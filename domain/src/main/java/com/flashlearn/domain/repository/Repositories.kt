@@ -1,5 +1,6 @@
 package com.flashlearn.domain.repository
 import com.flashlearn.domain.model.*
+import com.flashlearn.domain.gamification.AchievementState
 import java.util.UUID
 
 interface LearningStateRepository {
@@ -50,15 +51,17 @@ interface CategoryRepository {
 interface FlashLearnDatabase {
     suspend fun <T> withTransaction(block: suspend () -> T): T
 }
-
 interface ReviewSessionRepository {
     suspend fun insert(session: ReviewSession)
     suspend fun get(sessionId: UUID): ReviewSession?
     suspend fun update(session: ReviewSession)
 }
-
 interface ParserMetadataRepository {
     suspend fun get(conceptId: UUID): ParserMetadata?
     suspend fun upsert(conceptId: UUID, metadata: ParserMetadata)
     suspend fun getAll(): List<Pair<UUID, ParserMetadata>>
+}
+interface AchievementRepository {
+    suspend fun getAll(): List<AchievementState>
+    suspend fun upsertAll(states: List<AchievementState>)
 }

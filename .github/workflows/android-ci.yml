@@ -31,15 +31,22 @@ jobs:
         run: gradle --no-daemon assembleDebug
       - name: Unit tests
         run: gradle --no-daemon test
-      - name: Stage APK for upload
+      - name: Stage release artifacts
         run: |
-          mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/
+          mkdir -p dist/source
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v5.14_DEBUG.apk"
+          zip -qr "dist/FlashLearn_v5.14_SOURCE.zip" . -x ".git/*" "**/build/*" "**/.gradle/*"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: flashlearn-debug-apk
-          path: dist/app-debug.apk
+          path: dist/FlashLearn_v5.14_DEBUG.apk
+          if-no-files-found: error
+      - name: Upload complete source
+        uses: actions/upload-artifact@v4
+        with:
+          name: flashlearn-source
+          path: dist/FlashLearn_v5.14_SOURCE.zip
           if-no-files-found: error
 
   instrumentation-tests:
@@ -56,13 +63,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
-
       - name: Enable KVM group permissions
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
       - name: Run instrumentation tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -74,7 +79,6 @@ jobs:
           disable-animations: true
           force-avd-creation: true
           script: gradle --no-daemon connectedDebugAndroidTest
-
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

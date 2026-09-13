@@ -11,28 +11,18 @@ class Converters {
     @TypeConverter fun toInstant(value: Long?): Instant? = value?.let(Instant::ofEpochMilli)
 }
 
-@Entity(tableName = "concepts")
-data class ConceptEntity(@PrimaryKey val id: UUID, val entryType: String, val categoryId: UUID?, val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant)
-@Entity(tableName = "contents", indices = [Index(value = ["conceptId", "languageCode"], unique = true), Index(value = ["languageCode", "canonicalKey"])])
-data class ContentEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val languageCode: String, val text: String, val canonicalKey: String, val notes: String?, val pronunciation: String?, val example: String?)
-@Entity(tableName = "learning_states", indices = [Index(value = ["conceptId"], unique = true), Index(value = ["stage", "nextReviewAt"])])
-data class LearningStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val stage: String, val nextReviewAt: Instant?, val monthlyWrongCount: Int, val hasPathFailure: Boolean, val totalCorrect: Int, val totalWrong: Int, val lastReviewedAt: Instant?)
-@Entity(tableName = "difficulty_states", indices = [Index(value = ["conceptId"], unique = true)])
-data class DifficultyStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val current: String, val consecutiveCorrect: Int, val consecutiveWrong: Int, val hasReachedVeryHard: Boolean)
+@Entity(tableName = "concepts") data class ConceptEntity(@PrimaryKey val id: UUID, val entryType: String, val categoryId: UUID?, val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant)
+@Entity(tableName = "contents", indices = [Index(value = ["conceptId", "languageCode"], unique = true), Index(value = ["languageCode", "canonicalKey"])]) data class ContentEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val languageCode: String, val text: String, val canonicalKey: String, val notes: String?, val pronunciation: String?, val example: String?)
+@Entity(tableName = "learning_states", indices = [Index(value = ["conceptId"], unique = true), Index(value = ["stage", "nextReviewAt"])]) data class LearningStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val stage: String, val nextReviewAt: Instant?, val monthlyWrongCount: Int, val hasPathFailure: Boolean, val totalCorrect: Int, val totalWrong: Int, val lastReviewedAt: Instant?)
+@Entity(tableName = "difficulty_states", indices = [Index(value = ["conceptId"], unique = true)]) data class DifficultyStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val current: String, val consecutiveCorrect: Int, val consecutiveWrong: Int, val hasReachedVeryHard: Boolean)
 @Entity(tableName = "tags") data class TagEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "concept_tags", primaryKeys = ["conceptId", "tagId"], indices = [Index(value = ["tagId", "conceptId"])]) data class ConceptTagEntity(val conceptId: UUID, val tagId: UUID)
 @Entity(tableName = "review_sessions") data class ReviewSessionEntity(@PrimaryKey val id: UUID, val startedAt: Instant, val endedAt: Instant?, val reviewType: String)
 @Entity(tableName = "review_history", indices = [Index(value = ["sessionId", "reviewAttemptId"], unique = true)]) data class ReviewHistoryEntity(@PrimaryKey val id: UUID, val sessionId: UUID, val reviewAttemptId: UUID, val conceptId: UUID, val reviewedAt: Instant, val isCorrect: Boolean, val reviewType: String)
 @Entity(tableName = "settings") data class SettingsEntity(@PrimaryKey val key: String, val value: String, val updatedAt: Instant)
 @Entity(tableName = "categories", indices = [Index(value = ["name"], unique = true)]) data class CategoryEntity(@PrimaryKey val id: UUID, val name: String)
-@Entity(tableName = "parser_metadata")
-data class ParserMetadataEntity(
-    @PrimaryKey val conceptId: UUID,
-    val breakdownJson: String,
-    val relationshipsJson: String,
-    val variantsJson: String,
-    val confidence: Double
-)
+@Entity(tableName = "parser_metadata") data class ParserMetadataEntity(@PrimaryKey val conceptId: UUID, val breakdownJson: String, val relationshipsJson: String, val variantsJson: String, val confidence: Double)
+@Entity(tableName = "achievements") data class AchievementEntity(@PrimaryKey val achievementId: String, val unlocked: Boolean)
 
 @Dao interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(entity: ConceptEntity)
@@ -128,8 +118,12 @@ data class ParserMetadataEntity(
     @Query("DELETE FROM parser_metadata") suspend fun deleteAll()
     @Query("DELETE FROM parser_metadata WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
 }
+@Dao interface AchievementDao {
+    @Query("SELECT * FROM achievements ORDER BY achievementId ASC") suspend fun getAll(): List<AchievementEntity>
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<AchievementEntity>)
+}
 
-@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class], version = 4, exportSchema = true)
+@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class, AchievementEntity::class], version = 5, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class RoomFlashLearnDatabase : RoomDatabase() {
     abstract fun conceptDao(): ConceptDao
@@ -143,4 +137,5 @@ abstract class RoomFlashLearnDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
     abstract fun categoryDao(): CategoryDao
     abstract fun parserMetadataDao(): ParserMetadataDao
+    abstract fun achievementDao(): AchievementDao
 }
