@@ -114,6 +114,6 @@ class VocabularyParserTest {
         assertEquals("started_entry", result.importLog[0].action)
         assertEquals("attached_as_note", result.importLog[1].action)
         assertEquals("ignored", result.importLog[2].action)
-        assertEquals("warning_unknown", result.importLog[3].action)
+        assertEquals("attached_as_note", result.importLog[3].action)
     }
 }
