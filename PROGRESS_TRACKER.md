@@ -1,3 +1,10 @@
+## v5.03 — Bulk Import failure visibility
+- UI state now has an explicit `failedCount` instead of requiring the screen to infer failures from a generic error string.
+- Final result summary shows imported, duplicate, incomplete, and failed counts together.
+- Editing the source text resets all batch counters, including failures.
+- Existing resilient per-item failure behavior from v5.02 is preserved.
+- No database schema, learning algorithm, or scheduling changes were introduced.
+
 ## v5.02 — Resilient Bulk Import
 - Bulk Import now isolates ordinary per-item creation failures instead of aborting the entire batch.
 - A failed item remains visible as `FAILED` with its error message, while later valid items continue importing.
