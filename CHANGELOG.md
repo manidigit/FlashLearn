@@ -1,3 +1,9 @@
+# v5.07 — Algorithm boundary regression hardening
+- Added regression coverage for Daily wrong-answer scheduling across the local-day boundary.
+- Added coverage for Weekly→Monthly promotion and stable LEARNED behavior.
+- Added difficulty-cap coverage for VERY_HARD and monthly-failure escalation based on the pre-increment monthly wrong count.
+- No algorithm behavior was changed in this checkpoint; the goal is to lock the existing contract before deeper persistence work.
+
 # v5.06 — Home dashboard usability
 - Reworked the Home screen from a dense vertical list into a scroll-safe dashboard with clear sections and cards.
 - Added a primary review CTA that prefers Daily review when daily cards are due and falls back to a due review when appropriate.
