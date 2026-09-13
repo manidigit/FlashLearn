@@ -4,6 +4,7 @@ import com.flashlearn.database.*
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
 import java.util.UUID
+import org.json.JSONArray
 import javax.inject.Inject
 
 object Mappers {
@@ -22,6 +23,19 @@ object Mappers {
     fun session(e: ReviewSessionEntity)=ReviewSession(e.id,e.startedAt,e.endedAt,ReviewType.valueOf(e.reviewType))
     fun category(e: CategoryEntity)=Category(e.id,e.name)
     fun category(e: Category)=CategoryEntity(e.id,e.name)
+    fun parserMetadata(e: ParserMetadataEntity): ParserMetadata = ParserMetadata(
+        breakdown = JSONArray(e.breakdownJson).let { a -> (0 until a.length()).map { a.getString(it) } },
+        relationships = JSONArray(e.relationshipsJson).let { a -> (0 until a.length()).map { a.getString(it) } },
+        variants = JSONArray(e.variantsJson).let { a -> (0 until a.length()).map { a.getString(it) } },
+        confidence = e.confidence
+    )
+    fun parserMetadata(conceptId: UUID, value: ParserMetadata): ParserMetadataEntity = ParserMetadataEntity(
+        conceptId,
+        JSONArray().apply { value.breakdown.forEach(::put) }.toString(),
+        JSONArray().apply { value.relationships.forEach(::put) }.toString(),
+        JSONArray().apply { value.variants.forEach(::put) }.toString(),
+        value.confidence.coerceIn(0.0, 1.0)
+    )
 }
 
 class RoomConceptRepository @Inject constructor(private val dao: ConceptDao): ConceptRepository {
@@ -53,6 +67,11 @@ class RoomDifficultyStateRepository @Inject constructor(private val dao: Difficu
     override suspend fun upsert(state: DifficultyState)=dao.upsert(Mappers.difficulty(state))
     override suspend fun delete(conceptId: UUID)=dao.deleteByConceptId(conceptId)
     override suspend fun getAll()=dao.getAll().map(Mappers::difficulty)
+}
+class RoomParserMetadataRepository @Inject constructor(private val dao: ParserMetadataDao): ParserMetadataRepository {
+    override suspend fun get(conceptId: UUID)=dao.getByConceptId(conceptId)?.let(Mappers::parserMetadata)
+    override suspend fun upsert(conceptId: UUID, metadata: ParserMetadata)=dao.upsert(Mappers.parserMetadata(conceptId, metadata))
+    override suspend fun getAll(): List<Pair<UUID, ParserMetadata>> = dao.getAll().map { it.conceptId to Mappers.parserMetadata(it) }
 }
 class RoomConceptTagRepository @Inject constructor(private val dao: ConceptTagDao): ConceptTagRepository {
     override suspend fun insert(conceptTag: ConceptTag)=dao.insert(Mappers.tag(conceptTag))
