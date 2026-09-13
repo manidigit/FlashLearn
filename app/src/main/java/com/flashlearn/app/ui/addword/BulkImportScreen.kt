@@ -38,8 +38,12 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
             val validCount = state.preview.count { it.sourceText.isNotBlank() && !it.translationText.isNullOrBlank() }
             val incompleteCount = state.preview.size - validCount
             val noteCount = state.preview.count { !it.notes.isNullOrBlank() }
+            val breakdownCount = state.preview.sumOf { it.breakdown.size }
+            val relationshipCount = state.preview.sumOf { it.relationships.size }
+            val variantCount = state.preview.sumOf { it.variants.size }
             Text("تعداد تشخیص‌داده‌شده: ${state.preview.size}")
             Text("قابل ورود: $validCount | ناقص: $incompleteCount | دارای یادداشت: $noteCount")
+            Text("Metadata: تجزیه $breakdownCount | ارتباط $relationshipCount | شکل‌های دیگر $variantCount")
             if (state.warnings.isNotEmpty()) {
                 Text("هشدارهای Parser: ${state.warnings.size}", color = MaterialTheme.colorScheme.error)
                 LazyColumn(modifier = Modifier.weight(0.45f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -60,9 +64,15 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text("${item.sourceText} → ${item.translationText ?: "بدون ترجمه"}")
                         Text(
-                            "وضعیت: ${itemResult.status.label()} | نوع: ${item.entryType}",
+                            "وضعیت: ${itemResult.status.label()} | نوع: ${item.entryType} | اطمینان Parser: ${itemResult.confidencePercent}%",
                             style = MaterialTheme.typography.labelSmall
                         )
+                        if (itemResult.breakdownCount + itemResult.relationshipCount + itemResult.variantCount > 0) {
+                            Text(
+                                "تجزیه: ${itemResult.breakdownCount} | ارتباط: ${itemResult.relationshipCount} | شکل/مشتق: ${itemResult.variantCount}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                         itemResult.message?.let {
                             Text(it, style = MaterialTheme.typography.bodySmall)
                         }
