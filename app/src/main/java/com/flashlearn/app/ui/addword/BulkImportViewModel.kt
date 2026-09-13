@@ -39,6 +39,7 @@ data class BulkImportUiState(
     val importedCount: Int = 0,
     val skippedDuplicateCount: Int = 0,
     val invalidCount: Int = 0,
+    val failedCount: Int = 0,
     val error: String? = null,
     val done: Boolean = false
 )
@@ -60,6 +61,7 @@ class BulkImportViewModel @Inject constructor(
             importedCount = 0,
             skippedDuplicateCount = 0,
             invalidCount = 0,
+            failedCount = 0,
             error = null,
             done = false
         )
@@ -82,7 +84,7 @@ class BulkImportViewModel @Inject constructor(
         if (entries.isEmpty()) return
         val batch = entries.toList()
         viewModelScope.launch {
-            _state.value = _state.value.copy(isImporting = true, error = null, done = false)
+            _state.value = _state.value.copy(isImporting = true, error = null, done = false, failedCount = 0)
             try {
                 var imported = 0
                 var skippedDuplicates = 0
@@ -127,6 +129,7 @@ class BulkImportViewModel @Inject constructor(
                     importedCount = imported,
                     skippedDuplicateCount = skippedDuplicates,
                     invalidCount = invalid,
+                    failedCount = failed,
                     done = true,
                     error = if (failed > 0) "$failed مورد با خطا مواجه شد." else null
                 )
