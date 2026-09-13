@@ -1,3 +1,12 @@
+# v5.02 — Resilient Bulk Import
+- Bulk Import no longer aborts the whole batch when one ordinary item fails during concept creation.
+- Failed items remain in the result list with `FAILED` status and the underlying error message when available.
+- Later valid entries continue processing after a failed item.
+- Final state surfaces the number of failed items while preserving imported, duplicate, and incomplete results.
+- Duplicate and incomplete validation behavior remains unchanged.
+- No learning algorithm, scheduling rule, or database schema changed.
+- GitHub Actions remains the authoritative full Android build/test verification step.
+
 # v5.01 — Bulk Import metadata integration
 - Bulk Import now exposes Parser confidence for each entry as a percentage.
 - Breakdown, relationship, and variant/derivative metadata counts are visible in preview and item results.
