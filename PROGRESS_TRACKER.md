@@ -1,27 +1,32 @@
+## v5.06 — Home dashboard usability
+- Home is now a scroll-safe dashboard with distinct review, learning-status, review-type, and word-management sections.
+- Added a primary review CTA that prefers Daily review when daily cards are due and falls back to a due review when appropriate.
+- Added compact total/learned/accuracy metrics and retained streak visibility.
+- Review-type buttons remain enabled only when the corresponding summary has eligible cards.
+- Navigation and domain behavior are unchanged in this UI-focused checkpoint.
+
+## v5.05 — Progress dashboard
+- Progress became a focused learning dashboard with streak, today's workload, learned/total progress, review statistics, and stage distribution.
+- Refresh and navigation actions remain available.
+
+## v5.04 — Review session UX hardening
+- Review progress and live accuracy are visible during a session.
+- Reveal and answer actions were hardened against duplicate submission.
+
 ## v5.03 — Bulk Import failure visibility
-- UI state now has an explicit `failedCount` instead of requiring the screen to infer failures from a generic error string.
-- Final result summary shows imported, duplicate, incomplete, and failed counts together.
-- Editing the source text resets all batch counters, including failures.
-- Existing resilient per-item failure behavior from v5.02 is preserved.
-- No database schema, learning algorithm, or scheduling changes were introduced.
+- UI state now exposes an explicit failedCount.
+- Final result summary shows imported, duplicate, incomplete, and failed counts.
+- Editing source text resets all batch counters.
 
 ## v5.02 — Resilient Bulk Import
-- Bulk Import now isolates ordinary per-item creation failures instead of aborting the entire batch.
-- A failed item remains visible as `FAILED` with its error message, while later valid items continue importing.
-- The final import state reports the number of failed items without losing successful/duplicate/incomplete results.
-- Duplicate and incomplete handling remains unchanged.
-- Parser metadata projection remains available in the per-item result/UI layer.
-- No database schema, learning algorithm, or scheduling changes were introduced in this checkpoint.
+- Per-item failures no longer abort later valid imports.
+- Failed items remain visible with status and error information.
 
 ## v5.01 — Import metadata projection
-- Bulk Import اکنون confidence parser و تعداد breakdown/relationship/variant را برای هر مدخل و به‌صورت aggregate در preview نشان می‌دهد.
-- رفتار persistence، duplicate، incomplete و notes تغییر نکرد.
-- تست UI state برای projection متادیتای parser اضافه شد.
+- Parser confidence and breakdown/relationship/variant counts are exposed in preview and item results.
 
-## v4.97 — Bulk Import result tracking
-- Bulk Import اکنون برای تک‌تک مدخل‌ها نتیجه‌ی مستقل نگه می‌دارد: آماده، ناقص، واردشده، تکراری یا خطادار.
-- Preview مدخل‌های ناقص را قبل از ورود مشخص می‌کند و بعد از Import، دلیل ردشدن یا خطای هر مدخل نمایش داده می‌شود.
-- تکراری داخل همان batch از مدخلی که از قبل در Library وجود داشته تفکیک می‌شود.
-- با تغییر متن، نتایج Import قبلی نیز reset می‌شوند تا نتیجه‌ی قدیمی به batch جدید نسبت داده نشود.
-- تست UI state برای statusهای جدید اضافه شد.
-- الگوریتم یادگیری، scheduling و schema دیتابیس تغییر نکرد.
+## v5.00 — Parser Contract Completion
+- Parser-side Breakdown, Confidence, Relationship, Variant/Derivative and deterministic Import Log contracts were completed.
+
+## v4.99 — Parser CI regression fix
+- Fixed contextual classification so trailing unlabelled context after a complete pair is preserved as notes.

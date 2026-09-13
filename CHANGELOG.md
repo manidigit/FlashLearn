@@ -1,3 +1,10 @@
+# v5.06 — Home dashboard usability
+- Reworked the Home screen from a dense vertical list into a scroll-safe dashboard with clear sections and cards.
+- Added a primary review CTA that prefers Daily review when daily cards are due and falls back to a due review when appropriate.
+- Added compact learning metrics for total words, learned words, and overall accuracy.
+- Kept review-type availability tied to the existing progress summary so disabled review modes remain honest.
+- Preserved all existing navigation and domain behavior; this checkpoint is UI/UX focused.
+
 # v5.05 — Progress dashboard
 - Reworked the Progress screen into a focused learning dashboard instead of a plain text report.
 - Added cards for learning streak, today's review workload, review statistics, and learning-stage distribution.
@@ -59,13 +66,11 @@
 - Import results are reset whenever the source text changes, preventing stale outcome rows from being reused for a new batch.
 - Added UI-state regression coverage for the new import-result statuses.
 - No learning algorithm, scheduling rule, or database schema changed.
-- GitHub Actions remains the authoritative full Android build/test verification step.
 
 # v4.96 — Parser state-machine classification and warning pipeline
-- Promoted Paste Parser classification into an explicit line-type decision stage (`ENTRY_HEADER`, `TRANSLATION`, `BREAKDOWN`, `NOTE`, `GRAMMAR_NOTE`, `DERIVATIVE`, `RELATION`, `COMMENT`, `NUMBER`, `SEPARATOR`, `UNKNOWN`).
-- Added `parseDetailed()` with structured `ParseWarning` records containing warning type, line number, raw text, message, and confidence.
-- Incomplete source entries are preserved for preview/import validation instead of being silently lost; orphan Persian/explanatory lines now surface as warnings.
-- Added conservative recognition for breakdown, grammar, derivative, relationship, and comment lines while keeping them attached as notes to the current entry.
-- Bulk Import preview now surfaces Parser warnings with line numbers before import.
+- Promoted Paste Parser classification into an explicit line-type decision stage.
+- Added structured parser warnings with line number, raw text, message, and confidence.
+- Incomplete source entries are preserved for preview/import validation instead of being silently lost.
+- Added conservative recognition for breakdown, grammar, derivative, relationship, and comment lines.
+- Bulk Import preview surfaces Parser warnings with line numbers before import.
 - Added regression coverage for detailed parsing, orphan/incomplete input, and preserved free-form context.
-- No learning algorithm, scheduling rule, or database schema changed.
