@@ -58,6 +58,7 @@ class VocabularyParserTest {
         assertEquals(EntryKind.STRUCTURE, entries[0].entryType)
         assertEquals(EntryKind.IDIOM, entries[1].entryType)
     }
+
     @Test fun detailed_parse_classifies_breakdown_and_grammar_as_notes() {
         val result = VocabularyParser().parseDetailed(
             "hablar → صحبت کردن\nتجزیه: hablar = to speak\nGrammar: فعل بی‌قاعده"
@@ -89,5 +90,30 @@ class VocabularyParserTest {
         assertTrue(result.warnings.isEmpty())
     }
 
-}
+    @Test fun v500_extracts_breakdown_relationship_variant_and_confidence() {
+        val result = VocabularyParser().parseDetailed(
+            "hablar → صحبت کردن\nتجزیه: hablar = hab + lar\nمرتبط: خانواده: habla\nVariant: platicar"
+        )
+        val entry = result.entries.single()
+        assertEquals(1, entry.breakdown.size)
+        assertEquals("hablar = hab + lar", entry.breakdown[0].text)
+        assertEquals(1, entry.relationships.size)
+        assertEquals("خانواده", entry.relationships[0].label)
+        assertEquals("habla", entry.relationships[0].text)
+        assertEquals(1, entry.variants.size)
+        assertEquals("platicar", entry.variants[0].text)
+        assertTrue(entry.confidence >= 0.95)
+    }
 
+    @Test fun v500_exposes_deterministic_import_log_actions() {
+        val result = VocabularyParser().parseDetailed(
+            "1. casa → خانه\nمثال: casa grande\n---\nسلام"
+        )
+        assertEquals(4, result.importLog.size)
+        assertEquals(ParsedLineType.ENTRY_HEADER, result.importLog[0].lineType)
+        assertEquals("started_entry", result.importLog[0].action)
+        assertEquals("attached_as_note", result.importLog[1].action)
+        assertEquals("ignored", result.importLog[2].action)
+        assertEquals("warning_unknown", result.importLog[3].action)
+    }
+}
