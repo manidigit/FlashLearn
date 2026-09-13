@@ -1,3 +1,8 @@
+## v5.12 — Release identity monotonicity
+- Application versionName advanced to 5.12 and versionCode advanced to 12.
+- Added an Android instrumentation regression gate that verifies the packaged runtime versionName and versionCode.
+- No learning algorithm, scheduling rule, database schema, or parser behavior changed.
+
 ## v5.11 — Release identity and runtime gate hardening
 - Application versionName advanced to 5.11.
 - Added an Android instrumentation regression gate that verifies the packaged runtime versionName is exactly 5.11.
