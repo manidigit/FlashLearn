@@ -1,3 +1,10 @@
+# v5.04 — Review session UX hardening
+- Review now shows a live progress bar based on answered cards and total session size.
+- Review shows live session accuracy after the first answer.
+- The reveal-answer action uses the full available width for a clearer primary action.
+- Correct/wrong answer actions now share the available width and remain guarded by `canSubmitAnswer` while submission is in progress.
+- Existing review selection, scheduling, learning transition, difficulty update, and persistence behavior are unchanged.
+
 # v5.03 — Bulk Import failure visibility
 - Bulk Import now exposes an explicit `failedCount` in UI state and the final result summary.
 - A failed item remains visible with `FAILED` status and its error message, while later valid entries continue importing.
