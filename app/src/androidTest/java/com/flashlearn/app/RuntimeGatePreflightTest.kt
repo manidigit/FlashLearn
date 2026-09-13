@@ -1,5 +1,6 @@
 package com.flashlearn.app
 
+import android.content.pm.PackageManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -14,5 +15,12 @@ class RuntimeGatePreflightTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertNotNull(context)
         assertEquals("com.flashlearn.app", context.packageName)
+    }
+
+    @Test
+    fun releaseVersionIsFiveEleven() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        assertEquals("5.11", packageInfo.versionName)
     }
 }

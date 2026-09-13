@@ -1,3 +1,15 @@
+## v5.11 — Release identity and runtime gate hardening
+- Application versionName advanced to 5.11.
+- Added an Android instrumentation regression gate that verifies the packaged runtime versionName is exactly 5.11.
+- Kept the package-name preflight assertion.
+- No learning algorithm, scheduling rule, database schema, or parser behavior changed.
+
+## v5.10 — Parser metadata persistence
+- Parser breakdown, relationship, variant, and confidence metadata are persisted with concepts.
+- Room schema version 4 and migration 3→4 were added.
+- Repository/DI wiring and full-backup restore support were added.
+- Focused regression coverage was added for mappings, domain persistence, backup/restore, and schema contract.
+
 ## v5.07 — Algorithm boundary regression hardening
 - Added regression coverage for Daily wrong-answer scheduling across the local-day boundary.
 - Added coverage for Weekly→Monthly promotion and stable LEARNED behavior.
@@ -13,20 +25,16 @@
 
 ## v5.05 — Progress dashboard
 - Progress became a focused learning dashboard with streak, today's workload, learned/total progress, review statistics, and stage distribution.
-- Refresh and navigation actions remain available.
 
 ## v5.04 — Review session UX hardening
-- Review progress and live accuracy are visible during a session.
-- Reveal and answer actions were hardened against duplicate submission.
+- Review progress and live session accuracy are visible.
+- Reveal and answer actions are guarded against duplicate submission.
 
 ## v5.03 — Bulk Import failure visibility
-- UI state now exposes an explicit failedCount.
-- Final result summary shows imported, duplicate, incomplete, and failed counts.
-- Editing source text resets all batch counters.
+- UI state exposes failedCount and final summaries show imported, duplicate, incomplete, and failed counts.
 
 ## v5.02 — Resilient Bulk Import
 - Per-item failures no longer abort later valid imports.
-- Failed items remain visible with status and error information.
 
 ## v5.01 — Import metadata projection
 - Parser confidence and breakdown/relationship/variant counts are exposed in preview and item results.
