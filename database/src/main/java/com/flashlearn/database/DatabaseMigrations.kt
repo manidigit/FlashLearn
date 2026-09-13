@@ -15,3 +15,9 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_name` ON `categories` (`name`)")
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `parser_metadata` (`conceptId` TEXT NOT NULL, `breakdownJson` TEXT NOT NULL, `relationshipsJson` TEXT NOT NULL, `variantsJson` TEXT NOT NULL, `confidence` REAL NOT NULL, PRIMARY KEY(`conceptId`))")
+    }
+}
