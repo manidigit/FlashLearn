@@ -73,12 +73,8 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
-                        itemResult.message?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall)
-                        }
-                        item.notes?.takeIf { it.isNotBlank() }?.let {
-                            Text("یادداشت: $it", style = MaterialTheme.typography.bodySmall)
-                        }
+                        itemResult.message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        item.notes?.takeIf { it.isNotBlank() }?.let { Text("یادداشت: $it", style = MaterialTheme.typography.bodySmall) }
                     }
                 }
             }
@@ -87,7 +83,7 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
             }
         }
         if (state.done) {
-            Text("نتیجه ورود: ${state.importedCount} مدخل جدید، ${state.skippedDuplicateCount} تکراری رد شد، ${state.invalidCount} مدخل ناقص رد شد.")
+            Text("نتیجه ورود: ${state.importedCount} مدخل جدید، ${state.skippedDuplicateCount} تکراری رد شد، ${state.invalidCount} مدخل ناقص رد شد، ${state.failedCount} مدخل با خطا ماند.")
         }
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         OutlinedButton(onClick = onBack, enabled = !state.isImporting, modifier = Modifier.fillMaxWidth()) { Text("بازگشت") }
