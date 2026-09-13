@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -32,7 +33,6 @@ fun ReviewScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,13 +46,9 @@ fun ReviewScreen(
 
         if (!state.isSelectingMode && !state.isFinished) {
             OutlinedButton(
-                onClick = {
-                    viewModel.exitReview(onFinished)
-                },
+                onClick = { viewModel.exitReview(onFinished) },
                 enabled = !state.isSubmitting
-            ) {
-                Text("خروج از مرور")
-            }
+            ) { Text("خروج از مرور") }
         }
 
         when {
@@ -110,8 +106,17 @@ fun ReviewScreen(
 
             state.card != null -> {
                 val card = state.card!!
+                val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat()
+                val liveAccuracy = if (state.answered == 0) 0 else state.correct * 100 / state.answered
 
                 Text("${state.remaining} کارت باقی‌مانده از ${state.total}")
+                LinearProgressIndicator(
+                    progress = { progress.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (state.answered > 0) {
+                    Text("دقت جلسه: $liveAccuracy٪  •  ${state.correct} صحیح / ${state.wrong} غلط", style = MaterialTheme.typography.labelMedium)
+                }
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(24.dp)) {
@@ -141,28 +146,27 @@ fun ReviewScreen(
                         }
                     }
                     if (!card.isFlipped) {
-                        OutlinedButton(
-                            onClick = { viewModel.revealHint() },
-                            enabled = !card.hintRevealed
-                        ) {
+                        OutlinedButton(onClick = { viewModel.revealHint() }, enabled = !card.hintRevealed) {
                             Text("راهنما")
                         }
                     }
                 }
 
                 if (!card.isFlipped) {
-                    Button(onClick = { viewModel.flipCard() }) {
+                    Button(onClick = { viewModel.flipCard() }, modifier = Modifier.fillMaxWidth()) {
                         Text("نمایش پاسخ")
                     }
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { viewModel.submitAnswer(false) },
-                            enabled = state.canSubmitAnswer
+                            enabled = state.canSubmitAnswer,
+                            modifier = Modifier.weight(1f)
                         ) { Text("غلط") }
                         Button(
                             onClick = { viewModel.submitAnswer(true) },
-                            enabled = state.canSubmitAnswer
+                            enabled = state.canSubmitAnswer,
+                            modifier = Modifier.weight(1f)
                         ) { Text(if (state.isSubmitting) "در حال ثبت…" else "صحیح") }
                     }
                 }
@@ -170,7 +174,6 @@ fun ReviewScreen(
         }
     }
 }
-
 
 private fun reviewTypeLabel(type: ReviewType): String = when (type) {
     ReviewType.DAILY -> "روزانه"
