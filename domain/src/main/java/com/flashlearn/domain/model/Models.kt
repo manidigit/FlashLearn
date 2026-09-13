@@ -47,7 +47,6 @@ data class TransitionResult(
     val hasPathFailure: Boolean, val monthlyWrongCount: Int
 )
 
-
 data class ProgressSummary(
     val activeConceptCount: Int,
     val learnedConceptCount: Int,
@@ -58,4 +57,11 @@ data class ProgressSummary(
     val totalCorrect: Int,
     val totalWrong: Int,
     val accuracyPercent: Int
+)
+
+data class ParserMetadata(
+    val breakdown: List<String> = emptyList(),
+    val relationships: List<String> = emptyList(),
+    val variants: List<String> = emptyList(),
+    val confidence: Double = 0.0
 )
