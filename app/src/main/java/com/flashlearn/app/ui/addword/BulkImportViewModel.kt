@@ -87,6 +87,7 @@ class BulkImportViewModel @Inject constructor(
                 var imported = 0
                 var skippedDuplicates = 0
                 var invalid = 0
+                var failed = 0
                 val seenPairs = mutableSetOf<String>()
                 val results = mutableListOf<BulkImportItemResult>()
                 batch.forEach { entry ->
@@ -114,8 +115,8 @@ class BulkImportViewModel @Inject constructor(
                                 skippedDuplicates++
                                 results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "قبلاً در کتابخانه وجود دارد")
                             } catch (e: Exception) {
+                                failed++
                                 results += BulkImportItemResult(entry, BulkImportItemStatus.FAILED, e.message ?: "خطای نامشخص")
-                                throw e
                             }
                         }
                     }
@@ -126,7 +127,8 @@ class BulkImportViewModel @Inject constructor(
                     importedCount = imported,
                     skippedDuplicateCount = skippedDuplicates,
                     invalidCount = invalid,
-                    done = true
+                    done = true,
+                    error = if (failed > 0) "$failed مورد با خطا مواجه شد." else null
                 )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isImporting = false, error = e.message ?: "خطا در وارد کردن اطلاعات")
