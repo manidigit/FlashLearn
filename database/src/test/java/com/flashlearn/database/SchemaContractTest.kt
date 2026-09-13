@@ -11,21 +11,21 @@ class SchemaContractTest {
         assertTrue("Room schema directory was not generated", schemaRoot.isDirectory)
         val schemaFile = schemaRoot.walkTopDown()
             .filter { it.isFile && it.extension == "json" }
-            .firstOrNull { it.name == "3.json" }
-        assertTrue("Room schema version 3 was not generated", schemaFile != null)
+            .firstOrNull { it.name == "4.json" }
+        assertTrue("Room schema version 4 was not generated", schemaFile != null)
         return schemaFile!!.readText()
     }
 
     @Test
-    fun expectedEntityCountIsTen() {
+    fun expectedEntityCountIsEleven() {
         val schema = exportedSchema()
-        assertEquals(10, Regex("\"tableName\":").findAll(schema).count())
+        assertEquals(11, Regex("\"tableName\":").findAll(schema).count())
     }
 
     @Test
-    fun schemaVersionIsThreeAfterCategoryAddition() {
+    fun schemaVersionIsFourAfterParserMetadataAddition() {
         val schema = exportedSchema()
-        assertTrue(Regex("\"version\":\\s*3").containsMatchIn(schema))
+        assertTrue(Regex("\"version\":\\s*4").containsMatchIn(schema))
     }
 
     @Test
@@ -40,5 +40,15 @@ class SchemaContractTest {
         val schema = exportedSchema()
         assertTrue(schema.contains("\"tableName\": \"categories\""))
         assertTrue(schema.contains("\"name\": \"index_categories_name\""))
+    }
+
+    @Test
+    fun parserMetadataTableExistsWithExpectedFields() {
+        val schema = exportedSchema()
+        assertTrue(schema.contains("\"tableName\": \"parser_metadata\""))
+        assertTrue(schema.contains("\"fieldPath\": \"breakdownJson\""))
+        assertTrue(schema.contains("\"fieldPath\": \"relationshipsJson\""))
+        assertTrue(schema.contains("\"fieldPath\": \"variantsJson\""))
+        assertTrue(schema.contains("\"fieldPath\": \"confidence\""))
     }
 }
