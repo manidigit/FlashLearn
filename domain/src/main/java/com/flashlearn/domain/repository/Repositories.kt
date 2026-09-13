@@ -56,3 +56,9 @@ interface ReviewSessionRepository {
     suspend fun get(sessionId: UUID): ReviewSession?
     suspend fun update(session: ReviewSession)
 }
+
+interface ParserMetadataRepository {
+    suspend fun get(conceptId: UUID): ParserMetadata?
+    suspend fun upsert(conceptId: UUID, metadata: ParserMetadata)
+    suspend fun getAll(): List<Pair<UUID, ParserMetadata>>
+}
