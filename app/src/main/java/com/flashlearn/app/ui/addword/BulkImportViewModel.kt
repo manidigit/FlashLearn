@@ -17,13 +17,18 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import dagger.hilt.android.lifecycle.HiltViewModel
 
- enum class BulkImportItemStatus { READY, INCOMPLETE, IMPORTED, DUPLICATE, FAILED }
+enum class BulkImportItemStatus { READY, INCOMPLETE, IMPORTED, DUPLICATE, FAILED }
 
 data class BulkImportItemResult(
     val entry: ParsedEntry,
     val status: BulkImportItemStatus,
     val message: String? = null
-)
+) {
+    val confidencePercent: Int get() = (entry.confidence.coerceIn(0.0, 1.0) * 100).toInt()
+    val breakdownCount: Int get() = entry.breakdown.size
+    val relationshipCount: Int get() = entry.relationships.size
+    val variantCount: Int get() = entry.variants.size
+}
 
 data class BulkImportUiState(
     val rawText: String = "",
@@ -47,8 +52,6 @@ class BulkImportViewModel @Inject constructor(
     val state: StateFlow<BulkImportUiState> = _state.asStateFlow()
 
     fun onTextChange(value: String) {
-        // A preview belongs to the exact text that produced it. Clear it as soon as
-        // the source text changes so Import can never persist a stale preview.
         _state.value = _state.value.copy(
             rawText = value,
             preview = emptyList(),
@@ -67,9 +70,7 @@ class BulkImportViewModel @Inject constructor(
         val result = parser.parseDetailed(_state.value.rawText)
         _state.value = _state.value.copy(
             preview = result.entries,
-            results = result.entries.map { entry ->
-                BulkImportItemResult(entry, if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY)
-            },
+            results = result.entries.map(::readyResult),
             warnings = result.warnings,
             error = if (result.entries.isEmpty()) "مورد قابل وارد کردن پیدا نشد." else null
         )
@@ -79,8 +80,6 @@ class BulkImportViewModel @Inject constructor(
         if (_state.value.isImporting) return
         val entries = _state.value.preview.ifEmpty { parser.parseDetailed(_state.value.rawText).entries }
         if (entries.isEmpty()) return
-        // Snapshot the exact preview/input before entering the coroutine. UI edits cannot
-        // change the batch being imported halfway through the operation.
         val batch = entries.toList()
         viewModelScope.launch {
             _state.value = _state.value.copy(isImporting = true, error = null, done = false)
@@ -134,6 +133,11 @@ class BulkImportViewModel @Inject constructor(
             }
         }
     }
+
+    private fun readyResult(entry: ParsedEntry) = BulkImportItemResult(
+        entry,
+        if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY
+    )
 
     private fun EntryKind.toDomainEntryType() = when (this) {
         EntryKind.WORD -> EntryType.WORD
