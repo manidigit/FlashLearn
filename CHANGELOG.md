@@ -1,3 +1,9 @@
+# v5.03 — Bulk Import failure visibility
+- Bulk Import now exposes an explicit `failedCount` in UI state and the final result summary.
+- A failed item remains visible with `FAILED` status and its error message, while later valid entries continue importing.
+- Resetting the source text also resets the failure count with the other batch results.
+- No learning algorithm, scheduling rule, or database schema changed.
+
 # v5.02 — Resilient Bulk Import
 - Bulk Import no longer aborts the whole batch when one ordinary item fails during concept creation.
 - Failed items remain in the result list with `FAILED` status and the underlying error message when available.
@@ -28,7 +34,6 @@
 - No learning algorithm, scheduling rule, or database schema changed.
 
 # v4.98 — Bulk import UI-state CI fix
-
 - Fixed the Bulk Import status-label visibility so `BulkImportUiStateTest` can compile against the same stable status labels used by the screen.
 - No behavior, parser, learning algorithm, scheduling rule, or database schema changed.
 - This version specifically addresses the GitHub Actions `Cannot access 'label': it is private in file` compilation failure from v4.97.
@@ -41,10 +46,8 @@
 - Import results are reset whenever the source text changes, preventing stale outcome rows from being reused for a new batch.
 - Added UI-state regression coverage for the new import-result statuses.
 - No learning algorithm, scheduling rule, or database schema changed.
-- GitHub Actions remains the authoritative full Android build/test verification step.
 
 # v4.96 — Parser state-machine classification and warning pipeline
-
 - Promoted Paste Parser classification into an explicit line-type decision stage (`ENTRY_HEADER`, `TRANSLATION`, `BREAKDOWN`, `NOTE`, `GRAMMAR_NOTE`, `DERIVATIVE`, `RELATION`, `COMMENT`, `NUMBER`, `SEPARATOR`, `UNKNOWN`).
 - Added `parseDetailed()` with structured `ParseWarning` records containing warning type, line number, raw text, message, and confidence.
 - Incomplete source entries are preserved for preview/import validation instead of being silently lost; orphan Persian/explanatory lines now surface as warnings.
