@@ -16,11 +16,10 @@ object DatabaseModule {
     @Provides @Singleton
     fun provideRoomDatabase(@ApplicationContext context: Context): RoomFlashLearnDatabase =
         Room.databaseBuilder(context, RoomFlashLearnDatabase::class.java, "flashlearn.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
 
     @Provides fun categoryDao(db: RoomFlashLearnDatabase)=db.categoryDao()
-
     @Provides fun conceptDao(db: RoomFlashLearnDatabase)=db.conceptDao()
     @Provides fun contentDao(db: RoomFlashLearnDatabase)=db.contentDao()
     @Provides fun learningStateDao(db: RoomFlashLearnDatabase)=db.learningStateDao()
@@ -30,4 +29,5 @@ object DatabaseModule {
     @Provides fun reviewSessionDao(db: RoomFlashLearnDatabase)=db.reviewSessionDao()
     @Provides fun reviewHistoryDao(db: RoomFlashLearnDatabase)=db.reviewHistoryDao()
     @Provides fun settingsDao(db: RoomFlashLearnDatabase)=db.settingsDao()
+    @Provides fun parserMetadataDao(db: RoomFlashLearnDatabase)=db.parserMetadataDao()
 }
