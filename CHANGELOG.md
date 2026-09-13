@@ -1,3 +1,14 @@
+# v5.15 — Achievement persistence use case
+- Added the application-facing domain use case that evaluates the seven default achievements against current learning statistics and persists the complete resulting unlock state.
+- Preserved already-unlocked achievements and exposes newly unlocked IDs from the same deterministic evaluation result.
+- Added regression coverage for persisted unlocks and the all-locked initial catalog.
+
+# v5.14 — Achievement persistence
+- Added Room schema version 5 and migration 4→5 for achievement unlock state.
+- Added achievement repository and Room persistence wiring.
+- Advanced Android release identity to versionName 5.14 / versionCode 14.
+- Added exact source artifact packaging from Git history.
+
 # v5.13 — Achievements domain engine
 - Activated the product achievement catalog defined in the project backlog.
 - Added deterministic rules for seven achievements: FIRST_TEN_WORDS, SEVEN_DAY_STREAK, THIRTY_DAY_STREAK, MEMORY_BUILDER, VOCABULARY_BUILDER, HARD_MODE_MASTER, and LONG_TERM_MEMORY.
