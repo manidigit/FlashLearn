@@ -27,9 +27,7 @@ android {
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
-    buildTypes {
-        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
-    }
+    buildTypes { getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false } }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
