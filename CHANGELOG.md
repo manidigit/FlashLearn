@@ -1,5 +1,11 @@
 # FlashLearn Changelog
 
+## v5.66 — Parser reconciliation checkpoint
+- Hardened vocabulary parsing around entry boundaries, Persian-before-Spanish pairing, multiline Spanish sources, and orphan preservation.
+- Separated breakdown lines from notes and retained parser evidence on parsed entries for downstream reconciliation.
+- Added regression coverage for parser boundary, orphan, multiline-source, and consecutive-entry cases.
+- Advanced runtime identity to 5.66/66 and aligned CI/instrumentation preflight with the new version.
+
 ## v5.65 — UI interaction and CI hardening
 - Fixed language selectors in Settings and Add Word so the country/language list is anchored to the control instead of appearing detached at the bottom of the screen.
 - Language options show their country flags and prevent selecting the same language for both sides.
