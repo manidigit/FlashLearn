@@ -20,8 +20,10 @@ import com.flashlearn.domain.model.VocabularyDifficulty
 
 private val QuizCorrect = Color(0xFF2E7D32)
 private val QuizWrong = Color(0xFFC62828)
+private val QuizSelected = Color(0xFF7C4DFF)
 private val QuizCorrectContainer = Color(0xFFE8F5E9)
 private val QuizWrongContainer = Color(0xFFFFEBEE)
+private val QuizSelectedContainer = Color(0xFFF0E7FF)
 
 @Composable
 fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDifficulty? = null, quizChallenge: QuizChallenge = QuizChallenge.B, onFinished: () -> Unit) {
@@ -90,9 +92,12 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
     val selected = quiz.selectedOption
     val correct = quiz.correctAnswerText
 
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text("${state.answered} پاسخ", style = MaterialTheme.typography.labelMedium)
-        Text("${state.total} سؤال", style = MaterialTheme.typography.labelMedium)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Text("${state.correct} ✓", color = QuizCorrect, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.width(22.dp))
+        Text("${state.answered} / ${state.total}", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.width(22.dp))
+        Text("${state.wrong} ✕", color = QuizWrong, style = MaterialTheme.typography.titleMedium)
     }
     LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
 
@@ -108,22 +113,26 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        quiz.options.forEachIndexed { index, option ->
+        quiz.options.forEach { option ->
             val isCorrect = option == correct
             val isWrongSelection = answered && option == selected && !isCorrect
+            val isSelected = !answered && option == selected
             val container = when {
                 answered && isCorrect -> QuizCorrectContainer
                 isWrongSelection -> QuizWrongContainer
+                isSelected -> QuizSelectedContainer
                 else -> MaterialTheme.colorScheme.surface
             }
             val content = when {
                 answered && isCorrect -> QuizCorrect
                 isWrongSelection -> QuizWrong
+                isSelected -> QuizSelected
                 else -> MaterialTheme.colorScheme.onSurface
             }
             val border = when {
                 answered && isCorrect -> QuizCorrect
                 isWrongSelection -> QuizWrong
+                isSelected -> QuizSelected
                 else -> MaterialTheme.colorScheme.outline
             }
             OutlinedButton(
@@ -131,15 +140,10 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
                 enabled = !answered && !state.isSubmitting,
                 modifier = Modifier.fillMaxWidth().height(72.dp),
                 shape = MaterialTheme.shapes.large,
-                border = BorderStroke(if (answered && (isCorrect || isWrongSelection)) 2.dp else 1.dp, border),
+                border = BorderStroke(if (answered && (isCorrect || isWrongSelection) || isSelected) 2.dp else 1.dp, border),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content)
             ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Text("${index + 1}. ", style = MaterialTheme.typography.titleMedium)
-                    Text(option, style = MaterialTheme.typography.titleMedium)
-                    if (answered && isCorrect) Text("  ✓", style = MaterialTheme.typography.titleLarge)
-                    else if (isWrongSelection) Text("  ✕", style = MaterialTheme.typography.titleLarge)
-                }
+                Text(option, style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
     }
