@@ -1,6 +1,7 @@
 package com.flashlearn.app.ui
 
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.domain.model.VocabularyDifficulty
 
 enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 enum class AppLayoutDirection { RTL, LTR }
@@ -10,6 +11,8 @@ enum class LearningLanguage(val code: String, val labelFa: String) {
     SPANISH("es", "اسپانیایی"),
     ENGLISH("en", "انگلیسی")
 }
+
+enum class QuizChallenge(val label: String) { A("A"), B("B"), C("C") }
 
 data class LanguagePair(
     val source: LearningLanguage = LearningLanguage.SPANISH,
@@ -24,7 +27,9 @@ data class AppUiState(
     val appearance: AppearanceMode = AppearanceMode.SYSTEM,
     val accentColor: AccentColor = AccentColor.PURPLE,
     val layoutDirection: AppLayoutDirection = AppLayoutDirection.RTL,
-    val languagePair: LanguagePair = LanguagePair()
+    val languagePair: LanguagePair = LanguagePair(),
+    val personalWordDifficulty: VocabularyDifficulty? = null,
+    val quizChallenge: QuizChallenge = QuizChallenge.B
 ) {
     init { require(selectedRoute in AppRoutes.all()) { "Unknown application route: $selectedRoute" } }
 }
