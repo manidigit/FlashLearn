@@ -9,19 +9,20 @@ import com.flashlearn.domain.repository.ParserMetadataRepository
 import java.util.UUID
 import javax.inject.Inject
 
-/**
- * Imports one parsed vocabulary entry as a single atomic unit.
- *
- * The Concept/Content/Learning/Difficulty records and parser metadata must either
- * all persist or all roll back. This prevents a successful concept from being left
- * behind when metadata persistence fails.
- */
+/** Imports one parsed vocabulary entry as a single atomic unit. */
 class ImportParsedEntryUseCase @Inject constructor(
     private val createConcept: CreateConceptUseCase,
     private val parserMetadataRepository: ParserMetadataRepository,
     private val database: FlashLearnDatabase
 ) {
-    suspend operator fun invoke(entry: ParsedEntry): UUID = database.withTransaction {
+    suspend operator fun invoke(
+        entry: ParsedEntry,
+        sourceLanguage: String = "es",
+        targetLanguage: String = "fa"
+    ): UUID = database.withTransaction {
+        require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) {
+            "زبان‌های مبدأ و مقصد باید متفاوت باشند"
+        }
         val source = entry.sourceText.trim()
         val translation = entry.translationText?.trim()
         require(source.isNotBlank() && !translation.isNullOrBlank()) { "مدخل ناقص" }
@@ -31,6 +32,8 @@ class ImportParsedEntryUseCase @Inject constructor(
             CreateConceptCommand(
                 sourceText = source,
                 targetText = targetText,
+                sourceLanguage = sourceLanguage,
+                targetLanguage = targetLanguage,
                 notes = entry.notes,
                 entryType = entry.entryType.toDomainEntryType()
             )
