@@ -14,6 +14,10 @@ private fun normalizeQuizText(text: String): String = Normalizer.normalize(text.
 
 enum class QuizChallenge { A, B, C }
 
+object QuizChallengeProvider {
+    @Volatile var current: QuizChallenge = QuizChallenge.B
+}
+
 sealed interface QuizQuestionResult {
     data class QuizQuestion(val promptText: String, val correctAnswerText: String, val options: List<String>) : QuizQuestionResult {
         init {
@@ -30,13 +34,6 @@ sealed interface QuizQuestionResult {
 
 data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: String)
 
-/**
- * Distractor policy:
- * A = same category;
- * B = same category + same personal vocabulary difficulty;
- * C = same category + same personal difficulty + same entry type.
- * A stricter level broadens only when its pool cannot provide three unique distractors.
- */
 class GenerateQuizQuestionUseCase @Inject constructor(
     private val contentRepository: ContentRepository,
     private val conceptRepository: ConceptRepository,
@@ -46,7 +43,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         concept: Concept,
         activeLanguagePair: QuizLanguagePair,
         difficultyState: DifficultyState,
-        challenge: QuizChallenge = QuizChallenge.B
+        challenge: QuizChallenge = QuizChallengeProvider.current
     ): QuizQuestionResult {
         if (!concept.active || activeLanguagePair.sourceLanguage.isBlank() || activeLanguagePair.targetLanguage.isBlank()) return QuizQuestionResult.FlashcardFallback
         val allContents = contentRepository.getAll()
