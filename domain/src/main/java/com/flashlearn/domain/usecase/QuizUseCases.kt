@@ -49,9 +49,9 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         val allContents = contentRepository.getAll()
         val prompt = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode == activeLanguagePair.sourceLanguage && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
         val correct = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode == activeLanguagePair.targetLanguage && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
-        val categoryId = concept.categoryId ?: return QuizQuestionResult.FlashcardFallback
+        val categoryId = concept.categoryId
         val activeConcepts = conceptRepository.getAllActive().filter { other ->
-            other.id != concept.id && other.categoryId == categoryId &&
+            other.id != concept.id && (categoryId == null || other.categoryId == categoryId) &&
                 allContents.any { it.conceptId == other.id && it.languageCode == activeLanguagePair.sourceLanguage && it.text.isNotBlank() } &&
                 allContents.any { it.conceptId == other.id && it.languageCode == activeLanguagePair.targetLanguage && it.text.isNotBlank() }
         }
