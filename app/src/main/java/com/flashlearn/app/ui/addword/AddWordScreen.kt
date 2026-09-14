@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.addword
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,10 +25,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, onBack: () -> Unit) {
             Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall)
             IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
         }
-        Column(
-            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
+        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(onClick = {}, enabled = false, label = { Text("اسپانیایی") }, modifier = Modifier.weight(1f))
                 AssistChip(onClick = {}, enabled = false, label = { Text("فارسی") }, modifier = Modifier.weight(1f))
