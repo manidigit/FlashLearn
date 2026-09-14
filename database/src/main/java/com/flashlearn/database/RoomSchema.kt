@@ -11,14 +11,14 @@ class Converters {
     @TypeConverter fun toInstant(value: Long?): Instant? = value?.let(Instant::ofEpochMilli)
 }
 
-@Entity(tableName = "concepts") data class ConceptEntity(@PrimaryKey val id: UUID, val entryType: String, val categoryId: UUID?, val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant)
+@Entity(tableName = "concepts", indices = [Index(value = ["active"]), Index(value = ["categoryId", "active"])]) data class ConceptEntity(@PrimaryKey val id: UUID, val entryType: String, val categoryId: UUID?, val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant)
 @Entity(tableName = "contents", indices = [Index(value = ["conceptId", "languageCode"], unique = true), Index(value = ["languageCode", "canonicalKey"])]) data class ContentEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val languageCode: String, val text: String, val canonicalKey: String, val notes: String?, val pronunciation: String?, val example: String?)
 @Entity(tableName = "learning_states", indices = [Index(value = ["conceptId"], unique = true), Index(value = ["stage", "nextReviewAt"])]) data class LearningStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val stage: String, val nextReviewAt: Instant?, val monthlyWrongCount: Int, val hasPathFailure: Boolean, val totalCorrect: Int, val totalWrong: Int, val lastReviewedAt: Instant?)
 @Entity(tableName = "difficulty_states", indices = [Index(value = ["conceptId"], unique = true)]) data class DifficultyStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val current: String, val consecutiveCorrect: Int, val consecutiveWrong: Int, val hasReachedVeryHard: Boolean)
 @Entity(tableName = "tags") data class TagEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "concept_tags", primaryKeys = ["conceptId", "tagId"], indices = [Index(value = ["tagId", "conceptId"])]) data class ConceptTagEntity(val conceptId: UUID, val tagId: UUID)
 @Entity(tableName = "review_sessions") data class ReviewSessionEntity(@PrimaryKey val id: UUID, val startedAt: Instant, val endedAt: Instant?, val reviewType: String)
-@Entity(tableName = "review_history", indices = [Index(value = ["sessionId", "reviewAttemptId"], unique = true)]) data class ReviewHistoryEntity(@PrimaryKey val id: UUID, val sessionId: UUID, val reviewAttemptId: UUID, val conceptId: UUID, val reviewedAt: Instant, val isCorrect: Boolean, val reviewType: String)
+@Entity(tableName = "review_history", indices = [Index(value = ["sessionId", "reviewAttemptId"], unique = true), Index(value = ["reviewedAt"]), Index(value = ["conceptId", "reviewedAt"])]) data class ReviewHistoryEntity(@PrimaryKey val id: UUID, val sessionId: UUID, val reviewAttemptId: UUID, val conceptId: UUID, val reviewedAt: Instant, val isCorrect: Boolean, val reviewType: String)
 @Entity(tableName = "settings") data class SettingsEntity(@PrimaryKey val key: String, val value: String, val updatedAt: Instant)
 @Entity(tableName = "categories", indices = [Index(value = ["name"], unique = true)]) data class CategoryEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "parser_metadata") data class ParserMetadataEntity(@PrimaryKey val conceptId: UUID, val breakdownJson: String, val relationshipsJson: String, val variantsJson: String, val confidence: Double)
@@ -42,6 +42,7 @@ class Converters {
     @Query("SELECT * FROM contents WHERE id = :id LIMIT 1") suspend fun getById(id: UUID): ContentEntity?
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntity?
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId") suspend fun getAllByConceptId(conceptId: UUID): List<ContentEntity>
+    @Query("SELECT * FROM contents WHERE conceptId IN (:conceptIds)") suspend fun getForConcepts(conceptIds: List<UUID>): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey = :canonicalKey") suspend fun findByCanonicalKey(languageCode: String, canonicalKey: String): List<ContentEntity>
     @Query("SELECT * FROM contents") suspend fun getAll(): List<ContentEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<ContentEntity>)
