@@ -2,6 +2,7 @@ package com.flashlearn.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Book
@@ -12,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.navigation.AppRoutes
@@ -25,9 +28,9 @@ fun FlashLearnShell(
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
         NavigationBar(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(76.dp),
             containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+            tonalElevation = 6.dp
         ) {
             NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, selectedRoute, onNavigate)
             NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, selectedRoute, onNavigate)
@@ -49,12 +52,18 @@ private fun RowScope.NavItem(
     NavigationBarItem(
         selected = selectedRoute == route,
         onClick = { onNavigate(route) },
-        icon = { Icon(icon, contentDescription = label) },
-        label = { Text(label) },
+        icon = {
+            Box(
+                Modifier.clip(RoundedCornerShape(14.dp))
+                    .then(if (selectedRoute == route) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)) else Modifier)
+                    .padding(horizontal = 13.dp, vertical = 5.dp)
+            ) { Icon(icon, contentDescription = label) }
+        },
+        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
             selectedIconColor = MaterialTheme.colorScheme.primary,
             selectedTextColor = MaterialTheme.colorScheme.primary,
-            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+            indicatorColor = Color.Transparent,
             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -62,22 +71,10 @@ private fun RowScope.NavItem(
 }
 
 @Composable
-fun ScreenHeader(
-    title: String,
-    onBack: (() -> Unit)? = null,
-    trailing: @Composable (() -> Unit)? = null
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Text("←", style = MaterialTheme.typography.titleLarge)
-            }
-        } else {
-            Spacer(Modifier.width(48.dp))
-        }
+fun ScreenHeader(title: String, onBack: (() -> Unit)? = null, trailing: @Composable (() -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (onBack != null) IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) }
+        else Spacer(Modifier.width(48.dp))
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
         trailing?.invoke() ?: Spacer(Modifier.width(48.dp))
     }
@@ -85,15 +82,17 @@ fun ScreenHeader(
 
 @Composable
 fun PurpleHeroCard(title: String, value: String, subtitle: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.titleMedium)
-            Text(value, color = Color.White, style = MaterialTheme.typography.displaySmall)
-            Text(subtitle, color = Color.White.copy(alpha = .9f), style = MaterialTheme.typography.bodyMedium)
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+        Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .72f))))) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("🔥", style = MaterialTheme.typography.displaySmall)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, color = Color.White, style = MaterialTheme.typography.titleMedium)
+                    Text(value, color = Color.White, style = MaterialTheme.typography.displaySmall)
+                    Text(subtitle, color = Color.White.copy(alpha = .9f), style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }
