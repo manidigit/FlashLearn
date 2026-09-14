@@ -18,7 +18,7 @@ class Converters {
 @Entity(tableName = "tags") data class TagEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "concept_tags", primaryKeys = ["conceptId", "tagId"], indices = [Index(value = ["tagId", "conceptId"])]) data class ConceptTagEntity(val conceptId: UUID, val tagId: UUID)
 @Entity(tableName = "review_sessions") data class ReviewSessionEntity(@PrimaryKey val id: UUID, val startedAt: Instant, val endedAt: Instant?, val reviewType: String)
-@Entity(tableName = "review_history", indices = [Index(value = ["sessionId", "reviewAttemptId"])]) data class ReviewHistoryEntity(@PrimaryKey val id: UUID, val sessionId: UUID, val reviewAttemptId: UUID, val conceptId: UUID, val reviewedAt: Instant, val isCorrect: Boolean, val reviewType: String)
+@Entity(tableName = "review_history", indices = [Index(value = ["sessionId", "reviewAttemptId"], unique = true)]) data class ReviewHistoryEntity(@PrimaryKey val id: UUID, val sessionId: UUID, val reviewAttemptId: UUID, val conceptId: UUID, val reviewedAt: Instant, val isCorrect: Boolean, val reviewType: String)
 @Entity(tableName = "settings") data class SettingsEntity(@PrimaryKey val key: String, val value: String, val updatedAt: Instant)
 @Entity(tableName = "categories", indices = [Index(value = ["name"], unique = true)]) data class CategoryEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "parser_metadata") data class ParserMetadataEntity(@PrimaryKey val conceptId: UUID, val breakdownJson: String, val relationshipsJson: String, val variantsJson: String, val confidence: Double)
