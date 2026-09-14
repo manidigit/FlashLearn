@@ -33,52 +33,75 @@ class AppViewModel @Inject constructor(
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    private val _state = mutableStateOf(AppUiState())
+    private val _state = mutableStateOf(loadPersistedState())
     val state: State<AppUiState> get() = _state
 
     init {
         viewModelScope.launch {
-            val languages = LearningLanguage.entries
-            val defaults = AppUiState().languagePair
-            val sourceIndex = prefs.getInt(KEY_SOURCE, defaults.source.ordinal).coerceIn(languages.indices)
-            var targetIndex = prefs.getInt(KEY_TARGET, defaults.target.ordinal).coerceIn(languages.indices)
-            if (sourceIndex == targetIndex) targetIndex = (targetIndex + 1) % languages.size
-            val appearance = AppearanceMode.entries.getOrElse(prefs.getInt(KEY_APPEARANCE, AppearanceMode.SYSTEM.ordinal)) { AppearanceMode.SYSTEM }
-            val accent = AccentColor.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentColor.PURPLE.ordinal)) { AccentColor.PURPLE }
-            val layout = AppLayoutDirection.entries.getOrElse(prefs.getInt(KEY_LAYOUT, AppLayoutDirection.RTL.ordinal)) { AppLayoutDirection.RTL }
-            val personalDifficulty = VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY, -1))
-            val challenge = QuizChallenge.entries.getOrElse(prefs.getInt(KEY_QUIZ_CHALLENGE, QuizChallenge.B.ordinal)) { QuizChallenge.B }
             val threshold = settingsRepository.getInt(KEY_THRESHOLD, DEFAULT_THRESHOLD).coerceIn(1, 20)
-            _state.value = _state.value.copy(
-                appearance = appearance,
-                accentColor = accent,
-                layoutDirection = layout,
-                languagePair = LanguagePair(languages[sourceIndex], languages[targetIndex]),
-                personalWordDifficulty = personalDifficulty,
-                quizChallenge = challenge,
-                difficultyThreshold = threshold
-            )
+            _state.value = _state.value.copy(difficultyThreshold = threshold)
         }
     }
 
-    fun setAppearance(mode: AppearanceMode) { _state.value = _state.value.copy(appearance = mode); prefs.edit().putInt(KEY_APPEARANCE, mode.ordinal).apply() }
-    fun setAccentColor(color: AccentColor) { _state.value = _state.value.copy(accentColor = color); prefs.edit().putInt(KEY_ACCENT, color.ordinal).apply() }
-    fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction); prefs.edit().putInt(KEY_LAYOUT, direction.ordinal).apply() }
+    private fun loadPersistedState(): AppUiState {
+        val languages = LearningLanguage.entries
+        val defaults = AppUiState()
+        val sourceIndex = prefs.getInt(KEY_SOURCE, defaults.languagePair.source.ordinal).coerceIn(languages.indices)
+        var targetIndex = prefs.getInt(KEY_TARGET, defaults.languagePair.target.ordinal).coerceIn(languages.indices)
+        if (sourceIndex == targetIndex) targetIndex = (targetIndex + 1) % languages.size
+        return defaults.copy(
+            appearance = AppearanceMode.entries.getOrElse(prefs.getInt(KEY_APPEARANCE, AppearanceMode.SYSTEM.ordinal)) { AppearanceMode.SYSTEM },
+            accentColor = AccentColor.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentColor.PURPLE.ordinal)) { AccentColor.PURPLE },
+            layoutDirection = AppLayoutDirection.entries.getOrElse(prefs.getInt(KEY_LAYOUT, AppLayoutDirection.RTL.ordinal)) { AppLayoutDirection.RTL },
+            languagePair = LanguagePair(languages[sourceIndex], languages[targetIndex]),
+            personalWordDifficulty = VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY, -1)),
+            quizChallenge = QuizChallenge.entries.getOrElse(prefs.getInt(KEY_QUIZ_CHALLENGE, QuizChallenge.B.ordinal)) { QuizChallenge.B },
+            difficultyThreshold = DEFAULT_THRESHOLD
+        )
+    }
+
+    fun setAppearance(mode: AppearanceMode) {
+        _state.value = _state.value.copy(appearance = mode)
+        prefs.edit().putInt(KEY_APPEARANCE, mode.ordinal).commit()
+    }
+
+    fun setAccentColor(color: AccentColor) {
+        _state.value = _state.value.copy(accentColor = color)
+        prefs.edit().putInt(KEY_ACCENT, color.ordinal).commit()
+    }
+
+    fun setLayoutDirection(direction: AppLayoutDirection) {
+        _state.value = _state.value.copy(layoutDirection = direction)
+        prefs.edit().putInt(KEY_LAYOUT, direction.ordinal).commit()
+    }
+
     fun setLanguagePair(pair: LanguagePair) {
         if (pair.source == pair.target) return
         _state.value = _state.value.copy(languagePair = pair)
-        prefs.edit().putInt(KEY_SOURCE, pair.source.ordinal).putInt(KEY_TARGET, pair.target.ordinal).apply()
+        prefs.edit().putInt(KEY_SOURCE, pair.source.ordinal).putInt(KEY_TARGET, pair.target.ordinal).commit()
     }
+
     fun reverseLanguagePair() = setLanguagePair(_state.value.languagePair.reversed())
-    fun setPersonalWordDifficulty(value: VocabularyDifficulty?) { _state.value = _state.value.copy(personalWordDifficulty = value); prefs.edit().putInt(KEY_PERSONAL_DIFFICULTY, value?.ordinal ?: -1).apply() }
-    fun setQuizChallenge(value: QuizChallenge) { _state.value = _state.value.copy(quizChallenge = value); prefs.edit().putInt(KEY_QUIZ_CHALLENGE, value.ordinal).apply() }
+
+    fun setPersonalWordDifficulty(value: VocabularyDifficulty?) {
+        _state.value = _state.value.copy(personalWordDifficulty = value)
+        prefs.edit().putInt(KEY_PERSONAL_DIFFICULTY, value?.ordinal ?: -1).commit()
+    }
+
+    fun setQuizChallenge(value: QuizChallenge) {
+        _state.value = _state.value.copy(quizChallenge = value)
+        prefs.edit().putInt(KEY_QUIZ_CHALLENGE, value.ordinal).commit()
+    }
+
     fun setDifficultyThreshold(value: Int) {
         val safe = value.coerceIn(1, 20)
         _state.value = _state.value.copy(difficultyThreshold = safe)
         viewModelScope.launch { settingsRepository.setInt(KEY_THRESHOLD, safe) }
     }
 
-    fun openLibraryDetail(conceptId: UUID) { _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId) }
+    fun openLibraryDetail(conceptId: UUID) {
+        _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
+    }
 
     fun goBack() {
         when (_state.value.selectedRoute) {
