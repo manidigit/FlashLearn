@@ -25,22 +25,19 @@ class CalculateProgressUseCase @Inject constructor(
     @Suppress("UNUSED_PARAMETER")
     suspend operator fun invoke(now: Instant): ProgressSnapshot {
         val concepts = conceptRepository.getAllActive()
-        val learning = concepts.map { concept ->
-            learningRepository.get(concept.id)
-                ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${concept.id}")
-        }
-        val difficulty = concepts.map { concept ->
-            difficultyRepository.get(concept.id)
-                ?: error("DATA_INTEGRITY_ERROR: DifficultyState not found for concept ${concept.id}")
-        }
+        val learningById = learningRepository.getAll().associateBy { it.conceptId }
+        val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
+
+        // Do not issue one Room query per concept. A restored 100k-word library must be
+        // summarized with three bulk reads rather than 200k sequential database calls.
         return ProgressSnapshot(
             totalConcepts = concepts.size,
-            dailyConcepts = learning.count { it.stage == Stage.DAILY },
-            weeklyConcepts = learning.count { it.stage == Stage.WEEKLY },
-            monthlyConcepts = learning.count { it.stage == Stage.MONTHLY },
-            learnedConcepts = learning.count { it.stage == Stage.LEARNED },
-            pathFailureConcepts = learning.count { it.hasPathFailure },
-            veryHardConcepts = difficulty.count { it.hasReachedVeryHard }
+            dailyConcepts = concepts.count { learningById[it.id]?.stage == Stage.DAILY },
+            weeklyConcepts = concepts.count { learningById[it.id]?.stage == Stage.WEEKLY },
+            monthlyConcepts = concepts.count { learningById[it.id]?.stage == Stage.MONTHLY },
+            learnedConcepts = concepts.count { learningById[it.id]?.stage == Stage.LEARNED },
+            pathFailureConcepts = concepts.count { learningById[it.id]?.hasPathFailure == true },
+            veryHardConcepts = concepts.count { difficultyById[it.id]?.hasReachedVeryHard == true }
         )
     }
 }
