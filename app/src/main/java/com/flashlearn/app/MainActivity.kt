@@ -8,8 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -84,10 +84,10 @@ class MainActivity : ComponentActivity() {
         val uiState by appViewModel.state
         when (route) {
             AppRoutes.HOME -> HomeScreen(homeViewModel, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) }, onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) }, onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
-            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
+            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizChallenge = uiState.quizChallenge) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizChallenge = uiState.quizChallenge, onQuizChallengeChange = appViewModel::setQuizChallenge, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 }
