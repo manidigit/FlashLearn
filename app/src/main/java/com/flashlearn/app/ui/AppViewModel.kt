@@ -1,30 +1,84 @@
 package com.flashlearn.app.ui
 
+import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.data.repository.RoomSettingsRepository
 import com.flashlearn.domain.model.VocabularyDifficulty
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
-class AppViewModel @Inject constructor() : ViewModel() {
+class AppViewModel @Inject constructor(
+    @ApplicationContext context: Context,
+    private val settingsRepository: RoomSettingsRepository
+) : ViewModel() {
+    companion object {
+        private const val PREFS = "flashlearn_ui_settings"
+        private const val KEY_APPEARANCE = "appearance"
+        private const val KEY_ACCENT = "accent"
+        private const val KEY_LAYOUT = "layout"
+        private const val KEY_SOURCE = "language_source"
+        private const val KEY_TARGET = "language_target"
+        private const val KEY_PERSONAL_DIFFICULTY = "personal_difficulty"
+        private const val KEY_QUIZ_CHALLENGE = "quiz_challenge"
+        private const val KEY_THRESHOLD = "threshold_difficulty"
+        private const val DEFAULT_THRESHOLD = 3
+    }
+
+    private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val _state = mutableStateOf(AppUiState())
     val state: State<AppUiState> get() = _state
 
-    fun setAppearance(mode: AppearanceMode) { _state.value = _state.value.copy(appearance = mode) }
-    fun setAccentColor(color: AccentColor) { _state.value = _state.value.copy(accentColor = color) }
-    fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction) }
-    fun setLanguagePair(pair: LanguagePair) { _state.value = _state.value.copy(languagePair = pair) }
-    fun reverseLanguagePair() { _state.value = _state.value.copy(languagePair = _state.value.languagePair.reversed()) }
-    fun setPersonalWordDifficulty(value: VocabularyDifficulty?) { _state.value = _state.value.copy(personalWordDifficulty = value) }
-    fun setQuizChallenge(value: QuizChallenge) { _state.value = _state.value.copy(quizChallenge = value) }
-
-    fun openLibraryDetail(conceptId: UUID) {
-        _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
+    init {
+        viewModelScope.launch {
+            val languages = LearningLanguage.entries
+            val defaults = AppUiState().languagePair
+            val sourceIndex = prefs.getInt(KEY_SOURCE, defaults.source.ordinal).coerceIn(languages.indices)
+            var targetIndex = prefs.getInt(KEY_TARGET, defaults.target.ordinal).coerceIn(languages.indices)
+            if (sourceIndex == targetIndex) targetIndex = (targetIndex + 1) % languages.size
+            val appearance = AppearanceMode.entries.getOrElse(prefs.getInt(KEY_APPEARANCE, AppearanceMode.SYSTEM.ordinal)) { AppearanceMode.SYSTEM }
+            val accent = AccentColor.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentColor.PURPLE.ordinal)) { AccentColor.PURPLE }
+            val layout = AppLayoutDirection.entries.getOrElse(prefs.getInt(KEY_LAYOUT, AppLayoutDirection.RTL.ordinal)) { AppLayoutDirection.RTL }
+            val personalDifficulty = VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY, -1))
+            val challenge = QuizChallenge.entries.getOrElse(prefs.getInt(KEY_QUIZ_CHALLENGE, QuizChallenge.B.ordinal)) { QuizChallenge.B }
+            val threshold = settingsRepository.getInt(KEY_THRESHOLD, DEFAULT_THRESHOLD).coerceIn(1, 20)
+            _state.value = _state.value.copy(
+                appearance = appearance,
+                accentColor = accent,
+                layoutDirection = layout,
+                languagePair = LanguagePair(languages[sourceIndex], languages[targetIndex]),
+                personalWordDifficulty = personalDifficulty,
+                quizChallenge = challenge,
+                difficultyThreshold = threshold
+            )
+        }
     }
+
+    fun setAppearance(mode: AppearanceMode) { _state.value = _state.value.copy(appearance = mode); prefs.edit().putInt(KEY_APPEARANCE, mode.ordinal).apply() }
+    fun setAccentColor(color: AccentColor) { _state.value = _state.value.copy(accentColor = color); prefs.edit().putInt(KEY_ACCENT, color.ordinal).apply() }
+    fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction); prefs.edit().putInt(KEY_LAYOUT, direction.ordinal).apply() }
+    fun setLanguagePair(pair: LanguagePair) {
+        if (pair.source == pair.target) return
+        _state.value = _state.value.copy(languagePair = pair)
+        prefs.edit().putInt(KEY_SOURCE, pair.source.ordinal).putInt(KEY_TARGET, pair.target.ordinal).apply()
+    }
+    fun reverseLanguagePair() = setLanguagePair(_state.value.languagePair.reversed())
+    fun setPersonalWordDifficulty(value: VocabularyDifficulty?) { _state.value = _state.value.copy(personalWordDifficulty = value); prefs.edit().putInt(KEY_PERSONAL_DIFFICULTY, value?.ordinal ?: -1).apply() }
+    fun setQuizChallenge(value: QuizChallenge) { _state.value = _state.value.copy(quizChallenge = value); prefs.edit().putInt(KEY_QUIZ_CHALLENGE, value.ordinal).apply() }
+    fun setDifficultyThreshold(value: Int) {
+        val safe = value.coerceIn(1, 20)
+        _state.value = _state.value.copy(difficultyThreshold = safe)
+        viewModelScope.launch { settingsRepository.setInt(KEY_THRESHOLD, safe) }
+    }
+
+    fun openLibraryDetail(conceptId: UUID) { _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId) }
 
     fun goBack() {
         when (_state.value.selectedRoute) {
