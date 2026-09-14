@@ -32,6 +32,7 @@ import com.flashlearn.domain.model.ReviewType
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    languagePair: LanguagePair = LanguagePair(),
     onStartReview: (ReviewType) -> Unit,
     onAddWord: () -> Unit,
     onBulkImport: () -> Unit,
@@ -46,7 +47,6 @@ fun HomeScreen(
     val total = summary?.activeConceptCount ?: 0
     val daily = summary?.dailyDueConceptCount ?: 0
     var menuExpanded by remember { mutableStateOf(false) }
-    val pair = LanguagePair()
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -67,9 +67,9 @@ fun HomeScreen(
                 Text("سلام مانی!", style = MaterialTheme.typography.headlineSmall)
                 Text("به فلش‌لرن خوش آمدی 👋", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(pair.source.flag, style = MaterialTheme.typography.labelLarge)
+                    Text(languagePair.source.flag, style = MaterialTheme.typography.labelLarge)
                     Text(" → ", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(pair.target.flag, style = MaterialTheme.typography.labelLarge)
+                    Text(languagePair.target.flag, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.width(4.dp))
                     Text("زبان یادگیری", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -84,18 +84,14 @@ fun HomeScreen(
                         Text("${state.streak?.currentStreakDays ?: 0}", color = Color.White, style = MaterialTheme.typography.displayMedium)
                         Text("ادامه بده و زنجیره را حفظ کن", color = Color.White.copy(alpha = .9f), style = MaterialTheme.typography.bodySmall)
                     }
-                    Surface(shape = RoundedCornerShape(18.dp), color = Color.White.copy(alpha = .14f)) {
-                        Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) { Text("🔥", style = MaterialTheme.typography.headlineLarge) }
-                    }
+                    Surface(shape = RoundedCornerShape(18.dp), color = Color.White.copy(alpha = .14f)) { Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) { Text("🔥", style = MaterialTheme.typography.headlineLarge) } }
                 }
             }
         }
 
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(50.dp).clip(RoundedCornerShape(15.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) {
-                    Text("📖", style = MaterialTheme.typography.titleLarge)
-                }
+                Box(Modifier.size(50.dp).clip(RoundedCornerShape(15.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) { Text("📖", style = MaterialTheme.typography.titleLarge) }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text("$total", style = MaterialTheme.typography.headlineMedium)
@@ -110,10 +106,7 @@ fun HomeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Text("☀️") }
                     Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("روزانه", style = MaterialTheme.typography.titleMedium)
-                        Text("$daily از $due", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                    }
+                    Column(Modifier.weight(1f)) { Text("روزانه", style = MaterialTheme.typography.titleMedium); Text("$daily از $due", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
                 }
                 LinearProgressIndicator(progress = { if (due == 0) 0f else (daily.toFloat() / due).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)), trackColor = MaterialTheme.colorScheme.surfaceVariant)
             }
@@ -134,11 +127,8 @@ fun HomeScreen(
 private fun QuickAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
     Card(modifier = modifier, shape = RoundedCornerShape(18.dp)) {
         Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 17.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
-            }
-            Spacer(Modifier.height(7.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge)
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)) }
+            Spacer(Modifier.height(7.dp)); Text(label, style = MaterialTheme.typography.labelLarge)
         }
     }
 }
