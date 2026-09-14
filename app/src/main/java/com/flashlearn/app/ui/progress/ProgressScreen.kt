@@ -24,37 +24,35 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
-            else -> LazyColumn(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            else -> LazyColumn(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 state.summary?.let { summary ->
                     item {
-                        PurpleHeroCard(
-                            "نمای این هفته",
-                            "+${summary.activeConceptCount}",
-                            "واژه فعال"
-                        )
+                        PurpleHeroCard("این هفته", "${summary.totalCorrect + summary.totalWrong}", "مرور انجام‌شده")
                     }
                     item {
-                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                SectionTitle("وضعیت مرور")
-                                MetricRow("کل مرورهای آماده", summary.dueConceptCount.toString())
-                                MetricRow("روزانه", summary.dailyDueConceptCount.toString())
-                                MetricRow("هفتگی", summary.weeklyDueConceptCount.toString())
-                                MetricRow("ماهانه", summary.monthlyDueConceptCount.toString())
+                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                            Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CompactMetric("واژه فعال", summary.activeConceptCount.toString(), Modifier.weight(1f))
+                                CompactMetric("یادگرفته", summary.learnedConceptCount.toString(), Modifier.weight(1f))
+                                CompactMetric("دقت", "${summary.accuracyPercent}٪", Modifier.weight(1f))
                             }
                         }
                     }
                 }
-                state.streak?.let { streak ->
+                if (state.dailyReviews.isNotEmpty()) {
                     item {
-                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                            Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text("🔥", style = MaterialTheme.typography.displaySmall)
-                                Spacer(Modifier.width(14.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text("روز پیوسته", style = MaterialTheme.typography.titleMedium)
-                                    Text("زنجیره فعلی: ${streak.currentStreakDays} روز")
-                                    Text("بهترین زنجیره: ${streak.longestStreakDays} روز", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SectionTitle("مرور روزانه — ۷ روز اخیر")
+                                state.dailyReviews.forEach { day ->
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(day.dayLabel, modifier = Modifier.width(62.dp), style = MaterialTheme.typography.labelMedium)
+                                        LinearProgressIndicator(
+                                            progress = { (day.total / (state.dailyReviews.maxOfOrNull { it.total }?.coerceAtLeast(1) ?: 1f)).coerceIn(0f, 1f) },
+                                            modifier = Modifier.weight(1f).height(7.dp)
+                                        )
+                                        Text("${day.total}", modifier = Modifier.width(28.dp), style = MaterialTheme.typography.labelMedium)
+                                    }
                                 }
                             }
                         }
@@ -62,24 +60,23 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                 }
                 state.statistics?.let { stats ->
                     item {
-                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                SectionTitle("آمار مرور")
-                                MetricRow("مرورهای انجام‌شده", stats.totalReviews.toString())
+                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                SectionTitle("نتیجه مرور")
                                 MetricRow("صحیح", stats.totalCorrect.toString())
                                 MetricRow("غلط", stats.totalWrong.toString())
                                 MetricRow("واژه‌های مرورشده", stats.reviewedConceptCount.toString())
-                                LinearProgressIndicator(progress = { (stats.accuracyPercent / 100f).coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(8.dp))
-                                Text("دقت کلی: ${stats.accuracyPercent}٪")
+                                LinearProgressIndicator(progress = { (stats.accuracyPercent / 100f).coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(7.dp))
+                                Text("دقت کلی: ${stats.accuracyPercent}٪", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
                 }
                 state.progress?.let { progress ->
                     item {
-                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                SectionTitle("توزیع مرحله‌های یادگیری")
+                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                SectionTitle("مرحله‌های یادگیری")
                                 MetricRow("روزانه", progress.dailyConcepts.toString())
                                 MetricRow("هفتگی", progress.weeklyConcepts.toString())
                                 MetricRow("ماهانه", progress.monthlyConcepts.toString())
@@ -92,37 +89,37 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                 }
                 if (state.achievements.isNotEmpty()) {
                     item {
-                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Outlined.EmojiEvents, null, tint = MaterialTheme.colorScheme.primary)
-                                    Spacer(Modifier.width(8.dp))
-                                    SectionTitle("دستاوردها")
+                                    Spacer(Modifier.width(7.dp)); SectionTitle("دستاوردها")
                                 }
                                 state.achievements.forEach { (definition, achievement) ->
                                     Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}")
-                                    Text(definition.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
                     }
                 }
-                item {
-                    OutlinedButton(onClick = viewModel::refresh, Modifier.fillMaxWidth()) {
-                        Icon(Icons.Outlined.Refresh, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("به‌روزرسانی آمار")
-                    }
-                }
+                item { OutlinedButton(onClick = viewModel::refresh, Modifier.fillMaxWidth()) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(6.dp)); Text("به‌روزرسانی") } }
             }
         }
     }
 }
 
 @Composable
+private fun CompactMetric(label: String, value: String, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleLarge)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
 private fun MetricRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.titleMedium)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Text(value, style = MaterialTheme.typography.titleSmall)
     }
 }
