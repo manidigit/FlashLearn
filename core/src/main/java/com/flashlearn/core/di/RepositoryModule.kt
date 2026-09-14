@@ -24,4 +24,5 @@ abstract class RepositoryModule {
     @Binds @Singleton abstract fun bindAchievementRepository(impl: RoomAchievementRepository): AchievementRepository
     @Binds @Singleton abstract fun bindBackupRepository(impl: com.flashlearn.data.backup.RoomBackupRepository): BackupRepository
     @Binds @Singleton abstract fun bindFlashLearnDatabase(impl: FlashLearnDatabaseImpl): FlashLearnDatabase
+    @Binds @Singleton abstract fun bindDataVersionRepository(impl: RoomDataVersionRepository): DataVersionRepository
 }

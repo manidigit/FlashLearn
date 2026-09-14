@@ -11,9 +11,27 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 60
-        versionName = "5.60"
+        versionCode = 61
+        versionName = "5.61"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
+            val storePasswordValue = System.getenv("FL_RELEASE_STORE_PASSWORD")
+            val keyAliasValue = System.getenv("FL_RELEASE_KEY_ALIAS")
+            val keyPasswordValue = System.getenv("FL_RELEASE_KEY_PASSWORD")
+            if (!storeFilePath.isNullOrBlank()) storeFile = file(storeFilePath)
+            if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
+            if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
+            if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
     }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }

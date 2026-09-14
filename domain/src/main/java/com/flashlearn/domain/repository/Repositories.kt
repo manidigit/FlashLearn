@@ -65,3 +65,9 @@ interface AchievementRepository {
     suspend fun getAll(): List<AchievementState>
     suspend fun upsertAll(states: List<AchievementState>)
 }
+interface DataVersionRepository {
+    suspend fun getConceptDataVersion(): Int
+    suspend fun getContentDataVersion(): Int
+    suspend fun setConceptDataVersion(version: Int)
+    suspend fun setContentDataVersion(version: Int)
+}

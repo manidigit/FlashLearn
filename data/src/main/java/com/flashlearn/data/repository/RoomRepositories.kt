@@ -37,7 +37,6 @@ object Mappers {
         value.confidence.coerceIn(0.0, 1.0)
     )
 }
-
 class RoomConceptRepository @Inject constructor(private val dao: ConceptDao): ConceptRepository {
     override suspend fun insert(concept: Concept): UUID { dao.insert(Mappers.concept(concept)); return concept.id }
     override suspend fun get(conceptId: UUID)=dao.getById(conceptId)?.let(Mappers::concept)
@@ -86,7 +85,13 @@ class RoomReviewHistoryRepository @Inject constructor(private val dao: ReviewHis
 class RoomSettingsRepository @Inject constructor(private val dao: SettingsDao): SettingsRepository {
     override suspend fun getInt(key: String, default: Int): Int=dao.getByKey(key)?.value?.toIntOrNull()?:default
 }
-
+class RoomDataVersionRepository @Inject constructor(private val dao: SettingsDao): DataVersionRepository {
+    override suspend fun getConceptDataVersion(): Int = dao.getByKey(KEY_CONCEPT_DATA_VERSION)?.value?.toIntOrNull() ?: 0
+    override suspend fun getContentDataVersion(): Int = dao.getByKey(KEY_CONTENT_DATA_VERSION)?.value?.toIntOrNull() ?: 0
+    override suspend fun setConceptDataVersion(version: Int) { dao.put(SettingsEntity(KEY_CONCEPT_DATA_VERSION, version.toString(), java.time.Instant.now())) }
+    override suspend fun setContentDataVersion(version: Int) { dao.put(SettingsEntity(KEY_CONTENT_DATA_VERSION, version.toString(), java.time.Instant.now())) }
+    private companion object { const val KEY_CONCEPT_DATA_VERSION = "data_version.concept"; const val KEY_CONTENT_DATA_VERSION = "data_version.content" }
+}
 class RoomReviewSessionRepository @Inject constructor(private val dao: ReviewSessionDao): ReviewSessionRepository {
     override suspend fun insert(session: ReviewSession) = dao.insert(Mappers.session(session))
     override suspend fun get(sessionId: UUID) = dao.getById(sessionId)?.let(Mappers::session)
