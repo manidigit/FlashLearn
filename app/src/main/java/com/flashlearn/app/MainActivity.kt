@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val appState by appViewModel.state
-            FlashLearnTheme(appearance = appState.appearance) {
+            FlashLearnTheme(appearance = appState.appearance, accentColor = appState.accentColor) {
                 CompositionLocalProvider(
                     LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr
                 ) {
@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun TopLevelContent(route: String) {
+        val uiState by appViewModel.state
         when (route) {
             AppRoutes.HOME -> HomeScreen(homeViewModel,
                 onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
@@ -108,9 +109,11 @@ class MainActivity : ComponentActivity() {
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.SETTINGS -> SettingsScreen(
-                appearance = uiAppearance(),
+                appearance = uiState.appearance,
+                accentColor = uiState.accentColor,
                 onAppearanceChange = appViewModel::setAppearance,
-                layoutDirection = uiStateDirection(),
+                onAccentColorChange = appViewModel::setAccentColor,
+                layoutDirection = uiState.layoutDirection,
                 onLayoutDirectionChange = appViewModel::setLayoutDirection,
                 onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
                 onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) },
@@ -118,7 +121,4 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-
-    private fun uiAppearance() = appViewModel.state.value.appearance
-    private fun uiStateDirection() = appViewModel.state.value.layoutDirection
 }
