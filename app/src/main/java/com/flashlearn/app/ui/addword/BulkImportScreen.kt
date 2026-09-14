@@ -2,20 +2,24 @@ package com.flashlearn.app.ui.addword
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flashlearn.app.ui.LanguagePair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,16 +33,11 @@ fun BulkImportScreen(
     languagePair: LanguagePair = LanguagePair(),
     onBack: () -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.resetForEntry(languagePair)
-    }
-    LaunchedEffect(languagePair) {
-        viewModel.setLanguagePair(languagePair)
-    }
+    LaunchedEffect(Unit) { viewModel.resetForEntry(languagePair) }
 
     val openTextFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -58,178 +57,270 @@ fun BulkImportScreen(
         }
     }
 
-    val results = remember(state.results, state.preview, state.done) {
-        if (state.done && state.results.isNotEmpty()) {
-            state.results
-        } else {
-            state.preview.map(viewModel::readyResultForDisplay)
+    val hasPreview = state.preview.isNotEmpty()
+    val showEditor = !hasPreview && !state.done
+
+    if (showEditor) {
+        BulkImportEditor(
+            state = state,
+            languagePair = languagePair,
+            onBack = onBack,
+            onTextChange = viewModel::onTextChange,
+            onPreview = viewModel::preview,
+            onPickFile = { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) }
+        )
+    } else {
+        BulkImportPreview(
+            state = state,
+            onBack = {
+                viewModel.resetForEntry(languagePair)
+                onBack()
+            },
+            onImport = viewModel::importAll
+        )
+    }
+}
+
+@Composable
+private fun BulkImportEditor(
+    state: BulkImportUiState,
+    languagePair: LanguagePair,
+    onBack: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onPreview: () -> Unit,
+    onPickFile: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 24.dp, top = 20.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت")
+                }
+                Text(
+                    "جای‌گذاری متن",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
+        item {
+            Text(
+                "${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                textAlign = TextAlign.End
+            )
+        }
+        item {
+            Text(
+                "چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.",
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.End
+            )
+        }
+        item {
+            OutlinedButton(
+                onClick = onPickFile,
+                enabled = !state.isImporting && !state.isPreviewing,
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Icon(Icons.Outlined.FileOpen, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("انتخاب فایل واژگان", fontWeight = FontWeight.SemiBold)
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = state.rawText,
+                onValueChange = onTextChange,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 230.dp, max = 360.dp),
+                label = { Text("متن واژگان") },
+                placeholder = { Text("la piedra\nسنگ\n\nel nivel\nسطح، درجه") },
+                minLines = 8,
+                maxLines = 16,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+        item {
+            Button(
+                onClick = onPreview,
+                enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Text(if (state.isPreviewing) "در حال پردازش..." else "پیش‌نمایش", fontWeight = FontWeight.Bold)
+            }
+        }
+        state.error?.let { error ->
+            item {
+                Text(
+                    error,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.End
+                )
+            }
         }
     }
-    val validCount = remember(state.preview) {
-        state.preview.count { it.sourceText.isNotBlank() && !it.translationText.isNullOrBlank() }
+}
+
+@Composable
+private fun BulkImportPreview(
+    state: BulkImportUiState,
+    onBack: () -> Unit,
+    onImport: () -> Unit
+) {
+    val results = if (state.done) state.results else state.preview.map { entry ->
+        BulkImportItemResult(
+            entry,
+            if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY
+        )
     }
-    val incompleteCount = state.preview.size - validCount
+    val validCount = results.count { it.status != BulkImportItemStatus.INCOMPLETE }
     val visibleResults = results.take(BulkImportViewModel.PREVIEW_LIMIT)
 
     Column(Modifier.fillMaxSize()) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت")
+            OutlinedButton(onClick = onBack, shape = RoundedCornerShape(24.dp)) {
+                Text("بازگشت")
             }
-            Text(
-                "ورود گروهی واژگان",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.End
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "جای‌گذاری متن",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    "پیش‌نمایش (${results.size} از ${results.size} مورد انتخاب شده)",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
         }
 
+        Text(
+            "برای ویرایش، متن هر ردیف را مستقیماً تغییر دهید.",
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End
+        )
+
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
-                Text(
-                    "${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            items(visibleResults) { result ->
+                PreviewEntryCard(result)
             }
-            item {
-                Text(
-                    "واژه‌ها را یکجا وارد کن؛ هر مدخل را به شکل «مبدأ → مقصد» یا در دو خط وارد کن.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-            item {
-                OutlinedButton(
-                    onClick = { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) },
-                    enabled = !state.isImporting,
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
-                ) {
-                    Icon(Icons.Outlined.FileOpen, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("انتخاب فایل واژگان")
+            if (results.size > BulkImportViewModel.PREVIEW_LIMIT) {
+                item {
+                    Text(
+                        "فقط ${BulkImportViewModel.PREVIEW_LIMIT} مورد اول برای پیش‌نمایش نمایش داده می‌شود؛ همه ${results.size} مورد وارد خواهند شد.",
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End
+                    )
                 }
             }
-            item {
-                OutlinedTextField(
-                    value = state.rawText,
-                    onValueChange = viewModel::onTextChange,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 220.dp),
-                    label = { Text("متن واژگان") },
-                    minLines = 5,
-                    maxLines = 9
-                )
-            }
-            item {
+        }
+
+        Surface(shadowElevation = 6.dp) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (!state.done) {
+                    Text(
+                        "قابل ورود: $validCount  •  ناقص: ${results.size - validCount}",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    Text(
+                        "نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
                 Button(
-                    onClick = viewModel::preview,
-                    enabled = !state.isImporting && state.rawText.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                    onClick = onImport,
+                    enabled = !state.isImporting && !state.isPreviewing && !state.done,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(28.dp)
                 ) {
-                    Text("پیش‌نمایش")
+                    Icon(Icons.Outlined.Upload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
                 }
-            }
-
-            if (state.preview.isNotEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large
-                    ) {
-                        Column(
-                            Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text("پیش‌نمایش", style = MaterialTheme.typography.titleMedium)
-                            Text("${state.preview.size} مدخل تشخیص داده شد")
-                            Text("قابل ورود: $validCount  •  ناقص: $incompleteCount")
-                            if (results.size > BulkImportViewModel.PREVIEW_LIMIT) {
-                                Text(
-                                    "${BulkImportViewModel.PREVIEW_LIMIT} مورد اول نمایش داده می‌شود؛ ورود همه موارد همچنان انجام می‌شود.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-                if (state.warnings.isNotEmpty()) {
-                    item {
-                        Text(
-                            "هشدارهای Parser: ${state.warnings.size}",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-                items(visibleResults) { result ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Column(
-                            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Text(
-                                "${result.entry.sourceText}  →  ${result.entry.translationText ?: "بدون ترجمه"}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.End
-                            )
-                            Text(
-                                buildString {
-                                    append(result.status.label())
-                                    append("  •  ")
-                                    append(result.confidencePercent)
-                                    append('%')
-                                    result.message?.let { append("  •  ").append(it) }
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                item {
-                    Button(
-                        onClick = viewModel::importAll,
-                        enabled = !state.isImporting,
-                        modifier = Modifier.fillMaxWidth().height(54.dp)
-                    ) {
-                        Text(if (state.isImporting) "در حال وارد کردن..." else "وارد کردن همه")
-                    }
-                }
-            }
-
-            if (state.done) {
-                item {
-                    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("نتیجه ورود", style = MaterialTheme.typography.titleMedium)
-                            Text("${state.importedCount} مدخل جدید")
-                            Text("${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص  •  ${state.failedCount} خطادار")
-                        }
-                    }
-                }
-            }
-            state.error?.let { error ->
-                item {
-                    Text(error, color = MaterialTheme.colorScheme.error)
+                state.error?.let { error ->
+                    Text(error, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.End)
                 }
             }
         }
     }
 }
 
-fun BulkImportItemStatus.label() = when (this) {
-    BulkImportItemStatus.READY -> "آماده"
-    BulkImportItemStatus.INCOMPLETE -> "ناقص"
-    BulkImportItemStatus.IMPORTED -> "وارد شد"
-    BulkImportItemStatus.DUPLICATE -> "تکراری"
-    BulkImportItemStatus.FAILED -> "خطا"
+@Composable
+private fun PreviewEntryCard(result: BulkImportItemResult) {
+    val incomplete = result.status == BulkImportItemStatus.INCOMPLETE
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                if (incomplete) "!" else "✓",
+                modifier = Modifier.size(42.dp).background(
+                    if (incomplete) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                    RoundedCornerShape(12.dp)
+                ).wrapContentHeight(Alignment.CenterVertically),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                OutlinedTextField(
+                    value = result.entry.sourceText,
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    shape = RoundedCornerShape(14.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = result.entry.translationText.orEmpty(),
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    shape = RoundedCornerShape(14.dp)
+                )
+            }
+        }
+    }
 }
