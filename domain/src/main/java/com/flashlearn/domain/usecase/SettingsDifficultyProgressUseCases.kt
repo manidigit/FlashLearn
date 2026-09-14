@@ -35,6 +35,10 @@ class GetProgressSummaryUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(now: Instant): ProgressSummary {
         val concepts = conceptRepository.getAllActive()
+        val statesById = learningStateRepository.getAll().associateBy { it.conceptId }
+
+        // Summary screens used to query LearningState once per concept. That is an N+1
+        // pattern and becomes visibly slow after a large backup restore. Join in memory.
         var learned = 0
         var due = 0
         var dailyDue = 0
@@ -44,7 +48,7 @@ class GetProgressSummaryUseCase @Inject constructor(
         var wrong = 0
 
         concepts.forEach { concept ->
-            val state = learningStateRepository.get(concept.id)
+            val state = statesById[concept.id]
                 ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${concept.id}")
 
             if (state.stage == Stage.LEARNED) learned++
