@@ -88,7 +88,7 @@ private fun BulkImportEditor(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 24.dp, top = 20.dp, bottom = 32.dp),
+        contentPadding = PaddingValues(24.dp, 20.dp, 24.dp, 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -187,15 +187,10 @@ private fun BulkImportPreview(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            OutlinedButton(onClick = onBack, shape = RoundedCornerShape(24.dp)) {
-                Text("بازگشت")
-            }
+            OutlinedButton(onClick = onBack, shape = RoundedCornerShape(24.dp)) { Text("بازگشت") }
             Column(horizontalAlignment = Alignment.End) {
                 Text("جای‌گذاری متن", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
-                Text(
-                    "پیش‌نمایش (${results.size} مورد)",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-                )
+                Text("پیش‌نمایش (${results.size} مورد)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
             }
         }
 
@@ -208,7 +203,7 @@ private fun BulkImportPreview(
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(24.dp, 14.dp, 24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(visibleResults) { result -> PreviewEntryCard(result) }
@@ -230,19 +225,9 @@ private fun BulkImportPreview(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (!state.done) {
-                    Text(
-                        "قابل ورود: $validCount  •  ناقص: ${results.size - validCount}",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text("قابل ورود: $validCount  •  ناقص: ${results.size - validCount}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    Text(
-                        "نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text("نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyLarge)
                 }
                 Button(
                     onClick = onImport,
@@ -270,10 +255,7 @@ private fun PreviewEntryCard(result: BulkImportItemResult) {
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 if (incomplete) "!" else "✓",
                 modifier = Modifier.size(42.dp).background(
