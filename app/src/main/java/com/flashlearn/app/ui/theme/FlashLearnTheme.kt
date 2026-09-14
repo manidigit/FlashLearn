@@ -4,9 +4,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.flashlearn.app.ui.AppearanceMode
 
 private val Purple = Color(0xFF7C3AED)
-private val PurpleLight = Color(0xFF6D28D9)
 private val DarkBackground = Color(0xFF0B0D12)
 private val DarkSurface = Color(0xFF151820)
 private val LightBackground = Color(0xFFF8F7FC)
@@ -34,14 +34,21 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun FlashLearnTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun FlashLearnTheme(
+    appearance: AppearanceMode = AppearanceMode.SYSTEM,
+    content: @Composable () -> Unit
+) {
+    val dark = when (appearance) {
+        AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+        AppearanceMode.LIGHT -> false
+        AppearanceMode.DARK -> true
+    }
     MaterialTheme(
         colorScheme = if (dark) DarkColors else LightColors,
         typography = Typography(
-            headlineLarge = MaterialTheme.typography.headlineLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
-            headlineMedium = MaterialTheme.typography.headlineMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
-            titleLarge = MaterialTheme.typography.titleLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            headlineLarge = Typography().headlineLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+            headlineMedium = Typography().headlineMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+            titleLarge = Typography().titleLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         ),
         shapes = Shapes(
             extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(10),
