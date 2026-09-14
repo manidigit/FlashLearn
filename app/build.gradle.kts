@@ -15,7 +15,17 @@ android {
         versionName = "5.73"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    // Keep the same debug signing certificate across every GitHub Actions runner.
+    // This is the same stable debug-key strategy used successfully in manidigit/Flash:
+    // a fresh runner must not generate a new debug certificate, otherwise Android
+    // rejects the next APK as a different signer and requires uninstall first.
     signingConfigs {
+        getByName("debug") {
+            storeFile = file("../keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
             val storePasswordValue = System.getenv("FL_RELEASE_STORE_PASSWORD")
@@ -27,7 +37,10 @@ android {
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
-    buildTypes { getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false } }
+    buildTypes {
+        getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
+        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
+    }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
