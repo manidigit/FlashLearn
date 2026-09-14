@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.64"
-  FL_VERSION_CODE: "64"
+  FL_VERSION_NAME: "5.65"
+  FL_VERSION_CODE: "65"
 
 jobs:
   build-and-unit-test:
@@ -88,6 +88,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      FL_RELEASE_KEYSTORE_B64: ${{ secrets.FL_RELEASE_KEYSTORE_B64 }}
+      FL_RELEASE_STORE_PASSWORD: ${{ secrets.FL_RELEASE_STORE_PASSWORD }}
+      FL_RELEASE_KEY_ALIAS: ${{ secrets.FL_RELEASE_KEY_ALIAS }}
+      FL_RELEASE_KEY_PASSWORD: ${{ secrets.FL_RELEASE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -99,31 +104,36 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
-      - name: Materialize release keystore
-        env:
-          FL_RELEASE_KEYSTORE_B64: ${{ secrets.FL_RELEASE_KEYSTORE_B64 }}
+      - name: Check release signing configuration
+        id: signing
+        shell: bash
         run: |
-          test -n "$FL_RELEASE_KEYSTORE_B64"
+          if [ -n "$FL_RELEASE_KEYSTORE_B64" ] && [ -n "$FL_RELEASE_STORE_PASSWORD" ] && [ -n "$FL_RELEASE_KEY_ALIAS" ] && [ -n "$FL_RELEASE_KEY_PASSWORD" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Release signing secrets are not configured; signed-release verification is skipped."
+          fi
+      - name: Materialize release keystore
+        if: steps.signing.outputs.available == 'true'
+        run: |
           mkdir -p "$RUNNER_TEMP/flashlearn"
           echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
       - name: Build signed release
+        if: steps.signing.outputs.available == 'true'
         env:
           FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
-          FL_RELEASE_STORE_PASSWORD: ${{ secrets.FL_RELEASE_STORE_PASSWORD }}
-          FL_RELEASE_KEY_ALIAS: ${{ secrets.FL_RELEASE_KEY_ALIAS }}
-          FL_RELEASE_KEY_PASSWORD: ${{ secrets.FL_RELEASE_KEY_PASSWORD }}
-        run: |
-          test -n "$FL_RELEASE_STORE_PASSWORD"
-          test -n "$FL_RELEASE_KEY_ALIAS"
-          test -n "$FL_RELEASE_KEY_PASSWORD"
-          gradle --no-daemon assembleRelease
+        run: gradle --no-daemon assembleRelease
       - name: Verify release artifact
+        if: steps.signing.outputs.available == 'true'
         run: test -s app/build/outputs/apk/release/app-release.apk
       - name: Stage release artifact
+        if: steps.signing.outputs.available == 'true'
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/FlashLearn_v${FL_VERSION_NAME}_RELEASE.apk"
       - uses: actions/upload-artifact@v4
+        if: steps.signing.outputs.available == 'true'
         with:
           name: flashlearn-release-apk
           path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_RELEASE.apk
