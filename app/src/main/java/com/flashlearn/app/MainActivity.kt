@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
                 onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }
             )
             AppRoutes.REVIEW -> {
+                reviewViewModel.setLanguagePair(uiState.languagePair)
                 QuizChallengeProvider.current = when (uiState.quizChallenge) {
                     QuizChallenge.A -> DomainQuizChallenge.A
                     QuizChallenge.B -> DomainQuizChallenge.B
