@@ -40,7 +40,7 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(entity: ContentEntity)
     @Update suspend fun update(entity: ContentEntity)
     @Query("SELECT * FROM contents WHERE id = :id LIMIT 1") suspend fun getById(id: UUID): ContentEntity?
-    @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntityEntity?
+    @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntity?
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId") suspend fun getAllByConceptId(conceptId: UUID): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE conceptId IN (:conceptIds)") suspend fun getForConcepts(conceptIds: List<UUID>): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey = :canonicalKey") suspend fun findByCanonicalKey(languageCode: String, canonicalKey: String): List<ContentEntity>
