@@ -39,26 +39,27 @@ class SelectReviewQueueUseCase @Inject constructor(
             ReviewType.LEARNED -> learningStateRepository.getAllByStage(Stage.LEARNED)
         }
 
-        val candidates = mutableListOf<ReviewCandidate>()
-        for (learning in states) {
-            val concept = conceptRepository.get(learning.conceptId) ?: continue
-            // Soft-deleted concepts must never leak into a review queue.
-            if (!concept.active) continue
-            val difficulty = difficultyStateRepository.get(learning.conceptId) ?: continue
-            val tags = conceptTagRepository.getTagsForConcept(learning.conceptId)
+        // Large restored libraries used to cause 3 database queries per learning state
+        // (concept + difficulty + tags). With 8k words that becomes tens of thousands of
+        // sequential Room calls; at 100k it becomes unusable. Load each table once and
+        // do the joins/filters in memory instead.
+        val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
+        val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+        val tagsByConcept = conceptTagRepository.getAll().groupBy(ConceptTag::conceptId)
+            .mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
 
+        val candidates = ArrayList<ReviewCandidate>(states.size)
+        for (learning in states) {
+            val concept = conceptsById[learning.conceptId] ?: continue
+            val difficulty = difficultiesById[learning.conceptId] ?: continue
+            val tags = tagsByConcept[learning.conceptId].orEmpty()
             if (filters.difficulty != null && difficulty.current != filters.difficulty) continue
             if (filters.categoryId != null && concept.categoryId != filters.categoryId) continue
             if (filters.tagId != null && filters.tagId !in tags) continue
-
-            candidates.add(ReviewCandidate(concept, learning, difficulty, tags))
+            candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }
 
-        // The repository contract should normally guarantee one LearningState per
-        // Concept, but keeping this boundary defensive prevents duplicate cards if
-        // malformed/imported data ever violates that invariant.
         val uniqueCandidates = candidates.distinctBy { it.concept.id }
-
         return when (filters.reviewType) {
             ReviewType.RANDOM, ReviewType.LEARNED -> uniqueCandidates.shuffled()
             ReviewType.DAILY, ReviewType.WEEKLY, ReviewType.MONTHLY ->
