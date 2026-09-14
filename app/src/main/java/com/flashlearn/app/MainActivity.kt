@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppViewModel
+import com.flashlearn.app.ui.QuizChallenge
 import com.flashlearn.app.ui.addword.AddWordScreen
 import com.flashlearn.app.ui.addword.AddWordViewModel
 import com.flashlearn.app.ui.addword.BulkImportScreen
@@ -35,6 +36,7 @@ import com.flashlearn.app.ui.review.ReviewScreen
 import com.flashlearn.app.ui.review.ReviewViewModel
 import com.flashlearn.app.ui.settings.SettingsScreen
 import com.flashlearn.app.ui.theme.FlashLearnTheme
+import com.flashlearn.domain.usecase.QuizChallenge as DomainQuizChallenge
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -84,7 +86,16 @@ class MainActivity : ComponentActivity() {
         val uiState by appViewModel.state
         when (route) {
             AppRoutes.HOME -> HomeScreen(homeViewModel, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) }, onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) }, onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
-            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizChallenge = uiState.quizChallenge) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
+            AppRoutes.REVIEW -> {
+                reviewViewModel.setQuizChallenge(
+                    when (uiState.quizChallenge) {
+                        QuizChallenge.A -> DomainQuizChallenge.A
+                        QuizChallenge.B -> DomainQuizChallenge.B
+                        QuizChallenge.C -> DomainQuizChallenge.C
+                    }
+                )
+                ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizChallenge = uiState.quizChallenge) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
+            }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizChallenge = uiState.quizChallenge, onQuizChallengeChange = appViewModel::setQuizChallenge, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
