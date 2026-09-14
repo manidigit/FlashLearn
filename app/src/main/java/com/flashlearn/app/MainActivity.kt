@@ -6,35 +6,38 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.AppViewModel
 import com.flashlearn.app.ui.addword.AddWordScreen
 import com.flashlearn.app.ui.addword.AddWordViewModel
 import com.flashlearn.app.ui.addword.BulkImportScreen
 import com.flashlearn.app.ui.addword.BulkImportViewModel
-import com.flashlearn.app.ui.home.HomeScreen
-import com.flashlearn.app.ui.home.HomeViewModel
-import com.flashlearn.app.ui.review.ReviewScreen
-import com.flashlearn.app.ui.review.ReviewViewModel
-import com.flashlearn.app.ui.progress.ProgressScreen
-import com.flashlearn.app.ui.progress.ProgressViewModel
-import com.flashlearn.app.ui.settings.SettingsScreen
 import com.flashlearn.app.ui.backup.BackupScreen
 import com.flashlearn.app.ui.backup.BackupViewModel
-import com.flashlearn.app.ui.library.LibraryScreen
-import com.flashlearn.app.ui.library.LibraryViewModel
+import com.flashlearn.app.ui.components.FlashLearnShell
+import com.flashlearn.app.ui.home.HomeScreen
+import com.flashlearn.app.ui.home.HomeViewModel
 import com.flashlearn.app.ui.library.LibraryDetailScreen
 import com.flashlearn.app.ui.library.LibraryDetailViewModel
+import com.flashlearn.app.ui.library.LibraryScreen
+import com.flashlearn.app.ui.library.LibraryViewModel
+import com.flashlearn.app.ui.progress.ProgressScreen
+import com.flashlearn.app.ui.progress.ProgressViewModel
+import com.flashlearn.app.ui.review.ReviewScreen
+import com.flashlearn.app.ui.review.ReviewViewModel
+import com.flashlearn.app.ui.settings.SettingsScreen
+import com.flashlearn.app.ui.theme.FlashLearnTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     private val appViewModel: AppViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
     private val reviewViewModel: ReviewViewModel by viewModels()
@@ -47,128 +50,79 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    AppRootScreen(
-                        appViewModel = appViewModel,
-                        homeViewModel = homeViewModel,
-                        reviewViewModel = reviewViewModel,
-                        addWordViewModel = addWordViewModel,
-                        progressViewModel = progressViewModel,
-                        bulkImportViewModel = bulkImportViewModel,
-                        backupViewModel = backupViewModel,
-                        libraryViewModel = libraryViewModel,
-                        libraryDetailViewModel = libraryDetailViewModel
+            FlashLearnTheme {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    Surface(Modifier.fillMaxSize()) { AppRootScreen() }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun AppRootScreen() {
+        val uiState by appViewModel.state
+        BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
+        val topLevel = uiState.selectedRoute in setOf(
+            AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS
+        )
+        if (topLevel) {
+            FlashLearnShell(
+                selectedRoute = uiState.selectedRoute,
+                onNavigate = { route ->
+                    appViewModel.navigate(route)
+                    when (route) {
+                        AppRoutes.HOME -> homeViewModel.refresh()
+                        AppRoutes.LIBRARY -> libraryViewModel.refresh()
+                        AppRoutes.PROGRESS -> progressViewModel.refresh()
+                    }
+                }
+            ) { TopLevelContent(uiState.selectedRoute) }
+        } else {
+            when (uiState.selectedRoute) {
+                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
+                    LibraryDetailScreen(
+                        libraryDetailViewModel, id,
+                        onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
+                        onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
                     )
                 }
+                AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) {
+                    appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh()
+                }
+                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) {
+                    appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh()
+                }
+                AppRoutes.BACKUP -> BackupScreen(
+                    backupViewModel,
+                    onBack = { appViewModel.navigate(AppRoutes.SETTINGS) },
+                    onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() }
+                )
             }
         }
     }
-}
 
-@Composable
-private fun AppRootScreen(
-    appViewModel: AppViewModel,
-    homeViewModel: HomeViewModel,
-    reviewViewModel: ReviewViewModel,
-    addWordViewModel: AddWordViewModel,
-    progressViewModel: ProgressViewModel,
-    bulkImportViewModel: BulkImportViewModel,
-    backupViewModel: BackupViewModel,
-    libraryViewModel: LibraryViewModel,
-    libraryDetailViewModel: LibraryDetailViewModel
-) {
-    val uiState by appViewModel.state
-
-    BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) {
-        appViewModel.goBack()
-    }
-
-    when (uiState.selectedRoute) {
-        AppRoutes.LIBRARY -> LibraryScreen(
-            libraryViewModel,
-            onBack = {
-                appViewModel.navigate(AppRoutes.HOME)
-                homeViewModel.refresh()
-            },
-            onOpen = { id -> appViewModel.openLibraryDetail(id) }
-        )
-        AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let {
-            LibraryDetailScreen(
-                libraryDetailViewModel,
-                it,
-                onBack = {
-                    libraryViewModel.refresh()
-                    appViewModel.navigate(AppRoutes.LIBRARY)
-                },
-                onDeleted = {
-                    libraryViewModel.refresh()
-                    appViewModel.navigate(AppRoutes.LIBRARY)
-                    homeViewModel.refresh()
-                }
+    @Composable
+    private fun TopLevelContent(route: String) {
+        when (route) {
+            AppRoutes.HOME -> HomeScreen(
+                homeViewModel,
+                onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
+                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
+                onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
+                onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) },
+                onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
+                onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) }
+            )
+            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) {
+                homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME)
+            }
+            AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail)
+            AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
+            AppRoutes.SETTINGS -> SettingsScreen(
+                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onBack = { appViewModel.navigate(AppRoutes.HOME) }
             )
         }
-        AppRoutes.PROGRESS -> ProgressScreen(
-            viewModel = progressViewModel,
-            onBack = {
-                appViewModel.navigate(AppRoutes.HOME)
-                homeViewModel.refresh()
-            }
-        )
-        AppRoutes.SETTINGS -> SettingsScreen(
-            onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
-            onBack = { appViewModel.navigate(AppRoutes.HOME) }
-        )
-        AppRoutes.BACKUP -> BackupScreen(
-            viewModel = backupViewModel,
-            onBack = { appViewModel.navigate(AppRoutes.SETTINGS) },
-            onRestored = {
-                homeViewModel.refresh()
-                libraryViewModel.refresh()
-                progressViewModel.refresh()
-            }
-        )
-        AppRoutes.REVIEW -> ReviewScreen(
-            viewModel = reviewViewModel,
-            onFinished = {
-                // Review writes the answer transaction before reaching this callback.
-                // Refresh both destinations so Home and Progress immediately reflect the
-                // same persisted review history without relying on a later manual refresh.
-                homeViewModel.refresh()
-                progressViewModel.refresh()
-                appViewModel.navigate(AppRoutes.HOME)
-            }
-        )
-        AppRoutes.BULK_IMPORT -> BulkImportScreen(
-            viewModel = bulkImportViewModel,
-            onBack = {
-                appViewModel.navigate(AppRoutes.HOME)
-                homeViewModel.refresh()
-            }
-        )
-        AppRoutes.ADD_WORD -> AddWordScreen(
-            viewModel = addWordViewModel,
-            onBack = {
-                appViewModel.navigate(AppRoutes.HOME)
-                homeViewModel.refresh()
-            }
-        )
-        else -> HomeScreen(
-            viewModel = homeViewModel,
-            onStartReview = { reviewType ->
-                reviewViewModel.prepareReviewType(reviewType)
-                appViewModel.navigate(AppRoutes.REVIEW)
-            },
-            onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
-            onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
-            onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) },
-            onProgress = {
-                progressViewModel.refresh()
-                appViewModel.navigate(AppRoutes.PROGRESS)
-            },
-            onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) }
-        )
     }
 }
