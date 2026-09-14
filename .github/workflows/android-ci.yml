@@ -36,19 +36,19 @@ jobs:
       - name: Stage release artifacts
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v5.56_DEBUG.apk"
-          git archive --format=zip --output="dist/FlashLearn_v5.56_SOURCE.zip" HEAD
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v5.58_DEBUG.apk"
+          git archive --format=zip --output="dist/FlashLearn_v5.58_SOURCE.zip" HEAD
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: flashlearn-debug-apk
-          path: dist/FlashLearn_v5.56_DEBUG.apk
+          path: dist/FlashLearn_v5.58_DEBUG.apk
           if-no-files-found: error
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
           name: flashlearn-source
-          path: dist/FlashLearn_v5.56_SOURCE.zip
+          path: dist/FlashLearn_v5.58_SOURCE.zip
           if-no-files-found: error
 
   instrumentation-tests:
