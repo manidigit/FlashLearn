@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
         } else when (uiState.selectedRoute) {
             AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
             AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onBackupRestore = { appViewModel.navigate(AppRoutes.BACKUP) })
-            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { appViewModel.navigate(AppRoutes.LIBRARY) }
+            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
             AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
         }
     }
@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
                 QuizChallengeProvider.current = when (uiState.quizChallenge) { QuizChallenge.A -> DomainQuizChallenge.A; QuizChallenge.B -> DomainQuizChallenge.B; QuizChallenge.C -> DomainQuizChallenge.C }
                 ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizChallenge = uiState.quizChallenge) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             }
-            AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, languagePair = uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
+            AppRoutes.LIBRARY -> LibraryScreen(viewModel = libraryViewModel, languagePair = uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizChallenge = uiState.quizChallenge, onQuizChallengeChange = appViewModel::setQuizChallenge, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
