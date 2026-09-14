@@ -28,10 +28,10 @@ class VocabularyParserTest {
     }
 
     @Test fun preserves_following_non_persian_lines_as_notes() {
-        val entries = VocabularyParser().parse("aprender\nیاد گرفتن\nمثال: aprender español cada día")
+        val entries = VocabularyParser().parse("aprender\nیاد گرفتن\nExample: aprender español cada día")
         assertEquals(1, entries.size)
         assertEquals("یاد گرفتن", entries[0].translationText)
-        assertEquals("مثال: aprender español cada día", entries[0].notes)
+        assertEquals("Example: aprender español cada día", entries[0].notes)
     }
 
     @Test fun detects_mixed_analysis_without_creating_fake_entry() {
@@ -70,23 +70,22 @@ class VocabularyParserTest {
         assertTrue(result.warnings.isEmpty())
     }
 
-    @Test fun detailed_parse_reports_orphan_translation_and_incomplete_header() {
+    @Test fun detailed_parse_pairs_orphan_translation_without_warning_after_successful_pairing() {
         val result = VocabularyParser().parseDetailed(
             "سلام\naprender"
         )
         assertEquals(1, result.entries.size)
         assertEquals("aprender", result.entries[0].sourceText)
-        assertTrue(result.entries[0].translationText == null)
-        assertEquals(1, result.warnings.size)
-        assertEquals(ParseWarningType.ORPHAN_SOURCE, result.warnings[0].warningType)
+        assertEquals("سلام", result.entries[0].translationText)
+        assertTrue(result.warnings.isEmpty())
     }
 
     @Test fun detailed_parse_preserves_unknown_following_lines_as_notes() {
         val result = VocabularyParser().parseDetailed(
-            "casa → خانه\ntexto libre para contexto"
+            "casa → خانه\nExample: texto libre para contexto"
         )
         assertEquals(1, result.entries.size)
-        assertEquals("texto libre para contexto", result.entries[0].notes)
+        assertEquals("Example: texto libre para contexto", result.entries[0].notes)
         assertTrue(result.warnings.isEmpty())
     }
 
