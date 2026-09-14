@@ -21,6 +21,8 @@ data class ReviewCandidate(
     val tagIds: List<UUID>
 )
 
+private const val REVIEW_BATCH_SIZE = 30
+
 class SelectReviewQueueUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository,
@@ -59,15 +61,14 @@ class SelectReviewQueueUseCase @Inject constructor(
             candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }
 
-        val uniqueCandidates = candidates.distinctBy { it.concept.id }
-        return when (filters.reviewType) {
-            ReviewType.RANDOM, ReviewType.LEARNED -> uniqueCandidates.shuffled()
-            ReviewType.DAILY, ReviewType.WEEKLY, ReviewType.MONTHLY ->
-                uniqueCandidates.sortedWith(
-                    compareBy<ReviewCandidate> { it.learningState.nextReviewAt ?: Instant.MIN }
-                        .thenBy { it.concept.id.toString() }
-                )
-        }
+        // A review session is deliberately a small batch. Never turn a restored library
+        // of thousands of due cards into one 8k/100k-card session. The eligible pool is
+        // shuffled before taking the batch so repeated sessions do not follow the same
+        // UUID/database ordering rhythm.
+        return candidates
+            .distinctBy { it.concept.id }
+            .shuffled()
+            .take(REVIEW_BATCH_SIZE)
     }
 }
 
