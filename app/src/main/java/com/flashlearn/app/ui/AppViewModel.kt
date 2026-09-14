@@ -13,17 +13,11 @@ class AppViewModel @Inject constructor() : ViewModel() {
     private val _state = mutableStateOf(AppUiState())
     val state: State<AppUiState> get() = _state
 
-    fun setAppearance(mode: AppearanceMode) {
-        _state.value = _state.value.copy(appearance = mode)
-    }
-
-    fun setAccentColor(color: AccentColor) {
-        _state.value = _state.value.copy(accentColor = color)
-    }
-
-    fun setLayoutDirection(direction: AppLayoutDirection) {
-        _state.value = _state.value.copy(layoutDirection = direction)
-    }
+    fun setAppearance(mode: AppearanceMode) { _state.value = _state.value.copy(appearance = mode) }
+    fun setAccentColor(color: AccentColor) { _state.value = _state.value.copy(accentColor = color) }
+    fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction) }
+    fun setLanguagePair(pair: LanguagePair) { _state.value = _state.value.copy(languagePair = pair) }
+    fun reverseLanguagePair() { _state.value = _state.value.copy(languagePair = _state.value.languagePair.reversed()) }
 
     fun openLibraryDetail(conceptId: UUID) {
         _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
