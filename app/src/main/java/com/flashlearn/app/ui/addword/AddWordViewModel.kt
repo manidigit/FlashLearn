@@ -3,6 +3,7 @@ package com.flashlearn.app.ui.addword
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.Category
+import com.flashlearn.domain.model.EntryType
 import com.flashlearn.domain.usecase.CreateConceptCommand
 import com.flashlearn.domain.usecase.CreateConceptUseCase
 import com.flashlearn.domain.usecase.GetAllCategoriesUseCase
@@ -21,6 +22,7 @@ data class AddWordUiState(
     val pronunciation: String = "",
     val example: String = "",
     val categoryName: String = "",
+    val entryType: EntryType = EntryType.WORD,
     val categories: List<Category> = emptyList(),
     val isSaving: Boolean = false,
     val lastSavedText: String? = null,
@@ -36,107 +38,48 @@ class AddWordViewModel @Inject constructor(
     private val getAllCategories: GetAllCategoriesUseCase,
     private val getOrCreateCategory: GetOrCreateCategoryUseCase
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(AddWordUiState())
     val state: StateFlow<AddWordUiState> = _state.asStateFlow()
     private var categoryLoadGeneration = 0L
 
-    init {
-        loadCategories()
-    }
+    init { loadCategories() }
 
     private fun loadCategories() {
         val generation = ++categoryLoadGeneration
         viewModelScope.launch {
             runCatching { getAllCategories() }
-                .onSuccess { categories ->
-                    if (generation == categoryLoadGeneration) {
-                        _state.value = _state.value.copy(categories = categories)
-                    }
-                }
-                .onFailure { error ->
-                    if (generation == categoryLoadGeneration) {
-                        _state.value = _state.value.copy(
-                            error = error.message ?: "خطا در بارگذاری دسته‌ها"
-                        )
-                    }
-                }
+                .onSuccess { categories -> if (generation == categoryLoadGeneration) _state.value = _state.value.copy(categories = categories) }
+                .onFailure { error -> if (generation == categoryLoadGeneration) _state.value = _state.value.copy(error = error.message ?: "خطا در بارگذاری دسته‌ها") }
         }
     }
 
-    fun onSourceTextChange(value: String) {
-        _state.value = _state.value.copy(sourceText = value, error = null)
-    }
-
-    fun onTargetTextChange(value: String) {
-        _state.value = _state.value.copy(targetText = value, error = null)
-    }
-
-    fun onNotesChange(value: String) {
-        _state.value = _state.value.copy(notes = value)
-    }
-
-    fun onPronunciationChange(value: String) {
-        _state.value = _state.value.copy(pronunciation = value)
-    }
-
-    fun onExampleChange(value: String) {
-        _state.value = _state.value.copy(example = value)
-    }
-
-    fun onCategoryNameChange(value: String) {
-        _state.value = _state.value.copy(categoryName = value)
-    }
+    fun onSourceTextChange(value: String) { _state.value = _state.value.copy(sourceText = value, error = null) }
+    fun onTargetTextChange(value: String) { _state.value = _state.value.copy(targetText = value, error = null) }
+    fun onNotesChange(value: String) { _state.value = _state.value.copy(notes = value) }
+    fun onPronunciationChange(value: String) { _state.value = _state.value.copy(pronunciation = value) }
+    fun onExampleChange(value: String) { _state.value = _state.value.copy(example = value) }
+    fun onCategoryNameChange(value: String) { _state.value = _state.value.copy(categoryName = value) }
+    fun onEntryTypeChange(value: EntryType) { _state.value = _state.value.copy(entryType = value) }
 
     fun save() {
         val current = _state.value
         if (!current.canSave) return
-
         viewModelScope.launch {
             _state.value = current.copy(isSaving = true, error = null)
             try {
-                val categoryId = if (current.categoryName.isNotBlank()) {
-                    getOrCreateCategory(current.categoryName)
-                } else null
-
-                createConcept(
-                    CreateConceptCommand(
-                        sourceText = current.sourceText.trim(),
-                        targetText = current.targetText.trim(),
-                        categoryId = categoryId,
-                        notes = current.notes.ifBlank { null },
-                        pronunciation = current.pronunciation.ifBlank { null },
-                        example = current.example.ifBlank { null }
-                    )
-                )
-
-                // Do not wipe newer input entered while the persistence operation was running.
-                // Normally fields are unchanged during a save, but this guard keeps batch entry
-                // safe even if the UI receives edits before the transaction completes.
+                val categoryId = current.categoryName.trim().takeIf { it.isNotEmpty() }?.let { getOrCreateCategory(it) }
+                createConcept(CreateConceptCommand(
+                    sourceText = current.sourceText.trim(), targetText = current.targetText.trim(),
+                    categoryId = categoryId, notes = current.notes.trim().ifBlank { null },
+                    pronunciation = current.pronunciation.trim().ifBlank { null }, example = current.example.trim().ifBlank { null },
+                    entryType = current.entryType
+                ))
                 val latest = _state.value
-                val unchangedSinceSave = latest.sourceText == current.sourceText &&
-                    latest.targetText == current.targetText &&
-                    latest.notes == current.notes &&
-                    latest.pronunciation == current.pronunciation &&
-                    latest.example == current.example &&
-                    latest.categoryName == current.categoryName
-
-                _state.value = if (unchangedSinceSave) {
-                    latest.copy(
-                        sourceText = "",
-                        targetText = "",
-                        notes = "",
-                        pronunciation = "",
-                        example = "",
-                        isSaving = false,
-                        lastSavedText = current.sourceText.trim()
-                    )
-                } else {
-                    latest.copy(
-                        isSaving = false,
-                        lastSavedText = current.sourceText.trim()
-                    )
-                }
+                val unchanged = latest.sourceText == current.sourceText && latest.targetText == current.targetText &&
+                    latest.notes == current.notes && latest.pronunciation == current.pronunciation &&
+                    latest.example == current.example && latest.categoryName == current.categoryName && latest.entryType == current.entryType
+                _state.value = if (unchanged) latest.copy(sourceText = "", targetText = "", notes = "", pronunciation = "", example = "", isSaving = false, lastSavedText = current.sourceText.trim())
+                else latest.copy(isSaving = false, lastSavedText = current.sourceText.trim())
                 loadCategories()
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isSaving = false, error = e.message ?: "خطا در ذخیره‌سازی")
