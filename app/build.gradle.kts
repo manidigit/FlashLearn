@@ -11,8 +11,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 62
-        versionName = "5.62"
+        versionCode = 63
+        versionName = "5.63"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -28,10 +28,7 @@ android {
         }
     }
     buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-        }
+        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
     }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
