@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.review
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -11,22 +12,34 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.QuizChallenge
 import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.model.VocabularyDifficulty
 
+private val QuizCorrect = Color(0xFF2E7D32)
+private val QuizWrong = Color(0xFFC62828)
+private val QuizCorrectContainer = Color(0xFFE8F5E9)
+private val QuizWrongContainer = Color(0xFFFFEBEE)
+
 @Composable
 fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDifficulty? = null, quizChallenge: QuizChallenge = QuizChallenge.B, onFinished: () -> Unit) {
     val state by viewModel.state.collectAsState()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
-        state.error?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth()) }
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let {
+            Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth())
+        }
         when {
             state.isSelectingMode -> ReviewSetup(state, viewModel, personalDifficulty, quizChallenge)
             state.isLoading -> CircularProgressIndicator()
             state.isFinished -> FinishCard(state, onFinished)
-            state.answerFeedback != null -> FeedbackCard(state)
             state.selectedMode == ReviewMode.QUIZ && state.quizCard != null -> QuizCard(state, viewModel)
+            state.answerFeedback != null -> FeedbackCard(state)
             state.selectedMode == ReviewMode.QUIZ -> QuizUnavailableCard()
             state.card != null -> FlashCard(state, viewModel)
         }
@@ -71,14 +84,80 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
 
 @Composable private fun QuizCard(state: ReviewUiState, vm: ReviewViewModel) {
     val quiz = state.quizCard ?: return
-    val card = state.card
-    Text("${state.remaining} سؤال باقی‌مانده از ${state.total}", style = MaterialTheme.typography.labelMedium)
-    LinearProgressIndicator(progress = { if (state.total == 0) 0f else state.answered.toFloat() / state.total }, modifier = Modifier.fillMaxWidth())
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) { Text(quiz.promptText, style = MaterialTheme.typography.headlineSmall); quiz.options.forEachIndexed { index, option -> if (quiz.selectedOption == option) Button(onClick = { vm.selectQuizOption(option) }, modifier = Modifier.fillMaxWidth()) { Text("${index + 1}. $option") } else OutlinedButton(onClick = { vm.selectQuizOption(option) }, modifier = Modifier.fillMaxWidth()) { Text("${index + 1}. $option") } }; if (card != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, modifier = Modifier.weight(1f)) { Text("یادداشت") }; OutlinedButton(onClick = vm::revealHint, modifier = Modifier.weight(1f)) { Text("راهنما") } }; Button(onClick = vm::submitQuizAnswer, enabled = quiz.selectedOption != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text("ثبت پاسخ") } } }
+    val feedback = state.answerFeedback
+    val answered = feedback != null
+    val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat()
+    val selected = quiz.selectedOption
+    val correct = quiz.correctAnswerText
+
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text("${state.answered} پاسخ", style = MaterialTheme.typography.labelMedium)
+        Text("${state.total} سؤال", style = MaterialTheme.typography.labelMedium)
+    }
+    LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 26.dp), contentAlignment = Alignment.Center) {
+            Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
+    }
+
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (!state.card?.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, enabled = !answered, modifier = Modifier.weight(1f)) { Text(if (state.card?.noteVisible == true) "مخفی کردن یادداشت" else "یادداشت") }
+        OutlinedButton(onClick = vm::revealHint, enabled = !answered, modifier = Modifier.weight(1f)) { Text("💡 راهنما") }
+    }
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        quiz.options.forEachIndexed { index, option ->
+            val isCorrect = option == correct
+            val isWrongSelection = answered && option == selected && !isCorrect
+            val container = when {
+                answered && isCorrect -> QuizCorrectContainer
+                isWrongSelection -> QuizWrongContainer
+                else -> MaterialTheme.colorScheme.surface
+            }
+            val content = when {
+                answered && isCorrect -> QuizCorrect
+                isWrongSelection -> QuizWrong
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+            val border = when {
+                answered && isCorrect -> QuizCorrect
+                isWrongSelection -> QuizWrong
+                else -> MaterialTheme.colorScheme.outline
+            }
+            OutlinedButton(
+                onClick = { vm.selectQuizOption(option) },
+                enabled = !answered && !state.isSubmitting,
+                modifier = Modifier.fillMaxWidth().height(72.dp),
+                shape = MaterialTheme.shapes.large,
+                border = BorderStroke(if (answered && (isCorrect || isWrongSelection)) 2.dp else 1.dp, border),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content)
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Text("${index + 1}. ", style = MaterialTheme.typography.titleMedium)
+                    Text(option, style = MaterialTheme.typography.titleMedium)
+                    if (answered && isCorrect) Text("  ✓", style = MaterialTheme.typography.titleLarge)
+                    else if (isWrongSelection) Text("  ✕", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+        }
+    }
+
+    if (!answered) {
+        Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(52.dp), shape = MaterialTheme.shapes.large) { Text("ثبت پاسخ", style = MaterialTheme.typography.titleMedium) }
+    } else {
+        Text(
+            if (feedback?.isCorrect == true) "✓ پاسخ صحیح — چند لحظه صبر کنید…" else "✕ پاسخ غلط — پاسخ صحیح سبز شده است؛ چند لحظه صبر کنید…",
+            color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable private fun QuizUnavailableCard() { Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge); Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
-@Composable private fun FeedbackCard(state: ReviewUiState) { val f = state.answerFeedback ?: return; Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط") } } }
+@Composable private fun FeedbackCard(state: ReviewUiState) { val f = state.answerFeedback ?: return; Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط") } } }
 @Composable private fun FinishCard(state: ReviewUiState, onFinished: () -> Unit) { Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall); Text("${state.answered} کارت پاسخ داده شد"); Text("صحیح: ${state.correct} • غلط: ${state.wrong}"); Text("دقت این جلسه: ${if (state.answered == 0) 0 else state.correct * 100 / state.answered}٪"); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("بازگشت به خانه") } } } }
 private fun reviewTypeLabel(type: ReviewType) = when (type) { ReviewType.DAILY -> "روزانه"; ReviewType.WEEKLY -> "هفتگی"; ReviewType.MONTHLY -> "ماهانه"; ReviewType.LEARNED -> "یادگرفته‌شده"; ReviewType.RANDOM -> "تصادفی" }
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
