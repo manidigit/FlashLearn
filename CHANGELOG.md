@@ -1,5 +1,13 @@
 # FlashLearn Changelog
 
+## v5.69 — Vocabulary Restore + Launcher Icon Fix
+- Added a dedicated restore path for the legacy `backupMode: VOCABULARY` JSON format.
+- Verified against the supplied vocabulary backup shape: schemaVersion 1, 8,098 concepts, Spanish/Persian contents, 11 categories, and multiple translations per language.
+- Vocabulary restore now parses and writes on `Dispatchers.IO`, uses batch Room operations, preserves existing learning/progress state, and collapses repeated translations for the same language into one Room-compatible content value.
+- Existing concept UUIDs are reused; missing concepts receive the required initial learning and difficulty states.
+- Bound the real FlashLearn launcher icon resource in the Android manifest and added the book/crown artwork as a vector launcher asset.
+- CI artifact version aligned to 5.69/69.
+
 ## v5.68 — Phase 5 Full Verification
 - Completed the final CI verification checkpoint for build, JVM unit tests, Android instrumentation tests, runtime preflight, and artifact generation.
 - Hardened the release-gate workflow so infrastructure/action-resolution failures do not block the normal build/test verification path.
