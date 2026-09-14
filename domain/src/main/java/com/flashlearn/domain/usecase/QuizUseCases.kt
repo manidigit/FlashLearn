@@ -3,6 +3,7 @@ package com.flashlearn.domain.usecase
 import com.flashlearn.domain.model.Content
 import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.model.DifficultyState
+import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
@@ -45,11 +46,25 @@ class GenerateQuizQuestionUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val difficultyStateRepository: DifficultyStateRepository
 ) {
-    suspend operator fun invoke(concept: Concept, activeLanguagePair: QuizLanguagePair, difficultyState: DifficultyState, challenge: QuizChallenge = QuizChallengeProvider.current): QuizQuestionResult {
+    suspend operator fun invoke(
+        concept: Concept,
+        activeLanguagePair: QuizLanguagePair,
+        difficultyState: DifficultyState?,
+        challenge: QuizChallenge = QuizChallengeProvider.current
+    ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
         val allContents = contentRepository.getAll()
         val prompt = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
         val correct = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
+
+        // Legacy/imported vocabulary can lack a DifficultyState. Missing auxiliary state
+        // must never silently change an explicitly selected Quiz session into Flashcards.
+        val effectiveDifficulty = difficultyState ?: DifficultyState(
+            id = java.util.UUID.randomUUID(), conceptId = concept.id,
+            current = VocabularyDifficulty.MEDIUM, consecutiveCorrect = 0,
+            consecutiveWrong = 0, hasReachedVeryHard = false
+        )
+
         val categoryId = concept.categoryId
         val activeConcepts = conceptRepository.getAllActive().filter { other ->
             other.id != concept.id && (categoryId == null || other.categoryId == categoryId) &&
@@ -62,8 +77,8 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         suspend fun candidatesFor(level: QuizChallenge): List<Content> {
             val concepts = activeConcepts.filter { other -> when (level) {
                 QuizChallenge.A -> true
-                QuizChallenge.B -> difficultyStateRepository.get(other.id)?.current == difficultyState.current
-                QuizChallenge.C -> difficultyStateRepository.get(other.id)?.current == difficultyState.current && other.entryType == concept.entryType
+                QuizChallenge.B -> difficultyStateRepository.get(other.id)?.current == effectiveDifficulty.current
+                QuizChallenge.C -> difficultyStateRepository.get(other.id)?.current == effectiveDifficulty.current && other.entryType == concept.entryType
             }}
             return unique(concepts.flatMap { targetContents[it.id].orEmpty() })
         }
