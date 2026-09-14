@@ -113,7 +113,7 @@ jobs:
           disable-animations: true
           force-avd-creation: true
           script: |
-            set -euo pipefail
+            set -eu
             gradle --no-daemon connectedDebugAndroidTest
             rm -f app/build/outputs/apk/debug/app-debug.apk
             cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
