@@ -12,10 +12,10 @@ class QuizUseCasesTest {
     private fun concept(id: UUID = UUID.randomUUID(), active: Boolean = true) = Concept(id, EntryType.WORD, null, false, active, Instant.EPOCH, Instant.EPOCH)
     private fun content(cid: UUID, lang: String, text: String) = Content(UUID.randomUUID(), cid, lang, text, text.trim().lowercase())
     private class CR(private val values: List<Concept>) : ConceptRepository {
-        override suspend fun insert(concept: Concept)=concept.id; override suspend fun get(conceptId: UUID)=values.find{it.id==conceptId}; override suspend fun getAllActive()=values.filter{it.active}; override suspend fun searchActive(query:String)=emptyList<Concept>(); override suspend fun update(concept:Concept){}; override suspend fun softDelete(conceptId:UUID,now:Instant){}
+        override suspend fun insert(concept: Concept)=concept.id; override suspend fun get(conceptId:UUID)=values.find{it.id==conceptId}; override suspend fun getAllActive()=values.filter{it.active}; override suspend fun searchActive(query:String)=emptyList<Concept>(); override suspend fun update(concept:Concept){}; override suspend fun softDelete(conceptId:UUID,now:Instant){}
     }
     private class CoR(private val values: List<Content>) : ContentRepository {
-        override suspend fun findByUuid(uuid:UUID)=values.find{it.id==uuid}; override suspend fun find(conceptId:UUID,languageCode:String)=values.find{it.conceptId==conceptId&&it.languageCode==languageCode}; override suspend fun upsert(content:Content){}; override suspend fun getAll()=values
+        override suspend fun findByUuid(uuid:UUID)=values.find{it.id==uuid}; override suspend fun find(conceptId:UUID,languageCode:String)=values.find{it.conceptId==conceptId&&it.languageCode==languageCode}; override suspend fun findForConcepts(conceptIds:List<UUID>)=values.filter{it.conceptId in conceptIds}; override suspend fun upsert(content:Content){}; override suspend fun getAll()=values
     }
     private class DR(private val values: Map<UUID,DifficultyState>) : DifficultyStateRepository {
         override suspend fun get(conceptId:UUID)=values[conceptId]; override suspend fun upsert(state:DifficultyState){}; override suspend fun delete(conceptId:UUID){}; override suspend fun getAll()=values.values.toList()
