@@ -15,8 +15,8 @@ class ReviewEngineUseCasesTest {
     private class CRepo(private val values: List<Concept>) : ConceptRepository {
         override suspend fun insert(concept: Concept) = concept.id
         override suspend fun get(conceptId: UUID) = values.find { it.id == conceptId }
-        override suspend fun getAllActive() = values
-        override suspend fun searchActive(query: String) = values.filter { it.id.toString().contains(query) }
+        override suspend fun getAllActive() = values.filter { it.active }
+        override suspend fun searchActive(query: String) = values.filter { it.active && it.id.toString().contains(query) }
         override suspend fun update(concept: Concept) {}
         override suspend fun softDelete(conceptId: UUID, now: Instant) {}
     }
@@ -37,7 +37,7 @@ class ReviewEngineUseCasesTest {
         override suspend fun insert(conceptTag: ConceptTag) {}
         override suspend fun getTagsForConcept(conceptId: UUID) = values[conceptId].orEmpty()
         override suspend fun getConceptsForTag(tagId: UUID) = values.filterValues { tagId in it }.keys.toList()
-        override suspend fun getAll() = values.flatMap { (conceptId, tagIds) -> tagIds.map { ConceptTag(UUID.randomUUID(), conceptId, it) } }
+        override suspend fun getAll() = values.flatMap { (conceptId, tagIds) -> tagIds.map { ConceptTag(conceptId, it) } }
     }
 
     private fun concept(id: UUID, categoryId: UUID? = null, active: Boolean = true) = Concept(id, EntryType.WORD, categoryId, false, active, now, now)
