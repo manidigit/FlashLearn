@@ -59,12 +59,13 @@ class VocabularyParserTest {
         assertEquals(EntryKind.IDIOM, entries[1].entryType)
     }
 
-    @Test fun detailed_parse_classifies_breakdown_and_grammar_as_notes() {
+    @Test fun detailed_parse_separates_breakdown_from_notes() {
         val result = VocabularyParser().parseDetailed(
             "hablar → صحبت کردن\nتجزیه: hablar = to speak\nGrammar: فعل بی‌قاعده"
         )
         assertEquals(1, result.entries.size)
-        assertTrue(result.entries[0].notes!!.contains("تجزیه: hablar = to speak"))
+        assertEquals(1, result.entries[0].breakdown.size)
+        assertEquals("hablar = to speak", result.entries[0].breakdown[0].text)
         assertTrue(result.entries[0].notes!!.contains("Grammar: فعل بی‌قاعده"))
         assertTrue(result.warnings.isEmpty())
     }
@@ -77,8 +78,8 @@ class VocabularyParserTest {
         assertEquals("aprender", result.entries[0].sourceText)
         assertTrue(result.entries[0].translationText == null)
         assertEquals(2, result.warnings.size)
-        assertEquals(ParseWarningType.ORPHAN_LINE, result.warnings[0].warningType)
-        assertEquals(ParseWarningType.INCOMPLETE_ENTRY, result.warnings[1].warningType)
+        assertEquals(ParseWarningType.ORPHAN_TRANSLATION, result.warnings[0].warningType)
+        assertEquals(ParseWarningType.ORPHAN_SOURCE, result.warnings[1].warningType)
     }
 
     @Test fun detailed_parse_preserves_unknown_following_lines_as_notes() {
@@ -88,6 +89,27 @@ class VocabularyParserTest {
         assertEquals(1, result.entries.size)
         assertEquals("texto libre para contexto", result.entries[0].notes)
         assertTrue(result.warnings.isEmpty())
+    }
+
+    @Test fun supports_persian_before_spanish_pair() {
+        val result = VocabularyParser().parseDetailed("دانشمند\nel científico")
+        assertEquals(1, result.entries.size)
+        assertEquals("el científico", result.entries[0].sourceText)
+        assertEquals("دانشمند", result.entries[0].translationText)
+        assertTrue(result.warnings.isEmpty())
+    }
+
+    @Test fun joins_multiline_spanish_source_before_translation() {
+        val result = VocabularyParser().parseDetailed("no puedes hacer\nuna tortilla sin romper huevos\nنمی‌توانی بدون شکستن تخم‌مرغ املت درست کنی")
+        val entry = result.entries.single()
+        assertEquals("no puedes hacer una tortilla sin romper huevos", entry.sourceText)
+        assertEquals("نمی‌توانی بدون شکستن تخم‌مرغ املت درست کنی", entry.translationText)
+        assertTrue(entry.evidence.contains("multilineSource"))
+    }
+
+    @Test fun consecutive_entries_are_not_attached_as_notes() {
+        val entries = VocabularyParser().parse("casa → خانه\nhablar → صحبت کردن")
+        assertEquals(2, entries.size)
     }
 
     @Test fun v500_extracts_breakdown_relationship_variant_and_confidence() {
@@ -114,6 +136,6 @@ class VocabularyParserTest {
         assertEquals("started_entry", result.importLog[0].action)
         assertEquals("attached_as_note", result.importLog[1].action)
         assertEquals("ignored", result.importLog[2].action)
-        assertEquals("attached_as_note", result.importLog[3].action)
+        assertEquals("warning_orphan", result.importLog[3].action)
     }
 }
