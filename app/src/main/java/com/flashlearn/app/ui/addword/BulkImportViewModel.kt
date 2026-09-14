@@ -20,6 +20,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 
 enum class BulkImportItemStatus { READY, INCOMPLETE, IMPORTED, DUPLICATE, FAILED }
 
+fun BulkImportItemStatus.label(): String = when (this) {
+    BulkImportItemStatus.READY -> "آماده"
+    BulkImportItemStatus.INCOMPLETE -> "ناقص"
+    BulkImportItemStatus.IMPORTED -> "وارد شد"
+    BulkImportItemStatus.DUPLICATE -> "تکراری"
+    BulkImportItemStatus.FAILED -> "خطا"
+}
+
 data class BulkImportItemResult(
     val entry: ParsedEntry,
     val status: BulkImportItemStatus,
