@@ -2,7 +2,7 @@ package com.flashlearn.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
+import androidx.activity.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,7 +51,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FlashLearnTheme {
+            val appState by appViewModel.state
+            FlashLearnTheme(appearance = appState.appearance) {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                     Surface(Modifier.fillMaxSize()) { AppRootScreen() }
                 }
@@ -63,9 +64,8 @@ class MainActivity : ComponentActivity() {
     private fun AppRootScreen() {
         val uiState by appViewModel.state
         BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
-        val topLevel = uiState.selectedRoute in setOf(
-            AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS
-        )
+        val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
+
         if (topLevel) {
             FlashLearnShell(
                 selectedRoute = uiState.selectedRoute,
@@ -87,12 +87,8 @@ class MainActivity : ComponentActivity() {
                         onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
                     )
                 }
-                AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) {
-                    appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh()
-                }
-                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) {
-                    appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh()
-                }
+                AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
+                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
                 AppRoutes.BACKUP -> BackupScreen(
                     backupViewModel,
                     onBack = { appViewModel.navigate(AppRoutes.SETTINGS) },
@@ -114,15 +110,17 @@ class MainActivity : ComponentActivity() {
                 onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
                 onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) }
             )
-            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) {
-                homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME)
-            }
+            AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail)
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.SETTINGS -> SettingsScreen(
+                appearance = uiAppearance(),
+                onAppearanceChange = appViewModel::setAppearance,
                 onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
                 onBack = { appViewModel.navigate(AppRoutes.HOME) }
             )
         }
     }
+
+    private fun uiAppearance() = appViewModel.state.value.appearance
 }
