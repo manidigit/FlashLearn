@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.domain.model.VocabularyDifficulty
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -18,6 +19,8 @@ class AppViewModel @Inject constructor() : ViewModel() {
     fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction) }
     fun setLanguagePair(pair: LanguagePair) { _state.value = _state.value.copy(languagePair = pair) }
     fun reverseLanguagePair() { _state.value = _state.value.copy(languagePair = _state.value.languagePair.reversed()) }
+    fun setPersonalWordDifficulty(value: VocabularyDifficulty?) { _state.value = _state.value.copy(personalWordDifficulty = value) }
+    fun setQuizChallenge(value: QuizChallenge) { _state.value = _state.value.copy(quizChallenge = value) }
 
     fun openLibraryDetail(conceptId: UUID) {
         _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
