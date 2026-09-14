@@ -26,9 +26,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 state.summary?.let { summary ->
-                    item {
-                        PurpleHeroCard("این هفته", "${summary.totalCorrect + summary.totalWrong}", "مرور انجام‌شده")
-                    }
+                    item { PurpleHeroCard("این هفته", "${summary.totalCorrect + summary.totalWrong}", "مرور انجام‌شده") }
                     item {
                         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
                             Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -41,16 +39,14 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                 }
                 if (state.dailyReviews.isNotEmpty()) {
                     item {
+                        val maxReviews = state.dailyReviews.maxOfOrNull { it.total }?.coerceAtLeast(1)?.toFloat() ?: 1f
                         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 SectionTitle("مرور روزانه — ۷ روز اخیر")
                                 state.dailyReviews.forEach { day ->
                                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                         Text(day.dayLabel, modifier = Modifier.width(62.dp), style = MaterialTheme.typography.labelMedium)
-                                        LinearProgressIndicator(
-                                            progress = { (day.total / (state.dailyReviews.maxOfOrNull { it.total }?.coerceAtLeast(1) ?: 1f)).coerceIn(0f, 1f) },
-                                            modifier = Modifier.weight(1f).height(7.dp)
-                                        )
+                                        LinearProgressIndicator(progress = { (day.total.toFloat() / maxReviews).coerceIn(0f, 1f) }, modifier = Modifier.weight(1f).height(7.dp))
                                         Text("${day.total}", modifier = Modifier.width(28.dp), style = MaterialTheme.typography.labelMedium)
                                     }
                                 }
@@ -95,9 +91,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                                     Icon(Icons.Outlined.EmojiEvents, null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(Modifier.width(7.dp)); SectionTitle("دستاوردها")
                                 }
-                                state.achievements.forEach { (definition, achievement) ->
-                                    Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}")
-                                }
+                                state.achievements.forEach { (definition, achievement) -> Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}") }
                             }
                         }
                     }
