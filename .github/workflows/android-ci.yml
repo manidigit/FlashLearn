@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.68"
-  FL_VERSION_CODE: "68"
+  FL_VERSION_NAME: "5.69"
+  FL_VERSION_CODE: "69"
 
 jobs:
   build-and-unit-test:
