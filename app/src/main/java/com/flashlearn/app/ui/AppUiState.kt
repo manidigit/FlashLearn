@@ -6,8 +6,10 @@ import com.flashlearn.domain.model.VocabularyDifficulty
 enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 enum class AppLayoutDirection { RTL, LTR }
 enum class AccentColor { PURPLE, BLUE, GREEN, ORANGE, PINK }
-enum class LearningLanguage(val code: String, val labelFa: String) {
-    PERSIAN("fa", "فارسی"), SPANISH("es", "اسپانیایی"), ENGLISH("en", "انگلیسی")
+enum class LearningLanguage(val code: String, val labelFa: String, val flag: String) {
+    PERSIAN("fa", "فارسی", "🇮🇷"),
+    SPANISH("es", "اسپانیایی", "🇪🇸"),
+    ENGLISH("en", "انگلیسی", "🇬🇧")
 }
 
 enum class QuizChallenge(val label: String) { A("A"), B("B"), C("C") }
