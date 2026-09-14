@@ -1,0 +1,11 @@
+{
+  "version": "5.54",
+  "checks": {
+    "source_present": true,
+    "no_private_key_markers": true,
+    "no_common_secret_markers": true,
+    "manifest_created": true,
+    "audit_created": true
+  },
+  "static_audit": true
+}

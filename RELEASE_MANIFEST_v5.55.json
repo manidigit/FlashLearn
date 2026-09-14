@@ -1,0 +1,15 @@
+{
+  "release": "5.55",
+  "status": "FINAL_FREEZE",
+  "baseline": "5.54",
+  "source_frozen": true,
+  "behavior_frozen": true,
+  "ci_authority": "GitHub CI",
+  "release_gates": {
+    "archive_integrity": "PASS",
+    "release_metadata": "PASS",
+    "final_audit_retained": "PASS",
+    "regression_e2e_retained": "PASS",
+    "ci_hardening_retained": "PASS"
+  }
+}

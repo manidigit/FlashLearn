@@ -1,0 +1,434 @@
+{
+  "version": "5.54",
+  "baseline": "5.53",
+  "files": {
+    ".github/v5.54/CI_HARDENING_CHECKLIST.md": {
+      "size": 285,
+      "sha256": "cdab12a42fbd28cc6a7bbb081c5f030839c012ee141e326aea854548e500cd5c"
+    },
+    ".github/v5.54/FINAL_AUDIT.md": {
+      "size": 808,
+      "sha256": "4ea869f90da71f566d5e2bf0c2a985a152d849576e3b2b3213cf46caa8eff479"
+    },
+    ".github/workflows/android-ci.yml": {
+      "size": 2923,
+      "sha256": "db7b2e0bbd44eb9e1a277748c235309c75d3450d13b7a12fe49dedb355062567"
+    },
+    "CHANGELOG.md": {
+      "size": 11395,
+      "sha256": "8dc0661cbaf08516b134b5da9e938aec195e7dc45362a5ca3abe4199b6e11765"
+    },
+    "FlashLearn_PROGRESS_TRACKER.md": {
+      "size": 21444,
+      "sha256": "da9e83c4d40dc23c2f7c01ca82a47b01d15bf6492bf04af6a138a343c5ea6930"
+    },
+    "PROGRESS.md": {
+      "size": 21444,
+      "sha256": "da9e83c4d40dc23c2f7c01ca82a47b01d15bf6492bf04af6a138a343c5ea6930"
+    },
+    "PROGRESS_TRACKER.md": {
+      "size": 20875,
+      "sha256": "1ce48e8d879965410a44be9bd26211542525052d28c463279b3f79f268db6e6c"
+    },
+    "REGRESSION_EDGE_CASES_v5.53.md": {
+      "size": 1373,
+      "sha256": "861409a5f75dafdb1f001881336477efba0628e07d5b63a186379868723188df"
+    },
+    "app/build.gradle.kts": {
+      "size": 1945,
+      "sha256": "afca370520c90e79701252483f32b3b07213a82e6eedea95e2c7b5399cc42051"
+    },
+    "app/src/androidTest/java/com/flashlearn/app/RuntimeGatePreflightTest.kt": {
+      "size": 903,
+      "sha256": "f7d8fdd540bfa096b62785ecd6afbaead7616fcd27b02d3d9be2dc9c7408f7d6"
+    },
+    "app/src/main/AndroidManifest.xml": {
+      "size": 544,
+      "sha256": "5cf0baeb89b9eacd195f9ecde6c73d5135a988b92fc72c2acc0124ec63513b6a"
+    },
+    "app/src/main/java/com/flashlearn/app/FlashLearnApplication.kt": {
+      "size": 162,
+      "sha256": "5ee2641b2b546bf593b3254858fdf9795f2be7a2044c68024f6520f349281bd0"
+    },
+    "app/src/main/java/com/flashlearn/app/MainActivity.kt": {
+      "size": 6906,
+      "sha256": "7d121d9f0173cba3773b5eb1ae1c6c2d392246bb945ecd110ea57d5ad246279c"
+    },
+    "app/src/main/java/com/flashlearn/app/navigation/AppNavigation.kt": {
+      "size": 1343,
+      "sha256": "7982c93fb4c89b1838b8ef94ddd2a8a75b48166f7b3843e006cfaf941e6c40ad"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/AppUiState.kt": {
+      "size": 341,
+      "sha256": "0a134171f4f6c88cc213c14fbb3270f9e7c8400d1b816ae771b6694c937c8f6e"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/AppViewModel.kt": {
+      "size": 1456,
+      "sha256": "35fedf92ba8723f502bec1fe5632abc33b7a9a6ab230db7f2adc439a268da409"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/addword/AddWordScreen.kt": {
+      "size": 4648,
+      "sha256": "abf5ac13aa31995369c6756859bb9c72ed29f6e0eed1014d891252d7246e32c0"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/addword/AddWordViewModel.kt": {
+      "size": 5488,
+      "sha256": "abb6e7781cb41cb24801649494526b2142c2b3925c28172ad76e667cb730814e"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/addword/BulkImportScreen.kt": {
+      "size": 5981,
+      "sha256": "9e9974e119cc56e762c40e8f6ade1b9f669c1ea83116b7b859553b0da89dcd8c"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/addword/BulkImportViewModel.kt": {
+      "size": 7174,
+      "sha256": "7b85cd9950ebeea92ec7347150b99ebf61e27d5d0290cb70b322a571a68b5040"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/backup/BackupScreen.kt": {
+      "size": 2483,
+      "sha256": "a7ab071633456be9d2867220b67d9cf6af6919225b64f02ba58d61446a534700"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/backup/BackupViewModel.kt": {
+      "size": 2102,
+      "sha256": "f2fc0804b381dfa823c902f833497a5e75b04a8b4e1acc238a7186d31a9a007b"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/home/HomeScreen.kt": {
+      "size": 8346,
+      "sha256": "aef4a8c90effc079207e7e93bc1621c1c68bfbebd4b18cfcee6f4720a5b42744"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/home/HomeViewModel.kt": {
+      "size": 2519,
+      "sha256": "6e5cb04d226df8f7b2bf74537928d9b8cef5a0d4b4403bc8b166eb726ba72101"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/library/LibraryDetailScreen.kt": {
+      "size": 7879,
+      "sha256": "d9f6b61f1445c1a430ce7b9ebbbb1e20f7f1ed978768d87aa3fd1752b988e512"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/library/LibraryScreen.kt": {
+      "size": 3267,
+      "sha256": "4ff3f8191ab9f0c610b7769f6eca25b12b086f3bed30a1c9984f889bb6c6e432"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt": {
+      "size": 3534,
+      "sha256": "7dc1c94659f5b3c6ab1b2fd636e7343d6ebfe1e9dd416a9ed5ff62228d0090d3"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/progress/ProgressScreen.kt": {
+      "size": 7088,
+      "sha256": "4f56a7142306d4b93a88b3b794df1633842ba93c0374f12dd026f6cb4bfd7be9"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/progress/ProgressViewModel.kt": {
+      "size": 4525,
+      "sha256": "1e72e9b2eccceab9bea396be5c966b58e8d369ca71002ae97039ec66788ed93f"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/review/ReviewScreen.kt": {
+      "size": 15509,
+      "sha256": "15b979d67c7806c293cfee0a238bba0e6420e9bf2f9fb973af0224be344bc764"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/review/ReviewViewModel.kt": {
+      "size": 20118,
+      "sha256": "b26afe0d517eb41111bb9c376b4d035c58fa30abeeb3430aa8669960cec9cd11"
+    },
+    "app/src/main/java/com/flashlearn/app/ui/settings/SettingsScreen.kt": {
+      "size": 1136,
+      "sha256": "e4e152a2bb18c7e6bcf297267ad913e45a0f7172c51d9ee1ca464998bdbf3a7b"
+    },
+    "app/src/main/res/values/styles.xml": {
+      "size": 118,
+      "sha256": "a94fe1931789693e831568559ea7d163069e0265fb664557da5fb44e8b04c2f2"
+    },
+    "app/src/test/java/com/flashlearn/app/navigation/AppNavigationContractTest.kt": {
+      "size": 1512,
+      "sha256": "d457c23949d46fc050a60f92107fb5e1a4be463b140477096730b9ae90319c63"
+    },
+    "app/src/test/java/com/flashlearn/app/navigation/AppViewModelNavigationTest.kt": {
+      "size": 973,
+      "sha256": "88c56d94e229fe175fec4efc7656a894e6b7107146f8b767e997acae4035ceec"
+    },
+    "app/src/test/java/com/flashlearn/app/ui/addword/AddWordUiStateTest.kt": {
+      "size": 641,
+      "sha256": "23d6fd3f6cc1996abb699c41c033e556332eb1dd6edf2236101a7525b4776620"
+    },
+    "app/src/test/java/com/flashlearn/app/ui/addword/BulkImportUiStateTest.kt": {
+      "size": 2341,
+      "sha256": "0d2854bea5b0bc78459024b9ba38a909f9f228e0e49a70ac79ff054912f3dcae"
+    },
+    "app/src/test/java/com/flashlearn/app/ui/review/ReviewUiStateTest.kt": {
+      "size": 4343,
+      "sha256": "8de9c80ef44540f89c8660ec74f586dd4490cf834b84a896dad0700199254325"
+    },
+    "build.gradle.kts": {
+      "size": 335,
+      "sha256": "3444635c83ba404ef7695e2084a4d86a5c3a52fa62f7e4543909cd60c3f73315"
+    },
+    "core/build.gradle.kts": {
+      "size": 766,
+      "sha256": "d9e2adfe50973415229f91f0a18ba2dea431a2635880044b91fb8184687b89dc"
+    },
+    "core/src/main/java/com/flashlearn/core/di/DatabaseModule.kt": {
+      "size": 1672,
+      "sha256": "780811131c47ffab324d2f119dd0517040e4b9ed516164281081c81b0b8f4284"
+    },
+    "core/src/main/java/com/flashlearn/core/di/RepositoryModule.kt": {
+      "size": 1864,
+      "sha256": "f6d786ce72f62a6147973c6ffaacbc7c377d1efd953cf6fd20410668b013e717"
+    },
+    "core/src/main/java/com/flashlearn/core/di/ServiceLocator.kt": {
+      "size": 645,
+      "sha256": "84b617657fc3d3e54022f32962f4642ef73372e57cc2b084d5e0fad684377fb0"
+    },
+    "core/src/test/java/com/flashlearn/core/di/DependencyInjectionContractTest.kt": {
+      "size": 1247,
+      "sha256": "caf3ff15e9faba9ecd46c120a3ebe77ab4b350d0b02a55c09cb2374da6044606"
+    },
+    "data/build.gradle.kts": {
+      "size": 1033,
+      "sha256": "4f3c726bc0f5cf5d1995438b2ed12dff412dd0416145f190044afe9b141c8cf2"
+    },
+    "data/src/androidTest/java/com/flashlearn/data/integration/FullBackupRestoreTest.kt": {
+      "size": 22237,
+      "sha256": "25944234542ce9e7a6de864570304c8be7af05d73a957fd065fdc1839108c94b"
+    },
+    "data/src/androidTest/java/com/flashlearn/data/integration/Phase4RuntimeGateTest.kt": {
+      "size": 5631,
+      "sha256": "2b04945f9e3e41d586e0316bc254859773f948b0145533432a6f0cce82b024a4"
+    },
+    "data/src/main/java/com/flashlearn/data/backup/RoomBackupRepository.kt": {
+      "size": 21478,
+      "sha256": "625b2e9ce633429225f72706a8e4cf71992e93392889e4e1997a6690f3db2f28"
+    },
+    "data/src/main/java/com/flashlearn/data/repository/FlashLearnDatabaseImpl.kt": {
+      "size": 486,
+      "sha256": "5fbe422bd907bfba407d21437816356f1c2465863ed54ed552056987fb3a3358"
+    },
+    "data/src/main/java/com/flashlearn/data/repository/RoomAchievementRepository.kt": {
+      "size": 713,
+      "sha256": "58a1a129c49ea799c6005fe4b2be6a19bd8d7cf99c5528dd1764db19521ec7e9"
+    },
+    "data/src/main/java/com/flashlearn/data/repository/RoomRepositories.kt": {
+      "size": 7783,
+      "sha256": "685a4845f6e1f6dabe11e0c05c6afc45de74f062be3a749d5e0552988826c9eb"
+    },
+    "database/build.gradle.kts": {
+      "size": 972,
+      "sha256": "fe33a2c4b4106b6ec401265c901ec7c36c0f3ade39f1a2f15ddb645ba70a70e3"
+    },
+    "database/src/androidTest/java/com/flashlearn/database/DatabaseMigrationTest.kt": {
+      "size": 11217,
+      "sha256": "55c582e2f82560225740cc529684c42ee524f183a9305d8aca52e19d4f813889"
+    },
+    "database/src/main/java/com/flashlearn/database/DatabaseMigrations.kt": {
+      "size": 1290,
+      "sha256": "4ff2e9346a3ce682cf4303adffd12cb5dfd5c8cf25292c8eeafb6675d937a735"
+    },
+    "database/src/main/java/com/flashlearn/database/RoomSchema.kt": {
+      "size": 13450,
+      "sha256": "071f4143e1423c9f088c9b4b4e303af45360e06caa9a3dc9dd9d1acde11f6d55"
+    },
+    "database/src/test/java/com/flashlearn/database/SchemaContractTest.kt": {
+      "size": 2179,
+      "sha256": "ad0c749a5c5ff5f7a556d903c04defce1f49595f3537f1f425b8ade6df96c27a"
+    },
+    "docs/BACKLOG_DRAFTS/Achievement.kt": {
+      "size": 1623,
+      "sha256": "c0c2a0ee34a788ce60288567a03c955d2203a54b668cb76ff15cca6f9f6a95d8"
+    },
+    "docs/BACKLOG_DRAFTS/Progress.kt": {
+      "size": 1312,
+      "sha256": "0996adae19cb5f069d9e37fd964c63e9b6dbc4ab61c0134327e37260cfa5d4cf"
+    },
+    "docs/BACKLOG_DRAFTS/README.md": {
+      "size": 730,
+      "sha256": "8a7a43ef7dbf533ac72d96e47db91591154d335e9ffd628caf89c95b1ddca990"
+    },
+    "docs/BACKLOG_DRAFTS/Statistics.kt": {
+      "size": 849,
+      "sha256": "5b55dbf30c9bf71a71d5ac7617120d9cc62663cb1f01ddc1c0db1aadb820d99d"
+    },
+    "docs/FlashLearn_PROGRESS_TRACKER.md": {
+      "size": 20884,
+      "sha256": "7892b20e95cde8948246856b1d512d8c45ab6447c613d1a497928e93a0ccdfc5"
+    },
+    "docs/PROGRESS.md": {
+      "size": 20884,
+      "sha256": "7892b20e95cde8948246856b1d512d8c45ab6447c613d1a497928e93a0ccdfc5"
+    },
+    "docs/V5.00_PARSER_CONTRACT.md": {
+      "size": 1443,
+      "sha256": "8e42d2bf21ba4a7ccd107690d7a92ae17d103e583e4f74d7983cca780f89ab62"
+    },
+    "docs/V5.51_LIBRARY_ADDWORD_BULK_IMPORT_AUDIT.md": {
+      "size": 2470,
+      "sha256": "b3d214f203f17f009afc23e9841104e79f74c86dd4ffef9cfa0b41ac5be7bdde"
+    },
+    "docs/V5.52_PROGRESS_STATISTICS_E2E.md": {
+      "size": 1820,
+      "sha256": "f6897e7150ff11fe323e40f4b40b3ec60281e3f2ebe49d6968bf2bc7d17f3548"
+    },
+    "docs/V5_01_IMPORT_METADATA.md": {
+      "size": 991,
+      "sha256": "08cd91588fba1739089473a72af5f90d5ee763fb605da1fba5eacfa515b87ef6"
+    },
+    "domain/build.gradle.kts": {
+      "size": 503,
+      "sha256": "5eaf89e2cd192738b651d5b0d18d2a47e92b208d7e0788e48cd983b5078ea602"
+    },
+    "domain/src/main/java/com/flashlearn/domain/algorithm/Algorithms.kt": {
+      "size": 3515,
+      "sha256": "ae93b4280f6f1a315c8f4f387862a120a62c4918e3e46023c7706b0a2a3ae80c"
+    },
+    "domain/src/main/java/com/flashlearn/domain/backup/BackupModels.kt": {
+      "size": 8560,
+      "sha256": "1742835c5167a2171d93d566ebd0b2b1f3f0e0fe074abf1e9cdf121f29d4580f"
+    },
+    "domain/src/main/java/com/flashlearn/domain/gamification/Achievement.kt": {
+      "size": 3870,
+      "sha256": "4fff47044a9e60a65bb115109b9d4200a3ef373d72d08163f2069d5153730405"
+    },
+    "domain/src/main/java/com/flashlearn/domain/model/Models.kt": {
+      "size": 2470,
+      "sha256": "9cb546b83e681b53d2358c8451bb5fef45c14a1833992c2db9c053f389737ea9"
+    },
+    "domain/src/main/java/com/flashlearn/domain/parser/VocabularyParser.kt": {
+      "size": 14373,
+      "sha256": "613cef65c32794129066f00cf3500843dfde587cec049457d650e9436ba880c9"
+    },
+    "domain/src/main/java/com/flashlearn/domain/progress/Progress.kt": {
+      "size": 1906,
+      "sha256": "e58da98ade13edb9108948a52342aaddb7cccb11f8e27591fae27361eb78704b"
+    },
+    "domain/src/main/java/com/flashlearn/domain/repository/BackupRepository.kt": {
+      "size": 260,
+      "sha256": "bccc9610341d1b1b3ab19e638091072a779390130705925fe368754e1a5b19e5"
+    },
+    "domain/src/main/java/com/flashlearn/domain/repository/Repositories.kt": {
+      "size": 2608,
+      "sha256": "962c1d504f227ab5b7f19f15ffd2df19e8aeda61d7f69bfd888005b64a156529"
+    },
+    "domain/src/main/java/com/flashlearn/domain/statistics/Statistics.kt": {
+      "size": 1997,
+      "sha256": "76ec8861aff523c46bb924736fbf1e04ad2bfb0896a91e1ad052d068cf2d5ee2"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/CategoryUseCases.kt": {
+      "size": 890,
+      "sha256": "3f30b9305202accc4bdf4e8ed148dc36c5c5dd916970260fcc4263e33b7e2979"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/DataIntegrityUseCases.kt": {
+      "size": 3713,
+      "sha256": "1406cc1c4abf11fef8275464b8458f77ae52b025fb4450f89b68ec9cf4e87ecf"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt": {
+      "size": 2257,
+      "sha256": "09f7a8f0404ded68690b59c69dea41804423532dfb9192ee052d782ef761d671"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/QuizUseCases.kt": {
+      "size": 6435,
+      "sha256": "cd63d66954b515d68c714c5781f17c58397760e6eaa896b6f25e1733b8d27c14"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/ReviewEngineUseCases.kt": {
+      "size": 4112,
+      "sha256": "a26f40c83216e0f28d712d18e64609bdcb8bd550df0333c3d67dcb14bfb65648"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/SettingsDifficultyProgressUseCases.kt": {
+      "size": 2712,
+      "sha256": "f768c39976b487edb8988380af9ea5c08788f6d43dbe250ef4e4cb973fedc56c"
+    },
+    "domain/src/main/java/com/flashlearn/domain/usecase/UseCases.kt": {
+      "size": 12632,
+      "sha256": "7eefc21c54752e191a47f4eed09b80d79c33e4b54c84f188fd73ca2677455457"
+    },
+    "domain/src/test/java/com/flashlearn/domain/algorithm/AlgorithmBoundaryRegressionTest.kt": {
+      "size": 2366,
+      "sha256": "15403dfd97e2e321cdd5027cd32efe048f879688debb8974f42f1c39b6e9031c"
+    },
+    "domain/src/test/java/com/flashlearn/domain/algorithm/AlgorithmContractTest.kt": {
+      "size": 3166,
+      "sha256": "e640d0be23f6f1d3bd33eacd01c74d8d41e9bcd6b4488af0ad7862801c5585f7"
+    },
+    "domain/src/test/java/com/flashlearn/domain/backup/BackupTypeTest.kt": {
+      "size": 639,
+      "sha256": "d9bfe5244248dbe106a76b8b4ff031d8b7df186a518d50ee903e3a6a932a30c4"
+    },
+    "domain/src/test/java/com/flashlearn/domain/backup/BackupValidatorTest.kt": {
+      "size": 3380,
+      "sha256": "3ef7b8bc4f899553c3d759e692cead70b5302ad7c1af893bbe9afa491ae837c0"
+    },
+    "domain/src/test/java/com/flashlearn/domain/gamification/AchievementTest.kt": {
+      "size": 2035,
+      "sha256": "8bb046c1f40551dd68e72a940f8365ca281d90ce1b218acc84aaaec9a29bea07"
+    },
+    "domain/src/test/java/com/flashlearn/domain/parser/VocabularyParserTest.kt": {
+      "size": 5606,
+      "sha256": "2394b66d38610b7f3d76163a8ac580caf7cd66e197319f85d2570440c3d4a87d"
+    },
+    "domain/src/test/java/com/flashlearn/domain/progress/ProgressUseCaseTest.kt": {
+      "size": 3329,
+      "sha256": "158af13d8f2a13503f6e54afc50f933a79537844002085a8b240fdf18e7038de"
+    },
+    "domain/src/test/java/com/flashlearn/domain/statistics/StatisticsTest.kt": {
+      "size": 3377,
+      "sha256": "8c5de544a5c54b0a3c78ad3011c8a70d1ab88f2250ee053972fb6fe0cf2b27a9"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/CreateConceptDuplicateTest.kt": {
+      "size": 6528,
+      "sha256": "351ce3d352252113ae5d54ee60bd32dff5e14456b671ab6195b611266b468be1"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/DataIntegrityUseCasesTest.kt": {
+      "size": 2481,
+      "sha256": "019ef65e9f3186bc5eae90d39a8e1d315b6c8f507645e07b2949076188b8e663"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCaseTest.kt": {
+      "size": 4590,
+      "sha256": "d6875215d6f77954d3fd73a1f5c9325ec7b376ac77c824b856f6e6dbafe4926d"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/LibraryManagementUseCasesTest.kt": {
+      "size": 3620,
+      "sha256": "c66c225b53e4fa716d5244fee0189dc0f1c12afaa6bcad5b0368cfeb3d36274a"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/MvpE2EUseCasesTest.kt": {
+      "size": 10057,
+      "sha256": "c260aec0d62f69fb6f228a9f91ede2c32b530cd9d0ca965589b9e29b8ef7967d"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/ProgressStatisticsE2EContractTest.kt": {
+      "size": 7008,
+      "sha256": "99b43ff5683851e55f65b5fc9972750d86f314c16fe7c9a51ea6357e01a2ec74"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/ProgressSummaryUseCaseTest.kt": {
+      "size": 3918,
+      "sha256": "ea040543e4ff44393116c0047da2e405cc45714b949fca059b807f2457e51a39"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/QuizUseCasesTest.kt": {
+      "size": 9791,
+      "sha256": "209073a98462ffd5bf6e820fba9a8dddd832c7b14a3a3426b127c2282e0f71a1"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/ReviewEngineUseCasesTest.kt": {
+      "size": 11271,
+      "sha256": "5fd2d8d31c0f5875656a7319a96e1e421ee4685f51e1a75d1bf29ce714dea062"
+    },
+    "domain/src/test/java/com/flashlearn/domain/usecase/ReviewSessionUseCasesTest.kt": {
+      "size": 1756,
+      "sha256": "765fcb54d5a8a520c95d7def0cbdc29fe8f7d04e986d3a927bdae98494f77a79"
+    },
+    "gradle/wrapper/README.txt": {
+      "size": 131,
+      "sha256": "d4f20671fd198954fe2ce15d137d71b1dfe5aa1a1e1d438debca728303c15ff6"
+    },
+    "gradle/wrapper/gradle-wrapper.properties": {
+      "size": 250,
+      "sha256": "35de83dec52b3733316f01c5769cd7b6b5fe868a275a1744d3710c9916a38ad5"
+    },
+    "gradle.properties": {
+      "size": 103,
+      "sha256": "fa078c27c9e4bde28a029d673875b028884505efa436b68cf60e1ac0be5b679b"
+    },
+    "parser.jar": {
+      "size": 25320,
+      "sha256": "f122ce04c18ff0fee3617b9c1359cc7edf5a246270f422607974eb607c579ac1"
+    },
+    "settings.gradle.kts": {
+      "size": 321,
+      "sha256": "90029dc3fc8203b65f39b92df866e32981c362236ee869fbb137185517610798"
+    },
+    "v5.53_REGRESSION_MANIFEST.json": {
+      "size": 419,
+      "sha256": "571dafb178cd9661aedab79528705fab64ad2db316e8ce84055c0ed9b819fdee"
+    }
+  }
+}
