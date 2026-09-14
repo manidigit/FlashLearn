@@ -19,7 +19,7 @@ interface DifficultyStateRepository {
 interface ContentRepository {
     suspend fun findByUuid(uuid: UUID): Content?
     suspend fun find(conceptId: UUID, languageCode: String): Content?
-    suspend fun findForConcepts(conceptIds: List<UUID>): List<Content>
+    suspend fun findForConcepts(conceptIds: List<UUID>): List<Content> = getAll().filter { it.conceptId in conceptIds.toSet() }
     suspend fun upsert(content: Content)
     suspend fun getAll(): List<Content>
 }
@@ -27,7 +27,7 @@ interface ConceptTagRepository {
     suspend fun insert(conceptTag: ConceptTag)
     suspend fun getTagsForConcept(conceptId: UUID): List<UUID>
     suspend fun getConceptsForTag(tagId: UUID): List<UUID>
-    suspend fun getAll(): List<ConceptTag>
+    suspend fun getAll(): List<ConceptTag> = emptyList()
 }
 interface ConceptRepository {
     suspend fun insert(concept: Concept): UUID
