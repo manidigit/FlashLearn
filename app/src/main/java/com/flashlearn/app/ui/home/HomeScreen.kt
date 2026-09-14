@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -64,8 +65,8 @@ fun HomeScreen(viewModel: HomeViewModel, onStartReview: (ReviewType) -> Unit, on
 
 @Composable
 private fun QuickAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = modifier, shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Card(modifier = modifier, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             Spacer(Modifier.height(8.dp)); Text(label)
         }
