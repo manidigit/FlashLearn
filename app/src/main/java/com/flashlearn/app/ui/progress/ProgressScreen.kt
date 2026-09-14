@@ -3,7 +3,6 @@ package com.flashlearn.app.ui.progress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.*
@@ -25,17 +24,13 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            else -> LazyColumn(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 state.summary?.let { summary ->
                     item {
                         PurpleHeroCard(
-                            "+${summary.activeConceptCount - summary.learnedConceptCount}",
-                            "${state.statistics?.accuracyPercent ?: 0}%",
-                            "کلمه جدید   •   دقت پاسخ‌های داده‌شده"
+                            "نمای این هفته",
+                            "+${summary.activeConceptCount}",
+                            "واژه فعال"
                         )
                     }
                     item {
@@ -74,10 +69,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                                 MetricRow("صحیح", stats.totalCorrect.toString())
                                 MetricRow("غلط", stats.totalWrong.toString())
                                 MetricRow("واژه‌های مرورشده", stats.reviewedConceptCount.toString())
-                                LinearProgressIndicator(
-                                    progress = { (stats.accuracyPercent / 100f).coerceIn(0f, 1f) },
-                                    Modifier.fillMaxWidth().height(8.dp)
-                                )
+                                LinearProgressIndicator(progress = { (stats.accuracyPercent / 100f).coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(8.dp))
                                 Text("دقت کلی: ${stats.accuracyPercent}٪")
                             }
                         }
@@ -87,11 +79,13 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                     item {
                         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                SectionTitle("توزیع سطح‌ها")
-                                MetricRow("آسان", progress.dailyConcepts.toString())
-                                MetricRow("متوسط", progress.weeklyConcepts.toString())
-                                MetricRow("سخت", progress.monthlyConcepts.toString())
+                                SectionTitle("توزیع مرحله‌های یادگیری")
+                                MetricRow("روزانه", progress.dailyConcepts.toString())
+                                MetricRow("هفتگی", progress.weeklyConcepts.toString())
+                                MetricRow("ماهانه", progress.monthlyConcepts.toString())
                                 MetricRow("یادگرفته‌شده", progress.learnedConcepts.toString())
+                                MetricRow("شکست مسیر", progress.pathFailureConcepts.toString())
+                                MetricRow("خیلی سخت", progress.veryHardConcepts.toString())
                             }
                         }
                     }
