@@ -7,7 +7,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,12 +17,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.components.PurpleHeroCard
 import com.flashlearn.domain.model.ReviewType
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, onStartReview: (ReviewType) -> Unit, onAddWord: () -> Unit, onBulkImport: () -> Unit, onLibrary: () -> Unit, onProgress: () -> Unit, onSettings: () -> Unit) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onStartReview: (ReviewType) -> Unit,
+    onAddWord: () -> Unit,
+    onBulkImport: () -> Unit,
+    onLibrary: () -> Unit,
+    onProgress: () -> Unit,
+    onLanguage: () -> Unit,
+    onBackup: () -> Unit
+) {
     val state by viewModel.state.collectAsState()
     val summary = state.summary
     val due = summary?.dueConceptCount ?: 0
@@ -43,10 +52,16 @@ fun HomeScreen(viewModel: HomeViewModel, onStartReview: (ReviewType) -> Unit, on
                     Box(contentAlignment = Alignment.Center) { Text("☰", style = MaterialTheme.typography.headlineSmall) }
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text("مرور") }, onClick = { menuExpanded = false; onStartReview(ReviewType.DAILY) })
-                    DropdownMenuItem(text = { Text("واژگان") }, onClick = { menuExpanded = false; onLibrary() })
-                    DropdownMenuItem(text = { Text("آمار") }, onClick = { menuExpanded = false; onProgress() })
-                    DropdownMenuItem(text = { Text("تنظیمات") }, onClick = { menuExpanded = false; onSettings() })
+                    DropdownMenuItem(
+                        text = { Text("انتخاب زبان") },
+                        leadingIcon = { Icon(Icons.Outlined.Language, contentDescription = null) },
+                        onClick = { menuExpanded = false; onLanguage() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("پشتیبان‌گیری و بازیابی") },
+                        leadingIcon = { Icon(Icons.Outlined.Backup, contentDescription = null) },
+                        onClick = { menuExpanded = false; onBackup() }
+                    )
                 }
             }
             Spacer(Modifier.width(14.dp))
@@ -92,14 +107,7 @@ fun HomeScreen(viewModel: HomeViewModel, onStartReview: (ReviewType) -> Unit, on
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             QuickAction("واژگان", Icons.Outlined.Book, Modifier.weight(1f), onLibrary)
-            QuickAction("تنظیمات", Icons.Outlined.Settings, Modifier.weight(1f), onSettings)
-        }
-        if (due > 0) {
-            Button(
-                onClick = { onStartReview(if (daily > 0) ReviewType.DAILY else ReviewType.RANDOM) },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = MaterialTheme.shapes.medium
-            ) { Text(if (daily > 0) "شروع مرور روزانه" else "شروع مرور") }
+            QuickAction("افزودن واژه", Icons.Outlined.Book, Modifier.weight(1f), onAddWord)
         }
     }
 }
