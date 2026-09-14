@@ -28,81 +28,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ReviewScreen(
-    viewModel: ReviewViewModel,
-    onFinished: () -> Unit
-) {
+fun ReviewScreen(viewModel: ReviewViewModel, onFinished: () -> Unit) {
     val state by viewModel.state.collectAsState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(32.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        state.error?.let {
-            Text("خطا: $it", color = MaterialTheme.colorScheme.error)
-        }
+        state.error?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth()) }
 
         if (!state.isSelectingMode && !state.isFinished) {
-            OutlinedButton(
-                onClick = { viewModel.exitReview(onFinished) },
-                enabled = !state.isSubmitting
-            ) { Text("خروج از مرور") }
+            OutlinedButton(onClick = { viewModel.exitReview(onFinished) }, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text("خروج از مرور") }
         }
 
         when {
             state.isSelectingMode -> {
                 Text("مرور: ${reviewTypeLabel(state.selectedReviewType)}", style = MaterialTheme.typography.headlineSmall)
                 Text("حالت مرور", style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { viewModel.chooseMode(ReviewMode.FLASHCARD) }) { Text("فلش‌کارت") }
-                    OutlinedButton(onClick = { viewModel.chooseMode(ReviewMode.QUIZ) }) { Text("آزمون چهارگزینه‌ای") }
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { viewModel.chooseMode(ReviewMode.FLASHCARD) }, modifier = Modifier.fillMaxWidth()) { Text("فلش‌کارت") }
+                    OutlinedButton(onClick = { viewModel.chooseMode(ReviewMode.QUIZ) }, modifier = Modifier.fillMaxWidth()) { Text("آزمون چهارگزینه‌ای") }
                 }
                 Text("حالت انتخاب‌شده: ${if (state.selectedMode == ReviewMode.QUIZ) "آزمون" else "فلش‌کارت"}")
+
                 Text("نوع مرور", style = MaterialTheme.typography.titleMedium)
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ReviewType.entries.forEach { type ->
-                        OutlinedButton(onClick = { viewModel.chooseReviewType(type) }) {
-                            Text(reviewTypeLabel(type))
-                        }
-                    }
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ReviewType.entries.forEach { type -> OutlinedButton(onClick = { viewModel.chooseReviewType(type) }) { Text(reviewTypeLabel(type)) } }
                 }
                 Text("نوع انتخاب‌شده: ${reviewTypeLabel(state.selectedReviewType)}")
+
                 Text("فیلتر سختی", style = MaterialTheme.typography.titleMedium)
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { viewModel.chooseDifficulty(null) }) { Text("همه") }
-                    VocabularyDifficulty.entries.forEach { difficulty ->
-                        OutlinedButton(onClick = { viewModel.chooseDifficulty(difficulty) }) {
-                            Text(difficultyLabel(difficulty))
-                        }
-                    }
+                    VocabularyDifficulty.entries.forEach { difficulty -> OutlinedButton(onClick = { viewModel.chooseDifficulty(difficulty) }) { Text(difficultyLabel(difficulty)) } }
                 }
                 Text("سختی انتخاب‌شده: ${state.selectedDifficulty?.let(::difficultyLabel) ?: "همه"}")
+
                 if (state.categories.isNotEmpty()) {
                     Text("دسته‌بندی", style = MaterialTheme.typography.titleMedium)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { viewModel.chooseCategory(null) }) { Text("همه") }
-                        state.categories.forEach { category ->
-                            OutlinedButton(onClick = { viewModel.chooseCategory(category.id) }) {
-                                Text(category.name)
-                            }
-                        }
+                        state.categories.forEach { category -> OutlinedButton(onClick = { viewModel.chooseCategory(category.id) }) { Text(category.name) } }
                     }
                     Text("دسته انتخاب‌شده: ${state.categories.firstOrNull { it.id == state.selectedCategoryId }?.name ?: "همه"}")
                 }
-                Button(onClick = { viewModel.startNewSession() }) { Text("شروع مرور") }
+                Button(onClick = { viewModel.startNewSession() }, modifier = Modifier.fillMaxWidth()) { Text("شروع مرور") }
             }
 
             state.isLoading -> CircularProgressIndicator()
@@ -110,10 +81,7 @@ fun ReviewScreen(
             state.isFinished -> {
                 if (state.total == 0) {
                     Text("کارتی برای این مرور پیدا نشد", style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        "فیلتر سختی یا نوع مرور را تغییر بده، یا ابتدا چند واژه به کتابخانه اضافه کن.",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text("فیلتر سختی یا نوع مرور را تغییر بده، یا ابتدا چند واژه به کتابخانه اضافه کن.", style = MaterialTheme.typography.bodyLarge)
                 } else {
                     Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall)
                     Text("${state.answered} کارت پاسخ داده شد.")
@@ -121,26 +89,18 @@ fun ReviewScreen(
                     val accuracy = if (state.answered == 0) 0 else (state.correct * 100 / state.answered)
                     Text("دقت این جلسه: $accuracy٪")
                 }
-                Button(onClick = onFinished) { Text("بازگشت به خانه") }
+                Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("بازگشت به خانه") }
             }
 
             state.answerFeedback != null -> {
                 val feedback = state.answerFeedback!!
-                Text(
-                    if (feedback.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = if (feedback.isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
+                Text(if (feedback.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (feedback.isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
                 Text("مرحله فعلی: ${feedback.stageLabel}")
                 Text("سختی فعلی: ${feedback.difficultyLabel}")
-                if (!feedback.isCorrect && !feedback.correctAnswerText.isNullOrBlank()) {
-                    Text("پاسخ صحیح: ${feedback.correctAnswerText}")
-                }
+                if (!feedback.isCorrect && !feedback.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${feedback.correctAnswerText}")
                 Text("پاسخ ثبت شد و پیشرفتت ذخیره شد.")
                 Text("نتیجه تا اینجا: ${state.correct} صحیح، ${state.wrong} غلط")
-                if (!feedback.isCorrect) {
-                    Text("سؤال بعدی تا چند لحظه دیگر…")
-                }
+                if (!feedback.isCorrect) Text("سؤال بعدی تا چند لحظه دیگر…")
             }
 
             state.quizCard != null && state.answerFeedback == null -> {
@@ -149,57 +109,26 @@ fun ReviewScreen(
                 val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat()
                 Text("${state.remaining} سؤال باقی‌مانده از ${state.total}")
                 LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(quiz.promptText, style = MaterialTheme.typography.headlineSmall)
-                        if (card?.hintRevealed == true) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("راهنما: حرف اول پاسخ «${card.targetText.take(1)}»")
-                        }
-                        if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("یادداشت: ${card.sourceNotes}")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        if (card?.hintRevealed == true) { Spacer(Modifier.height(8.dp)); Text("راهنما: حرف اول پاسخ «${card.targetText.take(1)}»") }
+                        if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(8.dp)); Text("یادداشت: ${card.sourceNotes}") }
+                        Spacer(Modifier.height(12.dp))
                         quiz.options.forEachIndexed { index, option ->
                             val selected = quiz.selectedOption == option
-                            if (selected) {
-                                Button(
-                                    onClick = { viewModel.selectQuizOption(option) },
-                                    enabled = !state.isSubmitting,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text("${index + 1}. $option") }
-                            } else {
-                                OutlinedButton(
-                                    onClick = { viewModel.selectQuizOption(option) },
-                                    enabled = !state.isSubmitting,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text("${index + 1}. $option") }
-                            }
+                            if (selected) Button(onClick = { viewModel.selectQuizOption(option) }, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text("${index + 1}. $option") }
+                            else OutlinedButton(onClick = { viewModel.selectQuizOption(option) }, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text("${index + 1}. $option") }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
                         if (card != null) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                if (!card.sourceNotes.isNullOrBlank()) {
-                                    OutlinedButton(
-                                        onClick = { viewModel.toggleNote() },
-                                        enabled = !state.isSubmitting,
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت") }
-                                }
-                                OutlinedButton(
-                                    onClick = { viewModel.revealHint() },
-                                    enabled = !card.hintRevealed && !state.isSubmitting,
-                                    modifier = Modifier.weight(1f)
-                                ) { Text("راهنما") }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = { viewModel.toggleNote() }, enabled = !state.isSubmitting, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت") }
+                                OutlinedButton(onClick = { viewModel.revealHint() }, enabled = !card.hintRevealed && !state.isSubmitting, modifier = Modifier.weight(1f)) { Text("راهنما") }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
                         }
-                        Button(
-                            onClick = viewModel::submitQuizAnswer,
-                            enabled = quiz.selectedOption != null && !state.isSubmitting,
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(if (state.isSubmitting) "در حال ثبت…" else "ثبت پاسخ") }
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = viewModel::submitQuizAnswer, enabled = quiz.selectedOption != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text(if (state.isSubmitting) "در حال ثبت…" else "ثبت پاسخ") }
                     }
                 }
             }
@@ -208,67 +137,25 @@ fun ReviewScreen(
                 val card = state.card!!
                 val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat()
                 val liveAccuracy = if (state.answered == 0) 0 else state.correct * 100 / state.answered
-
                 Text("${state.remaining} کارت باقی‌مانده از ${state.total}")
-                LinearProgressIndicator(
-                    progress = { progress.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (state.answered > 0) {
-                    Text("دقت جلسه: $liveAccuracy٪  •  ${state.correct} صحیح / ${state.wrong} غلط", style = MaterialTheme.typography.labelMedium)
-                }
-
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(24.dp)) {
+                LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                if (state.answered > 0) Text("دقت جلسه: $liveAccuracy٪  •  ${state.correct} صحیح / ${state.wrong} غلط", style = MaterialTheme.typography.labelMedium)
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
                         Text(card.sourceText, style = MaterialTheme.typography.headlineSmall)
-
-                        if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("یادداشت: ${card.sourceNotes}")
-                        }
-
-                        if (!card.isFlipped && card.hintRevealed) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("راهنما: حرف اول پاسخ «${card.targetText.take(1)}»")
-                        }
-
-                        if (card.isFlipped) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(card.targetText, style = MaterialTheme.typography.headlineSmall)
-                        }
+                        if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(8.dp)); Text("یادداشت: ${card.sourceNotes}") }
+                        if (!card.isFlipped && card.hintRevealed) { Spacer(Modifier.height(8.dp)); Text("راهنما: حرف اول پاسخ «${card.targetText.take(1)}»") }
+                        if (card.isFlipped) { Spacer(Modifier.height(16.dp)); Text(card.targetText, style = MaterialTheme.typography.headlineSmall) }
                     }
                 }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (!card.sourceNotes.isNullOrBlank()) {
-                        OutlinedButton(onClick = { viewModel.toggleNote() }) {
-                            Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت")
-                        }
-                    }
-                    if (!card.isFlipped) {
-                        OutlinedButton(onClick = { viewModel.revealHint() }, enabled = !card.hintRevealed) {
-                            Text("راهنما")
-                        }
-                    }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = { viewModel.toggleNote() }, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "یادداشت") }
+                    if (!card.isFlipped) OutlinedButton(onClick = { viewModel.revealHint() }, enabled = !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("راهنما") }
                 }
-
-                if (!card.isFlipped) {
-                    Button(onClick = { viewModel.flipCard() }, modifier = Modifier.fillMaxWidth()) {
-                        Text("نمایش پاسخ")
-                    }
-                } else {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = { viewModel.submitAnswer(false) },
-                            enabled = state.canSubmitAnswer,
-                            modifier = Modifier.weight(1f)
-                        ) { Text("غلط") }
-                        Button(
-                            onClick = { viewModel.submitAnswer(true) },
-                            enabled = state.canSubmitAnswer,
-                            modifier = Modifier.weight(1f)
-                        ) { Text(if (state.isSubmitting) "در حال ثبت…" else "صحیح") }
-                    }
+                if (!card.isFlipped) Button(onClick = { viewModel.flipCard() }, modifier = Modifier.fillMaxWidth()) { Text("نمایش پاسخ") }
+                else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { viewModel.submitAnswer(false) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("غلط") }
+                    Button(onClick = { viewModel.submitAnswer(true) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text(if (state.isSubmitting) "در حال ثبت…" else "صحیح") }
                 }
             }
         }
