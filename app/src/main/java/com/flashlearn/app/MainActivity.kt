@@ -3,6 +3,7 @@ package com.flashlearn.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppViewModel
 import com.flashlearn.app.ui.addword.AddWordScreen
 import com.flashlearn.app.ui.addword.AddWordViewModel
@@ -52,8 +54,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val appState by appViewModel.state
             FlashLearnTheme(appearance = appState.appearance) {
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                    Surface(Modifier.fillMaxSize()) { AppRootScreen() }
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr
+                ) {
+                    Surface(Modifier.fillMaxSize()) {
+                        BackHandler {
+                            if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish()
+                            else appViewModel.goBack()
+                        }
+                        AppRootScreen()
+                    }
                 }
             }
         }
@@ -97,9 +107,18 @@ class MainActivity : ComponentActivity() {
             AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiAppearance(), onAppearanceChange = appViewModel::setAppearance, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(
+                appearance = uiAppearance(),
+                onAppearanceChange = appViewModel::setAppearance,
+                layoutDirection = uiStateDirection(),
+                onLayoutDirectionChange = appViewModel::setLayoutDirection,
+                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onBack = { appViewModel.navigate(AppRoutes.HOME) }
+            )
         }
     }
 
     private fun uiAppearance() = appViewModel.state.value.appearance
+    private fun uiStateDirection() = appViewModel.state.value.layoutDirection
 }
