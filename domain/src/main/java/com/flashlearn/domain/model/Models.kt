@@ -6,6 +6,7 @@ enum class Stage { DAILY, WEEKLY, MONTHLY, LEARNED }
 enum class VocabularyDifficulty { EASY, MEDIUM, HARD, VERY_HARD }
 enum class ReviewType { DAILY, WEEKLY, MONTHLY, LEARNED, RANDOM }
 enum class EntryType { WORD, PHRASE, SENTENCE, IDIOM, COLLOCATION, STRUCTURE }
+enum class ImportMode { ADD_NEW, SKIP_DUPLICATE, MERGE, UPDATE }
 
 data class LearningState(
     val id: UUID, val conceptId: UUID, val stage: Stage, val nextReviewAt: Instant?,
