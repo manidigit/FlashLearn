@@ -77,8 +77,14 @@ class MainActivity : ComponentActivity() {
             }) { TopLevelContent(uiState.selectedRoute) }
         } else when (uiState.selectedRoute) {
             AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
-            AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair) { appViewModel.navigate(AppRoutes.LIBRARY); libraryViewModel.refresh(); homeViewModel.refresh() }
-            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.LIBRARY); libraryViewModel.refresh(); homeViewModel.refresh() }
+            AppRoutes.ADD_WORD -> AddWordScreen(
+                addWordViewModel,
+                languagePair = uiState.languagePair,
+                onBack = { appViewModel.navigate(AppRoutes.LIBRARY) },
+                onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
+                onBackupRestore = { appViewModel.navigate(AppRoutes.BACKUP) }
+            )
+            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { appViewModel.navigate(AppRoutes.LIBRARY) }
             AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
         }
     }
@@ -123,7 +129,7 @@ class MainActivity : ComponentActivity() {
                 difficultyThreshold = uiState.difficultyThreshold,
                 onDifficultyThresholdChange = appViewModel::setDifficultyThreshold,
                 onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
-                onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onImportExport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
                 onBack = { appViewModel.navigate(AppRoutes.HOME) }
             )
         }
