@@ -7,12 +7,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -52,7 +50,6 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
                 }
                 Button(onClick = viewModel::importAll, enabled = !state.isImporting, modifier = Modifier.fillMaxWidth()) { Text(if (state.isImporting) "در حال وارد کردن..." else "وارد کردن همه") }
             }
-            state.done && state.importedCount >= 0.let { state.done } .also { } // keeps the result section visually separated without changing import semantics
             if (state.done) Text("نتیجه ورود: ${state.importedCount} مدخل جدید، ${state.skippedDuplicateCount} تکراری، ${state.invalidCount} ناقص، ${state.failedCount} خطادار")
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
