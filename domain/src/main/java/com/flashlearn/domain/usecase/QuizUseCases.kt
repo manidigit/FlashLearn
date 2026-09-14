@@ -41,11 +41,27 @@ data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: Stri
     }
 }
 
+private data class QuizBank(
+    val contents: List<Content>,
+    val concepts: List<Concept>,
+    val difficultiesById: Map<UUID, DifficultyState>
+)
+
 class GenerateQuizQuestionUseCase @Inject constructor(
     private val contentRepository: ContentRepository,
     private val conceptRepository: ConceptRepository,
     private val difficultyStateRepository: DifficultyStateRepository
 ) {
+    private var bank: QuizBank? = null
+
+    suspend fun refreshBank() {
+        bank = QuizBank(
+            contents = contentRepository.getAll(),
+            concepts = conceptRepository.getAllActive(),
+            difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+        )
+    }
+
     suspend operator fun invoke(
         concept: Concept,
         activeLanguagePair: QuizLanguagePair,
@@ -54,13 +70,15 @@ class GenerateQuizQuestionUseCase @Inject constructor(
     ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
 
-        // Load each source once. The previous implementation re-read the full contents
-        // table and queried difficulty once per distractor candidate for every card. With
-        // thousands of restored words that made one quiz card perform thousands of Room
-        // calls. The current path performs three bulk reads and all matching in memory.
-        val allContents = contentRepository.getAll()
-        val allConcepts = conceptRepository.getAllActive()
-        val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+        // The bank is refreshed once when a Quiz review session starts. Subsequent cards
+        // do zero Room reads, which keeps a 30-card session fast even with 100k words.
+        val snapshot = bank ?: run {
+            refreshBank()
+            bank!!
+        }
+        val allContents = snapshot.contents
+        val allConcepts = snapshot.concepts
+        val difficultiesById = snapshot.difficultiesById
         val contentsByConcept = allContents.groupBy { it.conceptId }
 
         val conceptContents = contentsByConcept[concept.id].orEmpty()
@@ -90,9 +108,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                 it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
             }
         }
-        val validConceptIds = targetContents
-            .filterValues { it.isNotEmpty() }
-            .keys
+        val validConceptIds = targetContents.filterValues { it.isNotEmpty() }.keys
         val sourceConceptIds = contentsByConcept
             .filterValues { values -> values.any { it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() } }
             .keys
