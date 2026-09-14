@@ -48,6 +48,7 @@ jobs:
           if-no-files-found: error
       - name: Stage exact source archive
         run: |
+          mkdir -p dist
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
@@ -88,13 +89,7 @@ jobs:
             gradle --no-daemon connectedDebugAndroidTest
             gradle --no-daemon :app:assembleDebug
             adb install app/build/outputs/apk/debug/app-debug.apk
-            python3 - <<'PY'
-            from pathlib import Path
-            p = Path("app/build.gradle.kts")
-            s = p.read_text()
-            s = s.replace("versionCode = 70", "versionCode = 71").replace('versionName = "5.70"', 'versionName = "5.71"')
-            p.write_text(s)
-            PY
+            sed -i 's/versionCode = 70/versionCode = 71/; s/versionName = "5.70"/versionName = "5.71"/' app/build.gradle.kts
             gradle --no-daemon :app:assembleDebug
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "71"
