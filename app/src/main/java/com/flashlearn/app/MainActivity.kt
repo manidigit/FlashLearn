@@ -86,7 +86,16 @@ class MainActivity : ComponentActivity() {
     @Composable private fun TopLevelContent(route: String) {
         val uiState by appViewModel.state
         when (route) {
-            AppRoutes.HOME -> HomeScreen(homeViewModel, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) }, onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) }, onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
+            AppRoutes.HOME -> HomeScreen(
+                viewModel = homeViewModel,
+                onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
+                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
+                onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
+                onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) },
+                onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
+                onLanguage = { appViewModel.navigate(AppRoutes.SETTINGS) },
+                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }
+            )
             AppRoutes.REVIEW -> {
                 QuizChallengeProvider.current = when (uiState.quizChallenge) {
                     QuizChallenge.A -> DomainQuizChallenge.A
