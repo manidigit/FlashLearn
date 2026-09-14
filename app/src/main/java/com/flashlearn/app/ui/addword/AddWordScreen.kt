@@ -9,44 +9,50 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.ui.LanguagePair
+import com.flashlearn.app.ui.LearningLanguage
 import com.flashlearn.domain.model.EntryType
 
 @Composable
-fun AddWordScreen(viewModel: AddWordViewModel, onBack: () -> Unit) {
+fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit) {
     val state by viewModel.state.collectAsState()
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
+    var sourceMenuExpanded by remember { mutableStateOf(false) }
+    var targetMenuExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair.source.code, languagePair.target.code) }
     val filteredCategories = state.categories.filter { state.categoryName.isBlank() || it.name.contains(state.categoryName, ignoreCase = true) }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
+            Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, enabled = false, label = { Text("اسپانیایی") }, modifier = Modifier.weight(1f))
-                AssistChip(onClick = {}, enabled = false, label = { Text("فارسی") }, modifier = Modifier.weight(1f))
+                LanguageField(state.sourceLanguage, "زبان مبدأ", { sourceMenuExpanded = true }, Modifier.weight(1f))
+                LanguageField(state.targetLanguage, "زبان مقصد", { targetMenuExpanded = true }, Modifier.weight(1f))
             }
-            OutlinedTextField(state.sourceText, viewModel::onSourceTextChange, Modifier.fillMaxWidth(), label = { Text("واژه") }, placeholder = { Text("مثال: casa") }, singleLine = true)
-            OutlinedTextField(state.targetText, viewModel::onTargetTextChange, Modifier.fillMaxWidth(), label = { Text("معنی") }, placeholder = { Text("مثال: خانه") }, singleLine = true)
+            LanguageMenu(sourceMenuExpanded, { sourceMenuExpanded = false }, languagePair.source) { lang -> viewModel.setLanguagePair(lang.code, state.targetLanguage); sourceMenuExpanded = false }
+            LanguageMenu(targetMenuExpanded, { targetMenuExpanded = false }, languagePair.target) { lang -> viewModel.setLanguagePair(state.sourceLanguage, lang.code); targetMenuExpanded = false }
+
+            OutlinedTextField(state.sourceText, viewModel::onSourceTextChange, Modifier.fillMaxWidth(), label = { Text("واژه یا عبارت") }, placeholder = { Text("مثال: casa") }, singleLine = true)
+            OutlinedTextField(state.targetText, viewModel::onTargetTextChange, Modifier.fillMaxWidth(), label = { Text("ترجمه") }, placeholder = { Text("مثال: خانه") }, singleLine = true)
             OutlinedTextField(state.pronunciation, viewModel::onPronunciationChange, Modifier.fillMaxWidth(), label = { Text("تلفظ") }, singleLine = true)
-            OutlinedTextField(state.example, viewModel::onExampleChange, Modifier.fillMaxWidth(), label = { Text("مثال") }, minLines = 2, maxLines = 3)
+            OutlinedTextField(state.example, viewModel::onExampleChange, Modifier.fillMaxWidth(), label = { Text("جمله نمونه") }, minLines = 2, maxLines = 3)
             OutlinedTextField(state.notes, viewModel::onNotesChange, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(state.entryType.labelFa(), {}, Modifier.fillMaxWidth(), label = { Text("نوع ورودی") }, readOnly = true, singleLine = true)
                 Spacer(Modifier.matchParentSize().clickable { typeMenuExpanded = true })
-                DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) {
-                    EntryType.values().forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { viewModel.onEntryTypeChange(type); typeMenuExpanded = false }) }
-                }
+                DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) { EntryType.entries.forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { viewModel.onEntryTypeChange(type); typeMenuExpanded = false }) } }
             }
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(state.categoryName, { viewModel.onCategoryNameChange(it); categoryMenuExpanded = true }, Modifier.fillMaxWidth(), label = { Text("دسته‌بندی") }, singleLine = true)
-                DropdownMenu(categoryMenuExpanded && filteredCategories.isNotEmpty(), { categoryMenuExpanded = false }) {
-                    filteredCategories.forEach { category -> DropdownMenuItem(text = { Text(category.name) }, onClick = { viewModel.onCategoryNameChange(category.name); categoryMenuExpanded = false }) }
-                }
+                DropdownMenu(categoryMenuExpanded && filteredCategories.isNotEmpty(), { categoryMenuExpanded = false }) { filteredCategories.forEach { category -> DropdownMenuItem(text = { Text(category.name) }, onClick = { viewModel.onCategoryNameChange(category.name); categoryMenuExpanded = false }) } }
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
@@ -55,6 +61,15 @@ fun AddWordScreen(viewModel: AddWordViewModel, onBack: () -> Unit) {
             Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه")
         }
     }
+}
+
+@Composable private fun LanguageField(code: String, label: String, onClick: () -> Unit, modifier: Modifier) {
+    val language = LearningLanguage.entries.firstOrNull { it.code == code } ?: LearningLanguage.PERSIAN
+    OutlinedCard(modifier.clickable(onClick = onClick)) { Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } }
+}
+
+@Composable private fun LanguageMenu(expanded: Boolean, dismiss: () -> Unit, ignored: LearningLanguage, onSelect: (LearningLanguage) -> Unit) {
+    DropdownMenu(expanded, dismiss) { LearningLanguage.entries.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onSelect(lang) }) } }
 }
 
 private fun EntryType.labelFa(): String = when (this) {
