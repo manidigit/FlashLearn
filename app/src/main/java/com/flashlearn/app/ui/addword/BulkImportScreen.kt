@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flashlearn.app.ui.LanguagePair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,7 +32,7 @@ fun BulkImportScreen(
     languagePair: LanguagePair = LanguagePair(),
     onBack: () -> Unit
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -57,19 +56,7 @@ fun BulkImportScreen(
         }
     }
 
-    val hasPreview = state.preview.isNotEmpty()
-    val showEditor = !hasPreview && !state.done
-
-    if (showEditor) {
-        BulkImportEditor(
-            state = state,
-            languagePair = languagePair,
-            onBack = onBack,
-            onTextChange = viewModel::onTextChange,
-            onPreview = viewModel::preview,
-            onPickFile = { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) }
-        )
-    } else {
+    if (state.preview.isNotEmpty() || state.done) {
         BulkImportPreview(
             state = state,
             onBack = {
@@ -77,6 +64,15 @@ fun BulkImportScreen(
                 onBack()
             },
             onImport = viewModel::importAll
+        )
+    } else {
+        BulkImportEditor(
+            state = state,
+            languagePair = languagePair,
+            onBack = onBack,
+            onTextChange = viewModel::onTextChange,
+            onPreview = viewModel::preview,
+            onPickFile = { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) }
         )
     }
 }
@@ -164,12 +160,7 @@ private fun BulkImportEditor(
         }
         state.error?.let { error ->
             item {
-                Text(
-                    error,
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.End
-                )
+                Text(error, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.End)
             }
         }
     }
@@ -200,19 +191,16 @@ private fun BulkImportPreview(
                 Text("بازگشت")
             }
             Column(horizontalAlignment = Alignment.End) {
+                Text("جای‌گذاری متن", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
                 Text(
-                    "جای‌گذاری متن",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    "پیش‌نمایش (${results.size} از ${results.size} مورد انتخاب شده)",
+                    "پیش‌نمایش (${results.size} مورد)",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
         }
 
         Text(
-            "برای ویرایش، متن هر ردیف را مستقیماً تغییر دهید.",
+            "موارد تشخیص‌داده‌شده را بررسی کن و سپس همه موارد را وارد کن.",
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End
@@ -223,9 +211,7 @@ private fun BulkImportPreview(
             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(visibleResults) { result ->
-                PreviewEntryCard(result)
-            }
+            items(visibleResults) { result -> PreviewEntryCard(result) }
             if (results.size > BulkImportViewModel.PREVIEW_LIMIT) {
                 item {
                     Text(
@@ -282,9 +268,7 @@ private fun PreviewEntryCard(result: BulkImportItemResult) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f))
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -306,7 +290,6 @@ private fun PreviewEntryCard(result: BulkImportItemResult) {
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = false,
                     textStyle = MaterialTheme.typography.titleMedium,
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -316,7 +299,6 @@ private fun PreviewEntryCard(result: BulkImportItemResult) {
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = false,
                     textStyle = MaterialTheme.typography.bodyLarge,
                     shape = RoundedCornerShape(14.dp)
                 )
