@@ -2,8 +2,8 @@ package com.flashlearn.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -63,31 +63,26 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AppRootScreen() {
         val uiState by appViewModel.state
-        androidx.activity.compose.BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
+        BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
-            FlashLearnShell(
-                selectedRoute = uiState.selectedRoute,
-                onNavigate = { route ->
-                    appViewModel.navigate(route)
-                    when (route) {
-                        AppRoutes.HOME -> homeViewModel.refresh()
-                        AppRoutes.LIBRARY -> libraryViewModel.refresh()
-                        AppRoutes.PROGRESS -> progressViewModel.refresh()
-                    }
+            FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
+                appViewModel.navigate(route)
+                when (route) {
+                    AppRoutes.HOME -> homeViewModel.refresh()
+                    AppRoutes.LIBRARY -> libraryViewModel.refresh()
+                    AppRoutes.PROGRESS -> progressViewModel.refresh()
                 }
-            ) { TopLevelContent(uiState.selectedRoute) }
-        } else {
-            when (uiState.selectedRoute) {
-                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
-                    LibraryDetailScreen(libraryDetailViewModel, id,
-                        onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
-                        onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
-                }
-                AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
-                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
-                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
+            }) { TopLevelContent(uiState.selectedRoute) }
+        } else when (uiState.selectedRoute) {
+            AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
+                LibraryDetailScreen(libraryDetailViewModel, id,
+                    onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
+                    onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
             }
+            AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
+            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
+            AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
         }
     }
 
