@@ -1,6 +1,6 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.73 — Large-library review/performance hardening
+## Current checkpoint: v5.73 — Large-library review/performance + Quiz UX hardening
 **Application identity:** `versionName = 5.73`, `versionCode = 73`
 
 ### Current implementation status
@@ -14,11 +14,13 @@
 - Progress and Progress Summary no longer query LearningState/DifficultyState once per concept; they bulk-load state tables and join in memory for large libraries.
 - Library and Review content lookup already use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
 - Vocabulary and legacy FULL restore remain on `Dispatchers.IO` with batch Room writes; post-restore Progress/Statistics calculations now avoid the previous N+1 state queries.
+- Four-option Quiz UI now follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
+- Quiz prompt, progress, Hint and Note controls are retained; Quiz mode never silently renders as Flashcard when a Quiz question is unavailable.
 - CI is aligned to v5.73 and keeps the deterministic CI debug signing key for in-place update smoke testing.
 
 ### Verification gate
 - GitHub Actions is the authoritative build/test gate.
-- The latest v5.73 run must complete Build/Unit and Instrumentation successfully before the performance fixes are marked fully verified.
+- The latest v5.73 run must complete Build/Unit and Instrumentation successfully before the performance and Quiz UX fixes are marked fully verified.
 - Release Gate is non-blocking when stable production signing secrets are absent; the debug APK/source artifacts remain the normal downloadable CI outputs.
 
 ---
