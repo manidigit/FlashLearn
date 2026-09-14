@@ -9,6 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.*
@@ -34,6 +36,8 @@ fun SettingsScreen(
     onPersonalWordDifficultyChange: (VocabularyDifficulty?) -> Unit = {},
     quizChallenge: QuizChallenge = QuizChallenge.B,
     onQuizChallengeChange: (QuizChallenge) -> Unit = {},
+    difficultyThreshold: Int = 3,
+    onDifficultyThresholdChange: (Int) -> Unit = {},
     onBackup: () -> Unit = {},
     onImportExport: () -> Unit = onBackup,
     onBack: () -> Unit = {}
@@ -74,10 +78,10 @@ fun SettingsScreen(
         }
         TextButton(onClick = { onLanguagePairChange(languagePair.reversed()) }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("↔ جابه‌جایی زبان‌ها") }
         DropdownMenu(expanded = sourceMenu, onDismissRequest = { sourceMenu = false }) {
-            LearningLanguage.entries.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(languagePair.copy(source = lang)); sourceMenu = false }) }
+            LearningLanguage.entries.filter { it != languagePair.target }.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(LanguagePair(lang, languagePair.target)); sourceMenu = false }) }
         }
         DropdownMenu(expanded = targetMenu, onDismissRequest = { targetMenu = false }) {
-            LearningLanguage.entries.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(languagePair.copy(target = lang)); targetMenu = false }) }
+            LearningLanguage.entries.filter { it != languagePair.source }.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(LanguagePair(languagePair.source, lang)); targetMenu = false }) }
         }
         SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست") { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }
         Spacer(Modifier.height(12.dp))
@@ -87,6 +91,20 @@ fun SettingsScreen(
         val wordDifficultyOptions = listOf("همه" to (personalWordDifficulty == null)) + VocabularyDifficulty.entries.map { difficultyLabel(it) to (it == personalWordDifficulty) }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             wordDifficultyOptions.forEachIndexed { index, (label, selected) -> FilterChip(selected = selected, onClick = { onPersonalWordDifficultyChange(if (index == 0) null else VocabularyDifficulty.entries[index - 1]) }, label = { Text(label) }) }
+        }
+        Spacer(Modifier.height(12.dp))
+        Section("تعداد پاسخ برای تغییر سطح")
+        Text("تعداد پاسخ صحیح یا غلط پیاپی برای جابه‌جایی بین آسان، متوسط، سخت و خیلی سخت", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(6.dp))
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium)
+                    Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") }
+            }
         }
         Spacer(Modifier.height(12.dp))
         Section("چالش آزمون")
@@ -101,10 +119,10 @@ fun SettingsScreen(
         SettingsRow(Icons.Outlined.Storage, "صادرات / واردات کلمه", "ورود و خروج واژه‌ها") { onImportExport() }
         Spacer(Modifier.height(10.dp))
         Section("درباره")
-        SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.62") { aboutDialog = true }
+        SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.63") { aboutDialog = true }
     }
     if (aboutDialog) {
-        AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.62\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
+        AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.63\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
     }
 }
 
