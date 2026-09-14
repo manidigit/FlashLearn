@@ -1,20 +1,27 @@
 # FlashLearn Changelog
 
+## v5.71 — Legacy Restore + Quiz Mode + Update-Path Hardening
+- Hardened legacy FULL restore for the earlier-version backup format (`schemaVersion: 1`, `backupMode: FULL`, epoch timestamps, embedded concept contents).
+- Validated the supplied FULL backup shape: 8,098 concepts, 8,098 learning states, 1,878 review-history records, 8 languages, and 11 categories, with no violations of the restore parser's strict UUID/language/stage/difficulty/reference/streak checks.
+- Kept legacy FULL restore transactional and on `Dispatchers.IO`; preserves concepts, multilingual contents, learning/difficulty state, review sessions/history, and settings.
+- Fixed an explicit Quiz-session regression: missing DifficultyState on imported/legacy vocabulary can no longer silently switch a four-option Quiz into Flashcards.
+- Added Quiz regression coverage for a missing target DifficultyState.
+- Fixed CI version drift and added an emulator smoke test for v5.70 → v5.71 in-place APK installation using `adb install -r` under the same signing context.
+- Advanced runtime identity to 5.71/71.
+- Production release signing remains protected by the stable GitHub Actions keystore secrets; no private signing material is committed.
+
 ## v5.70 — Legacy Full Backup Restore + Update Verification
 - Added compatibility restore for the legacy FULL backup format used by earlier FlashLearn versions (`schemaVersion: 1`, `backupMode: FULL`, epoch timestamps, embedded concept contents).
 - Restores legacy concepts, categories, multilingual contents, learning state, difficulty state, review history/sessions, and settings into the current Room schema.
 - Preserves legacy sessions containing mixed review stages by splitting them by stage instead of rejecting or dropping history.
 - Added Android integration coverage for legacy FULL restore and idempotency.
-- Added emulator CI verification that installs the current APK and then performs an in-place `adb install -r` version upgrade with the same signing context.
-- CI/runtime identity advanced to 5.70/70.
 
 ## v5.69 — Vocabulary Restore + Launcher Icon Fix
 - Added a dedicated restore path for the legacy `backupMode: VOCABULARY` JSON format.
 - Verified against the supplied vocabulary backup shape: schemaVersion 1, 8,098 concepts, Spanish/Persian contents, 11 categories, and multiple translations per language.
 - Vocabulary restore now parses and writes on `Dispatchers.IO`, uses batch Room operations, preserves existing learning/progress state, and collapses repeated translations for the same language into one Room-compatible content value.
 - Existing concept UUIDs are reused; missing concepts receive the required initial learning and difficulty states.
-- Bound the real FlashLearn launcher icon resource in the Android manifest and added the book/crown artwork as a vector launcher asset.
-- CI artifact version aligned to 5.69/69.
+- Bound the FlashLearn launcher icon resource in the Android manifest and added the book/crown artwork as a vector launcher asset.
 
 ## v5.68 — Phase 5 Full Verification
 - Completed the final CI verification checkpoint for build, JVM unit tests, Android instrumentation tests, runtime preflight, and artifact generation.
@@ -27,8 +34,6 @@
 - Retained parser evidence on parsed entries and added regression coverage for parser boundary/orphan cases.
 - Added explicit vocabulary import modes: `ADD_NEW`, `SKIP_DUPLICATE`, `MERGE`, `UPDATE`; default is `MERGE`.
 - Added deterministic same-source/different-translation merge behavior while preserving exact-duplicate protection.
-- Updated the canonical `PROGRESS.md` with the actual v5.66 state and the current Room multi-translation compatibility limitation.
-- Runtime identity remains 5.66/66.
 
 ## v5.65 — UI interaction and CI hardening
 - Fixed language selectors in Settings and Add Word so the country/language list is anchored to the control instead of appearing detached at the bottom of the screen.
@@ -37,7 +42,6 @@
 - Bulk Import completion now refreshes Library and Home data immediately.
 - Kept Backup Restore accessible from Add Word and Settings.
 - Release CI no longer reports a false build failure when the release keystore secrets are absent; signed-release verification is explicitly skipped until the secrets are configured.
-- Runtime identity advanced to 5.65/65.
 
 ## v5.64 — Functional recovery checkpoint
 - Added persistence for appearance, accent color, layout, language pair, personal difficulty, quiz challenge, and difficulty threshold.
