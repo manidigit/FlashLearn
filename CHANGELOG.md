@@ -1,14 +1,21 @@
 # FlashLearn Changelog
 
-## v5.64 — Functional recovery + UI alignment
-- Fixed reliable persistence of appearance, accent color, layout, language pair, personal difficulty, quiz challenge, and difficulty threshold across app restarts.
-- Added explicit Add Word actions for Bulk Import and Backup Restore.
-- Added real text/CSV/file selection to Bulk Import and made imported entries use the active language pair.
-- Hardened Backup Restore file selection and UTF-8 reading with clear validation feedback.
-- Added country flags to language selectors and active-pair indicators.
-- Refined Home/Settings visual hierarchy, cards, icons, spacing, and controls toward the supplied reference design without removing existing capabilities.
-- Difficulty threshold is configurable from 1 to 20, default 3, and is consumed by SubmitReviewAnswer.
-- Runtime identity advanced to 5.64/64.
+## v5.65 — UI interaction and CI hardening
+- Fixed language selectors in Settings and Add Word so the country/language list is anchored to the control instead of appearing detached at the bottom of the screen.
+- Language options show their country flags and prevent selecting the same language for both sides.
+- Added a visible Bulk Import action beside Add Word in Library.
+- Bulk Import completion now refreshes Library and Home data immediately.
+- Kept Backup Restore accessible from Add Word and Settings.
+- Release CI no longer reports a false build failure when the release keystore secrets are absent; signed-release verification is explicitly skipped until the secrets are configured.
+- Runtime identity advanced to 5.65/65.
+
+## v5.64 — Functional recovery checkpoint
+- Added persistence for appearance, accent color, layout, language pair, personal difficulty, quiz challenge, and difficulty threshold.
+- Added Add Word actions for Bulk Import and Backup Restore.
+- Added text/CSV/file selection to Bulk Import.
+- Hardened Backup Restore file selection and UTF-8 reading.
+- Added flags to language selectors and refined visual hierarchy toward the supplied reference design.
+- Difficulty threshold is configurable from 1 to 20, default 3.
 
 ## v5.63 — Language Pair / Review / Quiz
 - Connected the active Language Pair to Review and Quiz selection.
@@ -23,11 +30,10 @@
 ## v5.61 — Data versioning / release hardening
 - Added explicit concept/content data-version markers and startup refresh/migration execution.
 - Added release signing configuration through GitHub Actions secrets.
-- Runtime identity advanced to 5.61/61.
 
 ## v5.52 — Progress / Statistics + E2E
 - Completed Progress and Statistics implementation and end-to-end Add Word → Review → Progress/Statistics coverage.
-- Added streak/statistics regression coverage and aligned runtime identity to 5.52/52.
+- Added streak/statistics regression coverage.
 
 ## v5.51 — Library / Add Word / Bulk Import audit
 - Fixed Library substring search.
@@ -46,7 +52,7 @@
 - Corrected the RoomBackupRepository compile issue and aligned release identity.
 
 ## v5.32 — Quiz UX completion
-- Added Quiz hint/notes controls, explicit wrong-answer feedback, and the required answer-advance behavior.
+- Added Quiz hint/notes controls, explicit wrong-answer feedback, and required answer-advance behavior.
 
 ## v5.29 — Quiz hardening
 - Added Quiz regression coverage, four-option generation, fallback, and Review integration.
