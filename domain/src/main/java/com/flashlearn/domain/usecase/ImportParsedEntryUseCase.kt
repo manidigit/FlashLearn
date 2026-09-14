@@ -1,9 +1,11 @@
-package com.flashlearn.domain.model.EntryType
-package com.flashlearn.domain.model.ParserMetadata
-package com.flashlearn.domain.parser.EntryKind
-package com.flashlearn.domain.parser.ParsedEntry
-package com.flashlearn.domain.repository.FlashLearnDatabase
-package com.flashlearn.domain.repository.ParserMetadataRepository
+package com.flashlearn.domain.usecase
+
+import com.flashlearn.domain.model.EntryType
+import com.flashlearn.domain.model.ParserMetadata
+import com.flashlearn.domain.parser.EntryKind
+import com.flashlearn.domain.parser.ParsedEntry
+import com.flashlearn.domain.repository.FlashLearnDatabase
+import com.flashlearn.domain.repository.ParserMetadataRepository
 import java.util.UUID
 import javax.inject.Inject
 
