@@ -33,13 +33,21 @@ jobs:
           gradle-version: "8.2"
       - name: Clean
         run: gradle --no-daemon clean
-      - name: Build debug for CI tests only
+      - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Unit tests
         run: gradle --no-daemon test
-      - name: Stage exact source archive
+      - name: Stage debug APK
         run: |
           mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flashlearn-debug-apk
+          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_DEBUG.apk
+          if-no-files-found: error
+      - name: Stage exact source archive
+        run: |
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
@@ -95,40 +103,52 @@ jobs:
       FL_RELEASE_KEY_PASSWORD: ${{ secrets.FL_RELEASE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
+      - name: Check release signing availability
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "$FL_RELEASE_KEYSTORE_B64" ] && [ -n "$FL_RELEASE_STORE_PASSWORD" ] && [ -n "$FL_RELEASE_KEY_ALIAS" ] && [ -n "$FL_RELEASE_KEY_PASSWORD" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release signing is not configured; release build is skipped."
+          fi
       - uses: actions/setup-java@v5
+        if: steps.signing.outputs.available == 'true'
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      - uses: actions/setup-android@v3
+        if: steps.signing.outputs.available == 'true'
       - uses: gradle/actions/setup-gradle@v4
+        if: steps.signing.outputs.available == 'true'
         with:
           gradle-version: "8.2"
-      - name: Require stable release signing
-        shell: bash
-        run: |
-          test -n "$FL_RELEASE_KEYSTORE_B64" || { echo "Missing FL_RELEASE_KEYSTORE_B64"; exit 1; }
-          test -n "$FL_RELEASE_STORE_PASSWORD" || { echo "Missing FL_RELEASE_STORE_PASSWORD"; exit 1; }
-          test -n "$FL_RELEASE_KEY_ALIAS" || { echo "Missing FL_RELEASE_KEY_ALIAS"; exit 1; }
-          test -n "$FL_RELEASE_KEY_PASSWORD" || { echo "Missing FL_RELEASE_KEY_PASSWORD"; exit 1; }
       - name: Materialize release keystore
+        if: steps.signing.outputs.available == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/flashlearn"
           echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
           test -s "$RUNNER_TEMP/flashlearn/release.keystore"
       - name: Build signed release
+        if: steps.signing.outputs.available == 'true'
         env:
           FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
         run: gradle --no-daemon clean assembleRelease
       - name: Verify release artifact
+        if: steps.signing.outputs.available == 'true'
         run: test -s app/build/outputs/apk/release/app-release.apk
       - name: Verify release signature
+        if: steps.signing.outputs.available == 'true'
         run: apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
       - name: Stage release artifact
+        if: steps.signing.outputs.available == 'true'
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/FlashLearn_v${FL_VERSION_NAME}_RELEASE.apk"
       - uses: actions/upload-artifact@v4
+        if: steps.signing.outputs.available == 'true'
         with:
           name: flashlearn-release-apk
           path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_RELEASE.apk
