@@ -2,7 +2,7 @@ package com.flashlearn.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.BackHandler
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -65,7 +65,6 @@ class MainActivity : ComponentActivity() {
         val uiState by appViewModel.state
         BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
-
         if (topLevel) {
             FlashLearnShell(
                 selectedRoute = uiState.selectedRoute,
@@ -81,19 +80,13 @@ class MainActivity : ComponentActivity() {
         } else {
             when (uiState.selectedRoute) {
                 AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
-                    LibraryDetailScreen(
-                        libraryDetailViewModel, id,
+                    LibraryDetailScreen(libraryDetailViewModel, id,
                         onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
-                        onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
-                    )
+                        onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
                 }
                 AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
                 AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
-                AppRoutes.BACKUP -> BackupScreen(
-                    backupViewModel,
-                    onBack = { appViewModel.navigate(AppRoutes.SETTINGS) },
-                    onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() }
-                )
+                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
             }
         }
     }
@@ -101,24 +94,17 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopLevelContent(route: String) {
         when (route) {
-            AppRoutes.HOME -> HomeScreen(
-                homeViewModel,
+            AppRoutes.HOME -> HomeScreen(homeViewModel,
                 onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
                 onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
                 onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
                 onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) },
                 onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
-                onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) }
-            )
+                onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
             AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail)
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(
-                appearance = uiAppearance(),
-                onAppearanceChange = appViewModel::setAppearance,
-                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
-                onBack = { appViewModel.navigate(AppRoutes.HOME) }
-            )
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiAppearance(), onAppearanceChange = appViewModel::setAppearance, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 
