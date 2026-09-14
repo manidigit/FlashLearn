@@ -107,7 +107,25 @@ class MainActivity : ComponentActivity() {
             }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizChallenge = uiState.quizChallenge, onQuizChallengeChange = appViewModel::setQuizChallenge, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(
+                appearance = uiState.appearance,
+                accentColor = uiState.accentColor,
+                onAppearanceChange = appViewModel::setAppearance,
+                onAccentColorChange = appViewModel::setAccentColor,
+                layoutDirection = uiState.layoutDirection,
+                onLayoutDirectionChange = appViewModel::setLayoutDirection,
+                languagePair = uiState.languagePair,
+                onLanguagePairChange = appViewModel::setLanguagePair,
+                personalWordDifficulty = uiState.personalWordDifficulty,
+                onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty,
+                quizChallenge = uiState.quizChallenge,
+                onQuizChallengeChange = appViewModel::setQuizChallenge,
+                difficultyThreshold = uiState.difficultyThreshold,
+                onDifficultyThresholdChange = appViewModel::setDifficultyThreshold,
+                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) },
+                onBack = { appViewModel.navigate(AppRoutes.HOME) }
+            )
         }
     }
 }
