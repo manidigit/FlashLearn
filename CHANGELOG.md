@@ -1,5 +1,13 @@
 # FlashLearn Changelog
 
+## v5.70 — Legacy Full Backup Restore + Update Verification
+- Added compatibility restore for the legacy FULL backup format used by earlier FlashLearn versions (`schemaVersion: 1`, `backupMode: FULL`, epoch timestamps, embedded concept contents).
+- Restores legacy concepts, categories, multilingual contents, learning state, difficulty state, review history/sessions, and settings into the current Room schema.
+- Preserves legacy sessions containing mixed review stages by splitting them by stage instead of rejecting or dropping history.
+- Added Android integration coverage for legacy FULL restore and idempotency.
+- Added emulator CI verification that installs the current APK and then performs an in-place `adb install -r` version upgrade with the same signing context.
+- CI/runtime identity advanced to 5.70/70.
+
 ## v5.69 — Vocabulary Restore + Launcher Icon Fix
 - Added a dedicated restore path for the legacy `backupMode: VOCABULARY` JSON format.
 - Verified against the supplied vocabulary backup shape: schemaVersion 1, 8,098 concepts, Spanish/Persian contents, 11 categories, and multiple translations per language.
