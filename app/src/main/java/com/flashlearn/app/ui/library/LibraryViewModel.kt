@@ -61,15 +61,17 @@ class LibraryViewModel @Inject constructor(
             try {
                 val cats = categoriesRepo.getAll()
                 val cs = if (query.isBlank()) concepts.getAllActive() else concepts.searchActive(query)
-                val allContent = contents.getAll().groupBy { it.conceptId }
                 val catMap = cats.associateBy { it.id }
-                val items = cs.asSequence()
+                val filteredConcepts = cs.asSequence()
                     .filter { selectedCategory == null || it.categoryId == selectedCategory }
                     .filter { !favoritesOnly || it.favorite }
-                    .map { c ->
-                        val cc = allContent[c.id].orEmpty()
-                        LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.firstOrNull { it.languageCode == targetLanguage }, c.categoryId?.let(catMap::get))
-                    }.toList()
+                    .toList()
+                // Do not scan the complete contents table for every search/filter change.
+                val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
+                val items = filteredConcepts.map { c ->
+                    val cc = contentMap[c.id].orEmpty()
+                    LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.firstOrNull { it.languageCode == targetLanguage }, c.categoryId?.let(catMap::get))
+                }
                 if (generation != refreshGeneration) return@launch
                 _state.value = _state.value.copy(categories = cats, items = items, isLoading = false)
             } catch (e: Exception) {
