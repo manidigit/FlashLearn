@@ -17,6 +17,7 @@ object Mappers {
     fun difficulty(e: DifficultyStateEntity)=DifficultyState(e.id,e.conceptId,VocabularyDifficulty.valueOf(e.current),e.consecutiveCorrect,e.consecutiveWrong,e.hasReachedVeryHard)
     fun difficulty(e: DifficultyState)=DifficultyStateEntity(e.id,e.conceptId,e.current.name,e.consecutiveCorrect,e.consecutiveWrong,e.hasReachedVeryHard)
     fun tag(e: ConceptTag)=ConceptTagEntity(e.conceptId,e.tagId)
+    fun tag(e: ConceptTagEntity)=ConceptTag(e.conceptId,e.tagId)
     fun history(e: ReviewHistory)=ReviewHistoryEntity(e.id,e.sessionId,e.reviewAttemptId,e.conceptId,e.reviewedAt,e.isCorrect,e.reviewType.name)
     fun history(e: ReviewHistoryEntity)=ReviewHistory(e.id,e.sessionId,e.reviewAttemptId,e.conceptId,e.reviewedAt,e.isCorrect,ReviewType.valueOf(e.reviewType))
     fun session(e: ReviewSession)=ReviewSessionEntity(e.id,e.startedAt,e.endedAt,e.reviewType.name)
@@ -48,6 +49,11 @@ class RoomConceptRepository @Inject constructor(private val dao: ConceptDao): Co
 class RoomContentRepository @Inject constructor(private val dao: ContentDao): ContentRepository {
     override suspend fun findByUuid(uuid: UUID)=dao.getById(uuid)?.let(Mappers::content)
     override suspend fun find(conceptId: UUID, languageCode: String)=dao.getByConceptIdAndLanguage(conceptId,languageCode)?.let(Mappers::content)
+    override suspend fun findForConcepts(conceptIds: List<UUID>): List<Content> {
+        if (conceptIds.isEmpty()) return emptyList()
+        // SQLite has a bound-variable limit on IN clauses; chunk to remain safe for 100k-word libraries.
+        return conceptIds.distinct().chunked(500).flatMap { ids -> dao.getForConcepts(ids).map(Mappers::content) }
+    }
     override suspend fun getAll()=dao.getAll().map(Mappers::content)
     override suspend fun upsert(content: Content) {
         val existing=dao.getByConceptIdAndLanguage(content.conceptId,content.languageCode)
@@ -76,6 +82,7 @@ class RoomConceptTagRepository @Inject constructor(private val dao: ConceptTagDa
     override suspend fun insert(conceptTag: ConceptTag)=dao.insert(Mappers.tag(conceptTag))
     override suspend fun getTagsForConcept(conceptId: UUID)=dao.getTagIdsForConcept(conceptId)
     override suspend fun getConceptsForTag(tagId: UUID)=dao.getConceptIdsForTag(tagId)
+    override suspend fun getAll(): List<ConceptTag> = dao.getAll().map(Mappers::tag)
 }
 class RoomReviewHistoryRepository @Inject constructor(private val dao: ReviewHistoryDao): ReviewHistoryRepository {
     override suspend fun insert(entry: ReviewHistory)=dao.insert(Mappers.history(entry))
