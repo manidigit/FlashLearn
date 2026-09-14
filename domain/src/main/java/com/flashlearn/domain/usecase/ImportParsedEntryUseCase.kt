@@ -2,6 +2,7 @@ package com.flashlearn.domain.usecase
 
 import com.flashlearn.domain.model.Content
 import com.flashlearn.domain.model.EntryType
+import com.flashlearn.domain.model.ImportMode
 import com.flashlearn.domain.model.ParserMetadata
 import com.flashlearn.domain.parser.EntryKind
 import com.flashlearn.domain.parser.ParsedEntry
@@ -12,7 +13,7 @@ import com.flashlearn.domain.repository.ParserMetadataRepository
 import java.util.UUID
 import javax.inject.Inject
 
-/** Imports one parsed vocabulary entry as a single atomic unit. */
+/** Imports one parsed vocabulary entry as a single atomic unit. Default mode is MERGE. */
 class ImportParsedEntryUseCase @Inject constructor(
     private val createConcept: CreateConceptUseCase,
     private val conceptRepository: ConceptRepository,
@@ -23,7 +24,8 @@ class ImportParsedEntryUseCase @Inject constructor(
     suspend operator fun invoke(
         entry: ParsedEntry,
         sourceLanguage: String = "es",
-        targetLanguage: String = "fa"
+        targetLanguage: String = "fa",
+        mode: ImportMode = ImportMode.MERGE
     ): UUID = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) {
             "زبان‌های مبدأ و مقصد باید متفاوت باشند"
@@ -42,8 +44,8 @@ class ImportParsedEntryUseCase @Inject constructor(
                 it.canonicalKey == sourceKey
         }
 
-        val conceptId = if (existingSource == null) {
-            createConcept.createInTransaction(
+        val conceptId = when {
+            existingSource == null -> createConcept.createInTransaction(
                 CreateConceptCommand(
                     sourceText = source,
                     targetText = targetText,
@@ -53,27 +55,23 @@ class ImportParsedEntryUseCase @Inject constructor(
                     entryType = entry.entryType.toDomainEntryType()
                 )
             )
-        } else {
-            val existingTarget = contentRepository.find(existingSource.conceptId, targetLanguage)
-            if (existingTarget?.canonicalKey == targetKey) {
-                throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
-            }
-            if (existingTarget == null) {
-                contentRepository.upsert(
-                    Content(UUID.randomUUID(), existingSource.conceptId, targetLanguage, targetText, targetKey)
+            mode == ImportMode.ADD_NEW -> createConcept.createInTransaction(
+                CreateConceptCommand(
+                    sourceText = source,
+                    targetText = targetText,
+                    sourceLanguage = sourceLanguage,
+                    targetLanguage = targetLanguage,
+                    notes = entry.notes,
+                    entryType = entry.entryType.toDomainEntryType()
                 )
-            } else {
-                val mergedText = mergeTranslationText(existingTarget.text, targetText)
-                if (mergedText != existingTarget.text) {
-                    contentRepository.upsert(
-                        existingTarget.copy(
-                            text = mergedText,
-                            canonicalKey = computeCanonicalKey(mergedText)
-                        )
-                    )
-                }
-            }
-            existingSource.conceptId
+            )
+            else -> mergeIntoExisting(
+                existingSource.conceptId,
+                targetLanguage,
+                targetText,
+                targetKey,
+                mode
+            )
         }
 
         parserMetadataRepository.upsert(
@@ -86,6 +84,52 @@ class ImportParsedEntryUseCase @Inject constructor(
             )
         )
         conceptId
+    }
+
+    private suspend fun mergeIntoExisting(
+        conceptId: UUID,
+        targetLanguage: String,
+        targetText: String,
+        targetKey: String,
+        mode: ImportMode
+    ): UUID {
+        val existingTarget = contentRepository.find(conceptId, targetLanguage)
+        if (existingTarget?.canonicalKey == targetKey) {
+            if (mode == ImportMode.SKIP_DUPLICATE) return conceptId
+            throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
+        }
+
+        when (mode) {
+            ImportMode.SKIP_DUPLICATE -> return conceptId
+            ImportMode.UPDATE -> {
+                if (existingTarget == null) {
+                    contentRepository.upsert(
+                        Content(UUID.randomUUID(), conceptId, targetLanguage, targetText, targetKey)
+                    )
+                } else {
+                    contentRepository.upsert(existingTarget.copy(text = targetText, canonicalKey = targetKey))
+                }
+            }
+            ImportMode.MERGE -> {
+                if (existingTarget == null) {
+                    contentRepository.upsert(
+                        Content(UUID.randomUUID(), conceptId, targetLanguage, targetText, targetKey)
+                    )
+                } else {
+                    val mergedText = mergeTranslationText(existingTarget.text, targetText)
+                    if (mergedText != existingTarget.text) {
+                        contentRepository.upsert(
+                            existingTarget.copy(
+                                text = mergedText,
+                                canonicalKey = computeCanonicalKey(mergedText)
+                            )
+                        )
+                    }
+                }
+            }
+            ImportMode.ADD_NEW -> error("ADD_NEW is handled before mergeIntoExisting")
+        }
+        return conceptId
     }
 
     private fun mergeTranslationText(existing: String, incoming: String): String {
