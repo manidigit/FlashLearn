@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.addword
 
+import com.flashlearn.app.ui.LanguagePair
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.parser.ParsedEntry
@@ -39,7 +40,9 @@ data class BulkImportUiState(
     val invalidCount: Int = 0,
     val failedCount: Int = 0,
     val error: String? = null,
-    val done: Boolean = false
+    val done: Boolean = false,
+    val sourceLanguage: String = "es",
+    val targetLanguage: String = "fa"
 )
 
 @HiltViewModel
@@ -50,119 +53,63 @@ class BulkImportViewModel @Inject constructor(
     private val _state = MutableStateFlow(BulkImportUiState())
     val state: StateFlow<BulkImportUiState> = _state.asStateFlow()
 
+    fun setLanguagePair(pair: LanguagePair) {
+        _state.value = _state.value.copy(sourceLanguage = pair.source.code, targetLanguage = pair.target.code)
+    }
+
     fun onTextChange(value: String) {
-        _state.value = _state.value.copy(
-            rawText = value,
-            preview = emptyList(),
-            results = emptyList(),
-            warnings = emptyList(),
-            importedCount = 0,
-            skippedDuplicateCount = 0,
-            invalidCount = 0,
-            failedCount = 0,
-            error = null,
-            done = false
-        )
+        _state.value = _state.value.copy(rawText = value, preview = emptyList(), results = emptyList(), warnings = emptyList(), importedCount = 0, skippedDuplicateCount = 0, invalidCount = 0, failedCount = 0, error = null, done = false)
     }
 
     fun preview() {
         if (_state.value.isImporting) return
         val result = parser.parseDetailed(_state.value.rawText)
-        _state.value = _state.value.copy(
-            preview = result.entries,
-            results = result.entries.map(::readyResult),
-            warnings = result.warnings,
-            error = if (result.entries.isEmpty()) "مورد قابل وارد کردن پیدا نشد." else null
-        )
+        _state.value = _state.value.copy(preview = result.entries, results = result.entries.map(::readyResult), warnings = result.warnings, error = if (result.entries.isEmpty()) "مورد قابل وارد کردن پیدا نشد." else null)
     }
 
     fun importAll() {
         if (_state.value.isImporting) return
         val current = _state.value
-        val parsed = if (current.preview.isNotEmpty()) {
-            null
-        } else {
-            parser.parseDetailed(current.rawText)
-        }
+        val parsed = if (current.preview.isNotEmpty()) null else parser.parseDetailed(current.rawText)
         val entries = current.preview.ifEmpty { parsed?.entries.orEmpty() }
         if (entries.isEmpty()) {
-            if (parsed != null) {
-                _state.value = _state.value.copy(
-                    preview = parsed.entries,
-                    results = parsed.entries.map(::readyResult),
-                    warnings = parsed.warnings,
-                    error = "مورد قابل وارد کردن پیدا نشد."
-                )
-            }
+            if (parsed != null) _state.value = _state.value.copy(preview = parsed.entries, results = parsed.entries.map(::readyResult), warnings = parsed.warnings, error = "مورد قابل وارد کردن پیدا نشد.")
             return
         }
-        if (parsed != null) {
-            _state.value = _state.value.copy(
-                preview = parsed.entries,
-                results = parsed.entries.map(::readyResult),
-                warnings = parsed.warnings,
-                error = null
-            )
-        }
+        if (parsed != null) _state.value = _state.value.copy(preview = parsed.entries, results = parsed.entries.map(::readyResult), warnings = parsed.warnings, error = null)
         val batch = entries.toList()
+        val sourceLanguage = current.sourceLanguage
+        val targetLanguage = current.targetLanguage
         viewModelScope.launch {
             _state.value = _state.value.copy(isImporting = true, error = null, done = false, failedCount = 0)
             try {
-                var imported = 0
-                var skippedDuplicates = 0
-                var invalid = 0
-                var failed = 0
+                var imported = 0; var skippedDuplicates = 0; var invalid = 0; var failed = 0
                 val seenPairs = mutableSetOf<String>()
                 val results = mutableListOf<BulkImportItemResult>()
                 batch.forEach { entry ->
-                    val source = entry.sourceText.trim()
-                    val translation = entry.translationText?.trim()
+                    val source = entry.sourceText.trim(); val translation = entry.translationText?.trim()
                     if (source.isBlank() || translation.isNullOrBlank()) {
-                        invalid++
-                        results += BulkImportItemResult(entry, BulkImportItemStatus.INCOMPLETE, "مدخل ناقص")
+                        invalid++; results += BulkImportItemResult(entry, BulkImportItemStatus.INCOMPLETE, "مدخل ناقص")
                     } else {
                         val pairKey = computeCanonicalKey(source) + "\u0000" + computeCanonicalKey(translation)
                         if (seenPairs.contains(pairKey)) {
-                            skippedDuplicates++
-                            results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "تکراری در همین دسته")
+                            skippedDuplicates++; results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "تکراری در همین دسته")
                         } else {
                             try {
-                                importParsedEntry(entry)
-                                imported++
-                                // Mark the pair as seen only after a successful atomic import.
-                                // A failed/duplicate item must not make a later identical item
-                                // look like a batch duplicate.
-                                seenPairs.add(pairKey)
-                                results += BulkImportItemResult(entry, BulkImportItemStatus.IMPORTED)
+                                importParsedEntry(entry, sourceLanguage, targetLanguage)
+                                imported++; seenPairs.add(pairKey); results += BulkImportItemResult(entry, BulkImportItemStatus.IMPORTED)
                             } catch (_: DuplicateConceptException) {
-                                skippedDuplicates++
-                                results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "قبلاً در کتابخانه وجود دارد")
+                                skippedDuplicates++; results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "قبلاً در کتابخانه وجود دارد")
                             } catch (e: Exception) {
-                                failed++
-                                results += BulkImportItemResult(entry, BulkImportItemStatus.FAILED, e.message ?: "خطای نامشخص")
+                                failed++; results += BulkImportItemResult(entry, BulkImportItemStatus.FAILED, e.message ?: "خطای نامشخص")
                             }
                         }
                     }
                 }
-                _state.value = _state.value.copy(
-                    results = results,
-                    isImporting = false,
-                    importedCount = imported,
-                    skippedDuplicateCount = skippedDuplicates,
-                    invalidCount = invalid,
-                    failedCount = failed,
-                    done = true,
-                    error = if (failed > 0) "$failed مورد با خطا مواجه شد." else null
-                )
-            } catch (e: Exception) {
-                _state.value = _state.value.copy(isImporting = false, error = e.message ?: "خطا در وارد کردن اطلاعات")
-            }
+                _state.value = _state.value.copy(results = results, isImporting = false, importedCount = imported, skippedDuplicateCount = skippedDuplicates, invalidCount = invalid, failedCount = failed, done = true, error = if (failed > 0) "$failed مورد با خطا مواجه شد." else null)
+            } catch (e: Exception) { _state.value = _state.value.copy(isImporting = false, error = e.message ?: "خطا در وارد کردن اطلاعات") }
         }
     }
 
-    private fun readyResult(entry: ParsedEntry) = BulkImportItemResult(
-        entry,
-        if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY
-    )
-
+    private fun readyResult(entry: ParsedEntry) = BulkImportItemResult(entry, if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY)
 }
