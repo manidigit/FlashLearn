@@ -15,7 +15,12 @@ import androidx.compose.ui.unit.dp
 import java.util.UUID
 
 @Composable
-fun LibraryScreen(viewModel: LibraryViewModel, onBack: () -> Unit = {}, onOpen: (UUID) -> Unit = {}) {
+fun LibraryScreen(
+    viewModel: LibraryViewModel,
+    onBack: () -> Unit = {},
+    onOpen: (UUID) -> Unit = {},
+    onAddWord: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
 
@@ -37,9 +42,7 @@ fun LibraryScreen(viewModel: LibraryViewModel, onBack: () -> Unit = {}, onOpen: 
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !state.favoritesOnly, onClick = { viewModel.onFavoritesChange(false) }, label = { Text("همه") })
-            FilterChip(selected = state.favoritesOnly, onClick = { viewModel.onFavoritesChange(true) }, label = { Text("یادگرفته‌شده") })
-            FilterChip(selected = false, onClick = { }, enabled = false, label = { Text("در حال یادگیری") })
-            FilterChip(selected = false, onClick = { }, enabled = false, label = { Text("جدید") })
+            FilterChip(selected = state.favoritesOnly, onClick = { viewModel.onFavoritesChange(true) }, label = { Text("موردعلاقه‌ها") })
         }
         Spacer(Modifier.height(10.dp))
         if (state.categories.isNotEmpty()) {
@@ -53,17 +56,13 @@ fun LibraryScreen(viewModel: LibraryViewModel, onBack: () -> Unit = {}, onOpen: 
             }
         }
         Spacer(Modifier.height(8.dp))
-
         when {
             state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null -> Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error)
             state.items.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("واژه‌ای پیدا نشد.") }
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.weight(1f)) {
                 items(state.items, key = { it.concept.id }) { item ->
-                    Card(
-                        Modifier.fillMaxWidth().clickable { onOpen(item.concept.id) },
-                        shape = MaterialTheme.shapes.medium
-                    ) {
+                    Card(Modifier.fillMaxWidth().clickable { onOpen(item.concept.id) }, shape = MaterialTheme.shapes.medium) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Outlined.StarBorder, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
                             Spacer(Modifier.width(10.dp))
@@ -78,7 +77,7 @@ fun LibraryScreen(viewModel: LibraryViewModel, onBack: () -> Unit = {}, onOpen: 
             }
         }
         Spacer(Modifier.height(10.dp))
-        Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(50.dp), shape = MaterialTheme.shapes.medium) {
+        Button(onClick = onAddWord, modifier = Modifier.fillMaxWidth().height(50.dp), shape = MaterialTheme.shapes.medium) {
             Text("+  افزودن واژه جدید")
         }
     }
