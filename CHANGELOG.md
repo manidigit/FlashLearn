@@ -1,6 +1,6 @@
 # FlashLearn Changelog
 
-## v5.73 — Large-Library Review + Statistics Performance
+## v5.73 — Large-Library Review + Statistics + Quiz UX Performance
 - Capped each Review session at 30 cards so a restored library cannot create an 8k/100k-card session.
 - Randomized the selected review batch to remove the previous database-order/UUID rhythm.
 - Replaced Review queue N+1 concept/difficulty/tag reads with bulk loads and in-memory joins.
@@ -9,6 +9,8 @@
 - Quiz selection now expands from the selected category to the full language-pair bank when a category does not contain enough distinct answers for four choices.
 - Reworked Progress and Progress Summary to bulk-load LearningState/DifficultyState instead of querying once per concept.
 - Kept vocabulary/legacy restore on IO with batch Room writes and aligned CI/update smoke testing to v5.73/73.
+- Redesigned the four-option Quiz screen toward the supplied reference: large prompt card, four large answer choices, Hint/Note controls, and clear progress.
+- Quiz answer feedback now follows the requested interaction: correct answer becomes green; when the selected answer is wrong it becomes red and the correct answer becomes green; choices lock after submission and remain visible for 2 seconds before advancing.
 
 ## v5.71 — Legacy Restore + Quiz Mode + Update-Path Hardening
 - Hardened legacy FULL restore for the earlier-version backup format (`schemaVersion: 1`, `backupMode: FULL`, epoch timestamps, embedded concept contents).
