@@ -8,7 +8,6 @@ import com.flashlearn.domain.statistics.CalculateStreakUseCase
 import com.flashlearn.domain.statistics.StatisticsSnapshot
 import com.flashlearn.domain.statistics.StreakSnapshot
 import com.flashlearn.domain.model.ProgressSummary
-import com.flashlearn.domain.usecase.GetProgressSummaryUseCase
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.repository.AchievementRepository
 import com.flashlearn.domain.gamification.AchievementContext
@@ -24,6 +23,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+data class DailyReviewStat(val dayLabel: String, val total: Int, val correct: Int) {
+    val accuracyPercent: Int get() = if (total == 0) 0 else (correct * 100) / total
+}
+
 data class ProgressUiState(
     val loading: Boolean = true,
     val progress: com.flashlearn.domain.progress.ProgressSnapshot? = null,
@@ -31,6 +34,7 @@ data class ProgressUiState(
     val statistics: StatisticsSnapshot? = null,
     val streak: StreakSnapshot? = null,
     val achievements: List<Pair<AchievementDefinition, AchievementState>> = emptyList(),
+    val dailyReviews: List<DailyReviewStat> = emptyList(),
     val error: String? = null
 )
 
@@ -39,7 +43,7 @@ class ProgressViewModel @Inject constructor(
     private val calculateProgress: CalculateProgressUseCase,
     private val calculateStatistics: CalculateStatisticsUseCase,
     private val calculateStreak: CalculateStreakUseCase,
-    private val getProgressSummary: GetProgressSummaryUseCase,
+    private val getProgressSummary: com.flashlearn.domain.usecase.GetProgressSummaryUseCase,
     private val historyRepository: ReviewHistoryRepository,
     private val achievementRepository: AchievementRepository,
     private val evaluateAchievements: EvaluateAchievementsUseCase
@@ -58,7 +62,8 @@ class ProgressViewModel @Inject constructor(
                 val stats = calculateStatistics()
                 val progress = calculateProgress(now)
                 val summary = getProgressSummary(now)
-                val streak = calculateStreak.calculate(historyRepository.getAll(), now, zoneId)
+                val history = historyRepository.getAll()
+                val streak = calculateStreak.calculate(history, now, zoneId)
                 val existingAchievements = achievementRepository.getAll()
                 val achievementResult = evaluateAchievements.evaluate(
                     DefaultAchievements.definitions,
@@ -76,19 +81,30 @@ class ProgressViewModel @Inject constructor(
                 val achievements = DefaultAchievements.definitions.mapNotNull { definition ->
                     achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
                 }
-                Quadruple(progress, summary, stats, streak, achievements)
-            }.onSuccess { (progress, summary, stats, streak, achievements) ->
+                val today = now.atZone(zoneId).toLocalDate()
+                val dayNames = listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")
+                val daily = (6 downTo 0).map { offset ->
+                    val date = today.minusDays(offset.toLong())
+                    val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
+                    DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
+                }
+                ProgressPayload(progress, summary, stats, streak, achievements, daily)
+            }.onSuccess { payload ->
                 if (generation == refreshGeneration) {
-                    _state.value = ProgressUiState(false, progress, summary, stats, streak, achievements, null)
+                    _state.value = ProgressUiState(false, payload.progress, payload.summary, payload.stats, payload.streak, payload.achievements, payload.dailyReviews, null)
                 }
             }.onFailure {
-                if (generation == refreshGeneration) {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "Unknown error")
-                }
+                if (generation == refreshGeneration) _state.value = _state.value.copy(loading = false, error = it.message ?: "خطا در محاسبه آمار")
             }
         }
     }
 }
 
-
-private data class Quadruple<A, B, C, D, E>(val first: A, val second: B, val third: C, val fourth: D, val fifth: E)
+private data class ProgressPayload(
+    val progress: com.flashlearn.domain.progress.ProgressSnapshot,
+    val summary: ProgressSummary,
+    val stats: StatisticsSnapshot,
+    val streak: StreakSnapshot,
+    val achievements: List<Pair<AchievementDefinition, AchievementState>>,
+    val dailyReviews: List<DailyReviewStat>
+)
