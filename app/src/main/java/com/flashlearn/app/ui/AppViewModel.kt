@@ -17,6 +17,10 @@ class AppViewModel @Inject constructor() : ViewModel() {
         _state.value = _state.value.copy(appearance = mode)
     }
 
+    fun setAccentColor(color: AccentColor) {
+        _state.value = _state.value.copy(accentColor = color)
+    }
+
     fun setLayoutDirection(direction: AppLayoutDirection) {
         _state.value = _state.value.copy(layoutDirection = direction)
     }
