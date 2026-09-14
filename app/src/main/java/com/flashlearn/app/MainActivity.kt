@@ -54,14 +54,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val appState by appViewModel.state
             FlashLearnTheme(appearance = appState.appearance, accentColor = appState.accentColor) {
-                CompositionLocalProvider(
-                    LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr
-                ) {
+                CompositionLocalProvider(LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr) {
                     Surface(Modifier.fillMaxSize()) {
-                        BackHandler {
-                            if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish()
-                            else appViewModel.goBack()
-                        }
+                        BackHandler { if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish() else appViewModel.goBack() }
                         AppRootScreen()
                     }
                 }
@@ -69,56 +64,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    private fun AppRootScreen() {
+    @Composable private fun AppRootScreen() {
         val uiState by appViewModel.state
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
             FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
                 appViewModel.navigate(route)
-                when (route) {
-                    AppRoutes.HOME -> homeViewModel.refresh()
-                    AppRoutes.LIBRARY -> libraryViewModel.refresh()
-                    AppRoutes.PROGRESS -> progressViewModel.refresh()
-                }
+                when (route) { AppRoutes.HOME -> homeViewModel.refresh(); AppRoutes.LIBRARY -> libraryViewModel.refresh(); AppRoutes.PROGRESS -> progressViewModel.refresh() }
             }) { TopLevelContent(uiState.selectedRoute) }
         } else when (uiState.selectedRoute) {
-            AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
-                LibraryDetailScreen(libraryDetailViewModel, id,
-                    onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
-                    onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
-            }
-            AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
-            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.HOME); homeViewModel.refresh() }
+            AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
+            AppRoutes.ADD_WORD -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair) { appViewModel.navigate(AppRoutes.LIBRARY); libraryViewModel.refresh(); homeViewModel.refresh() }
+            AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel) { appViewModel.navigate(AppRoutes.LIBRARY); libraryViewModel.refresh(); homeViewModel.refresh() }
             AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.SETTINGS) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh() })
         }
     }
 
-    @Composable
-    private fun TopLevelContent(route: String) {
+    @Composable private fun TopLevelContent(route: String) {
         val uiState by appViewModel.state
         when (route) {
-            AppRoutes.HOME -> HomeScreen(homeViewModel,
-                onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
-                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
-                onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
-                onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) },
-                onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
-                onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
+            AppRoutes.HOME -> HomeScreen(homeViewModel, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) }, onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) }, onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
             AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(
-                appearance = uiState.appearance,
-                accentColor = uiState.accentColor,
-                onAppearanceChange = appViewModel::setAppearance,
-                onAccentColorChange = appViewModel::setAccentColor,
-                layoutDirection = uiState.layoutDirection,
-                onLayoutDirectionChange = appViewModel::setLayoutDirection,
-                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
-                onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) },
-                onBack = { appViewModel.navigate(AppRoutes.HOME) }
-            )
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, accentColor = uiState.accentColor, onAppearanceChange = appViewModel::setAppearance, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onImportExport = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 }
