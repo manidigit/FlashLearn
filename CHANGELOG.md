@@ -1,5 +1,15 @@
 # FlashLearn Changelog
 
+## v5.73 — Large-Library Review + Statistics Performance
+- Capped each Review session at 30 cards so a restored library cannot create an 8k/100k-card session.
+- Randomized the selected review batch to remove the previous database-order/UUID rhythm.
+- Replaced Review queue N+1 concept/difficulty/tag reads with bulk loads and in-memory joins.
+- Replaced Review content N+1 reads with one bulk content lookup for the selected batch.
+- Reworked Quiz distractor selection to use bulk difficulty data and a cached quiz bank instead of full-table/per-candidate Room reads for every question.
+- Quiz selection now expands from the selected category to the full language-pair bank when a category does not contain enough distinct answers for four choices.
+- Reworked Progress and Progress Summary to bulk-load LearningState/DifficultyState instead of querying once per concept.
+- Kept vocabulary/legacy restore on IO with batch Room writes and aligned CI/update smoke testing to v5.73/73.
+
 ## v5.71 — Legacy Restore + Quiz Mode + Update-Path Hardening
 - Hardened legacy FULL restore for the earlier-version backup format (`schemaVersion: 1`, `backupMode: FULL`, epoch timestamps, embedded concept contents).
 - Validated the supplied FULL backup shape: 8,098 concepts, 8,098 learning states, 1,878 review-history records, 8 languages, and 11 categories, with no violations of the restore parser's strict UUID/language/stage/difficulty/reference/streak checks.
