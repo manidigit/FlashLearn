@@ -7,9 +7,7 @@ enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 enum class AppLayoutDirection { RTL, LTR }
 enum class AccentColor { PURPLE, BLUE, GREEN, ORANGE, PINK }
 enum class LearningLanguage(val code: String, val labelFa: String) {
-    PERSIAN("fa", "فارسی"),
-    SPANISH("es", "اسپانیایی"),
-    ENGLISH("en", "انگلیسی")
+    PERSIAN("fa", "فارسی"), SPANISH("es", "اسپانیایی"), ENGLISH("en", "انگلیسی")
 }
 
 enum class QuizChallenge(val label: String) { A("A"), B("B"), C("C") }
@@ -18,6 +16,7 @@ data class LanguagePair(
     val source: LearningLanguage = LearningLanguage.SPANISH,
     val target: LearningLanguage = LearningLanguage.PERSIAN
 ) {
+    init { require(source != target) { "Learning language pair must contain two different languages" } }
     fun reversed() = LanguagePair(target, source)
 }
 
