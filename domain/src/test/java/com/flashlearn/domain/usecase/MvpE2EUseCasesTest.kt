@@ -81,7 +81,7 @@ class MvpE2EUseCasesTest {
         val reviewNow = evaluationNow.plusMillis(1)
         val home = GetProgressSummaryUseCase(concepts, learning)(evaluationNow)
         assertEquals(10, home.activeConceptCount)
-        assertEquals(10, home.dueConceptCount) // null nextReviewAt is immediately reviewable
+        assertEquals(10, home.dueConceptCount)
         assertEquals(10, home.dailyDueConceptCount)
         assertEquals(0, home.weeklyDueConceptCount)
         assertEquals(0, home.monthlyDueConceptCount)
@@ -119,8 +119,6 @@ class MvpE2EUseCasesTest {
         assertEquals(1, stats.totalCorrect)
         assertEquals(100, stats.accuracyPercent)
 
-        // A failed WEEKLY review must return the word to DAILY, mark path failure,
-        // and update statistics; a later correct DAILY review advances it again.
         val weeklyAt = nextReviewAt!!
         val failed = submit(
             SubmitReviewAnswerRequest(
@@ -149,8 +147,6 @@ class MvpE2EUseCasesTest {
         assertEquals(1, statsAfterRecovery.totalWrong)
         assertEquals(66, statsAfterRecovery.accuracyPercent)
 
-        // Soft-delete must remove the concept from active progress/review eligibility
-        // while preserving the historical review record.
         DeleteConceptUseCase(concepts, Db())(ids.first())
         assertEquals(false, concepts.get(ids.first())?.active)
 
@@ -168,7 +164,6 @@ class MvpE2EUseCasesTest {
         assertTrue(queue.none { it.concept.id == ids.first() })
         assertEquals(3, history.values.size)
 
-        // v5.52 acceptance: the same review history drives statistics and streaks.
         val statistics = CalculateStatisticsUseCase(history)()
         assertEquals(3, statistics.totalReviews)
         assertEquals(2, statistics.totalCorrect)
@@ -177,9 +172,9 @@ class MvpE2EUseCasesTest {
         assertEquals(1, statistics.reviewedConceptCount)
 
         val streak = CalculateStreakUseCase().calculate(
-            history.values, reviewNow.plusSeconds(60), ZoneOffset.UTC
+            history.values, retryAt.plusSeconds(60), ZoneOffset.UTC
         )
-        assertEquals(1, streak.currentStreakDays)
-        assertEquals(1, streak.longestStreakDays)
+        assertEquals(2, streak.currentStreakDays)
+        assertEquals(2, streak.longestStreakDays)
     }
 }
