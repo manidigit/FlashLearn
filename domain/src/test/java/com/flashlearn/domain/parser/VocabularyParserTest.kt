@@ -77,9 +77,8 @@ class VocabularyParserTest {
         assertEquals(1, result.entries.size)
         assertEquals("aprender", result.entries[0].sourceText)
         assertTrue(result.entries[0].translationText == null)
-        assertEquals(2, result.warnings.size)
-        assertEquals(ParseWarningType.ORPHAN_TRANSLATION, result.warnings[0].warningType)
-        assertEquals(ParseWarningType.ORPHAN_SOURCE, result.warnings[1].warningType)
+        assertEquals(1, result.warnings.size)
+        assertEquals(ParseWarningType.ORPHAN_SOURCE, result.warnings[0].warningType)
     }
 
     @Test fun detailed_parse_preserves_unknown_following_lines_as_notes() {
@@ -136,6 +135,6 @@ class VocabularyParserTest {
         assertEquals("started_entry", result.importLog[0].action)
         assertEquals("attached_as_note", result.importLog[1].action)
         assertEquals("ignored", result.importLog[2].action)
-        assertEquals("warning_orphan", result.importLog[3].action)
+        assertEquals("attached_as_note", result.importLog[3].action)
     }
 }
