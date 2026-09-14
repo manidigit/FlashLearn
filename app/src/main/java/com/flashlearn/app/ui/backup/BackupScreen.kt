@@ -12,6 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -19,24 +23,30 @@ import java.io.InputStreamReader
 fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
     var pendingJson by remember { mutableStateOf<String?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val json = pendingJson
         if (uri != null && !json.isNullOrBlank()) {
-            runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) } }
-                .onFailure { viewModel.showMessage("ذخیره فایل ناموفق بود: ${it.message ?: "خطای دسترسی"}") }
+            scope.launch(Dispatchers.IO) {
+                runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) } }
+                    .onFailure { viewModel.showMessage("ذخیره فایل ناموفق بود: ${it.message ?: "خطای دسترسی"}") }
+            }
         }
         pendingJson = null
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
-            runCatching {
-                context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() }
-                    ?: error("فایل قابل خواندن نیست")
-            }.onSuccess { json ->
-                if (json.trimStart().startsWith("{")) viewModel.restore(json, onRestored)
-                else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.")
-            }.onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطای دسترسی"}") }
+            scope.launch(Dispatchers.IO) {
+                val result = runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() }
+                        ?: error("فایل قابل خواندن نیست")
+                }
+                result.onSuccess { json ->
+                    if (json.trimStart().startsWith("{")) viewModel.restore(json, onRestored)
+                    else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.")
+                }.onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطای دسترسی"}") }
+            }
         }
     }
 
@@ -58,6 +68,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
             OutlinedButton(onClick = { open.launch(arrayOf("application/json", "text/plain", "*/*")) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                 Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(8.dp)); Text("انتخاب فایل پشتیبان برای بازیابی")
             }
+            if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.message?.let { Text(it, color = if (it.contains("ناموفق") || it.contains("معتبر")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary) }
             state.exportedJson?.let { json ->
                 Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
