@@ -17,6 +17,10 @@ class AppViewModel @Inject constructor() : ViewModel() {
         _state.value = _state.value.copy(appearance = mode)
     }
 
+    fun setLayoutDirection(direction: AppLayoutDirection) {
+        _state.value = _state.value.copy(layoutDirection = direction)
+    }
+
     fun openLibraryDetail(conceptId: UUID) {
         _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
     }
