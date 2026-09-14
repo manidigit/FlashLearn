@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.69"
-  FL_VERSION_CODE: "69"
+  FL_VERSION_NAME: "5.70"
+  FL_VERSION_CODE: "70"
 
 jobs:
   build-and-unit-test:
@@ -84,7 +84,20 @@ jobs:
           emulator-options: "-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot"
           disable-animations: true
           force-avd-creation: true
-          script: gradle --no-daemon connectedDebugAndroidTest
+          script: |
+            gradle --no-daemon connectedDebugAndroidTest
+            gradle --no-daemon :app:assembleDebug
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            python3 - <<'PY'
+            from pathlib import Path
+            p = Path("app/build.gradle.kts")
+            s = p.read_text()
+            s = s.replace("versionCode = 70", "versionCode = 71").replace('versionName = "5.70"', 'versionName = "5.71"')
+            p.write_text(s)
+            PY
+            gradle --no-daemon :app:assembleDebug
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "71"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
