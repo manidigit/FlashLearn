@@ -2,6 +2,7 @@ package com.flashlearn.app.ui.backup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flashlearn.data.backup.LegacyFullBackupRepository
 import com.flashlearn.data.backup.VocabularyBackupRepository
 import com.flashlearn.domain.repository.BackupRepository
 import com.flashlearn.domain.repository.RestoreResult
@@ -19,7 +20,8 @@ data class BackupUiState(val busy: Boolean=false, val message: String?=null, val
 @HiltViewModel
 class BackupViewModel @Inject constructor(
     private val repo: BackupRepository,
-    private val vocabularyRepo: VocabularyBackupRepository
+    private val vocabularyRepo: VocabularyBackupRepository,
+    private val legacyFullRepo: LegacyFullBackupRepository
 ): ViewModel() {
     private val _state=MutableStateFlow(BackupUiState())
     val state: StateFlow<BackupUiState> = _state
@@ -39,7 +41,14 @@ class BackupViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 val root = JSONObject(json)
                 val isVocabulary = root.optString("backupMode") == "VOCABULARY"
-                if (isVocabulary) vocabularyRepo.restore(json) else repo.restoreFull(json)
+                val isLegacyFull = root.optString("backupMode") == "FULL" &&
+                    root.has("concepts") &&
+                    root.optJSONArray("concepts")?.optJSONObject(0)?.has("uuid") == true
+                when {
+                    isVocabulary -> vocabularyRepo.restore(json)
+                    isLegacyFull -> legacyFullRepo.restore(json)
+                    else -> repo.restoreFull(json)
+                }
             }
         }.onSuccess { r ->
             _state.value=BackupUiState(message=restoreMessage(r))
