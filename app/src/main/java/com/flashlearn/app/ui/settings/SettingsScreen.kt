@@ -16,11 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.flashlearn.app.ui.AccentColor
-import com.flashlearn.app.ui.AppLayoutDirection
-import com.flashlearn.app.ui.AppearanceMode
-import com.flashlearn.app.ui.LanguagePair
-import com.flashlearn.app.ui.LearningLanguage
+import com.flashlearn.app.ui.*
+import com.flashlearn.domain.model.VocabularyDifficulty
 
 @Composable
 fun SettingsScreen(
@@ -32,6 +29,10 @@ fun SettingsScreen(
     onLayoutDirectionChange: (AppLayoutDirection) -> Unit = {},
     languagePair: LanguagePair = LanguagePair(),
     onLanguagePairChange: (LanguagePair) -> Unit = {},
+    personalWordDifficulty: VocabularyDifficulty? = null,
+    onPersonalWordDifficultyChange: (VocabularyDifficulty?) -> Unit = {},
+    quizChallenge: QuizChallenge = QuizChallenge.B,
+    onQuizChallengeChange: (QuizChallenge) -> Unit = {},
     onBackup: () -> Unit = {},
     onImportExport: () -> Unit = onBackup,
     onBack: () -> Unit = {}
@@ -62,8 +63,8 @@ fun SettingsScreen(
             AccentChoice("نارنجی", AccentColor.ORANGE, accentColor, onAccentColorChange, Color(0xFFEA580C), Modifier.weight(1f))
             AccentChoice("صورتی", AccentColor.PINK, accentColor, onAccentColorChange, Color(0xFFDB2777), Modifier.weight(1f))
         }
-        Spacer(Modifier.height(10.dp))
 
+        Spacer(Modifier.height(12.dp))
         Section("زبان برنامه")
         SettingsRow(Icons.Outlined.Language, "زبان رابط کاربری", "فارسی", null)
         Spacer(Modifier.height(8.dp))
@@ -73,23 +74,44 @@ fun SettingsScreen(
             LanguageChoice(languagePair.target, "مقصد", { targetMenu = true }, Modifier.weight(1f))
         }
         TextButton(onClick = { onLanguagePairChange(languagePair.reversed()) }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("↔ جابه‌جایی زبان‌ها") }
-
         DropdownMenu(sourceMenu, { sourceMenu = false }) { LearningLanguage.entries.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(languagePair.copy(source = lang)); sourceMenu = false }) } }
         DropdownMenu(targetMenu, { targetMenu = false }) { LearningLanguage.entries.forEach { lang -> DropdownMenuItem(text = { Text(lang.labelFa) }, onClick = { onLanguagePairChange(languagePair.copy(target = lang)); targetMenu = false }) } }
-
-        Spacer(Modifier.height(4.dp))
         SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست") { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
+        Section("سختی واژه‌ها")
+        Text("چقدر این کلمه برای من سخت است", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(6.dp))
+        val wordDifficultyOptions = listOf("همه" to (personalWordDifficulty == null)) + VocabularyDifficulty.entries.map { difficultyLabel(it) to (it == personalWordDifficulty) }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            wordDifficultyOptions.forEachIndexed { index, (label, selected) -> FilterChip(selected = selected, onClick = { onPersonalWordDifficultyChange(if (index == 0) null else VocabularyDifficulty.entries[index - 1]) }, label = { Text(label) }) }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Section("چالش آزمون")
+        Text("درجه شباهت گزینه‌های غلط", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(6.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            QuizChallenge.entries.forEach { challenge -> FilterChip(selected = challenge == quizChallenge, onClick = { onQuizChallengeChange(challenge) }, label = { Text(challenge.label) }, modifier = Modifier.weight(1f)) }
+        }
+
+        Spacer(Modifier.height(12.dp))
         Section("داده‌ها")
         SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "نسخه کامل واژگان و پیشرفت") { onBackup() }
         SettingsRow(Icons.Outlined.Storage, "صادرات / واردات کلمه", "ورود و خروج واژه‌ها") { onImportExport() }
         Spacer(Modifier.height(10.dp))
         Section("درباره")
-        SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.58") { aboutDialog = true }
+        SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.59") { aboutDialog = true }
     }
 
-    if (aboutDialog) AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.58\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
+    if (aboutDialog) AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.59\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
+}
+
+private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) {
+    VocabularyDifficulty.EASY -> "آسان"
+    VocabularyDifficulty.MEDIUM -> "متوسط"
+    VocabularyDifficulty.HARD -> "سخت"
+    VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
 }
 
 @Composable private fun Section(text: String) { Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp)) }
