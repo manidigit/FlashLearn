@@ -11,8 +11,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 65
-        versionName = "5.65"
+        versionCode = 66
+        versionName = "5.66"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
