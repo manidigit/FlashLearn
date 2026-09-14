@@ -36,6 +36,7 @@ import com.flashlearn.app.ui.review.ReviewScreen
 import com.flashlearn.app.ui.review.ReviewViewModel
 import com.flashlearn.app.ui.settings.SettingsScreen
 import com.flashlearn.app.ui.theme.FlashLearnTheme
+import com.flashlearn.domain.usecase.QuizChallengeProvider
 import com.flashlearn.domain.usecase.QuizChallenge as DomainQuizChallenge
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -87,13 +88,11 @@ class MainActivity : ComponentActivity() {
         when (route) {
             AppRoutes.HOME -> HomeScreen(homeViewModel, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onBulkImport = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onLibrary = { appViewModel.navigate(AppRoutes.LIBRARY) }, onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) }, onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
             AppRoutes.REVIEW -> {
-                reviewViewModel.setQuizChallenge(
-                    when (uiState.quizChallenge) {
-                        QuizChallenge.A -> DomainQuizChallenge.A
-                        QuizChallenge.B -> DomainQuizChallenge.B
-                        QuizChallenge.C -> DomainQuizChallenge.C
-                    }
-                )
+                QuizChallengeProvider.current = when (uiState.quizChallenge) {
+                    QuizChallenge.A -> DomainQuizChallenge.A
+                    QuizChallenge.B -> DomainQuizChallenge.B
+                    QuizChallenge.C -> DomainQuizChallenge.C
+                }
                 ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizChallenge = uiState.quizChallenge) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
             }
             AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
