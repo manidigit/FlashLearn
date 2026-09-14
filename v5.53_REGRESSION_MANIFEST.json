@@ -1,8 +1,0 @@
-{
-  "version": "5.53",
-  "stage": "Regression & Edge Cases",
-  "baseline": "5.52",
-  "scope": ["Progress", "Statistics", "E2E", "Library", "Add Word", "Bulk Import"],
-  "source_preserved": true,
-  "checks": ["empty-state", "single-item", "duplicates", "malformed-import", "zero-denominator", "mixed-review-outcomes", "state-restoration", "navigation", "double-submit", "metadata-boundaries", "scheduling-boundaries"]
-}
