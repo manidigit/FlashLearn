@@ -1,6 +1,7 @@
 package com.flashlearn.app.ui.settings
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,30 +32,14 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("تنظیمات", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f)); TextButton(onClick = onBack) { Text("←") } }
         Spacer(Modifier.height(10.dp)); Section("ظاهر برنامه")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            AppearanceChoice("سیستمی", AppearanceMode.SYSTEM, Icons.Outlined.Computer, appearance, onAppearanceChange, Modifier.weight(1f))
-            AppearanceChoice("تم تاریک", AppearanceMode.DARK, Icons.Outlined.Brightness4, appearance, onAppearanceChange, Modifier.weight(1f))
-            AppearanceChoice("تم روشن", AppearanceMode.LIGHT, Icons.Outlined.Brightness7, appearance, onAppearanceChange, Modifier.weight(1f))
-        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) { AppearanceChoice("سیستمی", AppearanceMode.SYSTEM, Icons.Outlined.Computer, appearance, onAppearanceChange, Modifier.weight(1f)); AppearanceChoice("تم تاریک", AppearanceMode.DARK, Icons.Outlined.Brightness4, appearance, onAppearanceChange, Modifier.weight(1f)); AppearanceChoice("تم روشن", AppearanceMode.LIGHT, Icons.Outlined.Brightness7, appearance, onAppearanceChange, Modifier.weight(1f)) }
         Spacer(Modifier.height(12.dp)); Section("رنگ برنامه")
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AccentChoice("بنفش", AccentColor.PURPLE, accentColor, onAccentColorChange, Color(0xFF7C3AED)); AccentChoice("آبی", AccentColor.BLUE, accentColor, onAccentColorChange, Color(0xFF2563EB)); AccentChoice("سبز", AccentColor.GREEN, accentColor, onAccentColorChange, Color(0xFF16A34A)); AccentChoice("نارنجی", AccentColor.ORANGE, accentColor, onAccentColorChange, Color(0xFFEA580C)); AccentChoice("صورتی", AccentColor.PINK, accentColor, onAccentColorChange, Color(0xFFDB2777))
-        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) { AccentChoice("بنفش", AccentColor.PURPLE, accentColor, onAccentColorChange, Color(0xFF7C3AED)); AccentChoice("آبی", AccentColor.BLUE, accentColor, onAccentColorChange, Color(0xFF2563EB)); AccentChoice("سبز", AccentColor.GREEN, accentColor, onAccentColorChange, Color(0xFF16A34A)); AccentChoice("نارنجی", AccentColor.ORANGE, accentColor, onAccentColorChange, Color(0xFFEA580C)); AccentChoice("صورتی", AccentColor.PINK, accentColor, onAccentColorChange, Color(0xFFDB2777)) }
         Spacer(Modifier.height(12.dp)); Section("زبان برنامه"); SettingsRow(Icons.Outlined.Language, "زبان رابط کاربری", "فارسی")
         Spacer(Modifier.height(12.dp)); Section("زبان پیش‌فرض یادگیری")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.weight(1f)) {
-                LanguageChoice(languagePair.source, "مبدأ", { targetMenu = false; sourceMenu = true }, Modifier.fillMaxWidth())
-                DropdownMenu(expanded = sourceMenu, onDismissRequest = { sourceMenu = false }) {
-                    LearningLanguage.entries.filter { it != languagePair.target }.forEach { lang -> DropdownMenuItem(text = { LanguageLabel(lang) }, onClick = { onLanguagePairChange(LanguagePair(lang, languagePair.target)); sourceMenu = false }) }
-                }
-            }
-            Box(Modifier.weight(1f)) {
-                LanguageChoice(languagePair.target, "مقصد", { sourceMenu = false; targetMenu = true }, Modifier.fillMaxWidth())
-                DropdownMenu(expanded = targetMenu, onDismissRequest = { targetMenu = false }) {
-                    LearningLanguage.entries.filter { it != languagePair.source }.forEach { lang -> DropdownMenuItem(text = { LanguageLabel(lang) }, onClick = { onLanguagePairChange(LanguagePair(languagePair.source, lang)); targetMenu = false }) }
-                }
-            }
+            Box(Modifier.weight(1f)) { LanguageChoice(languagePair.source, "مبدأ", { targetMenu = false; sourceMenu = true }, Modifier.fillMaxWidth()); DropdownMenu(expanded = sourceMenu, onDismissRequest = { sourceMenu = false }) { LearningLanguage.entries.filter { it != languagePair.target }.forEach { lang -> DropdownMenuItem(text = { LanguageLabel(lang) }, onClick = { onLanguagePairChange(LanguagePair(lang, languagePair.target)); sourceMenu = false }) } } }
+            Box(Modifier.weight(1f)) { LanguageChoice(languagePair.target, "مقصد", { sourceMenu = false; targetMenu = true }, Modifier.fillMaxWidth()); DropdownMenu(expanded = targetMenu, onDismissRequest = { targetMenu = false }) { LearningLanguage.entries.filter { it != languagePair.source }.forEach { lang -> DropdownMenuItem(text = { LanguageLabel(lang) }, onClick = { onLanguagePairChange(LanguagePair(languagePair.source, lang)); targetMenu = false }) } } }
         }
         TextButton(onClick = { onLanguagePairChange(languagePair.reversed()) }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("↔ جابه‌جایی زبان‌ها") }
         SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست") { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }
@@ -67,9 +52,9 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
         Spacer(Modifier.height(12.dp)); Section("چالش آزمون"); Text("درجه شباهت گزینه‌های غلط", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(6.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { QuizChallenge.entries.forEach { challenge -> FilterChip(selected = challenge == quizChallenge, onClick = { onQuizChallengeChange(challenge) }, label = { Text(challenge.label) }, modifier = Modifier.weight(1f)) } }
         Spacer(Modifier.height(12.dp)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان") { onBackup() }; SettingsRow(Icons.Outlined.Storage, "افزودن گروهی / واردات فایل", "ورود چند واژه از متن یا فایل") { onImportExport() }
-        Spacer(Modifier.height(10.dp)); Section("درباره"); SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.64") { aboutDialog = true }
+        Spacer(Modifier.height(10.dp)); Section("درباره"); SettingsRow(Icons.Outlined.Language, "درباره برنامه", "FlashLearn • نسخه 5.65") { aboutDialog = true }
     }
-    if (aboutDialog) AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.64\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
+    if (aboutDialog) AlertDialog(onDismissRequest = { aboutDialog = false }, title = { Text("درباره FlashLearn") }, text = { Text("FlashLearn\nنسخه 5.65\n\nبرنامه یادگیری و مرور واژگان با پیگیری پیشرفت.") }, confirmButton = { TextButton(onClick = { aboutDialog = false }) { Text("باشه") } })
 }
 
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
