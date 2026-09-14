@@ -2,7 +2,7 @@ package com.flashlearn.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
+import androidx.activity.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AppRootScreen() {
         val uiState by appViewModel.state
-        BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
+        androidx.activity.compose.BackHandler(enabled = uiState.selectedRoute != AppRoutes.HOME) { appViewModel.goBack() }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
             FlashLearnShell(
@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
                 onProgress = { progressViewModel.refresh(); appViewModel.navigate(AppRoutes.PROGRESS) },
                 onSettings = { appViewModel.navigate(AppRoutes.SETTINGS) })
             AppRoutes.REVIEW -> ReviewScreen(reviewViewModel) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail)
+            AppRoutes.LIBRARY -> LibraryScreen(libraryViewModel, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
             AppRoutes.SETTINGS -> SettingsScreen(appearance = uiAppearance(), onAppearanceChange = appViewModel::setAppearance, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
