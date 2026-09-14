@@ -9,6 +9,7 @@ import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
 import java.text.Normalizer
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 
 private fun normalizeQuizText(text: String): String = Normalizer.normalize(text.trim().replace(Regex("\\s+"), " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)
@@ -89,10 +90,8 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
         } ?: return QuizQuestionResult.FlashcardFallback
 
-        // Legacy/imported vocabulary can lack a DifficultyState. Missing auxiliary state
-        // must never silently change an explicitly selected Quiz session into Flashcards.
         val effectiveDifficulty = difficultyState ?: DifficultyState(
-            id = java.util.UUID.randomUUID(), conceptId = concept.id,
+            id = UUID.randomUUID(), conceptId = concept.id,
             current = VocabularyDifficulty.MEDIUM, consecutiveCorrect = 0,
             consecutiveWrong = 0, hasReachedVeryHard = false
         )
@@ -134,9 +133,6 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             QuizChallenge.C -> listOf(QuizChallenge.C, QuizChallenge.B, QuizChallenge.A)
         }
 
-        // Prefer the same category, but never fail a four-choice quiz merely because the
-        // selected category contains fewer than four distinct target answers. Expand to
-        // the full language-pair bank before falling back to flashcards.
         var candidates = emptyList<Content>()
         for (level in levels) {
             candidates = unique(candidates + candidatesFor(level, categoryOnly = true))
