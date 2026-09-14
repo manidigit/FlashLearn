@@ -2,6 +2,7 @@ package com.flashlearn.app.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.domain.model.Category
 import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.model.Content
@@ -23,7 +24,9 @@ data class LibraryUiState(
     val categories: List<Category> = emptyList(),
     val items: List<LibraryItem> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val sourceLanguage: String = "es",
+    val targetLanguage: String = "fa"
 )
 
 @HiltViewModel
@@ -38,24 +41,20 @@ class LibraryViewModel @Inject constructor(
 
     init { refresh() }
 
-    fun onQueryChange(value: String) {
-        _state.value = _state.value.copy(query = value)
+    fun setLanguagePair(pair: LanguagePair) {
+        if (_state.value.sourceLanguage == pair.source.code && _state.value.targetLanguage == pair.target.code) return
+        _state.value = _state.value.copy(sourceLanguage = pair.source.code, targetLanguage = pair.target.code)
         refresh()
     }
-    fun onFavoritesChange(value: Boolean) {
-        _state.value = _state.value.copy(favoritesOnly = value)
-        refresh()
-    }
-    fun onCategoryChange(id: java.util.UUID?) {
-        _state.value = _state.value.copy(selectedCategoryId = id)
-        refresh()
-    }
+    fun onQueryChange(value: String) { _state.value = _state.value.copy(query = value); refresh() }
+    fun onFavoritesChange(value: Boolean) { _state.value = _state.value.copy(favoritesOnly = value); refresh() }
+    fun onCategoryChange(id: java.util.UUID?) { _state.value = _state.value.copy(selectedCategoryId = id); refresh() }
+
     fun refresh() {
         val generation = ++refreshGeneration
         val snapshot = _state.value
-        val query = snapshot.query.trim()
-        val selectedCategory = snapshot.selectedCategoryId
-        val favoritesOnly = snapshot.favoritesOnly
+        val query = snapshot.query.trim(); val selectedCategory = snapshot.selectedCategoryId; val favoritesOnly = snapshot.favoritesOnly
+        val sourceLanguage = snapshot.sourceLanguage; val targetLanguage = snapshot.targetLanguage
         viewModelScope.launch {
             if (generation != refreshGeneration) return@launch
             _state.value = _state.value.copy(isLoading = true, error = null)
@@ -69,7 +68,7 @@ class LibraryViewModel @Inject constructor(
                     .filter { !favoritesOnly || it.favorite }
                     .map { c ->
                         val cc = allContent[c.id].orEmpty()
-                        LibraryItem(c, cc.firstOrNull { it.languageCode == "es" }, cc.firstOrNull { it.languageCode == "fa" }, c.categoryId?.let(catMap::get))
+                        LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.firstOrNull { it.languageCode == targetLanguage }, c.categoryId?.let(catMap::get))
                     }.toList()
                 if (generation != refreshGeneration) return@launch
                 _state.value = _state.value.copy(categories = cats, items = items, isLoading = false)
