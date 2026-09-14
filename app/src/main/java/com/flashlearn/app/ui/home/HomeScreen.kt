@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Sync
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.components.PurpleHeroCard
 import com.flashlearn.domain.model.ReviewType
 
@@ -44,11 +46,9 @@ fun HomeScreen(
     val total = summary?.activeConceptCount ?: 0
     val daily = summary?.dailyDueConceptCount ?: 0
     var menuExpanded by remember { mutableStateOf(false) }
+    val pair = LanguagePair()
 
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box {
                 IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(48.dp)) {
@@ -58,6 +58,7 @@ fun HomeScreen(
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(text = { Text("انتخاب زبان") }, leadingIcon = { Icon(Icons.Outlined.Language, null) }, onClick = { menuExpanded = false; onLanguage() })
+                    DropdownMenuItem(text = { Text("افزودن گروهی واژگان") }, leadingIcon = { Icon(Icons.Outlined.FileUpload, null) }, onClick = { menuExpanded = false; onBulkImport() })
                     DropdownMenuItem(text = { Text("پشتیبان‌گیری و بازیابی") }, leadingIcon = { Icon(Icons.Outlined.Backup, null) }, onClick = { menuExpanded = false; onBackup() })
                 }
             }
@@ -65,43 +66,56 @@ fun HomeScreen(
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("سلام مانی!", style = MaterialTheme.typography.headlineSmall)
                 Text("به فلش‌لرن خوش آمدی 👋", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(pair.source.flag, style = MaterialTheme.typography.labelLarge)
+                    Text(" → ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(pair.target.flag, style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.width(4.dp))
+                    Text("زبان یادگیری", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PurpleHeroCard("روز پیوسته", "${state.streak?.currentStreakDays ?: 0}", "روز پیوسته")
-                Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) {
-                            Text("📖", style = MaterialTheme.typography.titleLarge)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                            Text("$total", style = MaterialTheme.typography.headlineMedium)
-                            Text("کلمه منتظر شماست", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                        }
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) {
+            Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .72f))))) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                        Text("روز پیوسته", color = Color.White.copy(alpha = .92f), style = MaterialTheme.typography.labelLarge)
+                        Text("${state.streak?.currentStreakDays ?: 0}", color = Color.White, style = MaterialTheme.typography.displayMedium)
+                        Text("ادامه بده و زنجیره را حفظ کن", color = Color.White.copy(alpha = .9f), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Surface(shape = RoundedCornerShape(18.dp), color = Color.White.copy(alpha = .14f)) {
+                        Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) { Text("🔥", style = MaterialTheme.typography.headlineLarge) }
                     }
                 }
             }
         }
 
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(50.dp).clip(RoundedCornerShape(15.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) {
+                    Text("📖", style = MaterialTheme.typography.titleLarge)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Text("$total", style = MaterialTheme.typography.headlineMedium)
+                    Text("کلمه منتظر شماست", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
         Text("ادامه بده", style = MaterialTheme.typography.titleMedium)
-        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("☀️", style = MaterialTheme.typography.titleLarge)
+                    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Text("☀️") }
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text("روزانه", style = MaterialTheme.typography.titleMedium)
                         Text("$daily از $due", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                LinearProgressIndicator(
-                    progress = { if (due == 0) 0f else (daily.toFloat() / due).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)),
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                LinearProgressIndicator(progress = { if (due == 0) 0f else (daily.toFloat() / due).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)), trackColor = MaterialTheme.colorScheme.surfaceVariant)
             }
         }
 
@@ -118,9 +132,9 @@ fun HomeScreen(
 
 @Composable
 private fun QuickAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Card(modifier = modifier, shape = MaterialTheme.shapes.large) {
+    Card(modifier = modifier, shape = RoundedCornerShape(18.dp)) {
         Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 17.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
             }
             Spacer(Modifier.height(7.dp))
