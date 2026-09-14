@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.addword
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,24 +9,42 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.ui.LanguagePair
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 @Composable
-fun BulkImportScreen(viewModel: BulkImportViewModel, onBack: () -> Unit) {
+fun BulkImportScreen(viewModel: BulkImportViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit) {
     val state by viewModel.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair) }
+    val openTextFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() }
+                    ?: error("فایل قابل خواندن نیست")
+            }.onSuccess(viewModel::onTextChange).onFailure { viewModel.onTextChange(""); }
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("ورود گروهی واژگان", style = MaterialTheme.typography.headlineSmall)
             IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("واژه‌ها را یکجا وارد کن", style = MaterialTheme.typography.titleLarge)
-            Text("هر مدخل را به شکل «اسپانیایی → فارسی» یا در دو خط وارد کن.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", style = MaterialTheme.typography.titleMedium)
+            Text("واژه‌ها را یکجا وارد کن؛ هر مدخل را به شکل «مبدأ → مقصد» یا در دو خط وارد کن.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton(onClick = { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) }, enabled = !state.isImporting, modifier = Modifier.fillMaxWidth().height(50.dp)) {
+                Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(8.dp)); Text("انتخاب فایل واژگان")
+            }
             OutlinedTextField(state.rawText, viewModel::onTextChange, Modifier.fillMaxWidth().height(180.dp), label = { Text("متن واژگان") })
             Button(onClick = viewModel::preview, enabled = !state.isImporting && state.rawText.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("پیش‌نمایش") }
             if (state.preview.isNotEmpty()) {
