@@ -84,7 +84,7 @@ class RoomReviewHistoryRepository @Inject constructor(private val dao: ReviewHis
 }
 class RoomSettingsRepository @Inject constructor(private val dao: SettingsDao): SettingsRepository {
     override suspend fun getInt(key: String, default: Int): Int=dao.getByKey(key)?.value?.toIntOrNull()?:default
-    override suspend fun setInt(key: String, value: Int) { dao.put(SettingsEntity(key, value.toString(), java.time.Instant.now())) }
+    suspend fun setInt(key: String, value: Int) { dao.put(SettingsEntity(key, value.toString(), java.time.Instant.now())) }
 }
 class RoomDataVersionRepository @Inject constructor(private val dao: SettingsDao): DataVersionRepository {
     override suspend fun getConceptDataVersion(): Int = dao.getByKey(KEY_CONCEPT_DATA_VERSION)?.value?.toIntOrNull() ?: 0
