@@ -61,31 +61,65 @@ class ImportParsedEntryUseCaseTest {
         override suspend fun getAll() = values.entries.map { it.key to it.value }
     }
 
+    private fun useCase(concepts: Concepts, contents: Contents, metadata: Metadata): ImportParsedEntryUseCase {
+        val create = CreateConceptUseCase(concepts, contents, Learning(), Difficulty(), Tags(), Db())
+        return ImportParsedEntryUseCase(create, concepts, contents, metadata, Db())
+    }
+
+    private fun entry(source: String, translation: String) = ParsedEntry(
+        sourceText = source,
+        translationText = translation,
+        notes = null,
+        language = DetectedLanguage.MIXED,
+        entryType = EntryKind.PHRASE,
+        rawLines = listOf("$source → $translation"),
+        confidence = 0.91
+    )
+
     @Test
     fun import_persists_parser_metadata_with_same_concept() = runBlocking {
         val concepts = Concepts()
+        val contents = Contents()
         val metadata = Metadata()
-        val create = CreateConceptUseCase(concepts, Contents(), Learning(), Difficulty(), Tags(), Db())
-        val import = ImportParsedEntryUseCase(create, metadata, Db())
-        val entry = ParsedEntry(
-            sourceText = "estar listo",
-            translationText = "آماده بودن",
-            notes = "usage",
-            language = DetectedLanguage.MIXED,
-            entryType = EntryKind.PHRASE,
-            rawLines = listOf("estar listo → آماده بودن"),
+        val import = useCase(concepts, contents, metadata)
+        val parsed = entry("estar listo", "آماده بودن").copy(
             breakdown = listOf(BreakdownPart("estar + listo")),
             relationships = listOf(ParsedRelationship("related", "preparado")),
-            variants = listOf(ParsedVariant("estar preparado")),
-            confidence = 0.91
+            variants = listOf(ParsedVariant("estar preparado"))
         )
 
-        val id = import(entry)
+        val id = import(parsed)
 
         assertTrue(concepts.values.containsKey(id))
         assertEquals(listOf("estar + listo"), metadata.values[id]?.breakdown)
         assertEquals(listOf("related: preparado"), metadata.values[id]?.relationships)
         assertEquals(listOf("estar preparado"), metadata.values[id]?.variants)
         assertEquals(0.91, metadata.values[id]?.confidence ?: 0.0, 0.0001)
+    }
+
+    @Test
+    fun sameSourceDifferentTranslation_mergesIntoExistingConcept() = runBlocking {
+        val concepts = Concepts()
+        val contents = Contents()
+        val metadata = Metadata()
+        val import = useCase(concepts, contents, metadata)
+
+        val firstId = import(entry("cura", "کشیش"))
+        val secondId = import(entry("cura", "درمان"))
+
+        assertEquals(firstId, secondId)
+        assertEquals(1, concepts.values.size)
+        assertEquals("کشیش / درمان", contents.find(firstId, "fa")?.text)
+    }
+
+    @Test
+    fun exactDuplicateStillRejected() = runBlocking {
+        val concepts = Concepts()
+        val contents = Contents()
+        val import = useCase(concepts, contents, Metadata())
+        import(entry("hola", "سلام"))
+
+        val error = runCatching { import(entry(" Hola ", " سلام ")) }.exceptionOrNull()
+        assertTrue(error is DuplicateConceptException)
     }
 }
