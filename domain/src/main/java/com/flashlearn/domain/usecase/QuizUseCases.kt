@@ -53,9 +53,23 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         challenge: QuizChallenge = QuizChallengeProvider.current
     ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
+
+        // Load each source once. The previous implementation re-read the full contents
+        // table and queried difficulty once per distractor candidate for every card. With
+        // thousands of restored words that made one quiz card perform thousands of Room
+        // calls. The current path performs three bulk reads and all matching in memory.
         val allContents = contentRepository.getAll()
-        val prompt = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
-        val correct = allContents.firstOrNull { it.conceptId == concept.id && it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() } ?: return QuizQuestionResult.FlashcardFallback
+        val allConcepts = conceptRepository.getAllActive()
+        val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+        val contentsByConcept = allContents.groupBy { it.conceptId }
+
+        val conceptContents = contentsByConcept[concept.id].orEmpty()
+        val prompt = conceptContents.firstOrNull {
+            it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank()
+        } ?: return QuizQuestionResult.FlashcardFallback
+        val correct = conceptContents.firstOrNull {
+            it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
+        } ?: return QuizQuestionResult.FlashcardFallback
 
         // Legacy/imported vocabulary can lack a DifficultyState. Missing auxiliary state
         // must never silently change an explicitly selected Quiz session into Flashcards.
@@ -65,33 +79,60 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             consecutiveWrong = 0, hasReachedVeryHard = false
         )
 
-        val categoryId = concept.categoryId
-        val activeConcepts = conceptRepository.getAllActive().filter { other ->
-            other.id != concept.id && (categoryId == null || other.categoryId == categoryId) &&
-                allContents.any { it.conceptId == other.id && it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() } &&
-                allContents.any { it.conceptId == other.id && it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
-        }
         val normalizedCorrect = normalizeQuizText(correct.text)
-        fun unique(values: List<Content>) = values.filter { it.text.isNotBlank() }.distinctBy { normalizeQuizText(it.text) }.filter { normalizeQuizText(it.text) != normalizedCorrect }
-        val targetContents = allContents.filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }.groupBy { it.conceptId }
-        suspend fun candidatesFor(level: QuizChallenge): List<Content> {
-            val concepts = activeConcepts.filter { other -> when (level) {
-                QuizChallenge.A -> true
-                QuizChallenge.B -> difficultyStateRepository.get(other.id)?.current == effectiveDifficulty.current
-                QuizChallenge.C -> difficultyStateRepository.get(other.id)?.current == effectiveDifficulty.current && other.entryType == concept.entryType
-            }}
+        fun unique(values: List<Content>) = values
+            .filter { it.text.isNotBlank() }
+            .distinctBy { normalizeQuizText(it.text) }
+            .filter { normalizeQuizText(it.text) != normalizedCorrect }
+
+        val targetContents = contentsByConcept.mapValues { (_, values) ->
+            values.filter {
+                it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
+            }
+        }
+        val validConceptIds = targetContents
+            .filterValues { it.isNotEmpty() }
+            .keys
+        val sourceConceptIds = contentsByConcept
+            .filterValues { values -> values.any { it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() } }
+            .keys
+        val eligible = allConcepts.filter { other ->
+            other.id != concept.id && other.id in validConceptIds && other.id in sourceConceptIds
+        }
+
+        fun candidatesFor(level: QuizChallenge, categoryOnly: Boolean): List<Content> {
+            val concepts = eligible.filter { other ->
+                if (categoryOnly && concept.categoryId != null && other.categoryId != concept.categoryId) return@filter false
+                when (level) {
+                    QuizChallenge.A -> true
+                    QuizChallenge.B -> difficultiesById[other.id]?.current == effectiveDifficulty.current
+                    QuizChallenge.C -> difficultiesById[other.id]?.current == effectiveDifficulty.current && other.entryType == concept.entryType
+                }
+            }
             return unique(concepts.flatMap { targetContents[it.id].orEmpty() })
         }
+
         val levels = when (challenge) {
             QuizChallenge.A -> listOf(QuizChallenge.A)
             QuizChallenge.B -> listOf(QuizChallenge.B, QuizChallenge.A)
             QuizChallenge.C -> listOf(QuizChallenge.C, QuizChallenge.B, QuizChallenge.A)
         }
+
+        // Prefer the same category, but never fail a four-choice quiz merely because the
+        // selected category contains fewer than four distinct target answers. Expand to
+        // the full language-pair bank before falling back to flashcards.
         var candidates = emptyList<Content>()
         for (level in levels) {
-            candidates = unique(candidates + candidatesFor(level))
+            candidates = unique(candidates + candidatesFor(level, categoryOnly = true))
             if (candidates.size >= 3) break
         }
+        if (candidates.size < 3) {
+            for (level in levels) {
+                candidates = unique(candidates + candidatesFor(level, categoryOnly = false))
+                if (candidates.size >= 3) break
+            }
+        }
+
         if (candidates.size < 3) return QuizQuestionResult.FlashcardFallback
         val wrongOptions = candidates.shuffled().take(3).map { it.text }
         return QuizQuestionResult.QuizQuestion(prompt.text, correct.text, (listOf(correct.text) + wrongOptions).shuffled())
