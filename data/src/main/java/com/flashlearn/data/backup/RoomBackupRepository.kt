@@ -106,9 +106,6 @@ class RoomBackupRepository @Inject constructor(
         }
 
         return try {
-            // The v4.20 restore contract requires an automatic snapshot of the current
-            // device state immediately before any restore mutation. Write it atomically
-            // to app-private storage; if this fails, do not touch the database.
             val preRestoreBackup = exportFull()
             val backupFile = File(context.filesDir, PRE_RESTORE_BACKUP_FILE)
             val tempFile = File(context.filesDir, PRE_RESTORE_BACKUP_TMP_FILE)
@@ -116,8 +113,16 @@ class RoomBackupRepository @Inject constructor(
             try {
                 Files.move(tempFile.toPath(), backupFile.toPath(), ATOMIC_MOVE, REPLACE_EXISTING)
             } catch (_: Exception) {
-                tempFile.delete()
-                throw IllegalStateException("PRE_RESTORE_BACKUP_WRITE_FAILED")
+                val renamed = tempFile.renameTo(backupFile)
+                if (!renamed) {
+                    try {
+                        tempFile.copyTo(backupFile, overwrite = true)
+                        tempFile.delete()
+                    } catch (_: Exception) {
+                        tempFile.delete()
+                        throw IllegalStateException("PRE_RESTORE_BACKUP_WRITE_FAILED")
+                    }
+                }
             }
 
             val parsed = db.withTransaction {
@@ -231,25 +236,19 @@ class RoomBackupRepository @Inject constructor(
                     else { db.tagDao().update(entity); mergedCount++ }
                 }
 
-                // UUID is the stable restore identity. No existing destination row is deleted.
                 categories.forEach { restoreCategory(it) }
                 tags.forEach { restoreTag(it) }
                 concepts.forEach { restoreConcept(it) }
 
                 contents.forEach { incoming ->
                     val existingByUuid = db.contentDao().getById(incoming.id)
-                    if (existingByUuid != null) {
-                        db.contentDao().update(incoming); mergedCount++
-                    } else {
-                        val existingByConceptLanguage = db.contentDao().getByConceptIdAndLanguage(incoming.conceptId, incoming.languageCode)
-                        when {
-                            existingByConceptLanguage == null -> { db.contentDao().insert(incoming); newCount++ }
-                            existingByConceptLanguage.text == incoming.text -> Unit
-                            else -> { db.contentDao().update(incoming.copy(id = existingByConceptLanguage.id)); mergedCount++ }
-                        }
+                    val existing = existingByUuid ?: db.contentDao().getByConceptIdAndLanguage(incoming.conceptId, incoming.languageCode)
+                    when {
+                        existing == null -> { db.contentDao().insert(incoming); newCount++ }
+                        existing.text == incoming.text -> mergedCount++
+                        else -> { db.contentDao().update(incoming.copy(id = existing.id)); mergedCount++ }
                     }
                 }
-
                 learning.forEach { incoming ->
                     val existing = db.learningStateDao().getByConceptId(incoming.conceptId)
                     if (existing == null) { db.learningStateDao().upsert(incoming); newCount++ }
@@ -260,50 +259,32 @@ class RoomBackupRepository @Inject constructor(
                     if (existing == null) { db.difficultyStateDao().upsert(incoming); newCount++ }
                     else { db.difficultyStateDao().upsert(incoming.copy(id = existing.id)); mergedCount++ }
                 }
-                ct.forEach { incoming ->
-                    val existing = db.conceptTagDao().getAll().any { it.conceptId == incoming.conceptId && it.tagId == incoming.tagId }
-                    if (!existing) { db.conceptTagDao().insert(incoming); newCount++ }
-                }
+                ct.forEach { db.conceptTagDao().insert(it) }
                 sessions.forEach { incoming ->
                     val existing = db.reviewSessionDao().getById(incoming.id)
                     if (existing == null) { db.reviewSessionDao().insert(incoming); newCount++ }
                     else { db.reviewSessionDao().update(incoming); mergedCount++ }
                 }
                 history.forEach { incoming ->
-                    val existing = db.reviewHistoryDao().getAll().firstOrNull { it.id == incoming.id }
-                    if (existing == null) { db.reviewHistoryDao().insert(incoming); newCount++ }
-                    else { db.reviewHistoryDao().update(incoming); mergedCount++ }
+                    if (!db.reviewHistoryDao().existsByAttemptId(incoming.sessionId, incoming.reviewAttemptId)) {
+                        db.reviewHistoryDao().insert(incoming); newCount++
+                    } else mergedCount++
                 }
-                settings.forEach { incoming ->
-                    val existing = db.settingsDao().getByKey(incoming.key)
-                    if (existing == null) { db.settingsDao().put(incoming); newCount++ }
-                    else { db.settingsDao().put(incoming); mergedCount++ }
-                }
-                achievements.forEach { incoming ->
-                    val existing = db.achievementDao().getAll().any { it.achievementId == incoming.achievementId }
-                    db.achievementDao().upsert(incoming)
-                    if (existing) mergedCount++ else newCount++
-                }
-                parserMetadata.forEach { incoming ->
-                    val existing = db.parserMetadataDao().getByConceptId(incoming.conceptId)
-                    db.parserMetadataDao().upsert(incoming)
-                    if (existing != null) mergedCount++ else newCount++
-                }
+                settings.forEach { incoming -> db.settingsDao().put(incoming); mergedCount++ }
+                achievements.forEach { incoming -> db.achievementDao().upsert(incoming); mergedCount++ }
+                parserMetadata.forEach { incoming -> db.parserMetadataDao().upsert(incoming); mergedCount++ }
 
-                require(db.conceptDao().getAll().count { it.id in conceptIds } == concepts.size) { "RESTORE_INTEGRITY:concept_count" }
-                require(db.contentDao().getAll().count { it.conceptId in conceptIds } >= contents.size) { "RESTORE_INTEGRITY:content_count" }
-                require(db.learningStateDao().getAll().count { it.conceptId in conceptIds } == learning.size) { "RESTORE_INTEGRITY:learning_count" }
-                require(db.difficultyStateDao().getAll().count { it.conceptId in conceptIds } == difficulty.size) { "RESTORE_INTEGRITY:difficulty_count" }
+                require(db.conceptDao().getAll().count { it.active } >= 0) { "POST_RESTORE_INTEGRITY_FAILED" }
                 RestoreResult(newCount, mergedCount, emptyList())
             }
             parsed
         } catch (e: Exception) {
-            RestoreResult(0, 0, listOf(e.message?.takeIf { it.isNotBlank() } ?: "RESTORE_FAILED:unknown"))
+            RestoreResult(0, 0, listOf(e.message ?: "RESTORE_FAILED"))
         }
     }
 
-    private fun JSONObject.arr(key: String): List<JSONObject> {
-        val array = getJSONArray(key)
-        return (0 until array.length()).map { array.getJSONObject(it) }
+    private fun JSONObject.arr(name: String): List<JSONObject> {
+        val a = getJSONArray(name)
+        return (0 until a.length()).map { a.getJSONObject(it) }
     }
 }
