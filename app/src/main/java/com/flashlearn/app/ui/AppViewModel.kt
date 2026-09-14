@@ -3,32 +3,30 @@ package com.flashlearn.app.ui
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import com.flashlearn.app.navigation.AppRoutes
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
+import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor() : ViewModel() {
     private val _state = mutableStateOf(AppUiState())
     val state: State<AppUiState> get() = _state
 
-    fun openLibraryDetail(conceptId: java.util.UUID) { _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId) }
+    fun setAppearance(mode: AppearanceMode) {
+        _state.value = _state.value.copy(appearance = mode)
+    }
+
+    fun openLibraryDetail(conceptId: UUID) {
+        _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId)
+    }
 
     fun goBack() {
         when (_state.value.selectedRoute) {
-            AppRoutes.LIBRARY_DETAIL -> _state.value = _state.value.copy(
-                selectedRoute = AppRoutes.LIBRARY,
-                selectedConceptId = null
-            )
-            AppRoutes.BACKUP -> _state.value = _state.value.copy(
-                selectedRoute = AppRoutes.SETTINGS,
-                selectedConceptId = null
-            )
+            AppRoutes.LIBRARY_DETAIL -> _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY, selectedConceptId = null)
+            AppRoutes.BACKUP -> _state.value = _state.value.copy(selectedRoute = AppRoutes.SETTINGS, selectedConceptId = null)
             AppRoutes.HOME -> Unit
-            else -> _state.value = _state.value.copy(
-                selectedRoute = AppRoutes.HOME,
-                selectedConceptId = null
-            )
+            else -> _state.value = _state.value.copy(selectedRoute = AppRoutes.HOME, selectedConceptId = null)
         }
     }
 
