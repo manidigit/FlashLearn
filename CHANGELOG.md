@@ -1,10 +1,12 @@
 # FlashLearn Changelog
 
-## v5.66 — Parser reconciliation checkpoint
-- Hardened vocabulary parsing around entry boundaries, Persian-before-Spanish pairing, multiline Spanish sources, and orphan preservation.
-- Separated breakdown lines from notes and retained parser evidence on parsed entries for downstream reconciliation.
-- Added regression coverage for parser boundary, orphan, multiline-source, and consecutive-entry cases.
-- Advanced runtime identity to 5.66/66 and aligned CI/instrumentation preflight with the new version.
+## v5.66 — Final specification reconciliation checkpoint
+- Hardened vocabulary parsing around entry boundaries, Persian-before-Spanish pairing, multiline Spanish sources, orphan preservation, and breakdown separation.
+- Retained parser evidence on parsed entries and added regression coverage for parser boundary/orphan cases.
+- Added explicit vocabulary import modes: `ADD_NEW`, `SKIP_DUPLICATE`, `MERGE`, `UPDATE`; default is `MERGE`.
+- Added deterministic same-source/different-translation merge behavior while preserving exact-duplicate protection.
+- Updated the canonical `PROGRESS.md` with the actual v5.66 state and the current Room multi-translation compatibility limitation.
+- Runtime identity remains 5.66/66.
 
 ## v5.65 — UI interaction and CI hardening
 - Fixed language selectors in Settings and Add Word so the country/language list is anchored to the control instead of appearing detached at the bottom of the screen.
