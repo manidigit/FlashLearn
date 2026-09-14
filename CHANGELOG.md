@@ -1,5 +1,11 @@
 # FlashLearn Changelog
 
+## v5.68 — Phase 5 Full Verification
+- Completed the final CI verification checkpoint for build, JVM unit tests, Android instrumentation tests, runtime preflight, and artifact generation.
+- Hardened the release-gate workflow so infrastructure/action-resolution failures do not block the normal build/test verification path.
+- Kept stable release signing isolated behind GitHub Actions secrets; no private signing material is committed to the public repository.
+- Added the canonical Phase 5 verification record at `docs/PHASE5_VERIFICATION.md`.
+
 ## v5.66 — Final specification reconciliation checkpoint
 - Hardened vocabulary parsing around entry boundaries, Persian-before-Spanish pairing, multiline Spanish sources, orphan preservation, and breakdown separation.
 - Retained parser evidence on parsed entries and added regression coverage for parser boundary/orphan cases.
