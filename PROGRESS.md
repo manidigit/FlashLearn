@@ -1,30 +1,29 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.70 — Legacy FULL restore + update verification
-**Application identity:** `versionName = 5.70`, `versionCode = 70`
+## Current checkpoint: v5.71 — Legacy restore + Quiz mode + update-path hardening
+**Application identity:** `versionName = 5.71`, `versionCode = 71`
 
 ### Current implementation status
-- Added a dedicated compatibility path for the supplied legacy FULL backup format: `schemaVersion=1`, `backupMode=FULL`, epoch-millisecond timestamps, embedded concept contents, legacy learning-state fields, legacy review history, and settings.
-- Legacy FULL restore maps concepts/categories/multilingual contents, learning stage/counts, difficulty/streak state, review sessions/history, and settings into the current Room schema.
-- Legacy sessions containing mixed DAILY/WEEKLY stages are split by stage so the current session/history invariant is preserved without dropping review history.
-- Restore runs on the IO dispatcher and remains transactional.
-- Added Android integration coverage for legacy FULL restore and idempotent re-import.
-- CI now verifies an in-place APK version upgrade with `adb install -r` under the same signing context.
-- The existing release-signing gate still requires the stable keystore secrets for a real user-device release upgrade. No private signing material is committed to the public repository.
-- Legacy vocabulary restore remains supported separately for `backupMode=VOCABULARY`.
-
-### Important legacy-format mapping
-The supplied FULL backup has 8,098 concepts and 8,098 learning states, plus 1,878 review-history records. Its concepts embed `contents`, while the current Room model stores contents in a separate table. The compatibility layer normalizes repeated translations within one concept/language into one `" / "`-joined value because the current Room model permits one content row per `(conceptId, languageCode)`. Legacy review `responseTimeMs`, `previousStatus`, `newStatus`, and similar fields have no current storage columns, so only the current review-history fields are restored.
+- Legacy FULL restore supports the supplied earlier-version backup shape: `schemaVersion=1`, `backupMode=FULL`, epoch-millisecond timestamps, embedded multilingual concept contents, 8,098 concepts, 8,098 learning states, 1,878 review-history records, and settings.
+- The supplied FULL backup was independently validated against the restore parser's strict schema/value checks with no invalid concept UUID, language, stage, difficulty, reference, or streak records found.
+- Legacy FULL restore maps concepts, categories, multilingual contents, learning state, difficulty/streak state, review sessions/history, and settings into the current Room schema; repeated same-language translations are merged with ` / ` because the current Room schema stores one content row per `(conceptId, languageCode)`.
+- Legacy vocabulary restore remains supported separately for `backupMode=VOCABULARY` and the supplied 8,098-concept vocabulary backup.
+- Quiz mode no longer switches silently to Flashcards when an imported/legacy concept has no DifficultyState. It uses a safe effective difficulty for distractor selection and keeps the explicitly selected Quiz mode. If four valid options genuinely cannot be produced, the session remains in Quiz mode and reports the condition instead of changing modes.
+- Added a regression test proving Quiz generation works when the target concept has no DifficultyState.
+- CI now contains a real emulator smoke test for an in-place APK update: v5.70 → v5.71 using the same package and signing context and `adb install -r`.
+- CI version drift was removed; workflow and app identity are aligned to 5.71/71.
+- Stable release signing is still intentionally externalized to GitHub Actions secrets. A real production update over an already-installed release requires the same stable signing key; no private key is committed to the public repository.
 
 ### Verification gate
 - GitHub Actions is the authoritative build/test gate.
-- Release Gate passes without signing secrets by explicitly skipping signed-release verification; a real release APK requires the stable release keystore secrets.
-- Do not call restore/update fully verified until the latest Build/Unit and Instrumentation jobs finish successfully, including the legacy FULL restore tests and the APK in-place upgrade check.
+- The latest relevant CI run is still in progress; do not mark the three issues fully verified until Build/Unit and Instrumentation complete successfully.
+- Release Gate can pass while signed-release steps are skipped when stable signing secrets are absent.
 
 ---
 
 ## Historical checkpoints
 
+v5.70 — legacy FULL restore compatibility and update verification path.
 v5.69 — dedicated legacy vocabulary restore, launcher icon binding, and CI alignment.
 v5.68 — Phase 5 full verification checkpoint.
 v5.66 — final specification reconciliation.
