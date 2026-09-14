@@ -15,10 +15,10 @@ class RuntimeGatePreflightTest {
         assertEquals("com.flashlearn.app", context.packageName)
     }
 
-    @Test fun releaseVersionIsFiveSixty() {
+    @Test fun releaseVersionIsFiveSixtyOne() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        assertEquals("5.60", packageInfo.versionName)
-        assertEquals(60, packageInfo.longVersionCode.toInt())
+        assertEquals("5.61", packageInfo.versionName)
+        assertEquals(61, packageInfo.longVersionCode.toInt())
     }
 }
