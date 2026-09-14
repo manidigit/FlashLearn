@@ -23,31 +23,6 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - name: Restore stable CI debug keystore
-        id: ci-debug-keystore-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: flashlearn-ci-debug-keystore-v1
-      - name: Create stable CI debug keystore
-        if: steps.ci-debug-keystore-restore.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ~/.android
-          keytool -genkeypair -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android \
-            -keypass android \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-      - name: Save stable CI debug keystore
-        if: steps.ci-debug-keystore-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: flashlearn-ci-debug-keystore-v1
       - uses: android-actions/setup-android@v3
       - name: Install Android SDK
         run: |
@@ -60,6 +35,8 @@ jobs:
         run: gradle --no-daemon clean
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
+      - name: Verify debug APK signature
+        run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - name: Unit tests
         run: gradle --no-daemon test
       - name: Stage debug APK
@@ -92,13 +69,6 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - name: Restore stable CI debug keystore
-        id: ci-debug-keystore-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: flashlearn-ci-debug-keystore-v1
-          fail-on-cache-miss: true
       - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -119,17 +89,23 @@ jobs:
           disable-animations: true
           force-avd-creation: true
           script: |
+            set -euo pipefail
             gradle --no-daemon connectedDebugAndroidTest
             rm -f app/build/outputs/apk/debug/app-debug.apk
             cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
             trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
             sed -i 's/versionCode = 73/versionCode = 72/; s/versionName = "5.73"/versionName = "5.72"/' app/build.gradle.kts
             gradle --no-daemon :app:assembleDebug
-            adb install app/build/outputs/apk/debug/app-debug.apk
+            OLD_APK=app/build/outputs/apk/debug/app-debug.apk
+            OLD_CERT=$(apksigner verify --print-certs "$OLD_APK" | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')
+            adb install "$OLD_APK"
             test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "72"
             sed -i 's/versionCode = 72/versionCode = 73/; s/versionName = "5.72"/versionName = "5.73"/' app/build.gradle.kts
             gradle --no-daemon :app:assembleDebug
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            NEW_APK=app/build/outputs/apk/debug/app-debug.apk
+            NEW_CERT=$(apksigner verify --print-certs "$NEW_APK" | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')
+            test "$OLD_CERT" = "$NEW_CERT"
+            adb install -r "$NEW_APK"
             test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "73"
 
   release-gate:
