@@ -71,7 +71,9 @@ class VocabularyBackupRepository @Inject constructor(
                     val content = contentsJson.getJSONObject(j)
                     val language = content.optString("languageCode").trim()
                     val text = content.optString("text").trim()
-                    require(language.isNotEmpty() && text.isNotEmpty()) { "INVALID_VALUE:content" }
+                    // Some legacy vocabulary exports contain empty placeholder translations.
+                    // They are not real vocabulary values and must not abort the whole 8k+ import.
+                    if (language.isEmpty() || text.isEmpty()) continue
                     byLanguage.getOrPut(language) { mutableListOf() }.let { values ->
                         if (text !in values) values += text
                     }
