@@ -104,7 +104,9 @@ class LegacyFullBackupRepository @Inject constructor(
                     val content = contentsJson.getJSONObject(j)
                     val language = content.optString("languageCode").trim()
                     val text = content.optString("text").trim()
-                    require(language.isNotEmpty() && text.isNotEmpty()) { "INVALID_VALUE:content" }
+                    // Some legacy exports contain placeholder empty translations. Ignore those rows;
+                    // a concept is still required to have at least one real content value.
+                    if (language.isEmpty() || text.isEmpty()) continue
                     if (validLanguages.isNotEmpty()) require(language in validLanguages) { "INVALID_VALUE:languageCode" }
                     byLanguage.getOrPut(language) { mutableListOf() }.let { values -> if (text !in values) values += text }
                 }
