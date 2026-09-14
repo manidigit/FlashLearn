@@ -2,6 +2,7 @@ package com.flashlearn.app.ui.review
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.domain.model.Content
 import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.model.VocabularyDifficulty
@@ -27,10 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-// Mirrors the default language pair used by CreateConceptUseCase (domain module).
-private const val SOURCE_LANGUAGE = "es"
-private const val TARGET_LANGUAGE = "fa"
 
 enum class ReviewMode { FLASHCARD, QUIZ }
 
@@ -65,7 +62,7 @@ data class ReviewUiState(
     val isSelectingMode: Boolean = true,
     val selectedMode: ReviewMode = ReviewMode.FLASHCARD,
     val selectedReviewType: ReviewType = ReviewType.DAILY,
-    val selectedDifficulty: com.flashlearn.domain.model.VocabularyDifficulty? = null,
+    val selectedDifficulty: VocabularyDifficulty? = null,
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: UUID? = null,
     val card: ReviewCardUiState? = null,
@@ -80,7 +77,6 @@ data class ReviewUiState(
     val answerFeedback: ReviewAnswerFeedbackUiState? = null,
     val error: String? = null
 ) {
-    /** True only while the current revealed card is ready for one answer submission. */
     val canSubmitAnswer: Boolean
         get() = !isSubmitting && answerFeedback == null && !isFinished &&
             (card?.isFlipped == true || quizCard?.selectedOption != null)
@@ -107,16 +103,25 @@ class ReviewViewModel @Inject constructor(
     private var index = 0
     private var sessionGeneration = 0L
     private var isAdvancing = false
+    private var activeLanguagePair = LanguagePair()
 
-    fun chooseMode(mode: ReviewMode) {
-        _state.value = _state.value.copy(selectedMode = mode)
+    fun setLanguagePair(pair: LanguagePair) {
+        if (pair == activeLanguagePair) return
+        activeLanguagePair = pair
+        if (sessionId != null || queue.isNotEmpty()) {
+            sessionGeneration++
+            sessionId = null
+            queue = emptyList()
+            index = 0
+        }
     }
+
+    fun chooseMode(mode: ReviewMode) { _state.value = _state.value.copy(selectedMode = mode) }
 
     init {
         viewModelScope.launch {
             runCatching { categoryRepository.getAll().sortedBy { it.name } }
                 .onSuccess { categories -> _state.value = _state.value.copy(categories = categories) }
-                .onFailure { /* Category filtering is optional; review remains usable if it fails. */ }
         }
     }
 
@@ -126,67 +131,44 @@ class ReviewViewModel @Inject constructor(
 
     fun startNewSession(
         reviewType: ReviewType = _state.value.selectedReviewType,
-        difficulty: com.flashlearn.domain.model.VocabularyDifficulty? = _state.value.selectedDifficulty,
+        difficulty: VocabularyDifficulty? = _state.value.selectedDifficulty,
         categoryId: UUID? = _state.value.selectedCategoryId
     ) {
         val generation = ++sessionGeneration
         viewModelScope.launch {
             if (generation != sessionGeneration) return@launch
             val now = Instant.now()
+            val pair = activeLanguagePair
             _state.value = ReviewUiState(
-                isLoading = true,
-                isSelectingMode = false,
-                selectedReviewType = reviewType,
-                selectedMode = _state.value.selectedMode,
-                selectedDifficulty = difficulty,
-                categories = _state.value.categories,
+                isLoading = true, isSelectingMode = false,
+                selectedReviewType = reviewType, selectedMode = _state.value.selectedMode,
+                selectedDifficulty = difficulty, categories = _state.value.categories,
                 selectedCategoryId = categoryId
             )
-
             try {
-                // Close any previous session before replacing its queue. This prevents
-                // abandoned sessions when the user starts a new review without first
-                // leaving the previous one.
                 val previousSessionId = sessionId
                 if (previousSessionId != null) {
-                    // Do not silently continue if the previous session cannot be closed:
-                    // doing so would leave session history inconsistent.
                     endReviewSession(previousSessionId)
                     if (generation != sessionGeneration) return@launch
                     sessionId = null
                 }
-
                 val candidates = selectReviewQueue(
-                    ReviewSelectionFilters(
-                        reviewType = reviewType,
-                        difficulty = difficulty,
-                        categoryId = categoryId,
-                        now = now
-                    )
+                    ReviewSelectionFilters(reviewType = reviewType, difficulty = difficulty, categoryId = categoryId, now = now)
                 )
                 if (generation != sessionGeneration) return@launch
 
-                // A review card requires both language contents. Filter broken/incomplete
-                // concepts before the session starts so progress counts never include
-                // cards that will later be skipped by loadCurrentCard().
                 val validQueue = mutableListOf<UUID>()
                 for (candidate in candidates) {
                     if (generation != sessionGeneration) return@launch
-                    val hasSource = contentRepository.find(candidate.concept.id, SOURCE_LANGUAGE) != null
-                    val hasTarget = contentRepository.find(candidate.concept.id, TARGET_LANGUAGE) != null
+                    val hasSource = contentRepository.find(candidate.concept.id, pair.source.code) != null
+                    val hasTarget = contentRepository.find(candidate.concept.id, pair.target.code) != null
                     if (hasSource && hasTarget) validQueue += candidate.concept.id
                 }
                 queue = validQueue
                 index = 0
-
                 if (queue.isEmpty()) {
                     sessionId = null
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        isFinished = true,
-                        total = 0,
-                        remaining = 0
-                    )
+                    _state.value = _state.value.copy(isLoading = false, isFinished = true, total = 0, remaining = 0)
                 } else {
                     if (generation != sessionGeneration) return@launch
                     val startedSession = startReviewSession(reviewType, now)
@@ -195,75 +177,51 @@ class ReviewViewModel @Inject constructor(
                         return@launch
                     }
                     sessionId = startedSession
-                    loadCurrentCard(generation)
+                    loadCurrentCard(generation, pair)
                 }
             } catch (e: Exception) {
                 if (generation != sessionGeneration) return@launch
-                sessionId = null
-                queue = emptyList()
-                index = 0
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    isSelectingMode = true,
-                    card = null,
-                    answerFeedback = null,
-                    remaining = 0,
-                    total = 0,
-                    error = e.message ?: "خطا در آماده‌سازی مرور"
-                )
+                sessionId = null; queue = emptyList(); index = 0
+                _state.value = _state.value.copy(isLoading = false, isSelectingMode = true, card = null,
+                    answerFeedback = null, remaining = 0, total = 0, error = e.message ?: "خطا در آماده‌سازی مرور")
             }
         }
     }
 
-    private suspend fun loadCurrentCard(generation: Long) {
+    private suspend fun loadCurrentCard(generation: Long, pair: LanguagePair = activeLanguagePair) {
         if (generation != sessionGeneration) return
         val conceptId = queue.getOrNull(index) ?: return
-        val source: Content? = contentRepository.find(conceptId, SOURCE_LANGUAGE)
-        val target: Content? = contentRepository.find(conceptId, TARGET_LANGUAGE)
-
+        val source = contentRepository.find(conceptId, pair.source.code)
+        val target = contentRepository.find(conceptId, pair.target.code)
         if (source == null || target == null) {
-            // Data integrity issue for this concept; skip it rather than crash the review flow.
             if (generation == sessionGeneration) advanceToNext(generation)
             return
         }
         if (generation != sessionGeneration || sessionId == null) return
 
         val quizCard = if (_state.value.selectedMode == ReviewMode.QUIZ) {
-            val concept = candidatesConcept(conceptId)
-            val difficultyState = concept?.let { difficultyStateRepositoryForQuiz(it.id) }
+            val concept = conceptRepository.get(conceptId)
+            val difficultyState = concept?.let { difficultyStateRepository.get(it.id) }
             if (concept != null && difficultyState != null) {
-                when (val result = generateQuizQuestion(concept, QuizLanguagePair(SOURCE_LANGUAGE, TARGET_LANGUAGE), difficultyState)) {
-                    is QuizQuestionResult.QuizQuestion -> ReviewCardUiState(source.text, source.notes, target.text) to QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText)
+                when (val result = generateQuizQuestion(concept, QuizLanguagePair(pair.source.code, pair.target.code), difficultyState)) {
+                    is QuizQuestionResult.QuizQuestion -> ReviewCardUiState(source.text, source.notes, target.text) to
+                        QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText)
                     QuizQuestionResult.FlashcardFallback -> ReviewCardUiState(source.text, source.notes, target.text) to null
                 }
             } else ReviewCardUiState(source.text, source.notes, target.text) to null
         } else ReviewCardUiState(source.text, source.notes, target.text) to null
-        _state.value = _state.value.copy(
-            isLoading = false, isFinished = false,
-            card = quizCard.first, quizCard = quizCard.second,
-            remaining = queue.size - index, total = queue.size
-        )
+
+        _state.value = _state.value.copy(isLoading = false, isFinished = false,
+            card = quizCard.first, quizCard = quizCard.second, remaining = queue.size - index, total = queue.size)
     }
 
-    fun chooseReviewType(reviewType: ReviewType) {
-        _state.value = _state.value.copy(selectedReviewType = reviewType)
-    }
-
-    fun chooseDifficulty(difficulty: com.flashlearn.domain.model.VocabularyDifficulty?) {
-        _state.value = _state.value.copy(selectedDifficulty = difficulty)
-    }
-
-    fun chooseCategory(categoryId: UUID?) {
-        _state.value = _state.value.copy(selectedCategoryId = categoryId)
-    }
-
-    private suspend fun candidatesConcept(conceptId: UUID) = conceptRepository.get(conceptId)
-    private suspend fun difficultyStateRepositoryForQuiz(conceptId: UUID) = difficultyStateRepository.get(conceptId)
+    fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = reviewType) }
+    fun chooseDifficulty(difficulty: VocabularyDifficulty?) { _state.value = _state.value.copy(selectedDifficulty = difficulty) }
+    fun chooseCategory(categoryId: UUID?) { _state.value = _state.value.copy(selectedCategoryId = categoryId) }
 
     fun selectQuizOption(option: String) {
         val quiz = _state.value.quizCard ?: return
-        if (_state.value.isSubmitting || _state.value.answerFeedback != null) return
-        if (option !in quiz.options) return
+        if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return
         _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option))
     }
 
@@ -275,20 +233,9 @@ class ReviewViewModel @Inject constructor(
         submitAnswer(selected == quiz.correctAnswerText)
     }
 
-    fun flipCard() {
-        val current = _state.value.card ?: return
-        _state.value = _state.value.copy(card = current.copy(isFlipped = true))
-    }
-
-    fun revealHint() {
-        val current = _state.value.card ?: return
-        _state.value = _state.value.copy(card = current.copy(hintRevealed = true))
-    }
-
-    fun toggleNote() {
-        val current = _state.value.card ?: return
-        _state.value = _state.value.copy(card = current.copy(noteVisible = !current.noteVisible))
-    }
+    fun flipCard() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(isFlipped = true)) } }
+    fun revealHint() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(hintRevealed = true)) } }
+    fun toggleNote() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(noteVisible = !it.noteVisible)) } }
 
     fun submitAnswer(isCorrect: Boolean) {
         val currentState = _state.value
@@ -297,58 +244,31 @@ class ReviewViewModel @Inject constructor(
         val conceptId = queue.getOrNull(index) ?: return
         val reviewType = currentState.selectedReviewType
         val generation = sessionGeneration
-
         viewModelScope.launch {
             if (generation != sessionGeneration || sessionId != session) return@launch
             _state.value = _state.value.copy(isSubmitting = true, error = null)
             runCatching {
-                submitReviewAnswer(
-                    SubmitReviewAnswerRequest(
-                        conceptId = conceptId,
-                        sessionId = session,
-                        reviewAttemptId = UUID.randomUUID(),
-                        reviewType = reviewType,
-                        isCorrect = isCorrect,
-                        reviewedAt = Instant.now()
-                    )
-                )
+                submitReviewAnswer(SubmitReviewAnswerRequest(conceptId = conceptId, sessionId = session,
+                    reviewAttemptId = UUID.randomUUID(), reviewType = reviewType, isCorrect = isCorrect, reviewedAt = Instant.now()))
             }.onSuccess { result ->
                 if (generation != sessionGeneration || sessionId != session) return@onSuccess
-                _state.value = _state.value.copy(
-                    isSubmitting = false,
-                    answerFeedback = ReviewAnswerFeedbackUiState(
-                        isCorrect = isCorrect,
-                        stageLabel = stageLabel(result.learningState.stage),
-                        difficultyLabel = difficultyLabel(result.difficultyState.current),
-                        correctAnswerText = if (!isCorrect && currentState.selectedMode == ReviewMode.QUIZ) {
-                            currentState.quizCard?.correctAnswerText
-                        } else null,
-                        answered = _state.value.answered + 1,
-                        correct = _state.value.correct + if (isCorrect) 1 else 0,
-                        wrong = _state.value.wrong + if (isCorrect) 0 else 1
-                    ),
-                    answered = _state.value.answered + 1,
-                    correct = _state.value.correct + if (isCorrect) 1 else 0,
-                    wrong = _state.value.wrong + if (isCorrect) 0 else 1
-                )
-                // Quiz UX contract: correct answers advance immediately; wrong answers
-                // remain visible for two seconds before the next question.
+                val answered = _state.value.answered + 1
+                val correct = _state.value.correct + if (isCorrect) 1 else 0
+                val wrong = _state.value.wrong + if (isCorrect) 0 else 1
+                _state.value = _state.value.copy(isSubmitting = false,
+                    answerFeedback = ReviewAnswerFeedbackUiState(isCorrect, stageLabel(result.learningState.stage),
+                        difficultyLabel(result.difficultyState.current),
+                        if (!isCorrect && currentState.selectedMode == ReviewMode.QUIZ) currentState.quizCard?.correctAnswerText else null,
+                        answered, correct, wrong), answered = answered, correct = correct, wrong = wrong)
                 if (isCorrect) {
-                    if (generation == sessionGeneration && sessionId == session) {
-                        advanceToNext(generation)
-                    }
+                    if (generation == sessionGeneration && sessionId == session) advanceToNext(generation)
                 } else {
                     kotlinx.coroutines.delay(2_000)
-                    if (generation == sessionGeneration && sessionId == session && _state.value.answerFeedback != null) {
-                        advanceToNext(generation)
-                    }
+                    if (generation == sessionGeneration && sessionId == session && _state.value.answerFeedback != null) advanceToNext(generation)
                 }
             }.onFailure {
                 if (generation != sessionGeneration || sessionId != session) return@onFailure
-                _state.value = _state.value.copy(
-                    isSubmitting = false,
-                    error = it.message ?: "خطا در ثبت پاسخ"
-                )
+                _state.value = _state.value.copy(isSubmitting = false, error = it.message ?: "خطا در ثبت پاسخ")
             }
         }
     }
@@ -358,53 +278,22 @@ class ReviewViewModel @Inject constructor(
         val generation = sessionGeneration
         isAdvancing = true
         viewModelScope.launch {
-            try {
-                if (generation == sessionGeneration) advanceToNext(generation)
-            } finally {
-                isAdvancing = false
-            }
+            try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false }
         }
     }
 
-    /** Ends an active review session when the user intentionally leaves Review. */
     fun exitReview(onCompleted: () -> Unit = {}) {
         val exitGeneration = ++sessionGeneration
         val activeSessionId = sessionId
-        if (activeSessionId == null) {
-            queue = emptyList()
-            index = 0
-            onCompleted()
-            return
-        }
-
+        if (activeSessionId == null) { queue = emptyList(); index = 0; onCompleted(); return }
         viewModelScope.launch {
             var ended = false
-            try {
-                endReviewSession(activeSessionId)
-                ended = true
-            } catch (e: Exception) {
-                if (exitGeneration == sessionGeneration) {
-                    _state.value = _state.value.copy(
-                        error = e.message ?: "خطا در پایان مرور"
-                    )
-                }
+            try { endReviewSession(activeSessionId); ended = true } catch (e: Exception) {
+                if (exitGeneration == sessionGeneration) _state.value = _state.value.copy(error = e.message ?: "خطا در پایان مرور")
             }
-
-            // A new session may have started while the old session was being ended.
-            // In that case the old cleanup must not clear or overwrite the new session.
-            if (exitGeneration != sessionGeneration) return@launch
-            if (!ended) return@launch
-
-            sessionId = null
-            queue = emptyList()
-            index = 0
-            _state.value = _state.value.copy(
-                card = null,
-                quizCard = null,
-                isSubmitting = false,
-                isFinished = true,
-                remaining = 0
-            )
+            if (exitGeneration != sessionGeneration || !ended) return@launch
+            sessionId = null; queue = emptyList(); index = 0
+            _state.value = _state.value.copy(card = null, quizCard = null, isSubmitting = false, isFinished = true, remaining = 0)
             onCompleted()
         }
     }
@@ -414,49 +303,20 @@ class ReviewViewModel @Inject constructor(
         index += 1
         if (index >= queue.size) {
             val activeSessionId = sessionId
-            try {
-                activeSessionId?.let { endReviewSession(it) }
-            } catch (e: Exception) {
-                // Do not discard the active session when persistence of endedAt fails.
-                // The session can be retried instead of being left orphaned while the
-                // UI incorrectly reports a completed review.
-                if (generation == sessionGeneration) {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        isSubmitting = false,
-                        error = e.message ?: "خطا در پایان مرور"
-                    )
-                }
+            try { activeSessionId?.let { endReviewSession(it) } } catch (e: Exception) {
+                if (generation == sessionGeneration) _state.value = _state.value.copy(isLoading = false, isSubmitting = false, error = e.message ?: "خطا در پایان مرور")
                 return
             }
             if (generation != sessionGeneration) return
-            sessionId = null
-            queue = emptyList()
-            index = 0
-            _state.value = _state.value.copy(
-                isLoading = false,
-                card = null,
-                isFinished = true,
-                isSubmitting = false,
-                answerFeedback = null,
-                quizCard = null,
-                remaining = 0
-            )
+            sessionId = null; queue = emptyList(); index = 0
+            _state.value = _state.value.copy(isLoading = false, card = null, isFinished = true, isSubmitting = false, answerFeedback = null, quizCard = null, remaining = 0)
         } else {
-            // Clear the previous answer feedback before presenting the next card.
-            // ReviewScreen intentionally renders feedback before the card, so keeping
-            // this value would make the UI stay on the previous result forever.
             if (generation != sessionGeneration) return
-            _state.value = _state.value.copy(
-                isSubmitting = false,
-                answerFeedback = null,
-                error = null
-            )
-            loadCurrentCard(generation)
+            _state.value = _state.value.copy(isSubmitting = false, answerFeedback = null, error = null)
+            loadCurrentCard(generation, activeLanguagePair)
         }
     }
 }
-
 
 private fun difficultyLabel(value: VocabularyDifficulty): String = when (value) {
     VocabularyDifficulty.EASY -> "آسان"
