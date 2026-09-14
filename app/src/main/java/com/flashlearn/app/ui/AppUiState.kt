@@ -28,7 +28,11 @@ data class AppUiState(
     val layoutDirection: AppLayoutDirection = AppLayoutDirection.RTL,
     val languagePair: LanguagePair = LanguagePair(),
     val personalWordDifficulty: VocabularyDifficulty? = null,
-    val quizChallenge: QuizChallenge = QuizChallenge.B
+    val quizChallenge: QuizChallenge = QuizChallenge.B,
+    val difficultyThreshold: Int = 3
 ) {
-    init { require(selectedRoute in AppRoutes.all()) { "Unknown application route: $selectedRoute" } }
+    init {
+        require(selectedRoute in AppRoutes.all()) { "Unknown application route: $selectedRoute" }
+        require(difficultyThreshold in 1..20) { "difficultyThreshold must be between 1 and 20" }
+    }
 }
