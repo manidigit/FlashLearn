@@ -22,6 +22,8 @@ data class LibraryUiState(
     val selectedCategoryId: java.util.UUID? = null,
     val favoritesOnly: Boolean = false,
     val categories: List<Category> = emptyList(),
+    val categoryCounts: Map<java.util.UUID, Int> = emptyMap(),
+    val totalCount: Int = 0,
     val items: List<LibraryItem> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -61,19 +63,17 @@ class LibraryViewModel @Inject constructor(
             try {
                 val cats = categoriesRepo.getAll()
                 val cs = if (query.isBlank()) concepts.getAllActive() else concepts.searchActive(query)
+                val filteredBase = cs.asSequence().filter { !favoritesOnly || it.favorite }.toList()
+                val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
+                val filteredConcepts = filteredBase.asSequence().filter { selectedCategory == null || it.categoryId == selectedCategory }.toList()
                 val catMap = cats.associateBy { it.id }
-                val filteredConcepts = cs.asSequence()
-                    .filter { selectedCategory == null || it.categoryId == selectedCategory }
-                    .filter { !favoritesOnly || it.favorite }
-                    .toList()
-                // Do not scan the complete contents table for every search/filter change.
                 val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
                 val items = filteredConcepts.map { c ->
                     val cc = contentMap[c.id].orEmpty()
                     LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.firstOrNull { it.languageCode == targetLanguage }, c.categoryId?.let(catMap::get))
                 }
                 if (generation != refreshGeneration) return@launch
-                _state.value = _state.value.copy(categories = cats, items = items, isLoading = false)
+                _state.value = _state.value.copy(categories = cats, categoryCounts = counts, totalCount = filteredConcepts.size, items = items, isLoading = false)
             } catch (e: Exception) {
                 if (generation != refreshGeneration) return@launch
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "خطا در بارگذاری لغات")
