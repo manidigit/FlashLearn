@@ -56,13 +56,14 @@ class VocabularyBackupRepository @Inject constructor(
             val now = Instant.now()
             val incoming = ArrayList<Incoming>(conceptsJson.length())
             val seenConcepts = HashSet<UUID>(conceptsJson.length())
+            val validEntryTypes = EntryType.entries.map { it.name }.toSet()
 
             for (i in 0 until conceptsJson.length()) {
                 val item = conceptsJson.getJSONObject(i)
                 val id = UUID.fromString(item.getString("uuid"))
                 require(seenConcepts.add(id)) { "DUPLICATE_UUID:concepts" }
                 val entryType = item.optString("contentType", "WORD").uppercase()
-                require(entryType in EntryType.entries.map { it.name }) { "INVALID_VALUE:contentType" }
+                require(entryType in validEntryTypes) { "INVALID_VALUE:contentType" }
 
                 val byLanguage = linkedMapOf<String, MutableList<String>>()
                 val contentsJson = item.getJSONArray("contents")
@@ -77,15 +78,11 @@ class VocabularyBackupRepository @Inject constructor(
                 }
                 require(byLanguage.isNotEmpty()) { "INVALID_VALUE:contents" }
 
+                val note = item.optString("notes").takeIf { it.isNotBlank() && it != "null" }
                 val concept = ConceptEntity(id, entryType, null, false, true, now, now)
                 val contents = byLanguage.map { (language, values) ->
-                    ContentEntity(
-                        UUID.randomUUID(), id, language, values.joinToString(" / "),
-                        computeCanonicalKey(values.joinToString(" / ")),
-                        item.optString("notes").takeIf { it.isNotBlank() && it != "null" },
-                        null,
-                        null
-                    )
+                    val mergedText = values.joinToString(" / ")
+                    ContentEntity(UUID.randomUUID(), id, language, mergedText, computeCanonicalKey(mergedText), note, null, null)
                 }
                 incoming += Incoming(concept, contents)
             }
@@ -95,8 +92,7 @@ class VocabularyBackupRepository @Inject constructor(
                 val existingContents = db.contentDao().getAll().groupBy { it.conceptId }
 
                 val categoryEntities = categoryNames.mapNotNull { name ->
-                    val existing = db.categoryDao().findByName(name)
-                    if (existing != null) null else CategoryEntity(UUID.randomUUID(), name)
+                    if (db.categoryDao().findByName(name) != null) null else CategoryEntity(UUID.randomUUID(), name)
                 }
                 if (categoryEntities.isNotEmpty()) db.categoryDao().insertAll(categoryEntities)
 
@@ -115,8 +111,8 @@ class VocabularyBackupRepository @Inject constructor(
                         difficultyEntities += DifficultyStateEntity(UUID.randomUUID(), item.concept.id, VocabularyDifficulty.EASY.name, 0, 0, false)
                         newCount++
                     } else {
-                        // Vocabulary restore must not erase favorites, inactive state, or timestamps.
-                        conceptEntities += existing.copy(entryType = item.concept.entryType, updatedAt = now)
+                        // Restoring a vocabulary item should make it visible again, while keeping user progress.
+                        conceptEntities += existing.copy(entryType = item.concept.entryType, active = true, updatedAt = now)
                         mergedCount++
                     }
 
@@ -126,7 +122,12 @@ class VocabularyBackupRepository @Inject constructor(
                         if (old == null) {
                             contentEntities += content
                         } else {
-                            contentEntities += content.copy(id = old.id, notes = content.notes ?: old.notes, pronunciation = old.pronunciation, example = old.example)
+                            contentEntities += content.copy(
+                                id = old.id,
+                                notes = content.notes ?: old.notes,
+                                pronunciation = old.pronunciation,
+                                example = old.example
+                            )
                         }
                     }
                 }
