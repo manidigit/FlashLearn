@@ -16,7 +16,7 @@ object DatabaseModule {
     @Provides @Singleton
     fun provideRoomDatabase(@ApplicationContext context: Context): RoomFlashLearnDatabase =
         Room.databaseBuilder(context, RoomFlashLearnDatabase::class.java, "flashlearn.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .build()
     @Provides fun categoryDao(db: RoomFlashLearnDatabase)=db.categoryDao()
     @Provides fun conceptDao(db: RoomFlashLearnDatabase)=db.conceptDao()
@@ -30,4 +30,9 @@ object DatabaseModule {
     @Provides fun settingsDao(db: RoomFlashLearnDatabase)=db.settingsDao()
     @Provides fun parserMetadataDao(db: RoomFlashLearnDatabase)=db.parserMetadataDao()
     @Provides fun achievementDao(db: RoomFlashLearnDatabase)=db.achievementDao()
+    @Provides fun vocabularyRelationDao(db: RoomFlashLearnDatabase)=db.vocabularyRelationDao()
+    @Provides fun vocabularyVariantDao(db: RoomFlashLearnDatabase)=db.vocabularyVariantDao()
+    @Provides fun reviewQueueDao(db: RoomFlashLearnDatabase)=db.reviewQueueDao()
+    @Provides fun languageDao(db: RoomFlashLearnDatabase)=db.languageDao()
+    @Provides fun languagePairDao(db: RoomFlashLearnDatabase)=db.languagePairDao()
 }
