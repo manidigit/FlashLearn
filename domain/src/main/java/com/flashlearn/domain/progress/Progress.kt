@@ -40,6 +40,16 @@ class CalculateProgressUseCase @Inject constructor(
     }
 }
 
+object ProgressScoring {
+    fun score(stage: Stage?, hasReviewHistory: Boolean): Int = when (stage) {
+        Stage.LEARNED -> 100
+        Stage.MONTHLY -> 80
+        Stage.WEEKLY -> 60
+        Stage.DAILY -> 35
+        null -> if (hasReviewHistory) 15 else 0
+    }
+}
+
 data class ProgressPercentageResult(val percentage: Double)
 
 class CalculateProgressPercentage @Inject constructor(
@@ -53,13 +63,7 @@ class CalculateProgressPercentage @Inject constructor(
         val states = learningRepository.getAll().associateBy { it.conceptId }
         val reviewed = reviewHistoryRepository.getAll().groupBy { it.conceptId }
         val totalScore = concepts.sumOf { concept ->
-            when (states[concept.id]?.stage) {
-                Stage.LEARNED -> 100
-                Stage.MONTHLY -> 80
-                Stage.WEEKLY -> 60
-                Stage.DAILY -> 35
-                null -> if (!reviewed[concept.id].isNullOrEmpty()) 15 else 0
-            }
+            ProgressScoring.score(states[concept.id]?.stage, !reviewed[concept.id].isNullOrEmpty())
         }
         return totalScore.toDouble() / concepts.size.toDouble()
     }
