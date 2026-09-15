@@ -1,6 +1,7 @@
 package com.flashlearn.domain.parser
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -31,7 +32,7 @@ class VocabularyParserTest {
         val entries = VocabularyParser().parse("aprender\nیاد گرفتن\nExample: aprender español cada día")
         assertEquals(1, entries.size)
         assertEquals("یاد گرفتن", entries[0].translationText)
-        assertEquals("Example: aprender español cada día", entries[0].notes)
+        assertEquals("aprender español cada día", entries[0].notes)
     }
 
     @Test fun detects_mixed_analysis_without_creating_fake_entry() {
@@ -42,38 +43,31 @@ class VocabularyParserTest {
     }
 
     @Test fun merges_exact_duplicates_without_losing_notes() {
-        val entries = VocabularyParser().parse(
-            "hola → سلام\nExample one: hola amigo\nhola → سلام\nExample two: hola amigo"
-        )
+        val entries = VocabularyParser().parse("hola → سلام\nExample one: hola amigo\nhola → سلام\nExample two: hola amigo")
         assertEquals(1, entries.size)
-        assertTrue(entries[0].notes!!.contains("Example one: hola amigo"))
-        assertTrue(entries[0].notes!!.contains("Example two: hola amigo"))
+        assertTrue(entries[0].notes!!.contains("hola amigo"))
+        assertTrue(entries[0].notes!!.contains("Example two"))
     }
 
     @Test fun classifies_common_structures_and_idioms() {
-        val entries = VocabularyParser().parse(
-            "tener miedo de → ترسیدن از\nestar en las nubes → حواس‌پرت بودن"
-        )
+        val entries = VocabularyParser().parse("tener miedo de → ترسیدن از\nestar en las nubes → حواس‌پرت بودن")
         assertEquals(2, entries.size)
         assertEquals(EntryKind.STRUCTURE, entries[0].entryType)
         assertEquals(EntryKind.IDIOM, entries[1].entryType)
     }
 
-    @Test fun detailed_parse_separates_breakdown_from_notes() {
-        val result = VocabularyParser().parseDetailed(
-            "hablar → صحبت کردن\nتجزیه: hablar = to speak\nGrammar: فعل بی‌قاعده"
-        )
-        assertEquals(1, result.entries.size)
-        assertEquals(1, result.entries[0].breakdown.size)
-        assertEquals("hablar = to speak", result.entries[0].breakdown[0].text)
-        assertTrue(result.entries[0].notes!!.contains("Grammar: فعل بی‌قاعده"))
+    @Test fun detailed_parse_separates_breakdown_and_grammar_from_plain_notes() {
+        val result = VocabularyParser().parseDetailed("hablar → صحبت کردن\nتجزیه: hablar = to speak\nGrammar: فعل بی‌قاعده\nنکته: با hablar en público")
+        val entry = result.entries.single()
+        assertEquals(1, entry.breakdown.size)
+        assertEquals("hablar = to speak", entry.breakdown[0].text)
+        assertEquals("فعل بی‌قاعده", entry.grammarNote)
+        assertEquals("با hablar en público", entry.notes)
         assertTrue(result.warnings.isEmpty())
     }
 
     @Test fun detailed_parse_pairs_orphan_translation_without_warning_after_successful_pairing() {
-        val result = VocabularyParser().parseDetailed(
-            "سلام\naprender"
-        )
+        val result = VocabularyParser().parseDetailed("سلام\naprender")
         assertEquals(1, result.entries.size)
         assertEquals("aprender", result.entries[0].sourceText)
         assertEquals("سلام", result.entries[0].translationText)
@@ -81,11 +75,9 @@ class VocabularyParserTest {
     }
 
     @Test fun detailed_parse_preserves_unknown_following_lines_as_notes() {
-        val result = VocabularyParser().parseDetailed(
-            "casa → خانه\nExample: texto libre para contexto"
-        )
+        val result = VocabularyParser().parseDetailed("casa → خانه\nExample: texto libre para contexto")
         assertEquals(1, result.entries.size)
-        assertEquals("Example: texto libre para contexto", result.entries[0].notes)
+        assertEquals("texto libre para contexto", result.entries[0].notes)
         assertTrue(result.warnings.isEmpty())
     }
 
@@ -111,9 +103,7 @@ class VocabularyParserTest {
     }
 
     @Test fun v500_extracts_breakdown_relationship_variant_and_confidence() {
-        val result = VocabularyParser().parseDetailed(
-            "hablar → صحبت کردن\nتجزیه: hablar = hab + lar\nمرتبط: خانواده: habla\nVariant: platicar"
-        )
+        val result = VocabularyParser().parseDetailed("hablar → صحبت کردن\nتجزیه: hablar = hab + lar\nمرتبط: خانواده: habla\nVariant: platicar")
         val entry = result.entries.single()
         assertEquals(1, entry.breakdown.size)
         assertEquals("hablar = hab + lar", entry.breakdown[0].text)
@@ -126,14 +116,39 @@ class VocabularyParserTest {
     }
 
     @Test fun v500_exposes_deterministic_import_log_actions() {
-        val result = VocabularyParser().parseDetailed(
-            "1. casa → خانه\nمثال: casa grande\n---\nسلام"
-        )
+        val result = VocabularyParser().parseDetailed("1. casa → خانه\nمثال: casa grande\n---\nسلام")
         assertEquals(4, result.importLog.size)
         assertEquals(ParsedLineType.ENTRY_HEADER, result.importLog[0].lineType)
         assertEquals("started_entry", result.importLog[0].action)
-        assertEquals("attached_as_note", result.importLog[1].action)
+        assertEquals("attached_note", result.importLog[1].action)
         assertEquals("ignored", result.importLog[2].action)
-        assertEquals("attached_as_note", result.importLog[3].action)
+        assertEquals("attached_note", result.importLog[3].action)
+    }
+
+    @Test fun multiple_translation_lines_are_kept_as_separate_meanings() {
+        val result = VocabularyParser().parseDetailed("casa\nخانه\nمنزل")
+        val entry = result.entries.single()
+        assertEquals("خانه / منزل", entry.translationText)
+        assertTrue(entry.evidence.contains("additionalTranslation"))
+        assertFalse(entry.notes.orEmpty().contains("منزل"))
+    }
+
+    @Test fun grammar_marker_is_not_stored_as_plain_note() {
+        val entry = VocabularyParser().parseDetailed("hablar → صحبت کردن\nنکته گرامری: مصدر بی‌قاعده").entries.single()
+        assertEquals("مصدر بی‌قاعده", entry.grammarNote)
+        assertEquals(null, entry.notes)
+    }
+
+    @Test fun normalization_preserves_semantic_punctuation_and_removes_only_decorative_prefix() {
+        val entry = VocabularyParser().parseDetailed("  ۱.   ¿qué quieres?  →   چه می‌خواهی؟  ").entries.single()
+        assertEquals("¿qué quieres?", entry.sourceText)
+        assertEquals("چه می‌خواهی؟", entry.translationText)
+    }
+
+    @Test fun low_signal_untranslated_source_is_reported_with_warning() {
+        val result = VocabularyParser().parseDetailed("hola")
+        assertEquals(1, result.entries.size)
+        assertTrue(result.warnings.any { it.warningType == ParseWarningType.ORPHAN_SOURCE })
+        assertTrue(result.entries.single().confidence < 0.80)
     }
 }
