@@ -8,12 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Backup
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.FileUpload
-import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +20,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
-import com.flashlearn.app.ui.components.PurpleHeroCard
 import com.flashlearn.domain.model.ReviewType
 
 @Composable
@@ -34,34 +27,16 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     languagePair: LanguagePair = LanguagePair(),
     onStartReview: (ReviewType) -> Unit,
-    onAddWord: () -> Unit,
-    onBulkImport: () -> Unit,
-    onLibrary: () -> Unit,
-    onProgress: () -> Unit,
-    onLanguage: () -> Unit,
-    onBackup: () -> Unit
+    onAddWord: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val summary = state.summary
     val due = summary?.dueConceptCount ?: 0
     val total = summary?.activeConceptCount ?: 0
     val daily = summary?.dailyDueConceptCount ?: 0
-    var menuExpanded by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(48.dp)) {
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .12f)) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Menu, "منو", tint = MaterialTheme.colorScheme.primary) }
-                    }
-                }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text("انتخاب زبان") }, leadingIcon = { Icon(Icons.Outlined.Language, null) }, onClick = { menuExpanded = false; onLanguage() })
-                    DropdownMenuItem(text = { Text("افزودن گروهی واژگان") }, leadingIcon = { Icon(Icons.Outlined.FileUpload, null) }, onClick = { menuExpanded = false; onBulkImport() })
-                    DropdownMenuItem(text = { Text("پشتیبان‌گیری و بازیابی") }, leadingIcon = { Icon(Icons.Outlined.Backup, null) }, onClick = { menuExpanded = false; onBackup() })
-                }
-            }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("سلام مانی!", style = MaterialTheme.typography.headlineSmall)
@@ -114,10 +89,6 @@ fun HomeScreen(
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             QuickAction("مرور کلمات", Icons.Outlined.Sync, Modifier.weight(1f)) { onStartReview(ReviewType.DAILY) }
-            QuickAction("آمار و گزارش", Icons.Outlined.BarChart, Modifier.weight(1f), onProgress)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            QuickAction("واژگان", Icons.Outlined.Book, Modifier.weight(1f), onLibrary)
             QuickAction("افزودن واژه", Icons.Outlined.Add, Modifier.weight(1f), onAddWord)
         }
     }
