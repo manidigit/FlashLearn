@@ -52,8 +52,14 @@ class SelectReviewQueueUseCase @Inject constructor(
             candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }
 
+        val unique = candidates.distinctBy { it.concept.id }
         val safeMaxCards = filters.maxCards.coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT)
-        return candidates.distinctBy { it.concept.id }.shuffled().take(safeMaxCards)
+        val ordered = when (filters.reviewType) {
+            ReviewType.DAILY, ReviewType.WEEKLY, ReviewType.MONTHLY ->
+                unique.sortedWith(compareBy<ReviewCandidate> { it.learningState.nextReviewAt }.thenBy { it.concept.id.toString() })
+            ReviewType.LEARNED, ReviewType.RANDOM -> unique.shuffled()
+        }
+        return ordered.take(safeMaxCards)
     }
 }
 
