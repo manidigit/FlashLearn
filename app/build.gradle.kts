@@ -11,14 +11,10 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 73
-        versionName = "5.73"
+        versionCode = 74
+        versionName = "5.74"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    // Keep the same debug signing certificate across every GitHub Actions runner.
-    // This is the same stable debug-key strategy used successfully in manidigit/Flash:
-    // a fresh runner must not generate a new debug certificate, otherwise Android
-    // rejects the next APK as a different signer and requires uninstall first.
     signingConfigs {
         getByName("debug") {
             storeFile = file("../keystore/debug.keystore")
