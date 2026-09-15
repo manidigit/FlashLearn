@@ -69,7 +69,6 @@ class RoomBackupRepository @Inject constructor(
         if (missing.isNotEmpty() && schema >= 2) {
             return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
         }
-
         val validationIssues = validateBeforeMutation(root)
         if (validationIssues.isNotEmpty()) return RestoreResult(0, 0, validationIssues)
 
@@ -86,23 +85,14 @@ class RoomBackupRepository @Inject constructor(
                 val conceptIds = concepts.map { it.id }.toSet()
                 val existingConceptIds = db.conceptDao().getAll().map { it.id }.toSet()
                 concepts.forEach { if (it.id in existingConceptIds) { db.conceptDao().update(it); merged++ } else { db.conceptDao().insert(it); added++ } }
-
                 root.arr("categories").forEach { val e=CategoryEntity(uuid(it,"id"),it.getString("name")); if(db.categoryDao().getById(e.id)==null){db.categoryDao().insert(e);added++}else{db.categoryDao().update(e);merged++} }
                 root.arr("tags").forEach { val e=TagEntity(uuid(it,"id"),it.getString("name")); if(db.tagDao().getById(e.id)==null){db.tagDao().insert(e);added++}else{db.tagDao().update(e);merged++} }
-
                 root.arr("contents").filter { uuid(it,"conceptId") in conceptIds }.forEach { o ->
-                    val conceptId=uuid(o,"conceptId")
-                    val lang=o.getString("languageCode")
-                    val index=o.optInt("translationIndex",0)
-                    val incomingId=uuid(o,"id")
+                    val conceptId=uuid(o,"conceptId"); val lang=o.getString("languageCode"); val index=o.optInt("translationIndex",0); val incomingId=uuid(o,"id")
                     val e0=ContentEntity(incomingId,conceptId,lang,o.getString("text"),computeCanonicalKey(o.getString("text")),text(o,"notes"),text(o,"pronunciation"),text(o,"example"),index,text(o,"grammarNote"),text(o,"possibleCorrection"))
                     val existingById=db.contentDao().getById(incomingId)
                     val existingByIdentity=db.contentDao().getAll().firstOrNull { it.conceptId==conceptId && it.languageCode==lang && it.translationIndex==index }
-                    when {
-                        existingById != null -> { db.contentDao().update(e0); merged++ }
-                        existingByIdentity != null -> { db.contentDao().update(e0.copy(id=existingByIdentity.id)); merged++ }
-                        else -> { db.contentDao().insert(e0); added++ }
-                    }
+                    when { existingById != null -> { db.contentDao().update(e0); merged++ }; existingByIdentity != null -> { db.contentDao().update(e0.copy(id=existingByIdentity.id)); merged++ }; else -> { db.contentDao().insert(e0); added++ } }
                 }
                 root.arr("learningStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=LearningStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("stage"),instant(o,"nextReviewAt"),o.getInt("monthlyWrongCount"),o.getBoolean("hasPathFailure"),o.getInt("totalCorrect"),o.getInt("totalWrong"),instant(o,"lastReviewedAt")); val old=db.learningStateDao().getByConceptId(e.conceptId); if(old==null){db.learningStateDao().upsert(e);added++}else{db.learningStateDao().upsert(e.copy(id=old.id));merged++} }
                 root.arr("difficultyStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=DifficultyStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("current"),o.getInt("consecutiveCorrect"),o.getInt("consecutiveWrong"),o.getBoolean("hasReachedVeryHard")); val old=db.difficultyStateDao().getByConceptId(e.conceptId); if(old==null){db.difficultyStateDao().upsert(e);added++}else{db.difficultyStateDao().upsert(e.copy(id=old.id));merged++} }
@@ -122,30 +112,28 @@ class RoomBackupRepository @Inject constructor(
                 if (!refs.all { it in conceptIds }) issues += "INVALID_CONCEPT_REFERENCE"
                 RestoreResult(added, merged, issues)
             }
-        } catch (e: Exception) {
-            RestoreResult(0, 0, listOf(e.message ?: "RESTORE_FAILED"))
-        }
+        } catch (e: Exception) { RestoreResult(0, 0, listOf(e.message ?: "RESTORE_FAILED")) }
     }
 
     private fun validateBeforeMutation(root: JSONObject): List<String> {
         val issues = mutableListOf<String>()
-        val arrays = mapOf(
-            "concepts" to "id", "contents" to "id", "learningStates" to "id", "difficultyStates" to "id",
-            "tags" to "id", "reviewSessions" to "id", "reviewHistory" to "id", "categories" to "id",
-            "variants" to "id", "relations" to "id", "reviewQueue" to "id"
-        )
+        val arrays = mapOf("concepts" to "id", "contents" to "id", "learningStates" to "id", "difficultyStates" to "id", "tags" to "id", "reviewSessions" to "id", "reviewHistory" to "id", "categories" to "id", "variants" to "id", "relations" to "id", "reviewQueue" to "id")
         arrays.forEach { (section, key) ->
             val seen = mutableSetOf<String>()
-            root.optJSONArray(section)?.let { a ->
-                for (i in 0 until a.length()) {
-                    val o = a.optJSONObject(i) ?: run { issues += "INVALID_ENTRY:$section[$i]"; continue }
-                    val value = o.optString(key, "")
-                    if (value.isBlank() || runCatching { UUID.fromString(value) }.isFailure) issues += "INVALID_UUID:$section"
-                    else if (!seen.add(value)) issues += "DUPLICATE_UUID:$section"
+            val array = root.optJSONArray(section)
+            if (array != null) {
+                for (i in 0 until array.length()) {
+                    val o = array.optJSONObject(i)
+                    if (o == null) {
+                        issues += "INVALID_ENTRY:$section[$i]"
+                    } else {
+                        val value = o.optString(key, "")
+                        if (value.isBlank() || runCatching { UUID.fromString(value) }.isFailure) issues += "INVALID_UUID:$section"
+                        else if (!seen.add(value)) issues += "DUPLICATE_UUID:$section"
+                    }
                 }
             }
         }
-
         root.optJSONArray("learningStates")?.let { a -> for (i in 0 until a.length()) { val stage=a.getJSONObject(i).optString("stage"); if(stage !in STAGES) issues += "INVALID_VALUE:stage" } }
         root.optJSONArray("reviewSessions")?.let { a ->
             for (i in 0 until a.length()) {
