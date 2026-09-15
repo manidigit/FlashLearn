@@ -1,5 +1,14 @@
 package com.flashlearn.domain.gamification
 
+import com.flashlearn.domain.model.Stage
+import com.flashlearn.domain.model.ReviewType
+import com.flashlearn.domain.repository.AchievementRepository
+import com.flashlearn.domain.repository.ConceptRepository
+import com.flashlearn.domain.repository.DifficultyStateRepository
+import com.flashlearn.domain.repository.LearningStateRepository
+import com.flashlearn.domain.repository.ReviewHistoryRepository
+import java.time.Instant
+import javax.inject.Inject
 
 data class AchievementDefinition(
     val id: String,
@@ -18,7 +27,10 @@ data class AchievementContext(
     val totalWrong: Int,
     val currentStreakDays: Int,
     val longestStreakDays: Int,
-    val learnedConcepts: Int
+    val learnedConcepts: Int,
+    val totalActiveWords: Int = 0,
+    val veryHardLearnedConcepts: Int = 0,
+    val monthlyCorrectConcepts: Int = 0
 )
 
 data class AchievementEvaluationResult(
@@ -42,31 +54,30 @@ object AchievementIds {
 
 object DefaultAchievements {
     val definitions = listOf(
-        AchievementDefinition(AchievementIds.FIRST_TEN_WORDS, "اولین ۱۰ واژه", "یادگیری ۱۰ واژه"),
-        AchievementDefinition(AchievementIds.SEVEN_DAY_STREAK, "هفت روز پیوسته", "رسیدن به زنجیره ۷ روزه"),
-        AchievementDefinition(AchievementIds.THIRTY_DAY_STREAK, "سی روز پیوسته", "رسیدن به زنجیره ۳۰ روزه"),
-        AchievementDefinition(AchievementIds.MEMORY_BUILDER, "سازنده حافظه", "انجام ۱۰۰ مرور"),
-        AchievementDefinition(AchievementIds.VOCABULARY_BUILDER, "سازنده واژگان", "یادگیری ۱۰۰ واژه"),
-        AchievementDefinition(AchievementIds.HARD_MODE_MASTER, "استاد سخت", "ثبت ۵۰ پاسخ صحیح"),
-        AchievementDefinition(AchievementIds.LONG_TERM_MEMORY, "حافظه بلندمدت", "رسیدن به ۳۰ روز زنجیره و ۱۰۰ مرور")
+        AchievementDefinition(AchievementIds.FIRST_TEN_WORDS, "اولین ۱۰ واژه", "یادگیری ۱۰ واژه اول"),
+        AchievementDefinition(AchievementIds.SEVEN_DAY_STREAK, "هفت روز پیوسته", "۷ روز پیوسته تمرین"),
+        AchievementDefinition(AchievementIds.THIRTY_DAY_STREAK, "سی روز پیوسته", "۳۰ روز پیوسته تمرین"),
+        AchievementDefinition(AchievementIds.MEMORY_BUILDER, "سازنده حافظه", "۱۰۰ کلمه Learned"),
+        AchievementDefinition(AchievementIds.VOCABULARY_BUILDER, "سازنده واژگان", "۵۰۰ Concept فعال"),
+        AchievementDefinition(AchievementIds.HARD_MODE_MASTER, "استاد سخت", "تسلط بر ۲۵ کلمه VERY_HARD و Learned"),
+        AchievementDefinition(AchievementIds.LONG_TERM_MEMORY, "حافظه بلندمدت", "۵۰ Concept با پاسخ صحیح در مرور Monthly")
     )
 }
 
 object DefaultAchievementRules : AchievementRule {
     override fun isSatisfied(definition: AchievementDefinition, context: AchievementContext): Boolean = when (definition.id) {
-        AchievementIds.FIRST_TEN_WORDS -> context.learnedConcepts >= 10
-        AchievementIds.SEVEN_DAY_STREAK -> context.currentStreakDays >= 7 || context.longestStreakDays >= 7
-        AchievementIds.THIRTY_DAY_STREAK -> context.currentStreakDays >= 30 || context.longestStreakDays >= 30
-        AchievementIds.MEMORY_BUILDER -> context.totalReviews >= 100
-        AchievementIds.VOCABULARY_BUILDER -> context.learnedConcepts >= 100
-        AchievementIds.HARD_MODE_MASTER -> context.totalCorrect >= 50
-        AchievementIds.LONG_TERM_MEMORY ->
-            (context.currentStreakDays >= 30 || context.longestStreakDays >= 30) && context.totalReviews >= 100
+        AchievementIds.FIRST_TEN_WORDS -> context.totalReviews > 0 && context.learnedConcepts >= 10
+        AchievementIds.SEVEN_DAY_STREAK -> context.currentStreakDays >= 7
+        AchievementIds.THIRTY_DAY_STREAK -> context.currentStreakDays >= 30
+        AchievementIds.MEMORY_BUILDER -> context.learnedConcepts >= 100
+        AchievementIds.VOCABULARY_BUILDER -> context.totalActiveWords >= 500
+        AchievementIds.HARD_MODE_MASTER -> context.veryHardLearnedConcepts >= 25
+        AchievementIds.LONG_TERM_MEMORY -> context.monthlyCorrectConcepts >= 50
         else -> false
     }
 }
 
-class EvaluateAchievementsUseCase @javax.inject.Inject constructor() {
+class EvaluateAchievementsUseCase @Inject constructor() {
     private val rules: List<AchievementRule> = listOf(DefaultAchievementRules)
     fun evaluate(
         definitions: List<AchievementDefinition>,
@@ -76,17 +87,59 @@ class EvaluateAchievementsUseCase @javax.inject.Inject constructor() {
         val old = existing.associateBy { it.achievementId }
         val states = definitions.map { definition ->
             val wasUnlocked = old[definition.id]?.unlocked == true
-            AchievementState(
-                definition.id,
-                wasUnlocked || rules.any { it.isSatisfied(definition, context) }
-            )
+            AchievementState(definition.id, wasUnlocked || rules.any { it.isSatisfied(definition, context) })
         }
         return AchievementEvaluationResult(
             states = states,
-            newlyUnlocked = states.filter {
-                it.unlocked && old[it.achievementId]?.unlocked != true
-            }.map { it.achievementId }
+            newlyUnlocked = states.filter { it.unlocked && old[it.achievementId]?.unlocked != true }
+                .map { it.achievementId }
         )
     }
 }
 
+/**
+ * Specification-level automatic unlock operation. It computes all achievement
+ * inputs from repositories and persists only first-time unlocks. UI consumes
+ * the returned IDs for presentation and never evaluates achievement rules.
+ */
+class CheckAndUnlockAchievements @Inject constructor(
+    private val conceptRepository: ConceptRepository,
+    private val reviewHistoryRepository: ReviewHistoryRepository,
+    private val learningStateRepository: LearningStateRepository,
+    private val difficultyStateRepository: DifficultyStateRepository,
+    private val achievementRepository: AchievementRepository,
+    private val streakCalculator: com.flashlearn.domain.statistics.CalculateStreakUseCase
+) {
+    suspend operator fun invoke(now: Instant, zoneId: java.time.ZoneId): List<AchievementState> {
+        val activeConcepts = conceptRepository.getAllActive()
+        val activeIds = activeConcepts.map { it.id }.toSet()
+        val history = reviewHistoryRepository.getAll().filter { it.conceptId in activeIds }
+        val learning = learningStateRepository.getAll().filter { it.conceptId in activeIds }
+        val difficulty = difficultyStateRepository.getAll().filter { it.conceptId in activeIds }
+        val streak = streakCalculator.calculate(history, now, zoneId)
+        val context = AchievementContext(
+            totalReviews = history.size,
+            totalCorrect = history.count { it.isCorrect },
+            totalWrong = history.count { !it.isCorrect },
+            currentStreakDays = streak.currentStreakDays,
+            longestStreakDays = streak.longestStreakDays,
+            learnedConcepts = learning.count { it.stage == Stage.LEARNED },
+            totalActiveWords = activeConcepts.size,
+            veryHardLearnedConcepts = activeConcepts.count { concept ->
+                learning.any { it.conceptId == concept.id && it.stage == Stage.LEARNED } &&
+                    difficulty.any { it.conceptId == concept.id && it.hasReachedVeryHard }
+            },
+            monthlyCorrectConcepts = history.asSequence()
+                .filter { it.reviewType == ReviewType.MONTHLY && it.isCorrect }
+                .map { it.conceptId }
+                .distinct()
+                .count()
+        )
+        val existing = achievementRepository.getAll()
+        val result = EvaluateAchievementsUseCase().evaluate(DefaultAchievements.definitions, existing, context)
+        val oldUnlocked = existing.filter { it.unlocked }.associateBy { it.achievementId }
+        val toPersist = result.states.filter { it.unlocked && oldUnlocked[it.achievementId] == null }
+        if (toPersist.isNotEmpty()) achievementRepository.upsertAll(toPersist)
+        return toPersist
+    }
+}
