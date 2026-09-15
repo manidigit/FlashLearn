@@ -4,6 +4,7 @@ import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
 import com.flashlearn.domain.repository.LearningStateRepository
+import com.flashlearn.domain.repository.ReviewHistoryRepository
 import java.time.Instant
 import javax.inject.Inject
 
@@ -27,9 +28,6 @@ class CalculateProgressUseCase @Inject constructor(
         val concepts = conceptRepository.getAllActive()
         val learningById = learningRepository.getAll().associateBy { it.conceptId }
         val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
-
-        // Do not issue one Room query per concept. A restored 100k-word library must be
-        // summarized with three bulk reads rather than 200k sequential database calls.
         return ProgressSnapshot(
             totalConcepts = concepts.size,
             dailyConcepts = concepts.count { learningById[it.id]?.stage == Stage.DAILY },
@@ -39,5 +37,30 @@ class CalculateProgressUseCase @Inject constructor(
             pathFailureConcepts = concepts.count { learningById[it.id]?.hasPathFailure == true },
             veryHardConcepts = concepts.count { difficultyById[it.id]?.hasReachedVeryHard == true }
         )
+    }
+}
+
+data class ProgressPercentageResult(val percentage: Double)
+
+class CalculateProgressPercentage @Inject constructor(
+    private val conceptRepository: ConceptRepository,
+    private val learningRepository: LearningStateRepository,
+    private val reviewHistoryRepository: ReviewHistoryRepository
+) {
+    suspend operator fun invoke(): Double {
+        val concepts = conceptRepository.getAllActive()
+        if (concepts.isEmpty()) return 0.0
+        val states = learningRepository.getAll().associateBy { it.conceptId }
+        val reviewed = reviewHistoryRepository.getAll().groupBy { it.conceptId }
+        val totalScore = concepts.sumOf { concept ->
+            when (states[concept.id]?.stage) {
+                Stage.LEARNED -> 100
+                Stage.MONTHLY -> 80
+                Stage.WEEKLY -> 60
+                Stage.DAILY -> 35
+                null -> if (!reviewed[concept.id].isNullOrEmpty()) 15 else 0
+            }
+        }
+        return totalScore.toDouble() / concepts.size.toDouble()
     }
 }
