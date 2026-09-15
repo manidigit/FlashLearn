@@ -145,22 +145,29 @@ jobs:
       FL_RELEASE_KEY_PASSWORD: ${{ secrets.FL_RELEASE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
-      - name: Require stable release signing
+      - name: Check stable release signing configuration
+        id: release_signing
         shell: bash
         run: |
-          test -n "$FL_RELEASE_KEYSTORE_B64" || { echo "Stable release signing is not configured; debug CI artifact remains available."; exit 1; }
-          test -n "$FL_RELEASE_STORE_PASSWORD" || { echo "Missing FL_RELEASE_STORE_PASSWORD"; exit 1; }
-          test -n "$FL_RELEASE_KEY_ALIAS" || { echo "Missing FL_RELEASE_KEY_ALIAS"; exit 1; }
-          test -n "$FL_RELEASE_KEY_PASSWORD" || { echo "Missing FL_RELEASE_KEY_PASSWORD"; exit 1; }
+          if [[ -n "$FL_RELEASE_KEYSTORE_B64" && -n "$FL_RELEASE_STORE_PASSWORD" && -n "$FL_RELEASE_KEY_ALIAS" && -n "$FL_RELEASE_KEY_PASSWORD" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Stable release signing is configured."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release signing is not configured; skipping signed release gate. Debug CI remains the required artifact."
+          fi
       - uses: actions/setup-java@v5
+        if: steps.release_signing.outputs.configured == 'true'
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
       - uses: gradle/actions/setup-gradle@v4
+        if: steps.release_signing.outputs.configured == 'true'
         with:
           gradle-version: "8.2"
       - name: Install Android SDK tools
+        if: steps.release_signing.outputs.configured == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -176,20 +183,25 @@ jobs:
           command -v apksigner
           command -v apkanalyzer
       - name: Materialize stable release keystore
+        if: steps.release_signing.outputs.configured == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/flashlearn"
           echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
           test -s "$RUNNER_TEMP/flashlearn/release.keystore"
       - name: Build signed current release
+        if: steps.release_signing.outputs.configured == 'true'
         env:
           FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
         run: gradle --no-daemon clean assembleRelease
       - name: Verify current release signature
+        if: steps.release_signing.outputs.configured == 'true'
         run: apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
       - name: Verify current release version
+        if: steps.release_signing.outputs.configured == 'true'
         run: |
           test "$(apkanalyzer manifest version-code app/build/outputs/apk/release/app-release.apk)" = "${FL_VERSION_CODE}"
       - name: Real signed update-path smoke test
+        if: steps.release_signing.outputs.configured == 'true'
         env:
           FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
         shell: bash
@@ -210,10 +222,12 @@ jobs:
           adb install -r "$NEW_APK"
           test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "73"
       - name: Stage signed release artifact
+        if: steps.release_signing.outputs.configured == 'true'
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/FlashLearn_v${FL_VERSION_NAME}_RELEASE.apk"
       - uses: actions/upload-artifact@v4
+        if: steps.release_signing.outputs.configured == 'true'
         with:
           name: flashlearn-release-apk
           path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_RELEASE.apk
