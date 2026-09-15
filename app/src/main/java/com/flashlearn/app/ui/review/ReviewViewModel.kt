@@ -14,6 +14,7 @@ import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
 import com.flashlearn.domain.usecase.EndReviewSessionUseCase
+import com.flashlearn.domain.usecase.ReviewHelpUseCase
 import com.flashlearn.domain.usecase.ReviewSelectionFilters
 import com.flashlearn.domain.usecase.GenerateQuizQuestionUseCase
 import com.flashlearn.domain.usecase.QuizLanguagePair
@@ -34,7 +35,7 @@ import kotlinx.coroutines.launch
 
 enum class ReviewMode { FLASHCARD, QUIZ }
 data class QuizCardUiState(val promptText: String, val options: List<String>, val selectedOption: String? = null, val correctAnswerText: String)
-data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val noteVisible: Boolean = false)
+data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val hintText: String? = null, val noteVisible: Boolean = false)
 data class ReviewAnswerFeedbackUiState(val isCorrect: Boolean, val stageLabel: String, val difficultyLabel: String, val correctAnswerText: String? = null, val answered: Int, val correct: Int, val wrong: Int)
 data class ReviewUiState(
     val isLoading: Boolean = false, val isSelectingMode: Boolean = true,
@@ -59,6 +60,7 @@ class ReviewViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(ReviewUiState())
     val state: StateFlow<ReviewUiState> = _state.asStateFlow()
+    private val reviewHelp = ReviewHelpUseCase()
     private var sessionId: UUID? = null
     private var queue: List<UUID> = emptyList()
     private var index = 0
@@ -122,8 +124,16 @@ class ReviewViewModel @Inject constructor(
     fun selectQuizOption(option: String) { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return; _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option), error = null) }
     fun submitQuizAnswer() { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null) return; val selected = quiz.selectedOption ?: return; if (selected !in quiz.options) return; submitAnswer(selected == quiz.correctAnswerText) }
     fun flipCard() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(isFlipped = true)) } }
-    fun revealHint() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(hintRevealed = true)) } }
-    fun toggleNote() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(noteVisible = !it.noteVisible)) } }
+    fun revealHint() {
+        val card = _state.value.card ?: return
+        val hint = reviewHelp.hintFor(card.sourceText)
+        _state.value = _state.value.copy(card = card.copy(hintRevealed = true, hintText = hint))
+    }
+    fun toggleNote() {
+        val card = _state.value.card ?: return
+        if (reviewHelp.noteFor(card.sourceNotes) == null) return
+        _state.value = _state.value.copy(card = card.copy(noteVisible = !card.noteVisible))
+    }
     fun submitAnswer(isCorrect: Boolean) {
         val currentState = _state.value; if (!currentState.canSubmitAnswer) return
         val session = sessionId ?: return; val conceptId = queue.getOrNull(index) ?: return; val reviewType = currentState.selectedReviewType; val generation = sessionGeneration
