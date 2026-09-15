@@ -10,8 +10,8 @@ import javax.inject.Inject
 object Mappers {
     fun concept(e: ConceptEntity)=Concept(e.id,EntryType.valueOf(e.entryType),e.categoryId,e.favorite,e.active,e.createdAt,e.updatedAt)
     fun concept(e: Concept)=ConceptEntity(e.id,e.entryType.name,e.categoryId,e.favorite,e.active,e.createdAt,e.updatedAt)
-    fun content(e: ContentEntity)=Content(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.pronunciation,e.example)
-    fun content(e: Content)=ContentEntity(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.pronunciation,e.example)
+    fun content(e: ContentEntity)=Content(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.pronunciation,e.example,e.translationIndex,e.grammarNote,e.possibleCorrection)
+    fun content(e: Content)=ContentEntity(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.pronunciation,e.example,e.translationIndex,e.grammarNote,e.possibleCorrection)
     fun learning(e: LearningStateEntity)=LearningState(e.id,e.conceptId,Stage.valueOf(e.stage),e.nextReviewAt,e.monthlyWrongCount,e.hasPathFailure,e.totalCorrect,e.totalWrong,e.lastReviewedAt)
     fun learning(e: LearningState)=LearningStateEntity(e.id,e.conceptId,e.stage.name,e.nextReviewAt,e.monthlyWrongCount,e.hasPathFailure,e.totalCorrect,e.totalWrong,e.lastReviewedAt)
     fun difficulty(e: DifficultyStateEntity)=DifficultyState(e.id,e.conceptId,VocabularyDifficulty.valueOf(e.current),e.consecutiveCorrect,e.consecutiveWrong,e.hasReachedVeryHard)
@@ -37,6 +37,16 @@ object Mappers {
         JSONArray().apply { value.variants.forEach(::put) }.toString(),
         value.confidence.coerceIn(0.0, 1.0)
     )
+    fun relation(e: VocabularyRelationEntity)=VocabularyRelation(UUID.fromString(e.id.toString()),e.sourceConceptId,e.targetConceptId,VocabularyRelationType.valueOf(e.relationType),e.unresolvedText)
+    fun relation(e: VocabularyRelation)=VocabularyRelationEntity(e.id,e.sourceConceptId,e.targetConceptId,e.relationType.name,e.unresolvedText)
+    fun variant(e: VocabularyVariantEntity)=VocabularyVariant(e.id,e.conceptId,e.text,VocabularyVariantType.valueOf(e.variantType))
+    fun variant(e: VocabularyVariant)=VocabularyVariantEntity(e.id,e.conceptId,e.text,e.variantType.name)
+    fun reviewQueue(e: ReviewQueueEntity)=ReviewQueueItem(e.id,e.conceptId,e.sourceText,e.targetText,e.confidence,e.possibleCorrection,ReviewQueueStatus.valueOf(e.status),e.lineNumber,e.warning)
+    fun reviewQueue(e: ReviewQueueItem)=ReviewQueueEntity(e.id,e.conceptId,e.sourceText,e.targetText,e.confidence.coerceIn(0.0,1.0),e.possibleCorrection,e.status.name,e.lineNumber,e.warning)
+    fun language(e: LanguageEntity)=Language(e.code,e.name,e.active)
+    fun language(e: Language)=LanguageEntity(e.code,e.name,e.active)
+    fun languagePair(e: LanguagePairEntity)=LanguagePair(e.sourceLanguageCode,e.targetLanguageCode,e.active)
+    fun languagePair(e: LanguagePair)=LanguagePairEntity(e.sourceLanguageCode,e.targetLanguageCode,e.active)
 }
 class RoomConceptRepository @Inject constructor(private val dao: ConceptDao): ConceptRepository {
     override suspend fun insert(concept: Concept): UUID { dao.insert(Mappers.concept(concept)); return concept.id }
@@ -49,16 +59,17 @@ class RoomConceptRepository @Inject constructor(private val dao: ConceptDao): Co
 class RoomContentRepository @Inject constructor(private val dao: ContentDao): ContentRepository {
     override suspend fun findByUuid(uuid: UUID)=dao.getById(uuid)?.let(Mappers::content)
     override suspend fun find(conceptId: UUID, languageCode: String)=dao.getByConceptIdAndLanguage(conceptId,languageCode)?.let(Mappers::content)
+    override suspend fun findAll(conceptId: UUID, languageCode: String)=dao.getAllByConceptIdAndLanguage(conceptId,languageCode).map(Mappers::content)
     override suspend fun findForConcepts(conceptIds: List<UUID>): List<Content> {
         if (conceptIds.isEmpty()) return emptyList()
-        // SQLite has a bound-variable limit on IN clauses; chunk to remain safe for 100k-word libraries.
         return conceptIds.distinct().chunked(500).flatMap { ids -> dao.getForConcepts(ids).map(Mappers::content) }
     }
     override suspend fun getAll()=dao.getAll().map(Mappers::content)
     override suspend fun upsert(content: Content) {
-        val existing=dao.getByConceptIdAndLanguage(content.conceptId,content.languageCode)
-        if(existing==null) dao.insert(Mappers.content(content)) else dao.update(Mappers.content(content).copy(id=existing.id))
+        val existing=dao.getById(content.id)
+        if(existing==null) dao.insert(Mappers.content(content)) else dao.update(Mappers.content(content))
     }
+    override suspend fun insertTranslation(content: Content) = dao.insert(Mappers.content(content))
 }
 class RoomLearningStateRepository @Inject constructor(private val dao: LearningStateDao): LearningStateRepository {
     override suspend fun get(conceptId: UUID)=dao.getByConceptId(conceptId)?.let(Mappers::learning)
@@ -109,4 +120,28 @@ class RoomCategoryRepository @Inject constructor(private val dao: CategoryDao): 
     override suspend fun getAll() = dao.getAll().map(Mappers::category)
     override suspend fun findByName(name: String) = dao.findByName(name)?.let(Mappers::category)
     override suspend fun insert(category: Category): UUID { dao.insert(Mappers.category(category)); return category.id }
+}
+class RoomVocabularyRelationRepository @Inject constructor(private val dao: VocabularyRelationDao): VocabularyRelationRepository {
+    override suspend fun insert(value: VocabularyRelation)=dao.insert(Mappers.relation(value))
+    override suspend fun getForConcept(conceptId: UUID)=dao.getForConcept(conceptId).map(Mappers::relation)
+    override suspend fun getAll()=dao.getAll().map(Mappers::relation)
+}
+class RoomVocabularyVariantRepository @Inject constructor(private val dao: VocabularyVariantDao): VocabularyVariantRepository {
+    override suspend fun insert(value: VocabularyVariant)=dao.insert(Mappers.variant(value))
+    override suspend fun getForConcept(conceptId: UUID)=dao.getForConcept(conceptId).map(Mappers::variant)
+    override suspend fun getAll()=dao.getAll().map(Mappers::variant)
+}
+class RoomReviewQueueRepository @Inject constructor(private val dao: ReviewQueueDao): ReviewQueueRepository {
+    override suspend fun upsert(value: ReviewQueueItem)=dao.upsert(Mappers.reviewQueue(value))
+    override suspend fun getPending()=dao.getPending().map(Mappers::reviewQueue)
+    override suspend fun getAll()=dao.getAll().map(Mappers::reviewQueue)
+    override suspend fun update(value: ReviewQueueItem)=dao.update(Mappers.reviewQueue(value))
+}
+class RoomLanguageRepository @Inject constructor(private val dao: LanguageDao, private val pairDao: LanguagePairDao): LanguageRepository {
+    override suspend fun getAll()=dao.getAll().map(Mappers::language)
+    override suspend fun getActive()=dao.getActive().map(Mappers::language)
+    override suspend fun getPairs()=pairDao.getAll().map(Mappers::languagePair)
+    override suspend fun getActivePairs()=pairDao.getActive().map(Mappers::languagePair)
+    override suspend fun upsert(value: Language)=dao.upsert(Mappers.language(value))
+    override suspend fun upsertPair(value: LanguagePair)=pairDao.upsert(Mappers.languagePair(value))
 }
