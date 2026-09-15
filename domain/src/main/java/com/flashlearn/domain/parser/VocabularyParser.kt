@@ -29,7 +29,8 @@ data class ParsedEntry(
 )
 enum class EntryKind { WORD, PHRASE, SENTENCE, IDIOM, COLLOCATION, STRUCTURE }
 
-/** Deterministic, offline parser following the P0 state-machine pipeline. */
+/** Deterministic offline parser implementing normalization, language detection, classification,
+ * entry boundaries, translation/note/breakdown detection, duplicate merging and evidence. */
 class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAULT) {
     fun parse(raw: String): List<ParsedEntry> = parseDetailed(raw).entries
 
@@ -40,11 +41,14 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
         val log = mutableListOf<ParseLogEntry>()
         var pending: MutableEntry? = null
         var orphanTranslation: String? = null
+        var orphanWarning: ParseWarning? = null
 
         fun flush() {
             pending?.let { entry ->
                 val built = entry.build()
-                if (built.translationText.isNullOrBlank()) warnings += ParseWarning(ParseWarningType.ORPHAN_SOURCE, entry.lineNumber, entry.rawLines.firstOrNull().orEmpty(), "Source بدون ترجمه پیدا شد و حذف نشد.", built.confidence)
+                if (built.translationText.isNullOrBlank()) {
+                    warnings += ParseWarning(ParseWarningType.ORPHAN_SOURCE, entry.lineNumber, entry.rawLines.firstOrNull().orEmpty(), "Source بدون ترجمه پیدا شد و حذف نشد.", built.confidence)
+                }
                 entries += built
             }
             pending = null
@@ -57,8 +61,10 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
             val line = stripLeadingNumbering(rawTrimmed)
             val type = classifyLine(line)
             log += ParseLogEntry(lineNumber, rawTrimmed, type, "classified")
+
             when (type) {
                 ParsedLineType.SEPARATOR, ParsedLineType.NUMBER -> log[log.lastIndex] = log.last().copy(action = "ignored")
+
                 ParsedLineType.ENTRY_HEADER -> {
                     val pair = splitPair(line)
                     val numbered = hasLeadingNumber(rawTrimmed)
@@ -72,6 +78,9 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
                         return@forEachIndexed
                     }
                     flush()
+                    if (orphanTranslation != null) {
+                        warnings.remove(orphanWarning)
+                    }
                     val source = pair?.first?.trim().orEmpty().ifBlank { line }
                     val inlineTranslation = pair?.second?.trim()?.takeIf { it.isNotBlank() }
                     val translation = inlineTranslation ?: orphanTranslation
@@ -80,15 +89,27 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
                     if (isLikelySpanish(source)) evidence += "spanishDetected"
                     if (translation != null) evidence += "adjacentPersianTranslation"
                     if (pair != null) evidence += "translationMarker"
-                    pending = MutableEntry(source, translation, detectLanguage(line), classifyEntry(source), lineNumber, when { pair != null -> 1.0; translation != null -> 0.95; else -> 0.60 }, mutableListOf(rawTrimmed), evidence = evidence)
+                    pending = MutableEntry(
+                        source = source,
+                        translation = translation,
+                        language = detectLanguage(line),
+                        kind = classifyEntry(source),
+                        lineNumber = lineNumber,
+                        confidence = when { pair != null -> 1.0; translation != null -> 0.95; else -> 0.60 },
+                        rawLines = mutableListOf(rawTrimmed),
+                        evidence = evidence
+                    )
                     orphanTranslation = null
+                    orphanWarning = null
                     log[log.lastIndex] = log.last().copy(action = "started_entry")
                 }
+
                 ParsedLineType.TRANSLATION -> {
                     if (pending == null) {
                         if (index + 1 < lines.size && isLikelyEntryHeader(stripLeadingNumbering(lines[index + 1].trim()))) {
                             orphanTranslation = line
-                            warnings += ParseWarning(ParseWarningType.ORPHAN_TRANSLATION, lineNumber, rawTrimmed, "ترجمه قبل از Source پیدا شد و برای جفت‌سازی خط بعد نگه داشته شد.", 0.85)
+                            orphanWarning = ParseWarning(ParseWarningType.ORPHAN_TRANSLATION, lineNumber, rawTrimmed, "ترجمه قبل از Source پیدا شد و برای جفت‌سازی خط بعد نگه داشته شد.", 0.85)
+                            warnings += orphanWarning!!
                             log[log.lastIndex] = log.last().copy(action = "held_orphan_translation")
                         } else {
                             warnings += ParseWarning(ParseWarningType.ORPHAN_TRANSLATION, lineNumber, rawTrimmed, "ترجمه فارسی بدون Source پیدا شد و حذف نشد.", 0.50)
@@ -108,18 +129,15 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
                         log[log.lastIndex] = log.last().copy(action = "attached_translation")
                     }
                 }
+
                 ParsedLineType.BREAKDOWN -> attachStructured(pending, rawTrimmed, line, log, "breakdown") { text ->
                     val parts = text.split(Regex("\\s*=\\s*|\\s*:\\s*"), limit = 2)
                     pending!!.breakdown += BreakdownPart(text, parts.firstOrNull()?.trim(), parts.getOrNull(1)?.trim(), pending!!.breakdown.size)
                 }
-                ParsedLineType.DERIVATIVE -> attachStructured(pending, rawTrimmed, line, log, "relationship") { text ->
-                    pending!!.relationships += ParsedRelationship("DERIVED_FROM", text)
-                }
-                ParsedLineType.RELATION -> attachStructured(pending, rawTrimmed, line, log, "relationship") { text ->
-                    val pair = splitLabel(text)
-                    pending!!.relationships += ParsedRelationship(pair.first, pair.second)
-                }
+                ParsedLineType.DERIVATIVE -> attachStructured(pending, rawTrimmed, line, log, "relationship") { text -> pending!!.relationships += ParsedRelationship("DERIVED_FROM", text) }
+                ParsedLineType.RELATION -> attachStructured(pending, rawTrimmed, line, log, "relationship") { text -> val pair = splitLabel(text); pending!!.relationships += ParsedRelationship(pair.first, pair.second) }
                 ParsedLineType.VARIANT -> attachStructured(pending, rawTrimmed, line, log, "variant") { text -> pending!!.variants += ParsedVariant(text) }
+
                 ParsedLineType.GRAMMAR_NOTE -> {
                     if (pending == null) {
                         warnings += ParseWarning(ParseWarningType.ORPHAN_LINE, lineNumber, rawTrimmed, "نکته گرامری بدون مدخل قبلی پیدا شد.", 0.90)
@@ -131,6 +149,7 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
                         log[log.lastIndex] = log.last().copy(action = "attached_grammar_note")
                     }
                 }
+
                 ParsedLineType.NOTE, ParsedLineType.COMMENT -> {
                     if (pending == null) {
                         warnings += ParseWarning(ParseWarningType.ORPHAN_LINE, lineNumber, rawTrimmed, "خط توضیحی بدون مدخل قبلی پیدا شد.", 0.90)
@@ -142,6 +161,7 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
                         log[log.lastIndex] = log.last().copy(action = "attached_note")
                     }
                 }
+
                 ParsedLineType.UNKNOWN -> when {
                     pending != null && pending!!.translation == null && isLikelySpanish(line) -> {
                         pending!!.source = "${pending!!.source} ${stripDecorativePrefix(line)}"
@@ -194,6 +214,7 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
         val lower = s.trim().lowercase(Locale.ROOT)
         if (markers.grammar.any { lower.startsWith(it.lowercase(Locale.ROOT)) }) return ParsedLineType.GRAMMAR_NOTE
         if (markers.notes.any { lower.startsWith(it.lowercase(Locale.ROOT)) }) return ParsedLineType.NOTE
+        if (Regex("^(example|examples|note|notes|usage|ejemplo|ejemplos|nota|uso)\\s+[^:]{1,60}:").containsMatchIn(lower)) return ParsedLineType.NOTE
         return null
     }
 
@@ -221,7 +242,23 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
     private fun hasLeadingNumber(s: String) = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""").containsMatchIn(s)
     private fun stripLeadingNumbering(s: String): String = s.replaceFirst(Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*"""), "").trim().replaceFirst(Regex("""^\s*[-—*•#»«➜→]\s*"""), "").trim()
     private fun stripDecorativePrefix(s: String) = stripLeadingNumbering(s)
-    private fun splitPair(s: String): Pair<String, String>? { for (sep in listOf("→", "➜")) { val i = s.indexOf(sep); if (i > 0 && i < s.length - 1) return s.substring(0, i) to s.substring(i + sep.length) }; val dash = Regex("""\s+[-—]\s+""").find(s); if (dash != null) return s.substring(0, dash.range.first) to s.substring(dash.range.last + 1); return null }
+
+    private fun splitPair(s: String): Pair<String, String>? {
+        for (sep in listOf("→", "➜")) {
+            val i = s.indexOf(sep)
+            if (i > 0 && i < s.length - 1) return s.substring(0, i) to s.substring(i + sep.length)
+        }
+        val dash = Regex("""\s+[-—]\s+""").find(s)
+        if (dash != null) return s.substring(0, dash.range.first) to s.substring(dash.range.last + 1)
+        val colon = s.indexOf(':')
+        if (colon > 0 && colon < s.length - 1) {
+            val left = s.substring(0, colon).trim()
+            val right = s.substring(colon + 1).trim()
+            if (isLikelySpanish(left) && isLikelyPersian(right)) return left to right
+        }
+        return null
+    }
+
     private fun splitLabel(s: String): Pair<String, String> { val i = s.indexOf(':'); return if (i > 0) s.substring(0, i).trim() to s.substring(i + 1).trim() else "related" to s.trim() }
     private fun markerBody(s: String): String = s.trim().substringAfter(':', s.trim()).trim()
     private fun joinNote(old: String?, next: String) = if (old.isNullOrBlank()) next else "$old\n$next"
@@ -242,9 +279,19 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
     private fun isVariantLine(s: String) = markers.variant.any { s.trim().lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
     private fun isRelationLine(s: String) = markers.relation.any { s.trim().lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
     private fun isCommentLine(s: String) = s.trim().startsWith("//") || s.trim().startsWith("# ")
-    private fun isLikelyEntryHeader(s: String): Boolean { if (s.length < 2 || isLikelyPersian(s)) return false; if (s.endsWith(":") && s.length < 40) return false; return isLikelySpanish(s) || s.any { it in "áéíóúüñÁÉÍÓÚÜÑ¿¡" } }
+    private fun isLikelyEntryHeader(s: String): Boolean { if (s.length < 2 || isLikelyPersian(s)) return false; return isLikelySpanish(s) || s.any { it in "áéíóúüñÁÉÍÓÚÜÑ¿¡" } }
     private fun isSeparator(s: String) = s.isNotEmpty() && s.all { it in "-—_*•#»«➜→ " }
-    private fun classifyEntry(s: String): EntryKind { val words = s.trim().split(Regex("\\s+")).size; val lower = s.lowercase(Locale.ROOT); return when { words == 1 -> EntryKind.WORD; lower.contains("a no ser que") || lower.contains("tener miedo de") -> EntryKind.STRUCTURE; lower.contains("estar en las nubes") || lower.contains("no hay mal que") -> EntryKind.IDIOM; lower.contains(" no ") || lower.startsWith("no ") || s.endsWith(".") || s.endsWith("?") || s.endsWith("!") -> EntryKind.SENTENCE; else -> EntryKind.PHRASE } }
+    private fun classifyEntry(s: String): EntryKind {
+        val words = s.trim().split(Regex("\\s+")).size
+        val lower = s.lowercase(Locale.ROOT)
+        return when {
+            words == 1 -> EntryKind.WORD
+            lower.contains("a no ser que") || lower.contains("tener miedo de") -> EntryKind.STRUCTURE
+            lower.contains("estar en las nubes") || lower.contains("no hay mal que") -> EntryKind.IDIOM
+            lower.contains(" no ") || lower.startsWith("no ") || s.endsWith(".") || s.endsWith("?") || s.endsWith("!") -> EntryKind.SENTENCE
+            else -> EntryKind.PHRASE
+        }
+    }
 
     data class ParserMarkers(val notes: Set<String>, val grammar: Set<String>, val breakdown: Set<String>, val derivative: Set<String>, val variant: Set<String>, val relation: Set<String>) {
         companion object {
@@ -263,8 +310,9 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
 
     private data class MutableEntry(
         var source: String, var translation: String?, val language: DetectedLanguage, val kind: EntryKind, val lineNumber: Int, var confidence: Double,
-        val rawLines: MutableList<String>, var notes: String? = null, var grammarNote: String? = null, var breakdown: MutableList<BreakdownPart> = mutableListOf(),
-        var relationships: MutableList<ParsedRelationship> = mutableListOf(), var variants: MutableList<ParsedVariant> = mutableListOf(), var evidence: MutableList<String> = mutableListOf()
+        val rawLines: MutableList<String>, var notes: String? = null, var grammarNote: String? = null,
+        var breakdown: MutableList<BreakdownPart> = mutableListOf(), var relationships: MutableList<ParsedRelationship> = mutableListOf(),
+        var variants: MutableList<ParsedVariant> = mutableListOf(), var evidence: MutableList<String> = mutableListOf()
     ) {
         fun build() = ParsedEntry(source, translation, notes, grammarNote, language, kind, rawLines.toList(), breakdown.toList(), relationships.toList(), variants.toList(), confidence.coerceIn(0.0, 1.0), evidence.toList())
     }
