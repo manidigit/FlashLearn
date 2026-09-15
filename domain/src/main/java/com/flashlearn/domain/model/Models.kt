@@ -7,6 +7,9 @@ enum class VocabularyDifficulty { EASY, MEDIUM, HARD, VERY_HARD }
 enum class ReviewType { DAILY, WEEKLY, MONTHLY, LEARNED, RANDOM }
 enum class EntryType { WORD, PHRASE, SENTENCE, IDIOM, COLLOCATION, STRUCTURE }
 enum class ImportMode { ADD_NEW, SKIP_DUPLICATE, MERGE, UPDATE }
+enum class VocabularyRelationType { DERIVED_FROM, USED_IN, SYNONYM }
+enum class VocabularyVariantType { MASCULINE, FEMININE, ALTERNATIVE }
+enum class ReviewQueueStatus { PENDING, APPROVED, REJECTED }
 
 data class LearningState(
     val id: UUID, val conceptId: UUID, val stage: Stage, val nextReviewAt: Instant?,
@@ -25,7 +28,9 @@ data class DifficultyState(
 data class Content(
     val id: UUID, val conceptId: UUID, val languageCode: String, val text: String,
     val canonicalKey: String, val notes: String? = null,
-    val pronunciation: String? = null, val example: String? = null
+    val pronunciation: String? = null, val example: String? = null,
+    val translationIndex: Int = 0, val grammarNote: String? = null,
+    val possibleCorrection: String? = null
 )
 data class ConceptTag(val conceptId: UUID, val tagId: UUID)
 data class Category(val id: UUID, val name: String)
@@ -33,6 +38,21 @@ data class Concept(
     val id: UUID, val entryType: EntryType, val categoryId: UUID?,
     val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant
 )
+data class VocabularyRelation(
+    val id: UUID, val sourceConceptId: UUID, val targetConceptId: UUID?,
+    val relationType: VocabularyRelationType, val unresolvedText: String? = null
+)
+data class VocabularyVariant(
+    val id: UUID, val conceptId: UUID, val text: String,
+    val variantType: VocabularyVariantType
+)
+data class ReviewQueueItem(
+    val id: UUID, val conceptId: UUID?, val sourceText: String, val targetText: String?,
+    val confidence: Double, val possibleCorrection: String?, val status: ReviewQueueStatus,
+    val lineNumber: Int?, val warning: String?
+)
+data class Language(val code: String, val name: String, val active: Boolean = true)
+data class LanguagePair(val sourceLanguageCode: String, val targetLanguageCode: String, val active: Boolean = true)
 data class ReviewSession(
     val id: UUID,
     val startedAt: Instant,
