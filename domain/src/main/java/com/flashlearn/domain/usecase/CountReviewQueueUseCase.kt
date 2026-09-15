@@ -7,6 +7,7 @@ import com.flashlearn.domain.repository.DifficultyStateRepository
 import com.flashlearn.domain.repository.LearningStateRepository
 import javax.inject.Inject
 
+/** Counts all unique concepts matching the current review filters without applying the UI card limit. */
 class CountReviewQueueUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository,
