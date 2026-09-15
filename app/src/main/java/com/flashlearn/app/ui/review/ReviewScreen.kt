@@ -2,10 +2,19 @@ package com.flashlearn.app.ui.review
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.DoneAll
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.Shuffle
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Style
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.flashlearn.domain.model.QuizDifficulty
@@ -31,8 +41,14 @@ private val QuizSelectedContainer = Color(0xFFF0E7FF)
 fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDifficulty? = null, quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM, onFinished: () -> Unit) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(quizDifficulty) { viewModel.setQuizDifficulty(quizDifficulty) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth()) }
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let {
+            Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth())
+        }
         when {
             state.isSelectingMode -> ReviewSetup(state, viewModel, personalDifficulty)
             state.isLoading -> CircularProgressIndicator()
@@ -45,57 +61,191 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
     }
 }
 
-@Composable private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?) {
-    Text("مرور کلمات", style = MaterialTheme.typography.headlineSmall)
-    Text("نوع مرور", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        SelectCard("تستی", state.selectedMode == ReviewMode.QUIZ, { vm.chooseMode(ReviewMode.QUIZ) }, Modifier.weight(1f), "✓")
-        SelectCard("فلش‌کارت", state.selectedMode == ReviewMode.FLASHCARD, { vm.chooseMode(ReviewMode.FLASHCARD) }, Modifier.weight(1f), "▣")
-    }
-    Text("حالت مرور", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        SelectCard("تصادفی", state.selectedReviewType == ReviewType.RANDOM, { vm.chooseReviewType(ReviewType.RANDOM) }, Modifier.weight(1f), "⤨")
-        SelectCard("یادگرفته", state.selectedReviewType == ReviewType.LEARNED, { vm.chooseReviewType(ReviewType.LEARNED) }, Modifier.weight(1f), "★")
-    }
-    Text("سطح دشواری کلمات", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-    Text("چند انتخابی", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth())
-    FlowChoiceRow(listOf("همه" to state.selectedDifficulties.isEmpty()) + VocabularyDifficulty.entries.map { difficultyLabel(it) to (it in state.selectedDifficulties) }) { index -> vm.toggleDifficulty(if (index == 0) null else VocabularyDifficulty.entries[index - 1]) }
-    if (state.categories.isNotEmpty()) {
-        Text("دسته‌بندی لغات", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-        Text("چند انتخابی", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth())
-        FlowChoiceRow(listOf("همه" to state.selectedCategoryIds.isEmpty()) + state.categories.map { it.name to (it.id in state.selectedCategoryIds) }) { index -> vm.toggleCategory(if (index == 0) null else state.categories[index - 1].id) }
-    }
-    Text("سطح دشواری آزمون", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-        listOf(QuizDifficulty.EASY, QuizDifficulty.MEDIUM, QuizDifficulty.HARD).forEach { level -> ChoiceChip(quizDifficultyLabel(level), state.selectedQuizDifficulty == level) { vm.chooseQuizDifficulty(level) } }
-    }
-    Text("تعداد کلمات", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-        listOf(10, 20, 30, 50, 100).forEach { count -> ChoiceChip(count.toString(), state.maximumReviewCards == count) { vm.setMaximumReviewCards(count) } }
-    }
-    personalDifficulty?.let { Text("سطح شخصی فعلی: ${difficultyLabel(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth()) }
-    val filterSummary = buildList {
-        add(if (state.selectedDifficulties.isEmpty()) "همه سطوح" else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString(" و ") { difficultyLabel(it) })
-        if (state.categories.isNotEmpty()) add(if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${state.selectedCategoryIds.size} دسته")
-        add(if (state.selectedReviewType == ReviewType.RANDOM) "تصادفی" else "یادگرفته")
-    }.joinToString(" · ")
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .65f))) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("${state.maximumReviewCards} کلمه آماده مرور", style = MaterialTheme.typography.titleMedium)
+@Composable
+private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("مرور کلمات", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
-            Text(filterSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text("جلسه مرور را مطابق نیازت تنظیم کن", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        SetupSection("نوع مرور", "یک حالت را انتخاب کن") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ModeCard("تستی", "آزمون چهارگزینه‌ای", state.selectedMode == ReviewMode.QUIZ, { vm.chooseMode(ReviewMode.QUIZ) }, Icons.Outlined.Quiz, Modifier.weight(1f))
+                ModeCard("فلش‌کارت", "مرور با کارت", state.selectedMode == ReviewMode.FLASHCARD, { vm.chooseMode(ReviewMode.FLASHCARD) }, Icons.Outlined.Style, Modifier.weight(1f))
+            }
+        }
+
+        SetupSection("حالت مرور", "ترتیب انتخاب واژه‌ها") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ModeCard("تصادفی", "ترتیب تصادفی", state.selectedReviewType == ReviewType.RANDOM, { vm.chooseReviewType(ReviewType.RANDOM) }, Icons.Outlined.Shuffle, Modifier.weight(1f))
+                ModeCard("یادگرفته", "واژه‌های یادگرفته", state.selectedReviewType == ReviewType.LEARNED, { vm.chooseReviewType(ReviewType.LEARNED) }, Icons.Outlined.DoneAll, Modifier.weight(1f))
+            }
+        }
+
+        SetupSection("فیلترهای واژه", "چند انتخابی • «همه» یعنی بدون فیلتر") {
+            FilterBlock(title = "سطح دشواری کلمات", icon = Icons.Outlined.Tune) {
+                ChoiceGrid(
+                    options = listOf("همه" to state.selectedDifficulties.isEmpty()) + VocabularyDifficulty.entries.map { difficultyLabel(it) to (it in state.selectedDifficulties) },
+                    onChoice = { index -> vm.toggleDifficulty(if (index == 0) null else VocabularyDifficulty.entries[index - 1]) }
+                )
+            }
+            if (state.categories.isNotEmpty()) {
+                Spacer(Modifier.height(14.dp))
+                FilterBlock(title = "دسته‌بندی لغات", icon = Icons.Outlined.Category) {
+                    ChoiceGrid(
+                        options = listOf("همه" to state.selectedCategoryIds.isEmpty()) + state.categories.map { it.name to (it.id in state.selectedCategoryIds) },
+                        onChoice = { index -> vm.toggleCategory(if (index == 0) null else state.categories[index - 1].id) }
+                    )
+                }
+            }
+        }
+
+        if (state.selectedMode == ReviewMode.QUIZ) {
+            SetupSection("سطح دشواری آزمون", "میزان چالش سؤال‌ها") {
+                ChoiceGrid(
+                    options = listOf(
+                        quizDifficultyLabel(QuizDifficulty.EASY) to (state.selectedQuizDifficulty == QuizDifficulty.EASY),
+                        quizDifficultyLabel(QuizDifficulty.MEDIUM) to (state.selectedQuizDifficulty == QuizDifficulty.MEDIUM),
+                        quizDifficultyLabel(QuizDifficulty.HARD) to (state.selectedQuizDifficulty == QuizDifficulty.HARD)
+                    ),
+                    columns = 3,
+                    onChoice = { index -> vm.chooseQuizDifficulty(listOf(QuizDifficulty.EASY, QuizDifficulty.MEDIUM, QuizDifficulty.HARD)[index]) }
+                )
+            }
+        }
+
+        SetupSection("تعداد کلمات", "تعداد واژه‌های این جلسه") {
+            ChoiceGrid(
+                options = listOf(10, 20, 30, 50, 100).map { it.toString() to (state.maximumReviewCards == it) },
+                columns = 5,
+                onChoice = { index -> vm.setMaximumReviewCards(listOf(10, 20, 30, 50, 100)[index]) }
+            )
+        }
+
+        personalDifficulty?.let {
+            Text("سطح شخصی فعلی: ${difficultyLabel(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth())
+        }
+
+        val filterSummary = buildList {
+            add(if (state.selectedDifficulties.isEmpty()) "همه سطوح" else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) })
+            if (state.categories.isNotEmpty()) add(if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${state.selectedCategoryIds.size} دسته")
+            add(if (state.selectedReviewType == ReviewType.RANDOM) "تصادفی" else "یادگرفته")
+        }.joinToString("  •  ")
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .48f))
+        ) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primary.copy(alpha = .12f)) {
+                    Icon(Icons.Outlined.FormatListNumbered, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(11.dp).size(25.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("${state.maximumReviewCards} کلمه آماده مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(3.dp))
+                    Text(filterSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                }
+            }
+        }
+
+        Button(
+            onClick = vm::startNewSession,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            contentPadding = PaddingValues(horizontal = 20.dp)
+        ) {
+            Icon(Icons.Outlined.PlayArrow, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("شروع مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
-    Button(onClick = vm::startNewSession, modifier = Modifier.fillMaxWidth().height(52.dp), shape = MaterialTheme.shapes.large) { Text("شروع مرور", style = MaterialTheme.typography.titleMedium) }
 }
 
-@Composable private fun FlowChoiceRow(options: List<Pair<String, Boolean>>, onChoice: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) { options.forEachIndexed { i, (label, selected) -> ChoiceChip(label, selected) { onChoice(i) } } }
+@Composable
+private fun SetupSection(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .55f))
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.fillMaxWidth()) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(2.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            content()
+        }
+    }
 }
-@Composable private fun ChoiceChip(label: String, selected: Boolean, onClick: () -> Unit) { FilterChip(selected = selected, onClick = onClick, label = { Text(label, style = MaterialTheme.typography.labelMedium) }) }
-@Composable private fun SelectCard(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier, icon: String) {
-    Card(modifier = modifier.clickable(onClick = onClick), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .10f) else MaterialTheme.colorScheme.surfaceVariant), border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = .55f)) else null) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 15.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text(icon, style = MaterialTheme.typography.titleLarge, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.titleSmall) }
+
+@Composable
+private fun FilterBlock(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(19.dp))
+        Spacer(Modifier.width(7.dp))
+        Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+    }
+    content()
+}
+
+@Composable
+private fun ModeCard(label: String, description: String, selected: Boolean, onClick: () -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier) {
+    val container = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val borderColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .70f) else MaterialTheme.colorScheme.outlineVariant
+    Card(
+        modifier = modifier.height(112.dp).clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = container),
+        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor)
+    ) {
+        Column(Modifier.fillMaxSize().padding(13.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Surface(shape = MaterialTheme.shapes.large, color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .14f) else MaterialTheme.colorScheme.surfaceVariant) {
+                Icon(icon, contentDescription = null, tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(8.dp).size(25.dp))
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun ChoiceGrid(options: List<Pair<String, Boolean>>, columns: Int = 2, onChoice: (Int) -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.chunked(columns).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEachIndexed { index, (label, selected) ->
+                    ChoiceTile(label, selected, { onChoice(options.indexOf(row[index])) }, Modifier.weight(1f))
+                }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChoiceTile(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+    val container = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val border = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .72f) else MaterialTheme.colorScheme.outlineVariant
+    Surface(
+        modifier = modifier.height(46.dp).clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        color = container,
+        border = BorderStroke(if (selected) 1.5.dp else 1.dp, border)
+    ) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            if (selected) {
+                Icon(Icons.Outlined.DoneAll, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(5.dp))
+            }
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, textAlign = TextAlign.Center, maxLines = 1)
+        }
     }
 }
 
