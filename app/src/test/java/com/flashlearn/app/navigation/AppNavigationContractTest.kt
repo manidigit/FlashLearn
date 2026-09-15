@@ -11,6 +11,7 @@ class AppNavigationContractTest {
             listOf(
                 "home",
                 "review",
+                "needs_review",
                 "progress",
                 "settings",
                 "add_word",
@@ -28,6 +29,7 @@ class AppNavigationContractTest {
         val destinations = listOf(
             AppDestination.Home,
             AppDestination.Review,
+            AppDestination.NeedsReview,
             AppDestination.Progress,
             AppDestination.Settings,
             AppDestination.AddWord,
