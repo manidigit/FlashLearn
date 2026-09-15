@@ -6,8 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Backup
-import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +17,7 @@ import com.flashlearn.app.ui.LearningLanguage
 import com.flashlearn.domain.model.EntryType
 
 @Composable
-fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onBulkImport: () -> Unit = {}, onBackupRestore: () -> Unit = {}) {
+fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit) {
     val state by viewModel.state.collectAsState()
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
@@ -58,10 +56,6 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(state.categoryName, { viewModel.onCategoryNameChange(it); categoryMenuExpanded = true }, Modifier.fillMaxWidth(), label = { Text("دسته‌بندی") }, singleLine = true)
                 DropdownMenu(categoryMenuExpanded && filteredCategories.isNotEmpty(), { categoryMenuExpanded = false }) { filteredCategories.forEach { category -> DropdownMenuItem(text = { Text(category.name) }, onClick = { viewModel.onCategoryNameChange(category.name); categoryMenuExpanded = false }) } }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onBulkImport, modifier = Modifier.weight(1f).height(46.dp)) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(6.dp)); Text("افزودن گروهی") }
-                OutlinedButton(onClick = onBackupRestore, modifier = Modifier.weight(1f).height(46.dp)) { Icon(Icons.Outlined.Backup, null); Spacer(Modifier.width(6.dp)); Text("از فایل پشتیبان") }
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
