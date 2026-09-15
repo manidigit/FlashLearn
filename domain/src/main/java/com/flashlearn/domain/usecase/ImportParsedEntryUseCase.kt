@@ -20,12 +20,7 @@ class ImportParsedEntryUseCase @Inject constructor(
 ) {
     companion object { const val LOW_CONFIDENCE_THRESHOLD = 0.80; val REVIEW_SENTINEL: UUID = UUID(0L, 0L) }
 
-    suspend operator fun invoke(
-        entry: ParsedEntry,
-        sourceLanguage: String = "es",
-        targetLanguage: String = "fa",
-        mode: ImportMode = ImportMode.MERGE
-    ): UUID = database.withTransaction {
+    suspend operator fun invoke(entry: ParsedEntry, sourceLanguage: String = "es", targetLanguage: String = "fa", mode: ImportMode = ImportMode.MERGE): UUID = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
         val source = entry.sourceText.trim()
         val translations = entry.translationText.orEmpty().split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
@@ -50,13 +45,18 @@ class ImportParsedEntryUseCase @Inject constructor(
         }
 
         val existingTranslations = contentRepository.findAll(conceptId, targetLanguage)
-        translations.drop(if (existingSource == null || mode == ImportMode.ADD_NEW) 1 else 0).forEach { text ->
+        val incomingKeys = translations.map(::computeCanonicalKey).toSet()
+        if (existingSource != null && mode == ImportMode.MERGE && existingTranslations.any { it.canonicalKey in incomingKeys }) {
+            throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
+        }
+        var nextIndex = (existingTranslations.maxOfOrNull { it.translationIndex } ?: -1) + 1
+        val translationsToInsert = if (existingSource == null || mode == ImportMode.ADD_NEW) translations.drop(1) else translations
+        translationsToInsert.forEach { text ->
             val key = computeCanonicalKey(text)
-            if (existingTranslations.none { it.canonicalKey == key }) {
-                val nextIndex = (existingTranslations.maxOfOrNull { it.translationIndex } ?: -1) + 1
-                contentRepository.insertTranslation(Content(UUID.randomUUID(), conceptId, targetLanguage, text, key, grammarNote = extractGrammarNote(entry), possibleCorrection = correction, translationIndex = nextIndex))
+            val existing = existingTranslations.firstOrNull { it.canonicalKey == key }
+            if (existing == null) {
+                contentRepository.insertTranslation(Content(UUID.randomUUID(), conceptId, targetLanguage, text, key, grammarNote = extractGrammarNote(entry), possibleCorrection = correction, translationIndex = nextIndex++))
             } else if (mode == ImportMode.UPDATE) {
-                val existing = existingTranslations.first { it.canonicalKey == key }
                 contentRepository.upsert(existing.copy(grammarNote = extractGrammarNote(entry), possibleCorrection = correction))
             }
         }
