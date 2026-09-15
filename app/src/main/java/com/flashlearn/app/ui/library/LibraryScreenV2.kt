@@ -44,27 +44,18 @@ fun LibraryScreenV2(viewModel: LibraryViewModel, languagePair: LanguagePair, onB
         OutlinedTextField(state.query, viewModel::onQueryChange, Modifier.fillMaxWidth().height(58.dp), placeholder={Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign=TextAlign.End, color=Color(0xFF8C92A7))}, trailingIcon={Icon(Icons.Outlined.Search,"جستجو",tint=Navy)}, singleLine=true, shape=RoundedCornerShape(20.dp), colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=Color.White,focusedContainerColor=Color.White,unfocusedBorderColor=Color(0xFFD6DCF0),focusedBorderColor=Color(0xFFC8D0EA)))
         Spacer(Modifier.height(22.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(9.dp)) {
-            StatCard("جدید", state.newCount, Orange, SoftOrange, Icons.Outlined.Add, Modifier.weight(1f))
-            StatCard("در حال یادگیری", state.learningCount, Blue, SoftBlue, Icons.Outlined.History, Modifier.weight(1f))
-            StatCard("یادگرفته", state.learnedCount, Green, SoftGreen, Icons.Outlined.CheckCircle, Modifier.weight(1f))
-            StatCard("کل واژگان", state.totalCount, Purple, SoftPurple, Icons.Outlined.Book, Modifier.weight(1f))
+            StatCard("جدید", state.newCount, Orange, SoftOrange, Icons.Outlined.Add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
+            StatCard("در حال یادگیری", state.learningCount, Blue, SoftBlue, Icons.Outlined.History, Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
+            StatCard("یادگرفته", state.learnedCount, Green, SoftGreen, Icons.Outlined.CheckCircle, Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
+            StatCard("کل واژگان", state.totalCount, Purple, SoftPurple, Icons.Outlined.Book, Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
         }
         Spacer(Modifier.height(20.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.End) { Text("فیلترها", color=Navy, style=MaterialTheme.typography.titleLarge.copy(fontWeight=FontWeight.Bold)); Spacer(Modifier.width(8.dp)); Icon(Icons.Outlined.FilterList,"فیلترها",tint=Navy) }
         Spacer(Modifier.height(10.dp))
         Card(Modifier.fillMaxWidth().clickable(onClick=onCategories), shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(Color.White), border=androidx.compose.foundation.BorderStroke(1.dp,Border)) {
             Row(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ArrowBack,"انتخاب دسته",tint=Navy)
-                Spacer(Modifier.weight(1f))
-                Column(horizontalAlignment=Alignment.End){
-                    Text("دسته‌بندی‌ها",color=Navy,style=MaterialTheme.typography.titleMedium.copy(fontWeight=FontWeight.Bold))
-                    Text(
-                        if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها"
-                        else "${toFaDigits(state.selectedCategoryIds.size)} دسته انتخاب شده",
-                        color=Color(0xFF858CA4),
-                        style=MaterialTheme.typography.bodySmall
-                    )
-                }
+                Icon(Icons.Outlined.ArrowBack,"انتخاب دسته",tint=Navy);Spacer(Modifier.weight(1f))
+                Column(horizontalAlignment=Alignment.End){Text("دسته‌بندی‌ها",color=Navy,style=MaterialTheme.typography.titleMedium.copy(fontWeight=FontWeight.Bold));Text(if(state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${toFaDigits(state.selectedCategoryIds.size)} دسته انتخاب شده",color=Color(0xFF858CA4),style=MaterialTheme.typography.bodySmall)}
                 Spacer(Modifier.width(12.dp));Surface(Modifier.size(48.dp),RoundedCornerShape(15.dp),color=SoftPurple){Box(contentAlignment=Alignment.Center){Icon(Icons.Outlined.Folder,"دسته‌بندی‌ها",tint=Purple,modifier=Modifier.size(28.dp))}}
             }
         }
@@ -73,7 +64,9 @@ fun LibraryScreenV2(viewModel: LibraryViewModel, languagePair: LanguagePair, onB
     }
 }
 
-@Composable private fun StatCard(title:String,value:Int,color:Color,background:Color,icon:androidx.compose.ui.graphics.vector.ImageVector,modifier:Modifier){Card(modifier.height(132.dp).then(modifier),shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(background),border=androidx.compose.foundation.BorderStroke(1.dp,color.copy(alpha=.14f))){Column(Modifier.fillMaxSize().padding(6.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Icon(icon,title,tint=color,modifier=Modifier.size(38.dp));Spacer(Modifier.height(4.dp));Text(title,color=color,style=MaterialTheme.typography.labelLarge.copy(fontWeight=FontWeight.Bold),textAlign=TextAlign.Center);Text(toFaDigits(value),color=color,style=MaterialTheme.typography.headlineSmall.copy(fontWeight=FontWeight.Bold))}}}
+@Composable private fun StatCard(title:String,value:Int,color:Color,background:Color,icon:androidx.compose.ui.graphics.vector.ImageVector,modifier:Modifier,selected:Boolean,onClick:()->Unit){
+    Card(onClick=onClick,modifier=modifier.height(132.dp),shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(background),border=androidx.compose.foundation.BorderStroke(if(selected)2.dp else 1.dp,color.copy(alpha=if(selected).35f else .14f))){Column(Modifier.fillMaxSize().padding(6.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Icon(icon,title,tint=color,modifier=Modifier.size(38.dp));Spacer(Modifier.height(4.dp));Text(title,color=color,style=MaterialTheme.typography.labelLarge.copy(fontWeight=FontWeight.Bold),textAlign=TextAlign.Center);Text(toFaDigits(value),color=color,style=MaterialTheme.typography.headlineSmall.copy(fontWeight=FontWeight.Bold))}}
+}
 
 @Composable private fun VocabularyCardV2(item:LibraryItem,languagePair:LanguagePair,onClick:()->Unit){Card(Modifier.fillMaxWidth().clickable(onClick=onClick),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(Color.White),border=androidx.compose.foundation.BorderStroke(1.dp,Border)){Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=11.dp),verticalAlignment=Alignment.CenterVertically){Icon(Icons.Outlined.MoreVert,"گزینه‌ها",tint=Color(0xFF727B99),modifier=Modifier.size(24.dp));Spacer(Modifier.width(8.dp));DifficultyPillV2(item.difficulty);Spacer(Modifier.weight(1f));Column(horizontalAlignment=Alignment.End){Row(verticalAlignment=Alignment.CenterVertically){Text(item.source?.text ?: "—",color=Navy,style=MaterialTheme.typography.titleMedium.copy(fontWeight=FontWeight.Bold));Spacer(Modifier.width(7.dp));Text(languagePair.source.flag)};Text(item.target?.text ?: "—",color=Color(0xFF747B94),style=MaterialTheme.typography.bodyMedium);item.category?.let{Text(it.name,color=Blue,style=MaterialTheme.typography.labelSmall.copy(fontWeight=FontWeight.Bold))}};Spacer(Modifier.width(12.dp));Icon(Icons.Outlined.StarBorder,"موردعلاقه",tint=Color(0xFF7A84A4),modifier=Modifier.size(30.dp))}}}
 
