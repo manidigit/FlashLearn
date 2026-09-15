@@ -2,6 +2,7 @@ package com.flashlearn.domain.usecase
 
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
+import com.flashlearn.domain.settings.SettingsKeys
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
@@ -11,7 +12,8 @@ data class ReviewSelectionFilters(
     val difficulty: VocabularyDifficulty? = null,
     val categoryId: UUID? = null,
     val tagId: UUID? = null,
-    val now: Instant
+    val now: Instant,
+    val maxCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
 )
 
 data class ReviewCandidate(
@@ -20,8 +22,6 @@ data class ReviewCandidate(
     val difficulty: DifficultyState,
     val tagIds: List<UUID>
 )
-
-private const val REVIEW_BATCH_SIZE = 30
 
 class SelectReviewQueueUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
@@ -32,24 +32,15 @@ class SelectReviewQueueUseCase @Inject constructor(
     suspend operator fun invoke(filters: ReviewSelectionFilters): List<ReviewCandidate> {
         val states = when (filters.reviewType) {
             ReviewType.RANDOM -> learningStateRepository.getDueNonLearned(filters.now)
-            ReviewType.DAILY -> learningStateRepository.getAllByStage(Stage.DAILY)
-                .filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
-            ReviewType.WEEKLY -> learningStateRepository.getAllByStage(Stage.WEEKLY)
-                .filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
-            ReviewType.MONTHLY -> learningStateRepository.getAllByStage(Stage.MONTHLY)
-                .filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.DAILY -> learningStateRepository.getAllByStage(Stage.DAILY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.WEEKLY -> learningStateRepository.getAllByStage(Stage.WEEKLY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.MONTHLY -> learningStateRepository.getAllByStage(Stage.MONTHLY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
             ReviewType.LEARNED -> learningStateRepository.getAllByStage(Stage.LEARNED)
         }
 
-        // Large restored libraries used to cause 3 database queries per learning state
-        // (concept + difficulty + tags). With 8k words that becomes tens of thousands of
-        // sequential Room calls; at 100k it becomes unusable. Load each table once and
-        // do the joins/filters in memory instead.
         val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
         val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
-        val tagsByConcept = conceptTagRepository.getAll().groupBy(ConceptTag::conceptId)
-            .mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
-
+        val tagsByConcept = conceptTagRepository.getAll().groupBy(ConceptTag::conceptId).mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
         val candidates = ArrayList<ReviewCandidate>(states.size)
         for (learning in states) {
             val concept = conceptsById[learning.conceptId] ?: continue
@@ -61,33 +52,20 @@ class SelectReviewQueueUseCase @Inject constructor(
             candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }
 
-        // A review session is deliberately a small batch. Never turn a restored library
-        // of thousands of due cards into one 8k/100k-card session. The eligible pool is
-        // shuffled before taking the batch so repeated sessions do not follow the same
-        // UUID/database ordering rhythm.
-        return candidates
-            .distinctBy { it.concept.id }
-            .shuffled()
-            .take(REVIEW_BATCH_SIZE)
+        val safeMaxCards = filters.maxCards.coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT)
+        return candidates.distinctBy { it.concept.id }.shuffled().take(safeMaxCards)
     }
 }
 
-class StartReviewSessionUseCase @Inject constructor(
-    private val repository: ReviewSessionRepository
-) {
+class StartReviewSessionUseCase @Inject constructor(private val repository: ReviewSessionRepository) {
     suspend operator fun invoke(reviewType: ReviewType, startedAt: Instant = Instant.now()): UUID {
-        val id = UUID.randomUUID()
-        repository.insert(ReviewSession(id, startedAt, null, reviewType))
-        return id
+        val id = UUID.randomUUID(); repository.insert(ReviewSession(id, startedAt, null, reviewType)); return id
     }
 }
 
-class EndReviewSessionUseCase @Inject constructor(
-    private val repository: ReviewSessionRepository
-) {
+class EndReviewSessionUseCase @Inject constructor(private val repository: ReviewSessionRepository) {
     suspend operator fun invoke(sessionId: UUID, endedAt: Instant = Instant.now()) {
-        val session = repository.get(sessionId)
-            ?: error("REVIEW_SESSION_NOT_FOUND: $sessionId")
+        val session = repository.get(sessionId) ?: error("REVIEW_SESSION_NOT_FOUND: $sessionId")
         if (session.endedAt != null) return
         require(!endedAt.isBefore(session.startedAt)) { "endedAt cannot be before startedAt" }
         repository.update(session.copy(endedAt = endedAt))
