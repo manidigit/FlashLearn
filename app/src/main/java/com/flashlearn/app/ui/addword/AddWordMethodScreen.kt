@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material3.*
@@ -21,18 +20,14 @@ import androidx.compose.ui.unit.dp
 private val Navy = Color(0xFF0B236B)
 private val Purple = Color(0xFF7C2BEF)
 private val Blue = Color(0xFF147BE8)
-private val Green = Color(0xFF0BAA6A)
 private val SoftPurple = Color(0xFFF7F1FF)
 private val SoftBlue = Color(0xFFF1F8FF)
-private val SoftGreen = Color(0xFFF0FFF8)
-private val Border = Color(0xFFE1E7F3)
 
 @Composable
 fun AddWordMethodScreen(
     onBack: () -> Unit,
     onSingleWord: () -> Unit,
-    onBulkWords: () -> Unit,
-    onRestore: () -> Unit
+    onBulkWords: () -> Unit
 ) {
     Column(
         Modifier.fillMaxSize().background(Color.White).padding(horizontal = 20.dp, vertical = 12.dp)
@@ -60,8 +55,6 @@ fun AddWordMethodScreen(
         MethodCard("لغات تکی", "افزودن یک واژه جدید", Purple, SoftPurple, Icons.Outlined.Description, onSingleWord)
         Spacer(Modifier.height(16.dp))
         MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", Blue, SoftBlue, Icons.Outlined.Group, onBulkWords)
-        Spacer(Modifier.height(16.dp))
-        MethodCard("ریستور بکاپ", "بازیابی از فایل پشتیبان", Green, SoftGreen, Icons.Outlined.CloudUpload, onRestore)
         Spacer(Modifier.weight(1f))
     }
 }
