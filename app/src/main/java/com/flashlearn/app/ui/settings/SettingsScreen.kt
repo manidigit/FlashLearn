@@ -24,11 +24,11 @@ import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.*
 import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
+import com.flashlearn.domain.settings.SettingsKeys
 
 @Composable
-fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMode) -> Unit, accentColor: AccentColor = AccentColor.PURPLE, onAccentColorChange: (AccentColor) -> Unit = {}, layoutDirection: AppLayoutDirection = AppLayoutDirection.RTL, onLayoutDirectionChange: (AppLayoutDirection) -> Unit = {}, languagePair: LanguagePair = LanguagePair(), onLanguagePairChange: (LanguagePair) -> Unit = {}, personalWordDifficulty: VocabularyDifficulty? = null, onPersonalWordDifficultyChange: (VocabularyDifficulty?) -> Unit = {}, quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM, onQuizDifficultyChange: (QuizDifficulty) -> Unit = {}, difficultyThreshold: Int = 3, onDifficultyThresholdChange: (Int) -> Unit = {}, onBackup: () -> Unit = {}, onImportExport: () -> Unit = onBackup, onAbout: () -> Unit = {}, onBack: () -> Unit = {}) {
-    var sourceMenu by remember { mutableStateOf(false) }
-    var targetMenu by remember { mutableStateOf(false) }
+fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMode) -> Unit, accentColor: AccentColor = AccentColor.PURPLE, onAccentColorChange: (AccentColor) -> Unit = {}, layoutDirection: AppLayoutDirection = AppLayoutDirection.RTL, onLayoutDirectionChange: (AppLayoutDirection) -> Unit = {}, languagePair: LanguagePair = LanguagePair(), onLanguagePairChange: (LanguagePair) -> Unit = {}, personalWordDifficulty: VocabularyDifficulty? = null, onPersonalWordDifficultyChange: (VocabularyDifficulty?) -> Unit = {}, quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM, onQuizDifficultyChange: (QuizDifficulty) -> Unit = {}, difficultyThreshold: Int = SettingsKeys.DEFAULT_THRESHOLD_DIFFICULTY, onDifficultyThresholdChange: (Int) -> Unit = {}, maximumReviewCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS, onMaximumReviewCardsChange: (Int) -> Unit = {}, onBackup: () -> Unit = {}, onImportExport: () -> Unit = onBackup, onAbout: () -> Unit = {}, onBack: () -> Unit = {}) {
+    var sourceMenu by remember { mutableStateOf(false) }; var targetMenu by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("تنظیمات", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f)); TextButton(onClick = onBack) { Text("←") } }
         Spacer(Modifier.height(10.dp)); Section("ظاهر برنامه")
@@ -43,6 +43,9 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
         }
         TextButton(onClick = { onLanguagePairChange(languagePair.reversed()) }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("↔ جابه‌جایی زبان‌ها") }
         SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست") { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }
+        Spacer(Modifier.height(12.dp)); Section("مرور")
+        Text("حداکثر تعداد کارت‌هایی که در هر جلسه مرور نمایش داده می‌شود", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(6.dp))
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onMaximumReviewCardsChange(maximumReviewCards - 1) }, enabled = maximumReviewCards > SettingsKeys.MINIMUM_REVIEW_CARDS) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(maximumReviewCards.toString(), style = MaterialTheme.typography.headlineMedium); Text("کارت در جلسه", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; IconButton(onClick = { onMaximumReviewCardsChange(maximumReviewCards + 1) }, enabled = maximumReviewCards < SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
         Spacer(Modifier.height(12.dp)); Section("سختی واژه‌ها")
         Text("چقدر این کلمه برای من سخت است", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(6.dp))
         val wordDifficultyOptions = listOf("همه" to (personalWordDifficulty == null)) + VocabularyDifficulty.entries.map { difficultyLabel(it) to (it == personalWordDifficulty) }
@@ -55,7 +58,6 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
         Spacer(Modifier.height(10.dp)); Section("درباره"); SettingsRow(Icons.Outlined.Language, "درباره برنامه", "نسخه 5.73 • تاریخچه و اطلاعات سازنده") { onAbout() }
     }
 }
-
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
 private fun quizDifficultyLabel(difficulty: QuizDifficulty) = when (difficulty) { QuizDifficulty.EASY -> "آسان"; QuizDifficulty.MEDIUM -> "متوسط"; QuizDifficulty.HARD -> "سخت" }
 @Composable private fun Section(text: String) { Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp)) }
