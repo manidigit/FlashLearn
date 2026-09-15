@@ -9,7 +9,7 @@ enum class QuizDifficulty { EASY, MEDIUM, HARD }
 enum class ReviewType { DAILY, WEEKLY, MONTHLY, LEARNED, RANDOM }
 enum class EntryType { WORD, PHRASE, SENTENCE, IDIOM, COLLOCATION, STRUCTURE }
 enum class ImportMode { ADD_NEW, SKIP_DUPLICATE, MERGE, UPDATE }
-enum class VocabularyRelationType { DERIVED_FROM, USED_IN, SYNONYM }
+enum class VocabularyRelationType { USED_IN, DERIVED_FROM, INFLECTED_FORM, SYNONYM, ANTONYM, CONTRAST, EXAMPLE_OF, RELATED_TO }
 enum class VocabularyVariantType { MASCULINE, FEMININE, ALTERNATIVE }
 enum class ReviewQueueStatus { PENDING, APPROVED, REJECTED }
 
