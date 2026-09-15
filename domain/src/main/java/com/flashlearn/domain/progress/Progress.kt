@@ -62,7 +62,7 @@ class CalculateProgressPercentage @Inject constructor(
         if (concepts.isEmpty()) return 0.0
         val states = learningRepository.getAll().associateBy { it.conceptId }
         val reviewed = reviewHistoryRepository.getAll().groupBy { it.conceptId }
-        val totalScore = concepts.sumOf { concept ->
+        val totalScore: Int = concepts.sumOf { concept ->
             ProgressScoring.score(states[concept.id]?.stage, !reviewed[concept.id].isNullOrEmpty())
         }
         return totalScore.toDouble() / concepts.size.toDouble()
