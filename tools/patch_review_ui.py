@@ -3,7 +3,7 @@ from pathlib import Path
 path = Path('app/src/main/java/com/flashlearn/app/ui/review/ReviewScreen.kt')
 text = path.read_text(encoding='utf-8')
 start = text.index('@Composable\nprivate fun ReviewSetup')
-end = text.index('@Composable\nprivate fun FlashCard', start)
+end = text.index('@Composable private fun FlashCard', start)
 replacement = '''@Composable
 private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?, onBack: () -> Unit = {}) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
