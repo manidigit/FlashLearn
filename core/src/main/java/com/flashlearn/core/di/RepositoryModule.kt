@@ -16,6 +16,7 @@ abstract class RepositoryModule {
     @Binds @Singleton abstract fun bindLearningStateRepository(impl: RoomLearningStateRepository): LearningStateRepository
     @Binds @Singleton abstract fun bindDifficultyStateRepository(impl: RoomDifficultyStateRepository): DifficultyStateRepository
     @Binds @Singleton abstract fun bindConceptTagRepository(impl: RoomConceptTagRepository): ConceptTagRepository
+    @Binds @Singleton abstract fun bindTagRepository(impl: RoomTagRepository): TagRepository
     @Binds @Singleton abstract fun bindReviewHistoryRepository(impl: RoomReviewHistoryRepository): ReviewHistoryRepository
     @Binds @Singleton abstract fun bindReviewSessionRepository(impl: RoomReviewSessionRepository): ReviewSessionRepository
     @Binds @Singleton abstract fun bindSettingsRepository(impl: RoomSettingsRepository): SettingsRepository
