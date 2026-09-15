@@ -15,8 +15,6 @@ import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
-import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material.icons.outlined.Shuffle
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Style
@@ -107,16 +105,14 @@ private fun ReviewSetup(
             ReviewModeCard("هفتگی", state.selectedReviewType == ReviewType.WEEKLY, { vm.chooseReviewType(ReviewType.WEEKLY) }, Icons.Outlined.Category, Modifier.weight(1f))
             ReviewModeCard("ماهانه", state.selectedReviewType == ReviewType.MONTHLY, { vm.chooseReviewType(ReviewType.MONTHLY) }, Icons.Outlined.AutoAwesome, Modifier.weight(1f))
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReviewModeCard("تصادفی", state.selectedReviewType == ReviewType.RANDOM, { vm.chooseReviewType(ReviewType.RANDOM) }, Icons.Outlined.Shuffle, Modifier.weight(1f))
-            ReviewModeCard("یادگرفته", state.selectedReviewType == ReviewType.LEARNED, { vm.chooseReviewType(ReviewType.LEARNED) }, Icons.Outlined.DoneAll, Modifier.weight(1f))
-        }
 
         Text("سطح دشواری کلمات", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Text("چند انتخابی", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DifficultyTile("همه", state.selectedDifficulties.isEmpty(), null, Icons.Outlined.DoneAll, Modifier.weight(1f), vm)
-            VocabularyDifficulty.entries.forEach { difficulty -> DifficultyTile(difficultyLabel(difficulty), difficulty in state.selectedDifficulties, difficulty, difficultyIcon(difficulty), Modifier.weight(1f), vm) }
+            listOf(VocabularyDifficulty.EASY, VocabularyDifficulty.MEDIUM, VocabularyDifficulty.HARD).forEach { difficulty ->
+                DifficultyTile(difficultyLabel(difficulty), difficulty in state.selectedDifficulties, difficulty, difficultyIcon(difficulty), Modifier.weight(1f), vm)
+            }
         }
 
         Text("دسته‌بندی لغات", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
