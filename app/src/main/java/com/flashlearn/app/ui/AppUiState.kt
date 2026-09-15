@@ -3,24 +3,18 @@ package com.flashlearn.app.ui
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
+import com.flashlearn.domain.settings.SettingsKeys
 
 enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 enum class AppLayoutDirection { RTL, LTR }
 enum class AccentColor { PURPLE, BLUE, GREEN, ORANGE, PINK }
 enum class LearningLanguage(val code: String, val labelFa: String, val flag: String) {
-    PERSIAN("fa", "فارسی", "🇮🇷"),
-    SPANISH("es", "اسپانیایی", "🇪🇸"),
-    ENGLISH("en", "انگلیسی", "🇬🇧")
+    PERSIAN("fa", "فارسی", "🇮🇷"), SPANISH("es", "اسپانیایی", "🇪🇸"), ENGLISH("en", "انگلیسی", "🇬🇧")
 }
-
-data class LanguagePair(
-    val source: LearningLanguage = LearningLanguage.SPANISH,
-    val target: LearningLanguage = LearningLanguage.PERSIAN
-) {
+data class LanguagePair(val source: LearningLanguage = LearningLanguage.SPANISH, val target: LearningLanguage = LearningLanguage.PERSIAN) {
     init { require(source != target) { "Learning language pair must contain two different languages" } }
     fun reversed() = LanguagePair(target, source)
 }
-
 data class AppUiState(
     val selectedRoute: String = AppRoutes.HOME,
     val selectedConceptId: java.util.UUID? = null,
@@ -30,10 +24,12 @@ data class AppUiState(
     val languagePair: LanguagePair = LanguagePair(),
     val personalWordDifficulty: VocabularyDifficulty? = null,
     val quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM,
-    val difficultyThreshold: Int = 3
+    val difficultyThreshold: Int = SettingsKeys.DEFAULT_THRESHOLD_DIFFICULTY,
+    val maximumReviewCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
 ) {
     init {
         require(selectedRoute in AppRoutes.all()) { "Unknown application route: $selectedRoute" }
         require(difficultyThreshold in 1..20) { "difficultyThreshold must be between 1 and 20" }
+        require(maximumReviewCards in SettingsKeys.MINIMUM_REVIEW_CARDS..SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT) { "maximumReviewCards out of range" }
     }
 }
