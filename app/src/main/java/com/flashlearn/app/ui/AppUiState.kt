@@ -1,6 +1,7 @@
 package com.flashlearn.app.ui
 
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
 
 enum class AppearanceMode { SYSTEM, LIGHT, DARK }
@@ -11,8 +12,6 @@ enum class LearningLanguage(val code: String, val labelFa: String, val flag: Str
     SPANISH("es", "اسپانیایی", "🇪🇸"),
     ENGLISH("en", "انگلیسی", "🇬🇧")
 }
-
-enum class QuizChallenge(val label: String) { A("A"), B("B"), C("C") }
 
 data class LanguagePair(
     val source: LearningLanguage = LearningLanguage.SPANISH,
@@ -30,7 +29,7 @@ data class AppUiState(
     val layoutDirection: AppLayoutDirection = AppLayoutDirection.RTL,
     val languagePair: LanguagePair = LanguagePair(),
     val personalWordDifficulty: VocabularyDifficulty? = null,
-    val quizChallenge: QuizChallenge = QuizChallenge.B,
+    val quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM,
     val difficultyThreshold: Int = 3
 ) {
     init {
