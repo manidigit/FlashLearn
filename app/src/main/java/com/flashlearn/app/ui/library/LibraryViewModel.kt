@@ -6,8 +6,6 @@ import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.domain.model.Category
 import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.model.Content
-import com.flashlearn.domain.model.DifficultyState
-import com.flashlearn.domain.model.Stage
 import com.flashlearn.domain.model.Tag
 import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.domain.progress.CalculateProgressUseCase
@@ -38,12 +36,13 @@ data class LibraryItem(
 
 data class LibraryUiState(
     val query: String = "",
-    val selectedCategoryId: UUID? = null,
+    val selectedCategoryIds: Set<UUID> = emptySet(),
     val selectedTagId: UUID? = null,
     val favoritesOnly: Boolean = false,
     val categories: List<Category> = emptyList(),
     val tags: List<Tag> = emptyList(),
     val categoryCounts: Map<UUID, Int> = emptyMap(),
+    val categoryTotalCount: Int = 0,
     val tagCounts: Map<UUID, Int> = emptyMap(),
     val totalCount: Int = 0,
     val learnedCount: Int = 0,
@@ -84,7 +83,7 @@ class LibraryViewModel @Inject constructor(
 
     fun onQueryChange(value: String) { _state.value = _state.value.copy(query = value); refresh() }
     fun onFavoritesChange(value: Boolean) { _state.value = _state.value.copy(favoritesOnly = value); refresh() }
-    fun onCategoryChange(id: UUID?) { _state.value = _state.value.copy(selectedCategoryId = id); refresh() }
+    fun onCategoryChange(ids: Set<UUID>) { _state.value = _state.value.copy(selectedCategoryIds = ids); refresh() }
     fun onTagChange(id: UUID?) { _state.value = _state.value.copy(selectedTagId = id); refresh() }
 
     fun createTag(name: String, onDone: (String?) -> Unit = {}) = runTagMutation(onDone) { createTagUseCase(name) }
@@ -109,7 +108,7 @@ class LibraryViewModel @Inject constructor(
         val generation = ++refreshGeneration
         val snapshot = _state.value
         val query = snapshot.query.trim()
-        val selectedCategory = snapshot.selectedCategoryId
+        val selectedCategories = snapshot.selectedCategoryIds
         val selectedTag = snapshot.selectedTagId
         val favoritesOnly = snapshot.favoritesOnly
         val sourceLanguage = snapshot.sourceLanguage
@@ -133,7 +132,9 @@ class LibraryViewModel @Inject constructor(
 
                 val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
                 val tagCounts = filteredBase.asSequence().flatMap { tagLinks[it.id].orEmpty().asSequence() }.groupingBy { it }.eachCount()
-                val filteredConcepts = filteredBase.asSequence().filter { selectedCategory == null || it.categoryId == selectedCategory }.toList()
+                val filteredConcepts = filteredBase.asSequence()
+                    .filter { selectedCategories.isEmpty() || it.categoryId in selectedCategories }
+                    .toList()
                 val catMap = cats.associateBy { it.id }
                 val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
                 val items = filteredConcepts.map { c ->
@@ -154,6 +155,7 @@ class LibraryViewModel @Inject constructor(
                     categories = cats,
                     tagCounts = tagCounts,
                     categoryCounts = counts,
+                    categoryTotalCount = filteredBase.size,
                     totalCount = progress.totalConcepts,
                     learnedCount = progress.learnedConcepts,
                     learningCount = learningCount,
