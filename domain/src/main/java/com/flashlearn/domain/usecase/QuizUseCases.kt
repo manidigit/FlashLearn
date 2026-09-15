@@ -3,6 +3,7 @@ package com.flashlearn.domain.usecase
 import com.flashlearn.domain.model.Content
 import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.model.DifficultyState
+import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.ConceptRepository
@@ -13,12 +14,6 @@ import java.util.UUID
 import javax.inject.Inject
 
 private fun normalizeQuizText(text: String): String = Normalizer.normalize(text.trim().replace(Regex("\\s+"), " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)
-
-enum class QuizChallenge { A, B, C }
-
-object QuizChallengeProvider {
-    @Volatile var current: QuizChallenge = QuizChallenge.B
-}
 
 sealed interface QuizQuestionResult {
     data class QuizQuestion(val promptText: String, val correctAnswerText: String, val options: List<String>) : QuizQuestionResult {
@@ -67,12 +62,10 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         concept: Concept,
         activeLanguagePair: QuizLanguagePair,
         difficultyState: DifficultyState?,
-        challenge: QuizChallenge = QuizChallengeProvider.current
+        difficulty: QuizDifficulty = QuizDifficulty.MEDIUM
     ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
 
-        // The bank is refreshed once when a Quiz review session starts. Subsequent cards
-        // do zero Room reads, which keeps a 30-card session fast even with 100k words.
         val snapshot = bank ?: run {
             refreshBank()
             bank!!
@@ -115,22 +108,22 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             other.id != concept.id && other.id in validConceptIds && other.id in sourceConceptIds
         }
 
-        fun candidatesFor(level: QuizChallenge, categoryOnly: Boolean): List<Content> {
+        fun candidatesFor(level: QuizDifficulty, categoryOnly: Boolean): List<Content> {
             val concepts = eligible.filter { other ->
                 if (categoryOnly && concept.categoryId != null && other.categoryId != concept.categoryId) return@filter false
                 when (level) {
-                    QuizChallenge.A -> true
-                    QuizChallenge.B -> difficultiesById[other.id]?.current == effectiveDifficulty.current
-                    QuizChallenge.C -> difficultiesById[other.id]?.current == effectiveDifficulty.current && other.entryType == concept.entryType
+                    QuizDifficulty.EASY -> true
+                    QuizDifficulty.MEDIUM -> difficultiesById[other.id]?.current == effectiveDifficulty.current
+                    QuizDifficulty.HARD -> difficultiesById[other.id]?.current == effectiveDifficulty.current && other.entryType == concept.entryType
                 }
             }
             return unique(concepts.flatMap { targetContents[it.id].orEmpty() })
         }
 
-        val levels = when (challenge) {
-            QuizChallenge.A -> listOf(QuizChallenge.A)
-            QuizChallenge.B -> listOf(QuizChallenge.B, QuizChallenge.A)
-            QuizChallenge.C -> listOf(QuizChallenge.C, QuizChallenge.B, QuizChallenge.A)
+        val levels = when (difficulty) {
+            QuizDifficulty.EASY -> listOf(QuizDifficulty.EASY)
+            QuizDifficulty.MEDIUM -> listOf(QuizDifficulty.MEDIUM, QuizDifficulty.EASY)
+            QuizDifficulty.HARD -> listOf(QuizDifficulty.HARD, QuizDifficulty.MEDIUM, QuizDifficulty.EASY)
         }
 
         var candidates = emptyList<Content>()
