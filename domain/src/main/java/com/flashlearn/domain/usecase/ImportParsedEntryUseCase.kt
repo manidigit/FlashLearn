@@ -55,14 +55,14 @@ class ImportParsedEntryUseCase @Inject constructor(
             val key = computeCanonicalKey(text)
             val existing = existingTranslations.firstOrNull { it.canonicalKey == key }
             if (existing == null) {
-                contentRepository.insertTranslation(Content(UUID.randomUUID(), conceptId, targetLanguage, text, key, grammarNote = extractGrammarNote(entry), possibleCorrection = correction, translationIndex = nextIndex++))
+                contentRepository.insertTranslation(Content(UUID.randomUUID(), conceptId, targetLanguage, text, key, grammarNote = entry.grammarNote, possibleCorrection = correction, translationIndex = nextIndex++))
             } else if (mode == ImportMode.UPDATE) {
-                contentRepository.upsert(existing.copy(grammarNote = extractGrammarNote(entry), possibleCorrection = correction))
+                contentRepository.upsert(existing.copy(grammarNote = entry.grammarNote, possibleCorrection = correction))
             }
         }
         val sourceContent = contentRepository.find(conceptId, sourceLanguage)
-        if (sourceContent != null && (sourceContent.possibleCorrection != correction || sourceContent.grammarNote != extractGrammarNote(entry))) {
-            contentRepository.upsert(sourceContent.copy(possibleCorrection = correction, grammarNote = extractGrammarNote(entry), notes = extractPlainNotes(entry)))
+        if (sourceContent != null && (sourceContent.possibleCorrection != correction || sourceContent.grammarNote != entry.grammarNote || sourceContent.notes != extractPlainNotes(entry))) {
+            contentRepository.upsert(sourceContent.copy(possibleCorrection = correction, grammarNote = entry.grammarNote, notes = extractPlainNotes(entry)))
         }
 
         entry.relationships.forEach { relationship ->
@@ -91,10 +91,6 @@ class ImportParsedEntryUseCase @Inject constructor(
         parserMetadataRepository.upsert(conceptId, ParserMetadata(entry.breakdown.map { it.text }, entry.relationships.map { "${it.label}: ${it.text}" }, entry.variants.map { it.text }, entry.confidence.coerceIn(0.0,1.0)))
         conceptId
     }
-
-    private fun extractGrammarNote(entry: ParsedEntry): String? = entry.rawLines
-        .filter { it.trim().startsWith("گرامر:") || it.trim().startsWith("grammar:", true) || it.trim().startsWith("gramática:", true) }
-        .joinToString("\n") { it.substringAfter(':').trim() }.ifBlank { null }
 
     private fun extractPlainNotes(entry: ParsedEntry): String? = entry.notes?.lines()
         ?.filterNot { it.trim().startsWith("گرامر:") || it.trim().startsWith("grammar:", true) || it.trim().startsWith("gramática:", true) }
