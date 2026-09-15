@@ -49,6 +49,8 @@ data class ReviewUiState(
     val selectedDifficulty: VocabularyDifficulty? = null,
     val selectedDifficulties: Set<VocabularyDifficulty> = emptySet(),
     val categories: List<Category> = emptyList(),
+    val categoryWordCounts: Map<UUID, Int> = emptyMap(),
+    val allCategoryWordCount: Int = 0,
     val selectedCategoryId: UUID? = null,
     val selectedCategoryIds: Set<UUID> = emptySet(),
     val selectedQuizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM,
@@ -96,7 +98,20 @@ class ReviewViewModel @Inject constructor(
     private var sessionContents: Map<UUID, List<Content>> = emptyMap()
     private var sessionDifficulties: Map<UUID, DifficultyState> = emptyMap()
 
-    init { viewModelScope.launch { runCatching { categoryRepository.getAll().sortedBy { it.name } }.onSuccess { _state.value = _state.value.copy(categories = it); refreshAvailableReviewCount() } } }
+    init {
+        viewModelScope.launch {
+            runCatching {
+                val categories = categoryRepository.getAll().sortedBy { it.name }
+                val concepts = conceptRepository.getAllActive()
+                val counts = concepts.mapNotNull { concept -> concept.categoryId?.let { it to 1 } }
+                    .groupingBy { it.first }.fold(0) { acc, item -> acc + item.second }
+                Triple(categories, counts, concepts.size)
+            }.onSuccess { (categories, counts, total) ->
+                _state.value = _state.value.copy(categories = categories, categoryWordCounts = counts, allCategoryWordCount = total)
+                refreshAvailableReviewCount()
+            }
+        }
+    }
 
     fun setLanguagePair(pair: LanguagePair) {
         if (pair == activeLanguagePair) return
@@ -110,10 +125,21 @@ class ReviewViewModel @Inject constructor(
     fun chooseMode(mode: ReviewMode) { _state.value = _state.value.copy(selectedMode = mode) }
 
     fun prepareReviewType(reviewType: ReviewType) {
-        val normalized = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM
-        _state.value = _state.value.copy(selectedReviewType = normalized, isSelectingMode = true, isFinished = false, error = null)
+        _state.value = _state.value.copy(selectedReviewType = normalizeReviewType(reviewType), isSelectingMode = true, isFinished = false, error = null)
     }
-    fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM); refreshAvailableReviewCount() }
+
+    fun chooseReviewType(reviewType: ReviewType) {
+        _state.value = _state.value.copy(selectedReviewType = normalizeReviewType(reviewType))
+        refreshAvailableReviewCount()
+    }
+
+    private fun normalizeReviewType(reviewType: ReviewType): ReviewType = when (reviewType) {
+        ReviewType.DAILY -> ReviewType.DAILY
+        ReviewType.WEEKLY -> ReviewType.WEEKLY
+        ReviewType.MONTHLY -> ReviewType.MONTHLY
+        ReviewType.LEARNED -> ReviewType.LEARNED
+        ReviewType.RANDOM -> ReviewType.RANDOM
+    }
 
     fun toggleDifficulty(difficulty: VocabularyDifficulty?) {
         val current = _state.value.selectedDifficulties.toMutableSet()
@@ -126,6 +152,11 @@ class ReviewViewModel @Inject constructor(
         val current = _state.value.selectedCategoryIds.toMutableSet()
         if (categoryId == null) current.clear() else if (!current.add(categoryId)) current.remove(categoryId)
         _state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())
+        refreshAvailableReviewCount()
+    }
+
+    fun setCategories(categoryIds: Set<UUID>) {
+        _state.value = _state.value.copy(selectedCategoryIds = categoryIds, selectedCategoryId = categoryIds.singleOrNull())
         refreshAvailableReviewCount()
     }
 
@@ -159,7 +190,7 @@ class ReviewViewModel @Inject constructor(
     fun startNewSession(reviewType: ReviewType = _state.value.selectedReviewType, difficulty: VocabularyDifficulty? = null, categoryId: UUID? = null) {
         val generation = ++sessionGeneration
         val currentState = _state.value
-        val normalizedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM
+        val normalizedReviewType = normalizeReviewType(reviewType)
         val difficulties = if (difficulty != null) setOf(difficulty) else currentState.selectedDifficulties
         val categories = if (categoryId != null) setOf(categoryId) else currentState.selectedCategoryIds
         val maxCards = maximumReviewCards
