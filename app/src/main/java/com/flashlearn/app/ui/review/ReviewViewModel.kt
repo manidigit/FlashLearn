@@ -21,6 +21,7 @@ import com.flashlearn.domain.usecase.GenerateQuizQuestionUseCase
 import com.flashlearn.domain.usecase.QuizLanguagePair
 import com.flashlearn.domain.usecase.QuizQuestionResult
 import com.flashlearn.domain.usecase.ReviewCandidate
+import com.flashlearn.domain.usecase.CountReviewQueueUseCase
 import com.flashlearn.domain.usecase.SelectReviewQueueUseCase
 import com.flashlearn.domain.usecase.StartReviewSessionUseCase
 import com.flashlearn.domain.usecase.SubmitReviewAnswerRequest
@@ -52,6 +53,7 @@ data class ReviewUiState(
     val selectedCategoryIds: Set<UUID> = emptySet(),
     val selectedQuizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM,
     val maximumReviewCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS,
+    val availableReviewCount: Int = 0,
     val card: ReviewCardUiState? = null,
     val quizCard: QuizCardUiState? = null,
     val remaining: Int = 0,
@@ -77,6 +79,7 @@ class ReviewViewModel @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val difficultyStateRepository: DifficultyStateRepository,
     private val categoryRepository: CategoryRepository,
+    private val countReviewQueue: CountReviewQueueUseCase,
     private val generateQuizQuestion: GenerateQuizQuestionUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(ReviewUiState())
