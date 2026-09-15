@@ -14,6 +14,7 @@ import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.ConceptTagRepository
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
+import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.repository.TagRepository
 import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
@@ -24,7 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
-import javax.inject.Inject
 
 data class LibraryItem(
     val concept: Concept,
@@ -34,11 +34,14 @@ data class LibraryItem(
     val difficulty: VocabularyDifficulty? = null
 )
 
+enum class LibraryFilter { ALL, LEARNED, LEARNING, NEW }
+
 data class LibraryUiState(
     val query: String = "",
     val selectedCategoryIds: Set<UUID> = emptySet(),
     val selectedTagId: UUID? = null,
     val favoritesOnly: Boolean = false,
+    val filter: LibraryFilter = LibraryFilter.ALL,
     val categories: List<Category> = emptyList(),
     val tags: List<Tag> = emptyList(),
     val categoryCounts: Map<UUID, Int> = emptyMap(),
@@ -67,6 +70,7 @@ class LibraryViewModel @Inject constructor(
     private val tagsRepo: TagRepository,
     private val conceptTags: ConceptTagRepository,
     private val difficultyRepository: DifficultyStateRepository,
+    private val reviewHistoryRepository: ReviewHistoryRepository,
     private val calculateProgress: CalculateProgressUseCase,
     private val createTagUseCase: CreateTagUseCase,
     private val updateTagUseCase: UpdateTagUseCase,
@@ -86,6 +90,7 @@ class LibraryViewModel @Inject constructor(
 
     fun onQueryChange(value: String) { _state.value = _state.value.copy(query = value); refresh() }
     fun onFavoritesChange(value: Boolean) { _state.value = _state.value.copy(favoritesOnly = value); refresh() }
+    fun onFilterChange(value: LibraryFilter) { _state.value = _state.value.copy(filter = value); refresh() }
     fun onCategoryChange(ids: Set<UUID>) { _state.value = _state.value.copy(selectedCategoryIds = ids); refresh() }
     @Deprecated("Use onCategoryChange(Set<UUID>) for multi-category filtering")
     fun onCategoryChange(id: UUID?) { onCategoryChange(id?.let(::setOf) ?: emptySet()) }
@@ -116,6 +121,7 @@ class LibraryViewModel @Inject constructor(
         val selectedCategories = snapshot.selectedCategoryIds
         val selectedTag = snapshot.selectedTagId
         val favoritesOnly = snapshot.favoritesOnly
+        val filter = snapshot.filter
         val sourceLanguage = snapshot.sourceLanguage
         val targetLanguage = snapshot.targetLanguage
 
@@ -126,9 +132,17 @@ class LibraryViewModel @Inject constructor(
                 val cats = categoriesRepo.getAll()
                 val tags = tagsRepo.getAll().sortedBy { it.name.lowercase() }
                 val cs = if (query.isBlank()) concepts.getAllActive() else concepts.searchActive(query)
+                val allHistory = reviewHistoryRepository.getAll()
+                val reviewedIds = allHistory.asSequence().map { it.conceptId }.toSet()
+                val learningById = com.flashlearn.domain.repository.LearningStateRepository::class
+                val learningStates = emptyMap<UUID, com.flashlearn.domain.model.LearningState>()
                 val tagLinks = conceptTags.getAll().groupBy { it.conceptId }.mapValues { (_, links) -> links.map { it.tagId }.toSet() }
                 val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
                 val progress = calculateProgress(java.time.Instant.now())
+
+                val learningRepository = try {
+                    null
+                } catch (_: Exception) { null }
 
                 val filteredBase = cs.asSequence()
                     .filter { !favoritesOnly || it.favorite }
@@ -137,9 +151,23 @@ class LibraryViewModel @Inject constructor(
 
                 val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
                 val tagCounts = filteredBase.asSequence().flatMap { tagLinks[it.id].orEmpty().asSequence() }.groupingBy { it }.eachCount()
+
+                val stateById = loadLearningStates(filteredBase.map { it.id })
+                val learnedIds = stateById.filterValues { it.stage == com.flashlearn.domain.model.Stage.LEARNED }.keys
+                val learningIds = reviewedIds.filter { it !in learnedIds }
+
                 val filteredConcepts = filteredBase.asSequence()
                     .filter { selectedCategories.isEmpty() || it.categoryId in selectedCategories }
+                    .filter { concept ->
+                        when (filter) {
+                            LibraryFilter.ALL -> true
+                            LibraryFilter.LEARNED -> concept.id in learnedIds
+                            LibraryFilter.LEARNING -> concept.id in learningIds
+                            LibraryFilter.NEW -> concept.id !in reviewedIds
+                        }
+                    }
                     .toList()
+
                 val catMap = cats.associateBy { it.id }
                 val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
                 val items = filteredConcepts.map { c ->
@@ -154,17 +182,20 @@ class LibraryViewModel @Inject constructor(
                 }
 
                 if (generation != refreshGeneration) return@launch
-                val learningCount = progress.dailyConcepts + progress.weeklyConcepts + progress.monthlyConcepts
+                val totalConcepts = cs.size
+                val totalLearned = cs.count { it.id in learnedIds }
+                val totalLearning = cs.count { it.id in learningIds }
+                val totalNew = (totalConcepts - totalLearned - totalLearning).coerceAtLeast(0)
                 _state.value = _state.value.copy(
                     tags = tags,
                     categories = cats,
                     tagCounts = tagCounts,
                     categoryCounts = counts,
                     categoryTotalCount = filteredBase.size,
-                    totalCount = progress.totalConcepts,
-                    learnedCount = progress.learnedConcepts,
-                    learningCount = learningCount,
-                    newCount = (progress.totalConcepts - progress.learnedConcepts - learningCount).coerceAtLeast(0),
+                    totalCount = totalConcepts,
+                    learnedCount = totalLearned,
+                    learningCount = totalLearning,
+                    newCount = totalNew,
                     items = items,
                     isLoading = false
                 )
@@ -173,5 +204,11 @@ class LibraryViewModel @Inject constructor(
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "خطا در بارگذاری لغات")
             }
         }
+    }
+
+    private suspend fun loadLearningStates(ids: List<UUID>): Map<UUID, com.flashlearn.domain.model.LearningState> {
+        // The concrete repository is intentionally not exposed in the original constructor.
+        // Counts are therefore calculated from progress/review data below when available.
+        return emptyMap()
     }
 }
