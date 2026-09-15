@@ -1,9 +1,9 @@
 package com.flashlearn.domain.usecase
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class ReviewHelpUseCaseTest {
     private val useCase = ReviewHelpUseCase()
