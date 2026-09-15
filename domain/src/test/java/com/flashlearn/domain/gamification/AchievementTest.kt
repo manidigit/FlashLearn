@@ -1,6 +1,7 @@
 package com.flashlearn.domain.gamification
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,14 +25,18 @@ class AchievementTest {
     }
 
     @Test
-    fun thresholds_unlock_expected_achievements_and_preserve_existing_state() {
+    fun thresholds_unlock_only_when_each_frozen_condition_is_met() {
         val context = AchievementContext(
             totalReviews = 100,
             totalCorrect = 50,
             totalWrong = 10,
             currentStreakDays = 30,
             longestStreakDays = 30,
-            learnedConcepts = 100
+            learnedConcepts = 100,
+            practicedWords = 10,
+            totalActiveWords = 500,
+            veryHardLearnedConcepts = 25,
+            monthlyCorrectConcepts = 50
         )
 
         val result = useCase.evaluate(
@@ -42,16 +47,21 @@ class AchievementTest {
 
         assertEquals(7, result.states.count { it.unlocked })
         assertEquals(6, result.newlyUnlocked.size)
+        assertTrue(AchievementIds.FIRST_TEN_WORDS in result.newlyUnlocked)
+        assertTrue(AchievementIds.SEVEN_DAY_STREAK in result.newlyUnlocked)
+        assertTrue(AchievementIds.THIRTY_DAY_STREAK in result.newlyUnlocked)
+        assertTrue(AchievementIds.VOCABULARY_BUILDER in result.newlyUnlocked)
+        assertTrue(AchievementIds.HARD_MODE_MASTER in result.newlyUnlocked)
         assertTrue(AchievementIds.LONG_TERM_MEMORY in result.newlyUnlocked)
-        assertTrue(AchievementIds.MEMORY_BUILDER !in result.newlyUnlocked)
+        assertFalse(AchievementIds.MEMORY_BUILDER in result.newlyUnlocked)
     }
 
     @Test
-    fun seven_day_achievement_uses_longest_streak_when_current_streak_reset() {
+    fun seven_day_achievement_requires_current_streak() {
         val context = AchievementContext(0, 0, 0, 0, 7, 0)
         val result = useCase.evaluate(DefaultAchievements.definitions, emptyList(), context)
 
-        assertTrue(result.states.first { it.achievementId == AchievementIds.SEVEN_DAY_STREAK }.unlocked)
-        assertTrue(result.states.none { it.achievementId == AchievementIds.THIRTY_DAY_STREAK && it.unlocked })
+        assertFalse(result.states.first { it.achievementId == AchievementIds.SEVEN_DAY_STREAK }.unlocked)
+        assertFalse(result.states.first { it.achievementId == AchievementIds.THIRTY_DAY_STREAK }.unlocked)
     }
 }
