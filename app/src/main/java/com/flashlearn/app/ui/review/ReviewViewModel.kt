@@ -45,7 +45,7 @@ data class ReviewUiState(
     val isLoading: Boolean = false,
     val isSelectingMode: Boolean = true,
     val selectedMode: ReviewMode = ReviewMode.QUIZ,
-    val selectedReviewType: ReviewType = ReviewType.RANDOM,
+    val selectedReviewType: ReviewType = ReviewType.DAILY,
     val selectedDifficulty: VocabularyDifficulty? = null,
     val selectedDifficulties: Set<VocabularyDifficulty> = emptySet(),
     val categories: List<Category> = emptyList(),
