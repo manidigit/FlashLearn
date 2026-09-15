@@ -56,7 +56,15 @@ fun LibraryScreenV2(viewModel: LibraryViewModel, languagePair: LanguagePair, onB
             Row(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically) {
                 Icon(Icons.Outlined.ArrowBack,"انتخاب دسته",tint=Navy)
                 Spacer(Modifier.weight(1f))
-                Column(horizontalAlignment=Alignment.End){Text("دسته‌بندی‌ها",color=Navy,style=MaterialTheme.typography.titleMedium.copy(fontWeight=FontWeight.Bold));Text("همه دسته‌ها • ${toFaDigits(state.categories.size)} دسته",color=Color(0xFF858CA4),style=MaterialTheme.typography.bodySmall)}
+                Column(horizontalAlignment=Alignment.End){
+                    Text("دسته‌بندی‌ها",color=Navy,style=MaterialTheme.typography.titleMedium.copy(fontWeight=FontWeight.Bold))
+                    Text(
+                        if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها"
+                        else "${toFaDigits(state.selectedCategoryIds.size)} دسته انتخاب شده",
+                        color=Color(0xFF858CA4),
+                        style=MaterialTheme.typography.bodySmall
+                    )
+                }
                 Spacer(Modifier.width(12.dp));Surface(Modifier.size(48.dp),RoundedCornerShape(15.dp),color=SoftPurple){Box(contentAlignment=Alignment.Center){Icon(Icons.Outlined.Folder,"دسته‌بندی‌ها",tint=Purple,modifier=Modifier.size(28.dp))}}
             }
         }
