@@ -8,38 +8,14 @@ class AppNavigationContractTest {
     @Test
     fun allPrimaryDestinationsAreDeclared() {
         assertEquals(
-            listOf(
-                "home",
-                "review",
-                "needs_review",
-                "progress",
-                "settings",
-                "about",
-                "add_word",
-                "bulk_import",
-                "backup",
-                "library",
-                "library_detail"
-            ),
+            listOf("home","review","needs_review","progress","settings","about","add_word","add_word_form","bulk_import","backup","library","library_detail","category_selection"),
             AppRoutes.all()
         )
     }
 
     @Test
     fun everyDestinationUsesItsDeclaredRoute() {
-        val destinations = listOf(
-            AppDestination.Home,
-            AppDestination.Review,
-            AppDestination.NeedsReview,
-            AppDestination.Progress,
-            AppDestination.Settings,
-            AppDestination.About,
-            AppDestination.AddWord,
-            AppDestination.BulkImport,
-            AppDestination.Backup,
-            AppDestination.Library,
-            AppDestination.LibraryDetail
-        )
+        val destinations = listOf(AppDestination.Home,AppDestination.Review,AppDestination.NeedsReview,AppDestination.Progress,AppDestination.Settings,AppDestination.About,AppDestination.AddWord,AppDestination.AddWordForm,AppDestination.BulkImport,AppDestination.Backup,AppDestination.Library,AppDestination.LibraryDetail,AppDestination.CategorySelection)
         assertEquals(AppRoutes.all(), destinations.map { it.route })
         assertEquals(destinations.map { it.route }.toSet().size, destinations.size)
     }
