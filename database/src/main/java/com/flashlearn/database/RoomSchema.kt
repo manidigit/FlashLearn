@@ -12,7 +12,7 @@ class Converters {
 }
 
 @Entity(tableName = "concepts") data class ConceptEntity(@PrimaryKey val id: UUID, val entryType: String, val categoryId: UUID?, val favorite: Boolean, val active: Boolean, val createdAt: Instant, val updatedAt: Instant)
-@Entity(tableName = "contents", indices = [Index(value = ["conceptId", "languageCode"], unique = true), Index(value = ["languageCode", "canonicalKey"])]) data class ContentEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val languageCode: String, val text: String, val canonicalKey: String, val notes: String?, val pronunciation: String?, val example: String?)
+@Entity(tableName = "contents", indices = [Index(value = ["conceptId", "languageCode", "translationIndex"], unique = true), Index(value = ["languageCode", "canonicalKey"])]) data class ContentEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val languageCode: String, val text: String, val canonicalKey: String, val notes: String?, val pronunciation: String?, val example: String?, val translationIndex: Int = 0, val grammarNote: String? = null, val possibleCorrection: String? = null)
 @Entity(tableName = "learning_states", indices = [Index(value = ["conceptId"], unique = true), Index(value = ["stage", "nextReviewAt"])]) data class LearningStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val stage: String, val nextReviewAt: Instant?, val monthlyWrongCount: Int, val hasPathFailure: Boolean, val totalCorrect: Int, val totalWrong: Int, val lastReviewedAt: Instant?)
 @Entity(tableName = "difficulty_states", indices = [Index(value = ["conceptId"], unique = true)]) data class DifficultyStateEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val current: String, val consecutiveCorrect: Int, val consecutiveWrong: Int, val hasReachedVeryHard: Boolean)
 @Entity(tableName = "tags") data class TagEntity(@PrimaryKey val id: UUID, val name: String)
@@ -23,6 +23,11 @@ class Converters {
 @Entity(tableName = "categories", indices = [Index(value = ["name"], unique = true)]) data class CategoryEntity(@PrimaryKey val id: UUID, val name: String)
 @Entity(tableName = "parser_metadata") data class ParserMetadataEntity(@PrimaryKey val conceptId: UUID, val breakdownJson: String, val relationshipsJson: String, val variantsJson: String, val confidence: Double)
 @Entity(tableName = "achievements") data class AchievementEntity(@PrimaryKey val achievementId: String, val unlocked: Boolean)
+@Entity(tableName = "vocabulary_relations", indices = [Index(value = ["sourceConceptId", "targetConceptId", "relationType"], unique = true), Index(value = ["targetConceptId"])]) data class VocabularyRelationEntity(@PrimaryKey val id: UUID, val sourceConceptId: UUID, val targetConceptId: UUID?, val relationType: String, val unresolvedText: String?)
+@Entity(tableName = "vocabulary_variants", indices = [Index(value = ["conceptId", "text", "variantType"], unique = true)]) data class VocabularyVariantEntity(@PrimaryKey val id: UUID, val conceptId: UUID, val text: String, val variantType: String)
+@Entity(tableName = "review_queue", indices = [Index(value = ["status", "confidence"])]) data class ReviewQueueEntity(@PrimaryKey val id: UUID, val conceptId: UUID?, val sourceText: String, val targetText: String?, val confidence: Double, val possibleCorrection: String?, val status: String, val lineNumber: Int?, val warning: String?)
+@Entity(tableName = "languages") data class LanguageEntity(@PrimaryKey val code: String, val name: String, val active: Boolean)
+@Entity(tableName = "language_pairs", primaryKeys = ["sourceLanguageCode", "targetLanguageCode"]) data class LanguagePairEntity(val sourceLanguageCode: String, val targetLanguageCode: String, val active: Boolean)
 
 @Dao interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(entity: ConceptEntity)
@@ -40,7 +45,8 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(entity: ContentEntity)
     @Update suspend fun update(entity: ContentEntity)
     @Query("SELECT * FROM contents WHERE id = :id LIMIT 1") suspend fun getById(id: UUID): ContentEntity?
-    @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntity?
+    @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode ORDER BY translationIndex ASC LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntity?
+    @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode ORDER BY translationIndex ASC") suspend fun getAllByConceptIdAndLanguage(conceptId: UUID, languageCode: String): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId") suspend fun getAllByConceptId(conceptId: UUID): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE conceptId IN (:conceptIds)") suspend fun getForConcepts(conceptIds: List<UUID>): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey = :canonicalKey") suspend fun findByCanonicalKey(languageCode: String, canonicalKey: String): List<ContentEntity>
@@ -72,6 +78,7 @@ class Converters {
     @Update suspend fun update(entity: TagEntity)
     @Query("SELECT * FROM tags") suspend fun getAll(): List<TagEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<TagEntity>)
+    @Query("DELETE FROM tags WHERE id = :id") suspend fun deleteById(id: UUID)
     @Query("DELETE FROM tags") suspend fun deleteAll()
 }
 @Dao interface ConceptTagDao {
@@ -131,8 +138,39 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<AchievementEntity>)
     @Query("DELETE FROM achievements") suspend fun deleteAll()
 }
+@Dao interface VocabularyRelationDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(entity: VocabularyRelationEntity)
+    @Update suspend fun update(entity: VocabularyRelationEntity)
+    @Query("SELECT * FROM vocabulary_relations WHERE sourceConceptId = :conceptId OR targetConceptId = :conceptId") suspend fun getForConcept(conceptId: UUID): List<VocabularyRelationEntity>
+    @Query("SELECT * FROM vocabulary_relations") suspend fun getAll(): List<VocabularyRelationEntity>
+    @Query("DELETE FROM vocabulary_relations") suspend fun deleteAll()
+}
+@Dao interface VocabularyVariantDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(entity: VocabularyVariantEntity)
+    @Update suspend fun update(entity: VocabularyVariantEntity)
+    @Query("SELECT * FROM vocabulary_variants WHERE conceptId = :conceptId ORDER BY variantType, text") suspend fun getForConcept(conceptId: UUID): List<VocabularyVariantEntity>
+    @Query("SELECT * FROM vocabulary_variants") suspend fun getAll(): List<VocabularyVariantEntity>
+    @Query("DELETE FROM vocabulary_variants") suspend fun deleteAll()
+}
+@Dao interface ReviewQueueDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(entity: ReviewQueueEntity)
+    @Update suspend fun update(entity: ReviewQueueEntity)
+    @Query("SELECT * FROM review_queue WHERE status = 'PENDING' ORDER BY confidence ASC, lineNumber ASC, id ASC") suspend fun getPending(): List<ReviewQueueEntity>
+    @Query("SELECT * FROM review_queue ORDER BY lineNumber ASC, id ASC") suspend fun getAll(): List<ReviewQueueEntity>
+    @Query("DELETE FROM review_queue") suspend fun deleteAll()
+}
+@Dao interface LanguageDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(entity: LanguageEntity)
+    @Query("SELECT * FROM languages WHERE active = 1 ORDER BY code") suspend fun getActive(): List<LanguageEntity>
+    @Query("SELECT * FROM languages ORDER BY code") suspend fun getAll(): List<LanguageEntity>
+}
+@Dao interface LanguagePairDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(entity: LanguagePairEntity)
+    @Query("SELECT * FROM language_pairs WHERE active = 1 ORDER BY sourceLanguageCode, targetLanguageCode") suspend fun getActive(): List<LanguagePairEntity>
+    @Query("SELECT * FROM language_pairs") suspend fun getAll(): List<LanguagePairEntity>
+}
 
-@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class, AchievementEntity::class], version = 5, exportSchema = true)
+@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class, AchievementEntity::class, VocabularyRelationEntity::class, VocabularyVariantEntity::class, ReviewQueueEntity::class, LanguageEntity::class, LanguagePairEntity::class], version = 6, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class RoomFlashLearnDatabase : RoomDatabase() {
     abstract fun conceptDao(): ConceptDao
@@ -147,4 +185,9 @@ abstract class RoomFlashLearnDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun parserMetadataDao(): ParserMetadataDao
     abstract fun achievementDao(): AchievementDao
+    abstract fun vocabularyRelationDao(): VocabularyRelationDao
+    abstract fun vocabularyVariantDao(): VocabularyVariantDao
+    abstract fun reviewQueueDao(): ReviewQueueDao
+    abstract fun languageDao(): LanguageDao
+    abstract fun languagePairDao(): LanguagePairDao
 }
