@@ -12,7 +12,7 @@ interface ConceptTagRepository { suspend fun insert(conceptTag:ConceptTag);suspe
 interface TagRepository { suspend fun getAll():List<Tag>;suspend fun insert(tag:Tag):UUID;suspend fun update(tag:Tag);suspend fun delete(id:UUID) }
 interface ConceptRepository { suspend fun insert(concept:Concept):UUID;suspend fun get(conceptId:UUID):Concept?;suspend fun getAllActive():List<Concept>;suspend fun searchActive(query:String):List<Concept>;suspend fun update(concept:Concept);suspend fun softDelete(conceptId:UUID,now:java.time.Instant) }
 interface ReviewHistoryRepository { suspend fun insert(entry:ReviewHistory);suspend fun existsByAttemptId(sessionId:UUID,reviewAttemptId:UUID):Boolean;suspend fun getAll():List<ReviewHistory> }
-interface SettingsRepository { suspend fun getInt(key:String,default:Int):Int; suspend fun getString(key:String,default:String):String }
+interface SettingsRepository { suspend fun getInt(key:String,default:Int):Int; suspend fun getString(key:String,default:String):String = default }
 interface CategoryRepository { suspend fun getAll():List<Category>;suspend fun findByName(name:String):Category?;suspend fun insert(category:Category):UUID }
 interface FlashLearnDatabase { suspend fun <T> withTransaction(block:suspend()->T):T }
 interface ReviewSessionRepository { suspend fun insert(session:ReviewSession);suspend fun get(sessionId:UUID):ReviewSession?;suspend fun update(session:ReviewSession) }
