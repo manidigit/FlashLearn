@@ -27,4 +27,4 @@ data class ReviewSession(val id: UUID,val startedAt: Instant,val endedAt: Instan
 data class ReviewHistory(val id: UUID,val sessionId: UUID,val reviewAttemptId: UUID,val conceptId: UUID,val reviewedAt: Instant,val isCorrect: Boolean,val reviewType: ReviewType)
 data class TransitionResult(val newStage: Stage,val nextReviewAt: Instant?,val hasPathFailure: Boolean,val monthlyWrongCount: Int)
 data class ProgressSummary(val activeConceptCount: Int,val learnedConceptCount: Int,val dueConceptCount: Int,val dailyDueConceptCount: Int,val weeklyDueConceptCount: Int,val monthlyDueConceptCount: Int,val totalCorrect: Int,val totalWrong: Int,val accuracyPercent: Int)
-data class ParserMetadata(val breakdown: List<String>=emptyList(),val relationships: List<String>=emptyList(),val variants: List<String>=emptyList(),val confidence: Double=0.0)
+data class ParserMetadata(val breakdown: List<String> = emptyList(), val relationships: List<String> = emptyList(), val variants: List<String> = emptyList(), val confidence: Double = 0.0)
