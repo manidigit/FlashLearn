@@ -9,6 +9,7 @@ import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.data.repository.RoomSettingsRepository
 import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
+import com.flashlearn.domain.settings.SettingsKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
@@ -29,27 +30,21 @@ class AppViewModel @Inject constructor(
         private const val KEY_TARGET = "language_target"
         private const val KEY_PERSONAL_DIFFICULTY = "personal_difficulty"
         private const val KEY_QUIZ_DIFFICULTY = "quiz_difficulty"
-        private const val KEY_THRESHOLD = "threshold_difficulty"
-        private const val DEFAULT_THRESHOLD = 3
     }
-
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val _state = mutableStateOf(loadPersistedState())
     val state: State<AppUiState> get() = _state
 
     init {
         viewModelScope.launch {
-            val threshold = settingsRepository.getInt(KEY_THRESHOLD, DEFAULT_THRESHOLD).coerceIn(1, 20)
-            val persistedQuizDifficulty = runCatching {
-                QuizDifficulty.valueOf(settingsRepository.getString(KEY_QUIZ_DIFFICULTY, QuizDifficulty.MEDIUM.name))
-            }.getOrDefault(QuizDifficulty.MEDIUM)
-            _state.value = _state.value.copy(difficultyThreshold = threshold, quizDifficulty = persistedQuizDifficulty)
+            val threshold = settingsRepository.getInt(SettingsKeys.THRESHOLD_DIFFICULTY, SettingsKeys.DEFAULT_THRESHOLD_DIFFICULTY).coerceIn(1, 20)
+            val maxCards = settingsRepository.getInt(SettingsKeys.MAXIMUM_REVIEW_CARDS, SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS).coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT)
+            val persistedQuizDifficulty = runCatching { QuizDifficulty.valueOf(settingsRepository.getString(KEY_QUIZ_DIFFICULTY, QuizDifficulty.MEDIUM.name)) }.getOrDefault(QuizDifficulty.MEDIUM)
+            _state.value = _state.value.copy(difficultyThreshold = threshold, maximumReviewCards = maxCards, quizDifficulty = persistedQuizDifficulty)
         }
     }
-
     private fun loadPersistedState(): AppUiState {
-        val languages = LearningLanguage.entries
-        val defaults = AppUiState()
+        val languages = LearningLanguage.entries; val defaults = AppUiState()
         val sourceIndex = prefs.getInt(KEY_SOURCE, defaults.languagePair.source.ordinal).coerceIn(languages.indices)
         var targetIndex = prefs.getInt(KEY_TARGET, defaults.languagePair.target.ordinal).coerceIn(languages.indices)
         if (sourceIndex == targetIndex) targetIndex = (targetIndex + 1) % languages.size
@@ -61,33 +56,16 @@ class AppViewModel @Inject constructor(
             personalWordDifficulty = VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY, -1))
         )
     }
-
     fun setAppearance(mode: AppearanceMode) { _state.value = _state.value.copy(appearance = mode); prefs.edit().putInt(KEY_APPEARANCE, mode.ordinal).commit() }
     fun setAccentColor(color: AccentColor) { _state.value = _state.value.copy(accentColor = color); prefs.edit().putInt(KEY_ACCENT, color.ordinal).commit() }
     fun setLayoutDirection(direction: AppLayoutDirection) { _state.value = _state.value.copy(layoutDirection = direction); prefs.edit().putInt(KEY_LAYOUT, direction.ordinal).commit() }
     fun setLanguagePair(pair: LanguagePair) { if (pair.source == pair.target) return; _state.value = _state.value.copy(languagePair = pair); prefs.edit().putInt(KEY_SOURCE, pair.source.ordinal).putInt(KEY_TARGET, pair.target.ordinal).commit() }
     fun reverseLanguagePair() = setLanguagePair(_state.value.languagePair.reversed())
     fun setPersonalWordDifficulty(value: VocabularyDifficulty?) { _state.value = _state.value.copy(personalWordDifficulty = value); prefs.edit().putInt(KEY_PERSONAL_DIFFICULTY, value?.ordinal ?: -1).commit() }
-
-    fun setQuizDifficulty(value: QuizDifficulty) {
-        _state.value = _state.value.copy(quizDifficulty = value)
-        viewModelScope.launch { settingsRepository.setString(KEY_QUIZ_DIFFICULTY, value.name) }
-    }
-
-    fun setDifficultyThreshold(value: Int) {
-        val safe = value.coerceIn(1, 20)
-        _state.value = _state.value.copy(difficultyThreshold = safe)
-        viewModelScope.launch { settingsRepository.setInt(KEY_THRESHOLD, safe) }
-    }
-
+    fun setQuizDifficulty(value: QuizDifficulty) { _state.value = _state.value.copy(quizDifficulty = value); viewModelScope.launch { settingsRepository.setString(KEY_QUIZ_DIFFICULTY, value.name) } }
+    fun setDifficultyThreshold(value: Int) { val safe = value.coerceIn(1, 20); _state.value = _state.value.copy(difficultyThreshold = safe); viewModelScope.launch { settingsRepository.setInt(SettingsKeys.THRESHOLD_DIFFICULTY, safe) } }
+    fun setMaximumReviewCards(value: Int) { val safe = value.coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT); _state.value = _state.value.copy(maximumReviewCards = safe); viewModelScope.launch { settingsRepository.setInt(SettingsKeys.MAXIMUM_REVIEW_CARDS, safe) } }
     fun openLibraryDetail(conceptId: UUID) { _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY_DETAIL, selectedConceptId = conceptId) }
-    fun goBack() {
-        when (_state.value.selectedRoute) {
-            AppRoutes.LIBRARY_DETAIL -> _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY, selectedConceptId = null)
-            AppRoutes.BACKUP -> _state.value = _state.value.copy(selectedRoute = AppRoutes.SETTINGS, selectedConceptId = null)
-            AppRoutes.HOME -> Unit
-            else -> _state.value = _state.value.copy(selectedRoute = AppRoutes.HOME, selectedConceptId = null)
-        }
-    }
+    fun goBack() { when (_state.value.selectedRoute) { AppRoutes.LIBRARY_DETAIL -> _state.value = _state.value.copy(selectedRoute = AppRoutes.LIBRARY, selectedConceptId = null); AppRoutes.BACKUP -> _state.value = _state.value.copy(selectedRoute = AppRoutes.SETTINGS, selectedConceptId = null); AppRoutes.HOME -> Unit; else -> _state.value = _state.value.copy(selectedRoute = AppRoutes.HOME, selectedConceptId = null) } }
     fun navigate(route: String) { require(route in AppRoutes.all()) { "Unknown application route: $route" }; _state.value = _state.value.copy(selectedRoute = route, selectedConceptId = null) }
 }
