@@ -1,0 +1,21 @@
+name: Patch review filter refresh
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-review-count-v3.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Refresh count after filter toggles
+        run: |
+          python3 -c 'from pathlib import Path; nl=chr(10); p=Path("app/src/main/java/com/flashlearn/app/ui/review/ReviewViewModel.kt"); s=p.read_text(); old="_state.value = _state.value.copy(selectedDifficulties = current, selectedDifficulty = current.singleOrNull())"+nl+"    }"; new="_state.value = _state.value.copy(selectedDifficulties = current, selectedDifficulty = current.singleOrNull())"+nl+"        refreshAvailableReviewCount()"+nl+"    }"; s=s.replace(old,new,1); old="_state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())"+nl+"    }"; new="_state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())"+nl+"        refreshAvailableReviewCount()"+nl+"    }"; s=s.replace(old,new,1); p.write_text(s)'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/patch-review-count-v3.yml
+          git add app/src/main/java/com/flashlearn/app/ui/review/ReviewViewModel.kt
+          git commit -m 'Refresh review count when filters change'
+          git push
