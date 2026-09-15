@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
@@ -23,11 +25,13 @@ import java.util.UUID
 @Composable
 fun LibraryScreen(viewModel: LibraryViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit = {}, onOpen: (UUID) -> Unit = {}, onAddWord: () -> Unit = {}, onBulkImport: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
+    var manageTags by remember { mutableStateOf(false) }
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair) }
     LaunchedEffect(Unit) { viewModel.refresh() }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("واژگان", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            TextButton(onClick = { manageTags = true }) { Text("مدیریت Tag") }
             TextButton(onClick = onBack) { Text("←") }
         }
         Spacer(Modifier.height(8.dp))
@@ -36,6 +40,15 @@ fun LibraryScreen(viewModel: LibraryViewModel, languagePair: LanguagePair = Lang
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = !state.favoritesOnly, onClick = { viewModel.onFavoritesChange(false) }, label = { Text("همه") })
             FilterChip(selected = state.favoritesOnly, onClick = { viewModel.onFavoritesChange(true) }, label = { Text("موردعلاقه‌ها") })
+        }
+        if (state.tags.isNotEmpty()) {
+            Text("Tagها", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 7.dp, bottom = 4.dp))
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilterChip(selected = state.selectedTagId == null, onClick = { viewModel.onTagChange(null) }, label = { Text("همه") })
+                state.tags.forEach { tag ->
+                    FilterChip(selected = state.selectedTagId == tag.id, onClick = { viewModel.onTagChange(tag.id) }, label = { Text("${tag.name} • ${state.tagCounts[tag.id] ?: 0}") })
+                }
+            }
         }
         if (state.categories.isNotEmpty()) {
             Text("دسته‌بندی‌ها", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 7.dp, bottom = 4.dp))
@@ -48,12 +61,7 @@ fun LibraryScreen(viewModel: LibraryViewModel, languagePair: LanguagePair = Lang
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(
-            if (state.selectedCategoryId == null) "${state.totalCount} واژه" else "${state.totalCount} واژه در این دسته",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Text(if (state.selectedCategoryId == null) "${state.totalCount} واژه" else "${state.totalCount} واژه در این دسته", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth())
         when {
             state.isLoading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
@@ -81,4 +89,40 @@ fun LibraryScreen(viewModel: LibraryViewModel, languagePair: LanguagePair = Lang
             OutlinedButton(onClick = onBulkImport, modifier = Modifier.weight(1f).height(48.dp), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(6.dp)); Text("افزودن گروهی") }
         }
     }
+    if (manageTags) TagManagementDialog(state, viewModel, onDismiss = { manageTags = false })
+}
+
+@Composable
+private fun TagManagementDialog(state: LibraryUiState, viewModel: LibraryViewModel, onDismiss: () -> Unit) {
+    var newName by remember { mutableStateOf("") }
+    var editingId by remember { mutableStateOf<UUID?>(null) }
+    var editingName by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = { if (!state.isTagBusy) onDismiss() },
+        title = { Text("مدیریت Tagها") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value = newName, onValueChange = { newName = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Tag جدید") }, trailingIcon = { IconButton(onClick = { if (newName.isNotBlank()) viewModel.createTag(newName) { error -> message = error; if (error == null) newName = "" } }) { Icon(Icons.Outlined.Add, null) } })
+                if (state.tags.isEmpty()) Text("هنوز Tagای ساخته نشده است.")
+                state.tags.forEach { tag ->
+                    if (editingId == tag.id) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(value = editingName, onValueChange = { editingName = it }, modifier = Modifier.weight(1f), singleLine = true)
+                            TextButton(onClick = { viewModel.renameTag(tag.id, editingName) { error -> message = error; if (error == null) editingId = null } }) { Text("ذخیره") }
+                            TextButton(onClick = { editingId = null }) { Text("لغو") }
+                        }
+                    } else {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(tag.name, Modifier.weight(1f))
+                            IconButton(onClick = { editingId = tag.id; editingName = tag.name }) { Icon(Icons.Outlined.Edit, null) }
+                            IconButton(onClick = { viewModel.removeTag(tag.id) { error -> message = error } }) { Icon(Icons.Outlined.DeleteOutline, null) }
+                        }
+                    }
+                }
+                message?.let { Text(it, color = if (it.isBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss, enabled = !state.isTagBusy) { Text("بستن") } }
+    )
 }
