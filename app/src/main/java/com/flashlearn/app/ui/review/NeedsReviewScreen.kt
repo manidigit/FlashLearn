@@ -15,23 +15,34 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flashlearn.domain.model.ReviewQueueItem
 
 @Composable
 fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
-    val items by viewModel.items.collectAsStateWithLifecycle()
+    val items by viewModel.items.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Column(
+        Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text("نیازمند بررسی دستی", style = MaterialTheme.typography.headlineSmall)
             Button(onClick = onBack) { Text("بازگشت") }
         }
-        if (items.isEmpty()) Text("صف بررسی خالی است.")
-        else LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(items, key = { it.id }) { item -> ReviewQueueCard(item, viewModel) }
+        if (items.isEmpty()) {
+            Text("صف بررسی خالی است.")
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(items, key = { it.id }) { item ->
+                    ReviewQueueCard(item, viewModel)
+                }
+            }
         }
     }
 }
@@ -39,7 +50,10 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
 @Composable
 private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewModel) {
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(
+            Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
             Text(item.sourceText, style = MaterialTheme.typography.titleMedium)
             Text(item.targetText ?: "بدون ترجمه")
             Text("اعتماد: ${(item.confidence * 100).toInt()}٪")
