@@ -1,7 +1,7 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.73 — Large-library review/performance + Quiz UX hardening
-**Application identity:** `versionName = 5.73`, `versionCode = 73`
+## Current checkpoint: v5.74 — Review Help + About + Library category selection
+**Application identity:** `versionName = 5.74`, `versionCode = 74`
 
 ### Current implementation status
 - Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
@@ -14,19 +14,24 @@
 - Progress and Progress Summary no longer query LearningState/DifficultyState once per concept; they bulk-load state tables and join in memory for large libraries.
 - Library and Review content lookup already use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
 - Vocabulary and legacy FULL restore remain on `Dispatchers.IO` with batch Room writes; post-restore Progress/Statistics calculations now avoid the previous N+1 state queries.
-- Four-option Quiz UI now follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
+- Four-option Quiz UI follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
 - Quiz prompt, progress, Hint and Note controls are retained; Quiz mode never silently renders as Flashcard when a Quiz question is unavailable.
-- CI is aligned to v5.73 and keeps the deterministic CI debug signing key for in-place update smoke testing.
+- Review Help keeps Hint and Show Note separate from answer/session state; Hint is non-answer-revealing and Show Note returns only the requested note without mutating review results.
+- A standalone About page is registered as a dedicated route and Settings → About navigates to it.
+- Library category selection supports multiple selected categories, preserves the legacy single-category API compatibility, wires the selection into navigation, and reflects the selected category count in the filter card.
+- Category lists expose word counts and support multi-select/apply/clear-all behavior without removing existing app functionality.
+- CI remains the authoritative build/test gate.
 
 ### Verification gate
 - GitHub Actions is the authoritative build/test gate.
-- The latest v5.73 run must complete Build/Unit and Instrumentation successfully before the performance and Quiz UX fixes are marked fully verified.
+- The latest pushed run must complete Build/Unit and Instrumentation successfully before the checkpoint is considered fully verified.
 - Release Gate is non-blocking when stable production signing secrets are absent; the debug APK/source artifacts remain the normal downloadable CI outputs.
 
 ---
 
 ## Historical checkpoints
 
+v5.73 — Large-library review/performance + Quiz UX hardening.
 v5.72 — previous performance checkpoint before 30-card review batching and bulk Progress/Statistics joins.
 v5.71 — Legacy restore + Quiz mode + update-path hardening.
 v5.70 — legacy FULL restore compatibility and update verification path.
