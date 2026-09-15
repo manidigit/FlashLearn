@@ -93,7 +93,7 @@ class ReviewViewModel @Inject constructor(
     private var sessionContents: Map<UUID, List<Content>> = emptyMap()
     private var sessionDifficulties: Map<UUID, DifficultyState> = emptyMap()
 
-    init { viewModelScope.launch { runCatching { categoryRepository.getAll().sortedBy { it.name } }.onSuccess { _state.value = _state.value.copy(categories = it) } } }
+    init { viewModelScope.launch { runCatching { categoryRepository.getAll().sortedBy { it.name } }.onSuccess { _state.value = _state.value.copy(categories = it); refreshAvailableReviewCount() } } }
 
     fun setLanguagePair(pair: LanguagePair) {
         if (pair == activeLanguagePair) return
@@ -110,7 +110,7 @@ class ReviewViewModel @Inject constructor(
         val normalized = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM
         _state.value = _state.value.copy(selectedReviewType = normalized, isSelectingMode = true, isFinished = false, error = null)
     }
-    fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM) }
+    fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM); refreshAvailableReviewCount() }
 
     fun toggleDifficulty(difficulty: VocabularyDifficulty?) {
         val current = _state.value.selectedDifficulties.toMutableSet()
@@ -125,8 +125,31 @@ class ReviewViewModel @Inject constructor(
     }
 
     // Compatibility with existing callers.
-    fun chooseDifficulty(difficulty: VocabularyDifficulty?) { _state.value = if (difficulty == null) _state.value.copy(selectedDifficulty = null, selectedDifficulties = emptySet()) else _state.value.copy(selectedDifficulty = difficulty, selectedDifficulties = setOf(difficulty)) }
-    fun chooseCategory(categoryId: UUID?) { _state.value = if (categoryId == null) _state.value.copy(selectedCategoryId = null, selectedCategoryIds = emptySet()) else _state.value.copy(selectedCategoryId = categoryId, selectedCategoryIds = setOf(categoryId)) }
+    fun chooseDifficulty(difficulty: VocabularyDifficulty?) { _state.value = if (difficulty == null) _state.value.copy(selectedDifficulty = null, selectedDifficulties = emptySet()) else _state.value.copy(selectedDifficulty = difficulty, selectedDifficulties = setOf(difficulty)); refreshAvailableReviewCount() }
+    fun chooseCategory(categoryId: UUID?) { _state.value = if (categoryId == null) _state.value.copy(selectedCategoryId = null, selectedCategoryIds = emptySet()) else _state.value.copy(selectedCategoryId = categoryId, selectedCategoryIds = setOf(categoryId)); refreshAvailableReviewCount() }
+
+    private fun refreshAvailableReviewCount() {
+        val snapshot = _state.value
+        val reviewType = snapshot.selectedReviewType
+        val difficulties = snapshot.selectedDifficulties
+        val categories = snapshot.selectedCategoryIds
+        viewModelScope.launch {
+            val count = runCatching {
+                val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
+                val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
+                var total = 0
+                val now = Instant.now()
+                for (d in difficultyOptions) for (c in categoryOptions) {
+                    total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                }
+                total
+            }.getOrDefault(0)
+            val current = _state.value
+            if (current.selectedReviewType == reviewType && current.selectedDifficulties == difficulties && current.selectedCategoryIds == categories) {
+                _state.value = current.copy(availableReviewCount = count)
+            }
+        }
+    }
 
     fun startNewSession(reviewType: ReviewType = _state.value.selectedReviewType, difficulty: VocabularyDifficulty? = null, categoryId: UUID? = null) {
         val generation = ++sessionGeneration
