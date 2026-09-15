@@ -1,0 +1,116 @@
+name: Prepare review count and build fix
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-review-count-and-build.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Patch review count and compile error
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          
+          usecase = Path('domain/src/main/java/com/flashlearn/domain/usecase/CountReviewQueueUseCase.kt')
+          usecase.parent.mkdir(parents=True, exist_ok=True)
+          usecase.write_text('''package com.flashlearn.domain.usecase
+
+import com.flashlearn.domain.model.*
+import com.flashlearn.domain.repository.ConceptRepository
+import com.flashlearn.domain.repository.ConceptTagRepository
+import com.flashlearn.domain.repository.DifficultyStateRepository
+import com.flashlearn.domain.repository.LearningStateRepository
+import javax.inject.Inject
+
+class CountReviewQueueUseCase @Inject constructor(
+    private val conceptRepository: ConceptRepository,
+    private val learningStateRepository: LearningStateRepository,
+    private val difficultyStateRepository: DifficultyStateRepository,
+    private val conceptTagRepository: ConceptTagRepository
+) {
+    suspend operator fun invoke(filters: ReviewSelectionFilters): Int {
+        val states = when (filters.reviewType) {
+            ReviewType.RANDOM -> learningStateRepository.getDueNonLearned(filters.now)
+            ReviewType.DAILY -> learningStateRepository.getAllByStage(Stage.DAILY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.WEEKLY -> learningStateRepository.getAllByStage(Stage.WEEKLY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.MONTHLY -> learningStateRepository.getAllByStage(Stage.MONTHLY).filter { it.nextReviewAt != null && it.nextReviewAt <= filters.now }
+            ReviewType.LEARNED -> learningStateRepository.getAllByStage(Stage.LEARNED)
+        }
+        val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
+        val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+        val tagsByConcept = conceptTagRepository.getAll().groupBy(ConceptTag::conceptId).mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
+        return states.asSequence()
+            .mapNotNull { learning ->
+                val concept = conceptsById[learning.conceptId] ?: return@mapNotNull null
+                val difficulty = difficultiesById[learning.conceptId] ?: return@mapNotNull null
+                val tags = tagsByConcept[learning.conceptId].orEmpty()
+                if (filters.difficulty != null && difficulty.current != filters.difficulty) return@mapNotNull null
+                if (filters.categoryId != null && concept.categoryId != filters.categoryId) return@mapNotNull null
+                if (filters.tagId != null && filters.tagId !in tags) return@mapNotNull null
+                concept.id
+            }
+            .distinct()
+            .count()
+    }
+}
+''', encoding='utf-8')
+
+          vm = Path('app/src/main/java/com/flashlearn/app/ui/review/ReviewViewModel.kt')
+          s = vm.read_text(encoding='utf-8')
+          s = s.replace('import com.flashlearn.domain.usecase.ReviewCandidate\n', 'import com.flashlearn.domain.usecase.ReviewCandidate\nimport com.flashlearn.domain.usecase.CountReviewQueueUseCase\n', 1)
+          s = s.replace('    val maximumReviewCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS,\n', '    val maximumReviewCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS,\n    val availableReviewCount: Int = 0,\n', 1)
+          s = s.replace('    private val categoryRepository: CategoryRepository,\n    private val generateQuizQuestion:', '    private val categoryRepository: CategoryRepository,\n    private val countReviewQueue: CountReviewQueueUseCase,\n    private val generateQuizQuestion:', 1)
+          s = s.replace('init { viewModelScope.launch { runCatching { categoryRepository.getAll().sortedBy { it.name } }.onSuccess { _state.value = _state.value.copy(categories = it) } } }', 'init { viewModelScope.launch { runCatching { categoryRepository.getAll().sortedBy { it.name } }.onSuccess { _state.value = _state.value.copy(categories = it); refreshAvailableReviewCount() } } }', 1)
+          s = s.replace('fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM) }', 'fun chooseReviewType(reviewType: ReviewType) { _state.value = _state.value.copy(selectedReviewType = if (reviewType == ReviewType.LEARNED) ReviewType.LEARNED else ReviewType.RANDOM); refreshAvailableReviewCount() }', 1)
+          s = s.replace('_state.value = _state.value.copy(selectedDifficulties = current, selectedDifficulty = current.singleOrNull())\n    }', '_state.value = _state.value.copy(selectedDifficulties = current, selectedDifficulty = current.singleOrNull())\n        refreshAvailableReviewCount()\n    }', 1)
+          s = s.replace('_state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())\n    }', '_state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())\n        refreshAvailableReviewCount()\n    }', 1)
+          s = s.replace('fun chooseDifficulty(difficulty: VocabularyDifficulty?) { _state.value = if (difficulty == null) _state.value.copy(selectedDifficulty = null, selectedDifficulties = emptySet()) else _state.value.copy(selectedDifficulty = difficulty, selectedDifficulties = setOf(difficulty)) }', 'fun chooseDifficulty(difficulty: VocabularyDifficulty?) { _state.value = if (difficulty == null) _state.value.copy(selectedDifficulty = null, selectedDifficulties = emptySet()) else _state.value.copy(selectedDifficulty = difficulty, selectedDifficulties = setOf(difficulty)); refreshAvailableReviewCount() }', 1)
+          s = s.replace('fun chooseCategory(categoryId: UUID?) { _state.value = if (categoryId == null) _state.value.copy(selectedCategoryId = null, selectedCategoryIds = emptySet()) else _state.value.copy(selectedCategoryId = categoryId, selectedCategoryIds = setOf(categoryId)) }', 'fun chooseCategory(categoryId: UUID?) { _state.value = if (categoryId == null) _state.value.copy(selectedCategoryId = null, selectedCategoryIds = emptySet()) else _state.value.copy(selectedCategoryId = categoryId, selectedCategoryIds = setOf(categoryId)); refreshAvailableReviewCount() }', 1)
+          marker = '    fun startNewSession(reviewType: ReviewType = _state.value.selectedReviewType, difficulty: VocabularyDifficulty? = null, categoryId: UUID? = null) {'
+          method = '''    private fun refreshAvailableReviewCount() {
+        val snapshot = _state.value
+        val reviewType = snapshot.selectedReviewType
+        val difficulties = snapshot.selectedDifficulties
+        val categories = snapshot.selectedCategoryIds
+        viewModelScope.launch {
+            val count = runCatching {
+                val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
+                val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
+                var total = 0
+                val now = Instant.now()
+                for (d in difficultyOptions) for (c in categoryOptions) {
+                    total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                }
+                total
+            }.getOrDefault(0)
+            val current = _state.value
+            if (current.selectedReviewType == reviewType && current.selectedDifficulties == difficulties && current.selectedCategoryIds == categories) {
+                _state.value = current.copy(availableReviewCount = count)
+            }
+        }
+    }
+
+'''
+          if marker not in s:
+              raise SystemExit('ReviewViewModel anchor not found')
+          s = s.replace(marker, method + marker, 1)
+          vm.write_text(s, encoding='utf-8')
+
+          screen = Path('app/src/main/java/com/flashlearn/app/ui/review/ReviewScreen.kt')
+          s = screen.read_text(encoding='utf-8')
+          s = s.replace('import androidx.compose.foundation.rememberScrollState\n', 'import androidx.compose.foundation.rememberScrollState\nimport androidx.compose.foundation.horizontalScroll\n', 1)
+          s = s.replace('Text("${state.maximumReviewCards} کلمه آماده مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)', 'Text("${minOf(state.maximumReviewCards, state.availableReviewCount)} کلمه آماده مرور از ${state.availableReviewCount} کلمه فیلتر شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)', 1)
+          s = s.replace('Button(onClick = vm::startNewSession, modifier = Modifier.fillMaxWidth().height(58.dp)', 'Button(enabled = state.availableReviewCount > 0, onClick = vm::startNewSession, modifier = Modifier.fillMaxWidth().height(58.dp)', 1)
+          screen.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add domain/src/main/java/com/flashlearn/domain/usecase/CountReviewQueueUseCase.kt app/src/main/java/com/flashlearn/app/ui/review/ReviewViewModel.kt app/src/main/java/com/flashlearn/app/ui/review/ReviewScreen.kt .github/workflows/fix-review-count-and-build.yml
+          git rm .github/workflows/fix-review-count-and-build.yml
+          git commit -m 'Fix review filter count and build error'
+          git push
