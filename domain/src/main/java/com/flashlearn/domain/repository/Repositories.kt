@@ -19,8 +19,10 @@ interface DifficultyStateRepository {
 interface ContentRepository {
     suspend fun findByUuid(uuid: UUID): Content?
     suspend fun find(conceptId: UUID, languageCode: String): Content?
+    suspend fun findAll(conceptId: UUID, languageCode: String): List<Content> = find(conceptId, languageCode)?.let { listOf(it) } ?: emptyList()
     suspend fun findForConcepts(conceptIds: List<UUID>): List<Content> = getAll().filter { it.conceptId in conceptIds.toSet() }
     suspend fun upsert(content: Content)
+    suspend fun insertTranslation(content: Content) = upsert(content)
     suspend fun getAll(): List<Content>
 }
 interface ConceptTagRepository {
@@ -42,17 +44,13 @@ interface ReviewHistoryRepository {
     suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID): Boolean
     suspend fun getAll(): List<ReviewHistory>
 }
-interface SettingsRepository {
-    suspend fun getInt(key: String, default: Int): Int
-}
+interface SettingsRepository { suspend fun getInt(key: String, default: Int): Int }
 interface CategoryRepository {
     suspend fun getAll(): List<Category>
     suspend fun findByName(name: String): Category?
     suspend fun insert(category: Category): UUID
 }
-interface FlashLearnDatabase {
-    suspend fun <T> withTransaction(block: suspend () -> T): T
-}
+interface FlashLearnDatabase { suspend fun <T> withTransaction(block: suspend () -> T): T }
 interface ReviewSessionRepository {
     suspend fun insert(session: ReviewSession)
     suspend fun get(sessionId: UUID): ReviewSession?
@@ -72,4 +70,28 @@ interface DataVersionRepository {
     suspend fun getContentDataVersion(): Int
     suspend fun setConceptDataVersion(version: Int)
     suspend fun setContentDataVersion(version: Int)
+}
+interface VocabularyRelationRepository {
+    suspend fun insert(value: VocabularyRelation)
+    suspend fun getForConcept(conceptId: UUID): List<VocabularyRelation>
+    suspend fun getAll(): List<VocabularyRelation>
+}
+interface VocabularyVariantRepository {
+    suspend fun insert(value: VocabularyVariant)
+    suspend fun getForConcept(conceptId: UUID): List<VocabularyVariant>
+    suspend fun getAll(): List<VocabularyVariant>
+}
+interface ReviewQueueRepository {
+    suspend fun upsert(value: ReviewQueueItem)
+    suspend fun getPending(): List<ReviewQueueItem>
+    suspend fun getAll(): List<ReviewQueueItem>
+    suspend fun update(value: ReviewQueueItem)
+}
+interface LanguageRepository {
+    suspend fun getAll(): List<Language>
+    suspend fun getActive(): List<Language>
+    suspend fun getPairs(): List<LanguagePair>
+    suspend fun getActivePairs(): List<LanguagePair>
+    suspend fun upsert(value: Language)
+    suspend fun upsertPair(value: LanguagePair)
 }
