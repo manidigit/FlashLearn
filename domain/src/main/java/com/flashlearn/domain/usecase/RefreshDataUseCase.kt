@@ -20,7 +20,7 @@ class RefreshDataUseCase @Inject constructor(private val versions:DataVersionRep
   DataMigrationResult(cf,cv,tf,tv,changed)
  }
  private suspend fun migrateConcept(current:Int):Int=when(current){0->{val now=Instant.now();conceptRepository.getAllActive().forEach{require(it.createdAt<=now)};1};1->2;else->error("No concept migration path from version $current")}
- private suspend fun migrateContent(current:Int):Pair<Int,Int>=when(current){
+ private suspend fun migrateContent(current:Int): Pair<Int,Int> = when(current){
   0->{var c=0;contentRepository.getAll().forEach{val key=computeCanonicalKey(it.text);if(it.canonicalKey!=key){contentRepository.upsert(it.copy(canonicalKey=key));c++}};1 to c}
   1->{var c=0;contentRepository.getAll().forEach{val key=computeCanonicalKey(it.text);if(it.canonicalKey!=key){contentRepository.upsert(it.copy(canonicalKey=key));c++}};2 to c}
   2->{var c=0;val all=contentRepository.getAll();all.groupBy{it.conceptId to it.languageCode}.forEach{(_,rows)->var next=0;rows.sortedWith(compareBy({it.translationIndex},{it.id})).forEach{row->val parts=row.text.split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*")).map(String::trim).filter(String::isNotBlank).distinctBy(::computeCanonicalKey);if(parts.size<=1){if(row.translationIndex!=next){contentRepository.upsert(row.copy(translationIndex=next));c++};next++}else{parts.forEach{text->val idx=next++;if(idx==0){val key=computeCanonicalKey(text);if(row.text!=text||row.canonicalKey!=key||row.translationIndex!=idx){contentRepository.upsert(row.copy(text=text,canonicalKey=key,translationIndex=idx));c++}}else contentRepository.insertTranslation(row.copy(id=UUID.randomUUID(),text=text,canonicalKey=computeCanonicalKey(text),translationIndex=idx))}}}};3 to c}
