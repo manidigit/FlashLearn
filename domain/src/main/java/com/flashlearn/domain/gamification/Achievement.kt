@@ -80,7 +80,8 @@ class CheckAndUnlockAchievements @Inject constructor(
     private val learningStateRepository: LearningStateRepository,
     private val difficultyStateRepository: DifficultyStateRepository,
     private val achievementRepository: AchievementRepository,
-    private val streakCalculator: com.flashlearn.domain.statistics.CalculateStreakUseCase
+    private val streakCalculator: com.flashlearn.domain.statistics.CalculateStreakUseCase,
+    private val evaluator: EvaluateAchievementsUseCase
 ) {
     suspend operator fun invoke(now: Instant, zoneId: java.time.ZoneId): List<AchievementState> {
         val activeConcepts = conceptRepository.getAllActive()
@@ -109,7 +110,7 @@ class CheckAndUnlockAchievements @Inject constructor(
                 .count()
         )
         val existing = achievementRepository.getAll()
-        val result = EvaluateAchievementsUseCase().evaluate(DefaultAchievements.definitions, existing, context)
+        val result = evaluator.evaluate(DefaultAchievements.definitions, existing, context)
         val oldUnlocked = existing.filter { it.unlocked }.associateBy { it.achievementId }
         val newlyUnlocked = result.states.filter { it.unlocked && oldUnlocked[it.achievementId] == null }
         if (newlyUnlocked.isNotEmpty()) achievementRepository.upsertAll(newlyUnlocked)
