@@ -12,8 +12,8 @@ class AchievementRulesTest {
             totalReviews = 100,
             totalCorrect = 50,
             totalWrong = 50,
-            currentStreakDays = 7,
-            longestStreakDays = 7,
+            currentStreakDays = 30,
+            longestStreakDays = 30,
             learnedConcepts = 100,
             practicedWords = 10,
             totalActiveWords = 500,
@@ -30,6 +30,7 @@ class AchievementRulesTest {
         val result = EvaluateAchievementsUseCase().evaluate(DefaultAchievements.definitions, emptyList(), context)
         assertFalse(result.newlyUnlocked.contains(AchievementIds.FIRST_TEN_WORDS))
         assertFalse(result.newlyUnlocked.contains(AchievementIds.SEVEN_DAY_STREAK))
+        assertFalse(result.newlyUnlocked.contains(AchievementIds.THIRTY_DAY_STREAK))
         assertFalse(result.newlyUnlocked.contains(AchievementIds.MEMORY_BUILDER))
         assertFalse(result.newlyUnlocked.contains(AchievementIds.VOCABULARY_BUILDER))
         assertFalse(result.newlyUnlocked.contains(AchievementIds.HARD_MODE_MASTER))
