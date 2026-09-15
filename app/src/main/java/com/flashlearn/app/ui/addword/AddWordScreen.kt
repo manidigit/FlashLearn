@@ -4,9 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +26,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
     var typeMenuExpanded by remember { mutableStateOf(false) }
     var sourceMenuExpanded by remember { mutableStateOf(false) }
     var targetMenuExpanded by remember { mutableStateOf(false) }
+    var duplicateInfoVisible by remember { mutableStateOf(false) }
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair.source.code, languagePair.target.code) }
     val filteredCategories = state.categories.filter { state.categoryName.isBlank() || it.name.contains(state.categoryName, ignoreCase = true) }
 
@@ -31,17 +35,21 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
             Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
         }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(selected = duplicateInfoVisible, onClick = { duplicateInfoVisible = !duplicateInfoVisible }, label = { Text("کلمات تکراری") }, leadingIcon = { Icon(Icons.Outlined.WarningAmber, null) })
+            Spacer(Modifier.width(8.dp))
+            OutlinedButton(onClick = { viewModel.refreshCategories() }, enabled = !state.isSaving, shape = RoundedCornerShape(22.dp)) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(5.dp)); Text("رفرش") }
+        }
+        if (duplicateInfoVisible) {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Text("تشخیص کلمات تکراری فعال است: هنگام ذخیره، واژه با همان متن و ترجمه که قبلاً در کتابخانه وجود داشته باشد، به‌عنوان تکراری رد می‌شود.", Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
+            }
+        }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.weight(1f)) {
-                    LanguageField(state.sourceLanguage, "زبان مبدأ", { targetMenuExpanded = false; sourceMenuExpanded = true }, Modifier.fillMaxWidth())
-                    LanguageMenu(sourceMenuExpanded, { sourceMenuExpanded = false }, state.targetLanguage) { lang -> viewModel.setLanguagePair(lang.code, state.targetLanguage); sourceMenuExpanded = false }
-                }
-                Box(Modifier.weight(1f)) {
-                    LanguageField(state.targetLanguage, "زبان مقصد", { sourceMenuExpanded = false; targetMenuExpanded = true }, Modifier.fillMaxWidth())
-                    LanguageMenu(targetMenuExpanded, { targetMenuExpanded = false }, state.sourceLanguage) { lang -> viewModel.setLanguagePair(state.sourceLanguage, lang.code); targetMenuExpanded = false }
-                }
+                Box(Modifier.weight(1f)) { LanguageField(state.sourceLanguage, "زبان مبدأ", { targetMenuExpanded = false; sourceMenuExpanded = true }, Modifier.fillMaxWidth()); LanguageMenu(sourceMenuExpanded, { sourceMenuExpanded = false }, state.targetLanguage) { lang -> viewModel.setLanguagePair(lang.code, state.targetLanguage); sourceMenuExpanded = false } }
+                Box(Modifier.weight(1f)) { LanguageField(state.targetLanguage, "زبان مقصد", { sourceMenuExpanded = false; targetMenuExpanded = true }, Modifier.fillMaxWidth()); LanguageMenu(targetMenuExpanded, { targetMenuExpanded = false }, state.sourceLanguage) { lang -> viewModel.setLanguagePair(state.sourceLanguage, lang.code); targetMenuExpanded = false } }
             }
             OutlinedTextField(state.sourceText, viewModel::onSourceTextChange, Modifier.fillMaxWidth(), label = { Text("واژه یا عبارت") }, placeholder = { Text("مثال: casa") }, singleLine = true)
             OutlinedTextField(state.targetText, viewModel::onTargetTextChange, Modifier.fillMaxWidth(), label = { Text("ترجمه") }, placeholder = { Text("مثال: خانه") }, singleLine = true)
