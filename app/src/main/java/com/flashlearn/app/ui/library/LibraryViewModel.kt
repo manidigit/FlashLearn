@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
+import javax.inject.Inject
 
 data class LibraryItem(val concept: Concept,val source: Content?,val target: Content?,val category: Category?,val difficulty: VocabularyDifficulty? = null)
 enum class LibraryFilter { ALL, LEARNED, LEARNING, NEW }
