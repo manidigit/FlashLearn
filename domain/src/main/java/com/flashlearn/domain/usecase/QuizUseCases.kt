@@ -108,34 +108,51 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             other.id != concept.id && other.id in validConceptIds && other.id in sourceConceptIds
         }
 
-        fun candidatesFor(level: QuizDifficulty, categoryOnly: Boolean): List<Content> {
-            val concepts = eligible.filter { other ->
-                if (categoryOnly && concept.categoryId != null && other.categoryId != concept.categoryId) return@filter false
-                when (level) {
-                    QuizDifficulty.EASY -> true
-                    QuizDifficulty.MEDIUM -> difficultiesById[other.id]?.current == effectiveDifficulty.current
-                    QuizDifficulty.HARD -> difficultiesById[other.id]?.current == effectiveDifficulty.current && other.entryType == concept.entryType
-                }
-            }
-            return unique(concepts.flatMap { targetContents[it.id].orEmpty() })
+        fun matchesDifficulty(other: Concept, level: QuizDifficulty): Boolean = when (level) {
+            QuizDifficulty.EASY -> true
+            QuizDifficulty.MEDIUM -> difficultiesById[other.id]?.current == effectiveDifficulty.current
+            QuizDifficulty.HARD -> difficultiesById[other.id]?.current == effectiveDifficulty.current && other.entryType == concept.entryType
         }
 
-        val levels = when (difficulty) {
-            QuizDifficulty.EASY -> listOf(QuizDifficulty.EASY)
-            QuizDifficulty.MEDIUM -> listOf(QuizDifficulty.MEDIUM, QuizDifficulty.EASY)
-            QuizDifficulty.HARD -> listOf(QuizDifficulty.HARD, QuizDifficulty.MEDIUM, QuizDifficulty.EASY)
+        fun sameCategory(other: Concept): Boolean =
+            concept.categoryId != null && other.categoryId == concept.categoryId
+
+        fun candidatesFor(level: QuizDifficulty, requireCategory: Boolean): List<Content> = unique(
+            eligible
+                .asSequence()
+                .filter { matchesDifficulty(it, level) }
+                .filter { !requireCategory || sameCategory(it) }
+                .flatMap { targetContents[it.id].orEmpty().asSequence() }
+                .toList()
+        )
+
+        // Higher quiz difficulty prioritizes the closest available semantic neighborhood.
+        // Category is the strongest available taxonomy key in the current domain model.
+        val tiers = when (difficulty) {
+            QuizDifficulty.EASY -> listOf(
+                QuizDifficulty.EASY to true,
+                QuizDifficulty.EASY to false
+            )
+            QuizDifficulty.MEDIUM -> listOf(
+                QuizDifficulty.MEDIUM to true,
+                QuizDifficulty.EASY to true,
+                QuizDifficulty.MEDIUM to false,
+                QuizDifficulty.EASY to false
+            )
+            QuizDifficulty.HARD -> listOf(
+                QuizDifficulty.HARD to true,
+                QuizDifficulty.MEDIUM to true,
+                QuizDifficulty.EASY to true,
+                QuizDifficulty.HARD to false,
+                QuizDifficulty.MEDIUM to false,
+                QuizDifficulty.EASY to false
+            )
         }
 
         var candidates = emptyList<Content>()
-        for (level in levels) {
-            candidates = unique(candidates + candidatesFor(level, categoryOnly = true))
+        for ((level, requireCategory) in tiers) {
+            candidates = unique(candidates + candidatesFor(level, requireCategory))
             if (candidates.size >= 3) break
-        }
-        if (candidates.size < 3) {
-            for (level in levels) {
-                candidates = unique(candidates + candidatesFor(level, categoryOnly = false))
-                if (candidates.size >= 3) break
-            }
         }
 
         if (candidates.size < 3) return QuizQuestionResult.FlashcardFallback
