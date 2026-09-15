@@ -9,7 +9,7 @@ import java.time.Instant
 import java.util.UUID
 
 class QuizUseCasesTest {
-    private fun concept(id: UUID = UUID.randomUUID(), active: Boolean = true) = Concept(id, EntryType.WORD, null, false, active, Instant.EPOCH, Instant.EPOCH)
+    private fun concept(id: UUID = UUID.randomUUID(), active: Boolean = true, categoryId: UUID? = null, entryType: EntryType = EntryType.WORD) = Concept(id, entryType, categoryId, false, active, Instant.EPOCH, Instant.EPOCH)
     private fun content(cid: UUID, lang: String, text: String) = Content(UUID.randomUUID(), cid, lang, text, text.trim().lowercase())
     private class CR(private val values: List<Concept>) : ConceptRepository {
         override suspend fun insert(concept: Concept)=concept.id; override suspend fun get(conceptId:UUID)=values.find{it.id==conceptId}; override suspend fun getAllActive()=values.filter{it.active}; override suspend fun searchActive(query:String)=emptyList<Concept>(); override suspend fun update(concept:Concept){}; override suspend fun softDelete(conceptId:UUID,now:Instant){}
@@ -38,6 +38,31 @@ class QuizUseCasesTest {
     }
     @Test fun prioritizesSameDifficultyBeforeAdjacentAndFullBank() = runBlocking {
         val target=concept(); val same=concept(); val adjacent=concept(); val fullBank=concept(); val all=listOf(content(target.id,"es","target"),content(target.id,"fa","هدف"),content(same.id,"es","same-es"),content(same.id,"fa","همان"),content(adjacent.id,"es","adj-es"),content(adjacent.id,"fa","نزدیک"),content(fullBank.id,"es","full-es"),content(fullBank.id,"fa","دور")); val ds=mapOf(target.id to DifficultyState(UUID.randomUUID(),target.id,VocabularyDifficulty.MEDIUM,0,0,false),same.id to DifficultyState(UUID.randomUUID(),same.id,VocabularyDifficulty.MEDIUM,0,0,false),adjacent.id to DifficultyState(UUID.randomUUID(),adjacent.id,VocabularyDifficulty.HARD,0,0,false),fullBank.id to DifficultyState(UUID.randomUUID(),fullBank.id,VocabularyDifficulty.VERY_HARD,0,0,false)); val result=GenerateQuizQuestionUseCase(CoR(all),CR(listOf(target,same,adjacent,fullBank)),DR(ds))(target,QuizLanguagePair("es","fa"),ds.getValue(target.id)) as QuizQuestionResult.QuizQuestion; assertTrue("همان" in result.options); assertTrue("نزدیک" in result.options); assertTrue("دور" in result.options)
+    }
+    @Test fun categoryAwareMediumPrefersSameCategoryBeforeOtherCategories() = runBlocking {
+        val categoryA = UUID.randomUUID(); val categoryB = UUID.randomUUID()
+        val target=concept(categoryId=categoryA); val sameCategory=concept(categoryId=categoryA); val otherCategory=concept(categoryId=categoryB); val global=concept(categoryId=null)
+        val concepts=listOf(target,sameCategory,otherCategory,global)
+        val all=concepts.flatMapIndexed{i,c->listOf(content(c.id,"es","s$i"),content(c.id,"fa","t$i"))}
+        val ds=concepts.associate{it.id to DifficultyState(UUID.randomUUID(),it.id,VocabularyDifficulty.MEDIUM,0,0,false)}
+        val result=GenerateQuizQuestionUseCase(CoR(all),CR(concepts),DR(ds))(target,QuizLanguagePair("es","fa"),ds.getValue(target.id)) as QuizQuestionResult.QuizQuestion
+        assertTrue("t1" in result.options)
+        assertTrue("t2" in result.options)
+        assertTrue("t3" in result.options)
+    }
+    @Test fun categoryAwareHardUsesSameCategoryAndEntryTypeFirst() = runBlocking {
+        val categoryA = UUID.randomUUID(); val categoryB = UUID.randomUUID()
+        val target=concept(categoryId=categoryA,entryType=EntryType.WORD)
+        val closest=concept(categoryId=categoryA,entryType=EntryType.WORD)
+        val sameCategoryDifferentType=concept(categoryId=categoryA,entryType=EntryType.PHRASE)
+        val otherCategorySameType=concept(categoryId=categoryB,entryType=EntryType.WORD)
+        val concepts=listOf(target,closest,sameCategoryDifferentType,otherCategorySameType)
+        val all=concepts.flatMapIndexed{i,c->listOf(content(c.id,"es","s$i"),content(c.id,"fa","t$i"))}
+        val ds=concepts.associate{it.id to DifficultyState(UUID.randomUUID(),it.id,VocabularyDifficulty.MEDIUM,0,0,false)}
+        val result=GenerateQuizQuestionUseCase(CoR(all),CR(concepts),DR(ds))(target,QuizLanguagePair("es","fa"),ds.getValue(target.id),QuizDifficulty.HARD) as QuizQuestionResult.QuizQuestion
+        assertTrue("t1" in result.options)
+        assertTrue("t2" in result.options)
+        assertTrue("t3" in result.options)
     }
     @Test fun fallsBackWhenPromptOrCorrectLanguageIsMissing() = runBlocking {
         val target=concept(); val d1=concept(); val d2=concept(); val d3=concept(); val all=listOf(content(target.id,"es","hola"),content(d1.id,"es","uno"),content(d1.id,"fa","یک"),content(d2.id,"es","dos"),content(d2.id,"fa","دو"),content(d3.id,"es","tres"),content(d3.id,"fa","سه")); val concepts=listOf(target,d1,d2,d3); val ds=concepts.associate{it.id to DifficultyState(UUID.randomUUID(),it.id,VocabularyDifficulty.EASY,0,0,false)}; val result=GenerateQuizQuestionUseCase(CoR(all),CR(concepts),DR(ds))(target,QuizLanguagePair("es","fa"),ds.getValue(target.id)); assertEquals(QuizQuestionResult.FlashcardFallback,result)
