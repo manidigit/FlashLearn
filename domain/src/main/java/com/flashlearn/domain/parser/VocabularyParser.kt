@@ -56,7 +56,8 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
             val lineNumber = index + 1
             val rawTrimmed = rawLine.trim()
             if (rawTrimmed.isEmpty()) return@forEachIndexed
-            val line = stripLeadingNumbering(rawTrimmed)
+            // Preserve separator runs before decorative-prefix stripping; otherwise `---` becomes `--`.
+            val line = if (isSeparator(rawTrimmed)) rawTrimmed else stripLeadingNumbering(rawTrimmed)
             val type = classifyLine(line)
             log += ParseLogEntry(lineNumber, rawTrimmed, type, "classified")
 
@@ -185,7 +186,7 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
         explicitMarkerType(s)?.let { return it }
         if (isCommentLine(s)) return ParsedLineType.COMMENT
         val pair = splitPair(s)
-        if (pair != null && isLikelySpanish(pair.first) && isLikelyPersian(pair.second)) return ParsedLineType.ENTRY_HEADER
+        if (pair != null && hasLatinScript(pair.first) && hasPersianScript(pair.second)) return ParsedLineType.ENTRY_HEADER
         if (isLikelyPersian(s)) return ParsedLineType.TRANSLATION
         if (isLikelyEntryHeader(s)) return ParsedLineType.ENTRY_HEADER
         return ParsedLineType.UNKNOWN
@@ -240,7 +241,7 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
         if (colon > 0 && colon < s.length - 1) {
             val left = s.substring(0, colon).trim()
             val right = s.substring(colon + 1).trim()
-            if (isLikelySpanish(left) && isLikelyPersian(right)) return left to right
+            if (hasLatinScript(left) && hasPersianScript(right)) return left to right
         }
         return null
     }
@@ -253,6 +254,11 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
     private fun isLikelyEntryHeader(s: String): Boolean = isLikelySpanish(s) && !isSeparator(s)
     private fun isLikelySpanish(s: String): Boolean = detectLanguage(s) == DetectedLanguage.SPANISH
     private fun isLikelyPersian(s: String): Boolean = detectLanguage(s) == DetectedLanguage.PERSIAN
+
+    private fun hasLatinScript(s: String): Boolean = s.any { it in 'a'..'z' || it in 'A'..'Z' }
+    private fun hasPersianScript(s: String): Boolean = s.any {
+        it in '\u0600'..'\u06FF' || it in '\u0750'..'\u077F' || it in '\u08A0'..'\u08FF'
+    }
 
     private fun detectLanguage(s: String): DetectedLanguage {
         var spanish = 0
