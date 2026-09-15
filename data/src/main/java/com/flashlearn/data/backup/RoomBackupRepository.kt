@@ -29,6 +29,8 @@ class RoomBackupRepository @Inject constructor(
             "reviewSessions", "reviewHistory", "settings", "categories", "achievements", "parserMetadata",
             "relations", "variants", "reviewQueue", "languages", "languagePairs"
         )
+        private val STAGES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")
+        private val REVIEW_TYPES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")
     }
 
     override suspend fun exportFull(): String = db.withTransaction {
@@ -59,9 +61,17 @@ class RoomBackupRepository @Inject constructor(
 
     override suspend fun restoreFull(json: String): RestoreResult {
         val root = runCatching { JSONObject(json) }.getOrElse { return RestoreResult(0, 0, listOf("INVALID_JSON")) }
-        if (root.optInt("schemaVersion", -1) !in 1..SCHEMA || root.optString("backupType") != "FULL") return RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP"))
+        val schema = root.optInt("schemaVersion", -1)
+        if (schema !in 1..SCHEMA || root.optString("backupType") != "FULL") {
+            return RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP"))
+        }
         val missing = SECTIONS.filterNot(root::has)
-        if (missing.isNotEmpty() && root.optInt("schemaVersion") >= 2) return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
+        if (missing.isNotEmpty() && schema >= 2) {
+            return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
+        }
+
+        val validationIssues = validateBeforeMutation(root)
+        if (validationIssues.isNotEmpty()) return RestoreResult(0, 0, validationIssues)
 
         return try {
             File(context.filesDir, PRE_RESTORE).writeText(exportFull(), Charsets.UTF_8)
@@ -81,8 +91,18 @@ class RoomBackupRepository @Inject constructor(
                 root.arr("tags").forEach { val e=TagEntity(uuid(it,"id"),it.getString("name")); if(db.tagDao().getById(e.id)==null){db.tagDao().insert(e);added++}else{db.tagDao().update(e);merged++} }
 
                 root.arr("contents").filter { uuid(it,"conceptId") in conceptIds }.forEach { o ->
-                    val conceptId=uuid(o,"conceptId"); val lang=o.getString("languageCode"); val index=o.optInt("translationIndex",0); val id=uuid(o,"id"); val e=ContentEntity(id,conceptId,lang,o.getString("text"),computeCanonicalKey(o.getString("text")),text(o,"notes"),text(o,"pronunciation"),text(o,"example"),index,text(o,"grammarNote"),text(o,"possibleCorrection")); val existing=db.contentDao().getById(id)
-                    if(existing==null){db.contentDao().insert(e);added++}else{db.contentDao().update(e);merged++}
+                    val conceptId=uuid(o,"conceptId")
+                    val lang=o.getString("languageCode")
+                    val index=o.optInt("translationIndex",0)
+                    val incomingId=uuid(o,"id")
+                    val e0=ContentEntity(incomingId,conceptId,lang,o.getString("text"),computeCanonicalKey(o.getString("text")),text(o,"notes"),text(o,"pronunciation"),text(o,"example"),index,text(o,"grammarNote"),text(o,"possibleCorrection"))
+                    val existingById=db.contentDao().getById(incomingId)
+                    val existingByIdentity=db.contentDao().getAll().firstOrNull { it.conceptId==conceptId && it.languageCode==lang && it.translationIndex==index }
+                    when {
+                        existingById != null -> { db.contentDao().update(e0); merged++ }
+                        existingByIdentity != null -> { db.contentDao().update(e0.copy(id=existingByIdentity.id)); merged++ }
+                        else -> { db.contentDao().insert(e0); added++ }
+                    }
                 }
                 root.arr("learningStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=LearningStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("stage"),instant(o,"nextReviewAt"),o.getInt("monthlyWrongCount"),o.getBoolean("hasPathFailure"),o.getInt("totalCorrect"),o.getInt("totalWrong"),instant(o,"lastReviewedAt")); val old=db.learningStateDao().getByConceptId(e.conceptId); if(old==null){db.learningStateDao().upsert(e);added++}else{db.learningStateDao().upsert(e.copy(id=old.id));merged++} }
                 root.arr("difficultyStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=DifficultyStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("current"),o.getInt("consecutiveCorrect"),o.getInt("consecutiveWrong"),o.getBoolean("hasReachedVeryHard")); val old=db.difficultyStateDao().getByConceptId(e.conceptId); if(old==null){db.difficultyStateDao().upsert(e);added++}else{db.difficultyStateDao().upsert(e.copy(id=old.id));merged++} }
@@ -105,6 +125,63 @@ class RoomBackupRepository @Inject constructor(
         } catch (e: Exception) {
             RestoreResult(0, 0, listOf(e.message ?: "RESTORE_FAILED"))
         }
+    }
+
+    private fun validateBeforeMutation(root: JSONObject): List<String> {
+        val issues = mutableListOf<String>()
+        val arrays = mapOf(
+            "concepts" to "id", "contents" to "id", "learningStates" to "id", "difficultyStates" to "id",
+            "tags" to "id", "reviewSessions" to "id", "reviewHistory" to "id", "categories" to "id",
+            "variants" to "id", "relations" to "id", "reviewQueue" to "id"
+        )
+        arrays.forEach { (section, key) ->
+            val seen = mutableSetOf<String>()
+            root.optJSONArray(section)?.let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.optJSONObject(i) ?: run { issues += "INVALID_ENTRY:$section[$i]"; continue }
+                    val value = o.optString(key, "")
+                    if (value.isBlank() || runCatching { UUID.fromString(value) }.isFailure) issues += "INVALID_UUID:$section"
+                    else if (!seen.add(value)) issues += "DUPLICATE_UUID:$section"
+                }
+            }
+        }
+
+        root.optJSONArray("learningStates")?.let { a -> for (i in 0 until a.length()) { val stage=a.getJSONObject(i).optString("stage"); if(stage !in STAGES) issues += "INVALID_VALUE:stage" } }
+        root.optJSONArray("reviewSessions")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o=a.getJSONObject(i); val start=runCatching{Instant.parse(o.getString("startedAt"))}.getOrNull(); val end=runCatching{if(o.isNull("endedAt"))null else Instant.parse(o.getString("endedAt"))}.getOrNull()
+                if(start==null || (!o.isNull("endedAt") && end==null) || (start!=null && end!=null && end.isBefore(start))) issues += "INVALID_VALUE:reviewSession_time"
+                if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:reviewSession_reviewType"
+            }
+        }
+        root.optJSONArray("reviewHistory")?.let { a ->
+            val attempts=mutableSetOf<String>()
+            for (i in 0 until a.length()) {
+                val o=a.getJSONObject(i); val session=o.optString("sessionId"); val attempt=o.optString("reviewAttemptId")
+                if(!attempts.add("$session:$attempt")) issues += "DUPLICATE_ATTEMPT:reviewHistory"
+                if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:history_reviewType"
+                val reviewed=runCatching{Instant.parse(o.getString("reviewedAt"))}.getOrNull(); if(reviewed==null) issues += "INVALID_VALUE:reviewHistory_reviewedAt"
+            }
+            val sessions=root.optJSONArray("reviewSessions")
+            if(sessions!=null) {
+                val types=(0 until sessions.length()).associate { val s=sessions.getJSONObject(it); s.optString("id") to s.optString("reviewType") }
+                for(i in 0 until a.length()) { val o=a.getJSONObject(i); val st=types[o.optString("sessionId")]; if(st!=null && st != o.optString("reviewType")) issues += "INVALID_VALUE:history_session_reviewType" }
+            }
+        }
+        root.optJSONArray("contents")?.let { a ->
+            for(i in 0 until a.length()) {
+                val o=a.getJSONObject(i)
+                if(!o.has("canonicalKey") || o.isNull("canonicalKey")) issues += "INVALID_VALUE:canonicalKey"
+                if(o.optString("text").isBlank()) issues += "INVALID_VALUE:content_text"
+                if(o.optString("languageCode").isBlank()) issues += "INVALID_VALUE:languageCode"
+            }
+        }
+        root.optJSONArray("parserMetadata")?.let { a -> for(i in 0 until a.length()) { val c=a.getJSONObject(i).optDouble("confidence",Double.NaN); if(c.isNaN() || c !in 0.0..1.0) issues += "INVALID_VALUE:parserMetadata_confidence" } }
+        root.optJSONArray("conceptReferences")?.let { a ->
+            val concepts=root.optJSONArray("concepts")?.let { c -> (0 until c.length()).mapNotNull { c.optJSONObject(it)?.optString("id") }.toSet() } ?: emptySet()
+            for(i in 0 until a.length()) { val ref=a.optString(i); if(runCatching{UUID.fromString(ref)}.isFailure || ref !in concepts) issues += "INVALID_CONCEPT_REFERENCE" }
+        }
+        return issues.distinct()
     }
 
     private fun JSONObject.arr(name: String): List<JSONObject> { val a=getJSONArray(name); return (0 until a.length()).map(a::getJSONObject) }
