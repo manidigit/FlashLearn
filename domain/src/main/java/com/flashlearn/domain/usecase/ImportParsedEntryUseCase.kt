@@ -20,7 +20,13 @@ class ImportParsedEntryUseCase @Inject constructor(
 ) {
     companion object { const val LOW_CONFIDENCE_THRESHOLD = 0.80; val REVIEW_SENTINEL: UUID = UUID(0L, 0L) }
 
-    suspend operator fun invoke(entry: ParsedEntry, sourceLanguage: String = "es", targetLanguage: String = "fa", mode: ImportMode = ImportMode.MERGE): UUID = database.withTransaction {
+    suspend operator fun invoke(
+        entry: ParsedEntry,
+        sourceLanguage: String = "es",
+        targetLanguage: String = "fa",
+        mode: ImportMode = ImportMode.MERGE,
+        lineNumber: Int? = null
+    ): UUID = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
         val source = entry.sourceText.trim()
         val translations = entry.translationText.orEmpty().split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
@@ -30,7 +36,7 @@ class ImportParsedEntryUseCase @Inject constructor(
         if (source.isBlank() || translations.isEmpty()) throw IllegalArgumentException("مدخل ناقص")
 
         if (entry.confidence < LOW_CONFIDENCE_THRESHOLD) {
-            reviewQueueRepository.upsert(ReviewQueueItem(UUID.randomUUID(), null, source, translations.joinToString(" / "), entry.confidence, correction, ReviewQueueStatus.PENDING, null, "اعتماد پایین؛ نیازمند بررسی دستی"))
+            reviewQueueRepository.upsert(ReviewQueueItem(UUID.randomUUID(), null, source, translations.joinToString(" / "), entry.confidence, correction, ReviewQueueStatus.PENDING, lineNumber, "اعتماد پایین؛ نیازمند بررسی دستی"))
             return@withTransaction REVIEW_SENTINEL
         }
 
