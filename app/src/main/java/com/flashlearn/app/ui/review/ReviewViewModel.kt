@@ -119,12 +119,14 @@ class ReviewViewModel @Inject constructor(
         val current = _state.value.selectedDifficulties.toMutableSet()
         if (difficulty == null) current.clear() else if (!current.add(difficulty)) current.remove(difficulty)
         _state.value = _state.value.copy(selectedDifficulties = current, selectedDifficulty = current.singleOrNull())
+        refreshAvailableReviewCount()
     }
 
     fun toggleCategory(categoryId: UUID?) {
         val current = _state.value.selectedCategoryIds.toMutableSet()
         if (categoryId == null) current.clear() else if (!current.add(categoryId)) current.remove(categoryId)
         _state.value = _state.value.copy(selectedCategoryIds = current, selectedCategoryId = current.singleOrNull())
+        refreshAvailableReviewCount()
     }
 
     // Compatibility with existing callers.
