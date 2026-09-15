@@ -51,11 +51,36 @@ class ReviewEngineUseCasesTest {
         assertEquals(listOf(a), result.map { it.concept.id })
     }
 
-    @Test fun scheduledModes_returnDueCandidatesInRandomBatch() = runBlocking {
-        val oldest = UUID.randomUUID(); val newer = UUID.randomUUID(); val future = UUID.randomUUID()
-        val repo = SelectReviewQueueUseCase(CRepo(listOf(concept(newer), concept(oldest), concept(future))), LRepo(listOf(learning(newer, Stage.WEEKLY, now.minusSeconds(60)), learning(oldest, Stage.WEEKLY, now.minusSeconds(120)), learning(future, Stage.WEEKLY, now.plusSeconds(60)))), DRepo(listOf(difficulty(newer, VocabularyDifficulty.EASY), difficulty(oldest, VocabularyDifficulty.EASY), difficulty(future, VocabularyDifficulty.EASY))), TRepo(emptyMap()))
-        val result = repo(ReviewSelectionFilters(ReviewType.WEEKLY, now = now))
-        assertEquals(setOf(oldest, newer), result.map { it.concept.id }.toSet())
+    @Test fun scheduledModes_sortDueCardsByNextReviewThenConceptId() = runBlocking {
+        val firstId = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val secondId = UUID.fromString("00000000-0000-0000-0000-000000000002")
+        val thirdId = UUID.fromString("00000000-0000-0000-0000-000000000003")
+        val dueLater = now.minusSeconds(60)
+        val dueEarlier = now.minusSeconds(120)
+        val repo = SelectReviewQueueUseCase(
+            CRepo(listOf(concept(thirdId), concept(firstId), concept(secondId))),
+            LRepo(listOf(
+                learning(thirdId, Stage.WEEKLY, dueLater),
+                learning(secondId, Stage.WEEKLY, dueEarlier),
+                learning(firstId, Stage.WEEKLY, dueEarlier)
+            )),
+            DRepo(listOf(difficulty(firstId, VocabularyDifficulty.EASY), difficulty(secondId, VocabularyDifficulty.EASY), difficulty(thirdId, VocabularyDifficulty.EASY))),
+            TRepo(emptyMap())
+        )
+        val result = repo(ReviewSelectionFilters(ReviewType.WEEKLY, now = now, maxCards = 3))
+        assertEquals(listOf(firstId, secondId, thirdId), result.map { it.concept.id })
+    }
+
+    @Test fun scheduledModes_maxCardsIsAppliedAfterDeterministicOrdering() = runBlocking {
+        val ids = (1..3).map { UUID.fromString("00000000-0000-0000-0000-%012d".format(it)) }
+        val repo = SelectReviewQueueUseCase(
+            CRepo(ids.map { concept(it) }),
+            LRepo(ids.mapIndexed { index, id -> learning(id, Stage.DAILY, now.minusSeconds((3 - index).toLong())) }),
+            DRepo(ids.map { difficulty(it, VocabularyDifficulty.EASY) }),
+            TRepo(emptyMap())
+        )
+        val result = repo(ReviewSelectionFilters(ReviewType.DAILY, now = now, maxCards = 2))
+        assertEquals(ids.take(2), result.map { it.concept.id })
     }
 
     @Test fun randomMode_appliesDifficultyFilter() = runBlocking {
