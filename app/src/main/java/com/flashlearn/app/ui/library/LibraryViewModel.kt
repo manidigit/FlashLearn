@@ -54,7 +54,10 @@ data class LibraryUiState(
     val error: String? = null,
     val sourceLanguage: String = "es",
     val targetLanguage: String = "fa"
-)
+) {
+    @Deprecated("Use selectedCategoryIds for multi-category filtering")
+    val selectedCategoryId: UUID? get() = selectedCategoryIds.singleOrNull()
+}
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
@@ -84,6 +87,8 @@ class LibraryViewModel @Inject constructor(
     fun onQueryChange(value: String) { _state.value = _state.value.copy(query = value); refresh() }
     fun onFavoritesChange(value: Boolean) { _state.value = _state.value.copy(favoritesOnly = value); refresh() }
     fun onCategoryChange(ids: Set<UUID>) { _state.value = _state.value.copy(selectedCategoryIds = ids); refresh() }
+    @Deprecated("Use onCategoryChange(Set<UUID>) for multi-category filtering")
+    fun onCategoryChange(id: UUID?) { onCategoryChange(id?.let(::setOf) ?: emptySet()) }
     fun onTagChange(id: UUID?) { _state.value = _state.value.copy(selectedTagId = id); refresh() }
 
     fun createTag(name: String, onDone: (String?) -> Unit = {}) = runTagMutation(onDone) { createTagUseCase(name) }
