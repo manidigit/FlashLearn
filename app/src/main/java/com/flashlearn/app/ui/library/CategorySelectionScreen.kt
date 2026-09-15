@@ -20,13 +20,7 @@ private val Purple = Color(0xFF7C2BEF)
 private val Border = Color(0xFFE1E7F3)
 
 @Composable
-fun CategorySelectionScreen(
-    categories: List<Category>,
-    selectedIds: Set<UUID>,
-    counts: Map<UUID, Int>,
-    onBack: () -> Unit,
-    onApply: (Set<UUID>) -> Unit
-) {
+fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, counts: Map<UUID, Int>, onBack: () -> Unit, onApply: (Set<UUID>) -> Unit) {
     var selected by remember(selectedIds) { mutableStateOf(selectedIds) }
     val allSelected = selected.isEmpty()
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp)) {
@@ -35,13 +29,13 @@ fun CategorySelectionScreen(
             Text("دسته‌بندی‌ها", Modifier.align(Alignment.Center), color = Navy, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
         }
         Spacer(Modifier.height(12.dp))
-        CategoryRow("همه دسته‌ها", "انتخاب همه دسته‌ها", null, allSelected, null) { selected = emptySet() }
+        CategoryRow("همه دسته‌ها", "انتخاب همه دسته‌ها", allSelected) { selected = emptySet() }
         Spacer(Modifier.height(20.dp))
         Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = Navy, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.End)
         Spacer(Modifier.height(10.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             categories.forEach { category ->
-                CategoryRow(category.name, category.description.orEmpty(), counts[category.id], category.id in selected, category.id) {
+                CategoryRow(category.name, "${toFaDigits(counts[category.id] ?: 0)} لغت", category.id in selected) {
                     selected = if (category.id in selected) selected - category.id else selected + category.id
                 }
             }
@@ -54,14 +48,7 @@ fun CategorySelectionScreen(
 }
 
 @Composable
-private fun CategoryRow(
-    title: String,
-    subtitle: String,
-    count: Int?,
-    checked: Boolean,
-    categoryId: UUID?,
-    onClick: () -> Unit
-) {
+private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onClick: () -> Unit) {
     val icon = when (title) {
         "همه دسته‌ها" -> Icons.Outlined.Folder
         "عمومی" -> Icons.Outlined.Book
@@ -80,10 +67,14 @@ private fun CategoryRow(
             Spacer(Modifier.weight(1f))
             Column(Modifier.weight(3f), horizontalAlignment = Alignment.End) {
                 Text(title, color = Navy, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                if (subtitle.isNotBlank()) Text(subtitle, color = Color(0xFF8A92A8), style = MaterialTheme.typography.bodySmall)
+                Text(subtitle, color = Color(0xFF8A92A8), style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.width(14.dp))
             Surface(Modifier.size(48.dp), shape = RoundedCornerShape(14.dp), color = Color(0xFFF6F7FB)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = Purple, modifier = Modifier.size(27.dp)) } }
         }
     }
 }
+
+private fun toFaDigits(value: Int): String = value.toString().map {
+    when (it) { '0' -> '۰'; '1' -> '۱'; '2' -> '۲'; '3' -> '۳'; '4' -> '۴'; '5' -> '۵'; '6' -> '۶'; '7' -> '۷'; '8' -> '۸'; '9' -> '۹'; else -> it }
+}.joinToString("")
