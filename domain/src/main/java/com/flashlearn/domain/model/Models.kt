@@ -1,9 +1,11 @@
 package com.flashlearn.domain.model
+
 import java.time.Instant
 import java.util.UUID
 
 enum class Stage { DAILY, WEEKLY, MONTHLY, LEARNED }
 enum class VocabularyDifficulty { EASY, MEDIUM, HARD, VERY_HARD }
+enum class QuizDifficulty { EASY, MEDIUM, HARD }
 enum class ReviewType { DAILY, WEEKLY, MONTHLY, LEARNED, RANDOM }
 enum class EntryType { WORD, PHRASE, SENTENCE, IDIOM, COLLOCATION, STRUCTURE }
 enum class ImportMode { ADD_NEW, SKIP_DUPLICATE, MERGE, UPDATE }
