@@ -1,12 +1,15 @@
 # FlashLearn Changelog
 
-## v5.74 — Review Help + Standalone About Page
+## v5.74 — Review Help + About + Library Category Selection
 - Added an explicit domain-level Review Help contract for Hint and Show Note so help actions remain separate from answer/session state.
 - Hint content is deliberately non-answer-revealing; Show Note returns only an explicitly requested note and does not mutate review results.
-- Quiz mode now visibly renders the Hint and Show Note controls and their content without exposing the correct answer before submission.
+- Quiz mode visibly renders the Hint and Show Note controls and their content without exposing the correct answer before submission.
 - Added a standalone About page with application description, version, date, creator, and changelog history.
 - Registered the About page as a dedicated application route and changed Settings → About to navigate to it instead of opening an inline dialog.
 - Added domain tests covering non-revealing Hint behavior, purity, and note handling.
+- Added multi-category selection for Library/category flows while keeping the legacy single-category API compatible.
+- Wired selected category sets through navigation and reflected the selected category count in the Library filter card.
+- Category lists expose word counts and support multi-select, Apply, and Clear All behavior without removing existing app functionality.
 
 ## v5.73 — Large-Library Review + Statistics + Quiz UX Performance
 - Capped each Review session at 30 cards so a restored library cannot create an 8k/100k-card session.
