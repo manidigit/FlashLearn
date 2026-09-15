@@ -120,16 +120,16 @@ jobs:
             trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
             sed -i 's/versionCode = 73/versionCode = 72/; s/versionName = "5.73"/versionName = "5.72"/' app/build.gradle.kts
             gradle --no-daemon :app:assembleDebug
-            OLD_APK=app/build/outputs/apk/debug/app-debug.apk
-            OLD_CERT=$(apksigner verify --print-certs "$OLD_APK" | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')
-            adb install "$OLD_APK"
+            apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+            apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r' > "$RUNNER_TEMP/flashlearn-old-cert"
+            test -s "$RUNNER_TEMP/flashlearn-old-cert"
+            adb install app/build/outputs/apk/debug/app-debug.apk
             test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "72"
             sed -i 's/versionCode = 72/versionCode = 73/; s/versionName = "5.72"/versionName = "5.73"/' app/build.gradle.kts
             gradle --no-daemon :app:assembleDebug
-            NEW_APK=app/build/outputs/apk/debug/app-debug.apk
-            NEW_CERT=$(apksigner verify --print-certs "$NEW_APK" | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')
-            test "$OLD_CERT" = "$NEW_CERT"
-            adb install -r "$NEW_APK"
+            apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+            test "$(cat "$RUNNER_TEMP/flashlearn-old-cert")" = "$(apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')"
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
             test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "73"
             BASH_SCRIPT
 
