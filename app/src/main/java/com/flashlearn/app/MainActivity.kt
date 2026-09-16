@@ -59,18 +59,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val appState by appViewModel.state
-            FlashLearnTheme(
-                appearance = appState.appearance,
-                themeId = appState.themeId,
-                accentColor = appState.accentColor
-            ) {
-                CompositionLocalProvider(
-                    LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr
-                ) {
+            FlashLearnTheme(appearance = appState.appearance, themeId = appState.themeId, accentColor = appState.accentColor) {
+                CompositionLocalProvider(LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr) {
                     Surface(Modifier.fillMaxSize()) {
-                        BackHandler {
-                            if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish() else appViewModel.goBack()
-                        }
+                        BackHandler { if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish() else appViewModel.goBack() }
                         AppRootScreen()
                     }
                 }
@@ -83,56 +75,25 @@ class MainActivity : ComponentActivity() {
         val uiState by appViewModel.state
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
-            FlashLearnShell(
-                selectedRoute = uiState.selectedRoute,
-                onNavigate = { route ->
-                    appViewModel.navigate(route)
-                    when (route) {
-                        AppRoutes.HOME -> homeViewModel.refresh()
-                        AppRoutes.LIBRARY -> {
-                            libraryViewModel.setLanguagePair(uiState.languagePair)
-                            libraryViewModel.refresh()
-                        }
-                        AppRoutes.PROGRESS -> progressViewModel.refresh()
-                        else -> Unit
-                    }
+            FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
+                appViewModel.navigate(route)
+                when (route) {
+                    AppRoutes.HOME -> homeViewModel.refresh()
+                    AppRoutes.LIBRARY -> { libraryViewModel.setLanguagePair(uiState.languagePair); libraryViewModel.refresh() }
+                    AppRoutes.PROGRESS -> progressViewModel.refresh()
+                    else -> Unit
                 }
-            ) {
-                TopLevelContent(uiState.selectedRoute)
-            }
+            }) { TopLevelContent(uiState.selectedRoute) }
         } else {
             when (uiState.selectedRoute) {
                 AppRoutes.NEEDS_REVIEW -> NeedsReviewScreen(needsReviewViewModel) { appViewModel.navigate(AppRoutes.HOME) }
                 AppRoutes.ABOUT -> AboutScreen { appViewModel.navigate(AppRoutes.SETTINGS) }
-                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id ->
-                    LibraryDetailScreen(
-                        libraryDetailViewModel,
-                        id,
-                        onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) },
-                        onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
-                    )
-                }
-                AppRoutes.ADD_WORD -> AddWordMethodScreen(
-                    onBack = { appViewModel.navigate(AppRoutes.LIBRARY) },
-                    onSingleWord = { appViewModel.navigate(AppRoutes.ADD_WORD_FORM) },
-                    onBulkWords = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
-                    onRestoreBackup = { appViewModel.navigate(AppRoutes.BACKUP) }
-                )
+                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
+                AppRoutes.ADD_WORD -> AddWordMethodScreen(onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onSingleWord = { appViewModel.navigate(AppRoutes.ADD_WORD_FORM) }, onBulkWords = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onRestoreBackup = { appViewModel.navigate(AppRoutes.BACKUP) })
                 AppRoutes.ADD_WORD_FORM -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) })
-                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) {
-                    libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY)
-                }
-                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onRestored = {
-                    homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY)
-                })
-                AppRoutes.CATEGORY_SELECTION -> CategorySelectionScreen(
-                    categories = libraryViewModel.state.value.categories,
-                    selectedIds = libraryViewModel.state.value.selectedCategoryIds,
-                    counts = libraryViewModel.state.value.categoryCounts,
-                    allCount = libraryViewModel.state.value.categoryTotalCount,
-                    onBack = { appViewModel.navigate(AppRoutes.LIBRARY) },
-                    onApply = { ids -> libraryViewModel.onCategoryChange(ids); appViewModel.navigate(AppRoutes.LIBRARY) }
-                )
+                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
+                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
+                AppRoutes.CATEGORY_SELECTION -> CategorySelectionScreen(categories = libraryViewModel.state.value.categories, selectedIds = libraryViewModel.state.value.selectedCategoryIds, counts = libraryViewModel.state.value.categoryCounts, allCount = libraryViewModel.state.value.categoryTotalCount, onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onApply = { ids -> libraryViewModel.onCategoryChange(ids); appViewModel.navigate(AppRoutes.LIBRARY) })
             }
         }
     }
@@ -141,54 +102,11 @@ class MainActivity : ComponentActivity() {
     private fun TopLevelContent(route: String) {
         val uiState by appViewModel.state
         when (route) {
-            AppRoutes.HOME -> HomeScreen(
-                viewModel = homeViewModel,
-                languagePair = uiState.languagePair,
-                onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
-                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }
-            )
-            AppRoutes.REVIEW -> {
-                reviewViewModel.setLanguagePair(uiState.languagePair)
-                reviewViewModel.setQuizDifficulty(uiState.quizDifficulty)
-                reviewViewModel.setMaximumReviewCards(uiState.maximumReviewCards)
-                ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty) {
-                    homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME)
-                }
-            }
-            AppRoutes.LIBRARY -> LibraryScreenV2(
-                viewModel = libraryViewModel,
-                languagePair = uiState.languagePair,
-                onBack = { appViewModel.navigate(AppRoutes.HOME) },
-                onOpen = appViewModel::openLibraryDetail,
-                onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) },
-                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) }
-            )
+            AppRoutes.HOME -> HomeScreen(homeViewModel, uiState.languagePair, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
+            AppRoutes.REVIEW -> { reviewViewModel.setLanguagePair(uiState.languagePair); reviewViewModel.setQuizDifficulty(uiState.quizDifficulty); reviewViewModel.setMaximumReviewCards(uiState.maximumReviewCards); ReviewScreen(reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty) { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) } }
+            AppRoutes.LIBRARY -> LibraryScreenV2(libraryViewModel, uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(
-                appearance = uiState.appearance,
-                onAppearanceChange = appViewModel::setAppearance,
-                themeId = uiState.themeId,
-                themes = appViewModel.availableThemes(),
-                onThemeChange = appViewModel::setTheme,
-                onImportTheme = appViewModel::importTheme,
-                accentColor = uiState.accentColor,
-                onAccentColorChange = appViewModel::setAccentColor,
-                layoutDirection = uiState.layoutDirection,
-                onLayoutDirectionChange = appViewModel::setLayoutDirection,
-                languagePair = uiState.languagePair,
-                onLanguagePairChange = appViewModel::setLanguagePair,
-                personalWordDifficulty = uiState.personalWordDifficulty,
-                onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty,
-                quizDifficulty = uiState.quizDifficulty,
-                onQuizDifficultyChange = appViewModel::setQuizDifficulty,
-                difficultyThreshold = uiState.difficultyThreshold,
-                onDifficultyThresholdChange = appViewModel::setDifficultyThreshold,
-                maximumReviewCards = uiState.maximumReviewCards,
-                onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards,
-                onBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
-                onAbout = { appViewModel.navigate(AppRoutes.ABOUT) },
-                onBack = { appViewModel.navigate(AppRoutes.HOME) }
-            )
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 }
