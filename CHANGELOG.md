@@ -11,6 +11,8 @@
 - CI debug APKs now use the same pinned public Android development test key on every runner, preventing future update-install failures caused by changing ephemeral debug signatures.
 - The public development key is restricted to CI debug artifacts; production/release signing remains separate.
 - Documented the one-time signing migration limitation for installations created by older ephemeral CI debug keys.
+- Hardened concept creation so source/meaning matching is always recalculated from the actual stored text, even when an older row has a stale canonical key.
+- Adding an existing source with a new target meaning now stays on the same Concept; adding the same source + same meaning remains a duplicate and is not inserted again.
 
 ## v5.79 — Stable CI Debug Signing Preparation + Multiple-Meaning Edit Preservation
 - Added application version 5.79 / versionCode 79.
