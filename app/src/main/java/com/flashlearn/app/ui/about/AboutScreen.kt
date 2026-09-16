@@ -57,11 +57,11 @@ fun AboutScreen(onBack: () -> Unit) {
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("تاریخچه تغییرات", style = MaterialTheme.typography.titleLarge)
-                Text("v5.77 — جلوگیری سراسری از تکرار یک کلمه در همان روز در Random، Daily، Weekly، Monthly و Learned.")
-                Text("v5.76 — اصلاحات رابط کاربری، تم، آیکن‌ها، چگالی و سطوح کارت‌ها.")
-                Text("v5.73 — بهینه‌سازی مرور و آمار برای کتابخانه‌های بزرگ، محدودیت ۳۰ کارت در جلسه، بهبود انتخاب Distractor و بازطراحی تجربه آزمون چهارگزینه‌ای.")
-                Text("برای تاریخچه کامل، CHANGELOG مخزن پروژه مرجع است.")
+                Text("وضعیت نسخه", style = MaterialTheme.typography.titleLarge)
+                Text("نسخه نصب‌شده: v${BuildConfig.VERSION_NAME} (شماره ${BuildConfig.VERSION_CODE})")
+                Text("تاریخ Build این نسخه: ${BuildConfig.APP_BUILD_DATE}")
+                Text("مشخصات فنی و اطلاعات نسخه از Build Configuration پروژه خوانده می‌شوند؛ بنابراین با هر Build جدید، نسخه و تاریخ Build به‌صورت خودکار به‌روز می‌شوند و نیازی به ویرایش دستی AboutScreen نیست.")
+                Text("برای تاریخچه کامل تغییرات، CHANGELOG مخزن پروژه مرجع است.")
             }
         }
 
