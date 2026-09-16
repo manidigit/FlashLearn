@@ -14,6 +14,7 @@
 - The public Android development test key is used only for CI debug artifacts; production/release signing remains separate.
 - Multiple-meaning import, duplicate cleanup, Library multi-meaning display, and concept-edit preservation remain covered by the previous hardening checkpoint.
 - Same-day global review exclusion remains enforced at selection/answer boundaries as part of the review hardening path.
+- CI now verifies the APK certificate fingerprint directly against the exact keystore certificate used for the build.
 - CI remains the authoritative build/test gate.
 
 ### Verification gate
