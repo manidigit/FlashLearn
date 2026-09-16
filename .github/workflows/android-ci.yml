@@ -48,6 +48,7 @@ jobs:
           rm -f keystore/debug.keystore
           keytool -genkeypair -v \
             -keystore keystore/debug.keystore \
+            -storetype JKS \
             -storepass android \
             -keypass androiddebugkey \
             -alias androiddebugkey \
@@ -56,7 +57,7 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US" \
             -noprompt
-          keytool -list -keystore keystore/debug.keystore -storepass android -alias androiddebugkey >/dev/null
+          keytool -list -keystore keystore/debug.keystore -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -123,6 +124,7 @@ jobs:
           rm -f keystore/debug.keystore
           keytool -genkeypair -v \
             -keystore keystore/debug.keystore \
+            -storetype JKS \
             -storepass android \
             -keypass androiddebugkey \
             -alias androiddebugkey \
@@ -131,6 +133,7 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US" \
             -noprompt
+          keytool -list -keystore keystore/debug.keystore -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
