@@ -1,36 +1,34 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.74 — Review Help + About + Library category selection
-**Application identity:** `versionName = 5.74`, `versionCode = 74`
+## Current checkpoint: v5.80 — FULL backup export/restore compatibility + stable CI signing
+**Application identity:** `versionName = 5.80`, `versionCode = 80`
 
 ### Current implementation status
-- Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
-- Review queue selection is shuffled before taking the 30-card batch so cards do not follow the database/UUID ordering rhythm.
-- Review queue joins concepts, learning states, difficulty states, and tags with bulk reads instead of per-card Room calls.
-- Review language-pair validation loads candidate content in bulk and reuses it for the session.
-- Quiz generation now bulk-loads the quiz bank and caches it for the active process/session path instead of reading the full contents table and difficulty rows for every question.
-- Quiz distractor selection expands beyond a small category when necessary, so a category with fewer than four distinct answers does not unnecessarily break a four-choice quiz.
-- Missing DifficultyState still cannot silently switch an explicit Quiz session into Flashcards.
-- Progress and Progress Summary no longer query LearningState/DifficultyState once per concept; they bulk-load state tables and join in memory for large libraries.
-- Library and Review content lookup already use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
-- Vocabulary and legacy FULL restore remain on `Dispatchers.IO` with batch Room writes; post-restore Progress/Statistics calculations now avoid the previous N+1 state queries.
-- Four-option Quiz UI follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
-- Quiz prompt, progress, Hint and Note controls are retained; Quiz mode never silently renders as Flashcard when a Quiz question is unavailable.
-- Review Help keeps Hint and Show Note separate from answer/session state; Hint is non-answer-revealing and Show Note returns only the requested note without mutating review results.
-- A standalone About page is registered as a dedicated route and Settings → About navigates to it.
-- Library category selection supports multiple selected categories, preserves the legacy single-category API compatibility, wires the selection into navigation, and reflects the selected category count in the filter card.
-- Category lists expose word counts and support multi-select/apply/clear-all behavior without removing existing app functionality.
+- FULL backup export now uses the authoritative `RoomBackupRepository.exportFull()` path instead of the typed partial exporter, so the generated FULL file contains every section required by the schema-v2 restore validator.
+- FULL restore accepts the current `backupType = FULL` / `schemaVersion = 2` format while preserving compatibility with legacy `backupMode = FULL` and `backupMode = VOCABULARY` backups.
+- Restore validation remains fail-before-mutation for malformed or incomplete current FULL backups.
+- Pre-restore automatic backup remains enabled before database mutation.
+- CI now verifies that the current FULL export path and required restore sections stay aligned, preventing the previous export/restore format drift from returning.
+- CI version metadata and artifact names are aligned to 5.80/80.
+- CI debug builds now require an explicitly configured stable signing keystore instead of silently falling back to a runner-generated debug key, preventing future update-install failures caused by changing APK signatures.
+- Multiple-meaning import, duplicate cleanup, Library multi-meaning display, and concept-edit preservation remain covered by the previous hardening checkpoint.
+- Same-day global review exclusion remains enforced at selection/answer boundaries as part of the review hardening path.
 - CI remains the authoritative build/test gate.
 
 ### Verification gate
 - GitHub Actions is the authoritative build/test gate.
-- The latest pushed run must complete Build/Unit and Instrumentation successfully before the checkpoint is considered fully verified.
-- Release Gate is non-blocking when stable production signing secrets are absent; the debug APK/source artifacts remain the normal downloadable CI outputs.
+- The v5.80 workflow must complete compilation, APK signature verification, stable signing identity verification, version verification, unit tests, backup compatibility verification, and multiple-meaning verification successfully before this checkpoint is considered fully verified.
+- The stable CI debug signing keystore is intentionally supplied through GitHub Actions secrets and is not committed to the repository.
+- Existing installations signed by an older ephemeral CI debug key cannot be retroactively converted to the new signing identity; after the one-time migration, subsequent CI debug updates use the same stable identity.
 
 ---
 
 ## Historical checkpoints
 
+v5.79 — CI debug signing configuration preparation and multiple-meaning edit preservation.
+v5.78 — Multiple-meaning import/merge and duplicate-cleanup hardening.
+v5.77 — Global same-day review exclusion.
+v5.74 — Review Help + About + Library category selection.
 v5.73 — Large-library review/performance + Quiz UX hardening.
 v5.72 — previous performance checkpoint before 30-card review batching and bulk Progress/Statistics joins.
 v5.71 — Legacy restore + Quiz mode + update-path hardening.
