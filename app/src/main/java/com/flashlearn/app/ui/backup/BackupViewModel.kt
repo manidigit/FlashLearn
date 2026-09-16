@@ -37,10 +37,49 @@ class BackupViewModel @Inject constructor(
     private val typedRepo:TypedBackupRepository,
     private val dataExportRepo:DataExportRepository
 ):ViewModel(){
-    private val _state=MutableStateFlow(BackupUiState());val state:StateFlow<BackupUiState> = _state
-    fun export(type:BackupType=BackupType.FULL)=viewModelScope.launch{if(_state.value.busy)return@launch;_state.value=BackupUiState(busy=true,message="در حال ساخت ${type.name}…",exportedType=type);runCatching{withContext(Dispatchers.IO){typedRepo.export(type)}}.onSuccess{_state.value=BackupUiState(message="پشتیبان ${type.name} آماده است.",exportedJson=it,exportedType=type)}.onFailure{_state.value=BackupUiState(message="ساخت پشتیبان ناموفق بود: ${it.message?:"خطای نامشخص"}")}}
-    fun exportData(format: ExportFormat)=viewModelScope.launch{if(_state.value.busy)return@launch;_state.value=_state.value.copy(busy=true,message="در حال ساخت خروجی ${format.name}…",exportedFile=null,exportedFormat=format);runCatching{withContext(Dispatchers.IO){dataExportRepo.export(format)}}.onSuccess{file->_state.value=_state.value.copy(busy=false,message="خروجی ${format.name} آماده است.",exportedFile=file,exportedFormat=format)}.onFailure{e->_state.value=_state.value.copy(busy=false,message="ساخت خروجی ناموفق بود: ${e.message?:"خطای نامشخص"}")}}
-    fun restore(json:String,onSuccess:()->Unit={})=viewModelScope.launch{if(_state.value.busy)return@launch;_state.value=BackupUiState(busy=true,message="در حال بازیابی پشتیبان…");runCatching{withContext(Dispatchers.IO){val root=JSONObject(json);when{root.optString("backupMode")=="VOCABULARY"->vocabularyRepo.restore(json);root.optString("backupMode")=="FULL"&&root.has("concepts")&&root.optJSONArray("concepts")?.optJSONObject(0)?.has("uuid")==true->legacyFullRepo.restore(json);else->repo.restoreFull(json)}}}.onSuccess{r->_state.value=BackupUiState(message=restoreMessage(r));if(r.issues.isEmpty())onSuccess()}.onFailure{e->_state.value=BackupUiState(message="بازیابی ناموفق بود: ${e.message?:"خطای نامشخص"}")}}
+    private val _state=MutableStateFlow(BackupUiState())
+    val state:StateFlow<BackupUiState> = _state
+
+    fun export(type:BackupType=BackupType.FULL)=viewModelScope.launch {
+        if(_state.value.busy)return@launch
+        _state.value=BackupUiState(busy=true,message="در حال ساخت ${type.name}…",exportedType=type)
+        runCatching {
+            withContext(Dispatchers.IO) {
+                if (type == BackupType.FULL) repo.exportFull() else typedRepo.export(type)
+            }
+        }.onSuccess {
+            _state.value=BackupUiState(message="پشتیبان ${type.name} آماده است.",exportedJson=it,exportedType=type)
+        }.onFailure {
+            _state.value=BackupUiState(message="ساخت پشتیبان ناموفق بود: ${it.message?:"خطای نامشخص"}")
+        }
+    }
+
+    fun exportData(format: ExportFormat)=viewModelScope.launch {
+        if(_state.value.busy)return@launch
+        _state.value=_state.value.copy(busy=true,message="در حال ساخت خروجی ${format.name}…",exportedFile=null,exportedFormat=format)
+        runCatching{withContext(Dispatchers.IO){dataExportRepo.export(format)}}
+            .onSuccess{file->_state.value=_state.value.copy(busy=false,message="خروجی ${format.name} آماده است.",exportedFile=file,exportedFormat=format)}
+            .onFailure{e->_state.value=_state.value.copy(busy=false,message="ساخت خروجی ناموفق بود: ${e.message?:"خطای نامشخص"}")}}
+    }
+
+    fun restore(json:String,onSuccess:()->Unit={})=viewModelScope.launch {
+        if(_state.value.busy)return@launch
+        _state.value=BackupUiState(busy=true,message="در حال بازیابی پشتیبان…")
+        runCatching{
+            withContext(Dispatchers.IO){
+                val root=JSONObject(json)
+                when {
+                    root.optString("backupMode")=="VOCABULARY" -> vocabularyRepo.restore(json)
+                    root.optString("backupMode")=="FULL" && root.has("concepts") && root.optJSONArray("concepts")?.optJSONObject(0)?.has("uuid")==true -> legacyFullRepo.restore(json)
+                    root.optString("backupType")=="FULL" && root.optInt("schemaVersion",-1) in 1..2 -> repo.restoreFull(json)
+                    else -> repo.restoreFull(json)
+                }
+            }
+        }.onSuccess{r->_state.value=BackupUiState(message=restoreMessage(r));if(r.issues.isEmpty())onSuccess()}
+         .onFailure{e->_state.value=BackupUiState(message="بازیابی ناموفق بود: ${e.message?:"خطای نامشخص"}")}
+    }
+
     private fun restoreMessage(r:RestoreResult)="${r.newCount} رکورد جدید بازیابی شد و ${r.mergedCount} رکورد موجود ادغام شد.${if(r.issues.isNotEmpty())" ${r.issues.joinToString()}" else ""}"
-    fun clearMessage(){_state.value=_state.value.copy(message=null)};fun showMessage(message:String){_state.value=_state.value.copy(message=message)}
+    fun clearMessage(){_state.value=_state.value.copy(message=null)}
+    fun showMessage(message:String){_state.value=_state.value.copy(message=message)}
 }
