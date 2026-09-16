@@ -2,6 +2,7 @@ package com.flashlearn.app.ui.library
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.rememberScrollState
@@ -80,6 +81,7 @@ class LibraryDetailViewModel @Inject constructor(
 
 @Composable
 fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, onBack: () -> Unit, onDeleted: () -> Unit = {}) {
+    val tokens = LocalFlashLearnThemeTokens.current
     LaunchedEffect(conceptId) { viewModel.load(conceptId) }
     val item by viewModel.item.collectAsState()
     val message by viewModel.message.collectAsState()
