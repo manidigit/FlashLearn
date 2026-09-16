@@ -20,6 +20,7 @@ import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.repository.TagRepository
 import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
+import com.flashlearn.domain.usecase.RemoveExactDuplicateConceptsUseCase
 import com.flashlearn.domain.usecase.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,7 @@ data class LibraryUiState(
     val categoryCounts: Map<UUID, Int> = emptyMap(), val categoryTotalCount: Int = 0,
     val tagCounts: Map<UUID, Int> = emptyMap(), val totalCount: Int = 0, val learnedCount: Int = 0,
     val learningCount: Int = 0, val newCount: Int = 0, val items: List<LibraryItem> = emptyList(),
-    val isLoading: Boolean = true, val isTagBusy: Boolean = false, val error: String? = null,
+    val isLoading: Boolean = true, val isTagBusy: Boolean = false, val isDuplicateCleanupBusy: Boolean = false, val error: String? = null,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa"
 ) {
     @Deprecated("Use selectedCategoryIds for multi-category filtering")
@@ -53,7 +54,8 @@ class LibraryViewModel @Inject constructor(
     private val conceptTags: ConceptTagRepository, private val difficultyRepository: DifficultyStateRepository,
     private val learningRepository: LearningStateRepository, private val reviewHistoryRepository: ReviewHistoryRepository,
     private val calculateProgress: CalculateProgressUseCase, private val createTagUseCase: CreateTagUseCase,
-    private val updateTagUseCase: UpdateTagUseCase, private val deleteTagUseCase: DeleteTagUseCase
+    private val updateTagUseCase: UpdateTagUseCase, private val deleteTagUseCase: DeleteTagUseCase,
+    private val removeExactDuplicates: RemoveExactDuplicateConceptsUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(LibraryUiState())
     val state: StateFlow<LibraryUiState> = _state.asStateFlow()
@@ -71,6 +73,7 @@ class LibraryViewModel @Inject constructor(
     fun renameTag(id:UUID,name:String,onDone:(String?)->Unit={})=runTagMutation(onDone){updateTagUseCase(id,name)}
     fun removeTag(id:UUID,onDone:(String?)->Unit={})=runTagMutation(onDone){deleteTagUseCase(id);if(_state.value.selectedTagId==id)_state.value=_state.value.copy(selectedTagId=null)}
     private fun runTagMutation(onDone:(String?)->Unit,block:suspend()->Unit){if(_state.value.isTagBusy)return;viewModelScope.launch{_state.value=_state.value.copy(isTagBusy=true,error=null);runCatching{block();refresh()}.onSuccess{onDone(null)}.onFailure{onDone(it.message?:"خطا در مدیریت Tag")};_state.value=_state.value.copy(isTagBusy=false)}}
+    fun removeExactDuplicates(onDone:(Int)->Unit={}){if(_state.value.isDuplicateCleanupBusy)return;viewModelScope.launch{_state.value=_state.value.copy(isDuplicateCleanupBusy=true,error=null);runCatching{removeExactDuplicates(_state.value.sourceLanguage,_state.value.targetLanguage)}.onSuccess{count->refresh();onDone(count)}.onFailure{_state.value=_state.value.copy(error=it.message?:"خطا در پاکسازی تکراری‌ها")};_state.value=_state.value.copy(isDuplicateCleanupBusy=false)}}
 
     fun refresh(){
         val generation=++refreshGeneration;val snapshot=_state.value;val query=snapshot.query.trim();val selectedCategories=snapshot.selectedCategoryIds;val selectedTag=snapshot.selectedTagId;val favoritesOnly=snapshot.favoritesOnly;val filter=snapshot.filter;val sourceLanguage=snapshot.sourceLanguage;val targetLanguage=snapshot.targetLanguage
