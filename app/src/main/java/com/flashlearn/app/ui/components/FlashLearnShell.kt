@@ -28,11 +28,7 @@ import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
-fun FlashLearnShell(
-    selectedRoute: String,
-    onNavigate: (String) -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
+fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
@@ -51,14 +47,7 @@ fun FlashLearnShell(
 }
 
 @Composable
-private fun RowScope.NavItem(
-    route: String,
-    label: String,
-    outlinedIcon: ImageVector,
-    filledIcon: ImageVector,
-    selectedRoute: String,
-    onNavigate: (String) -> Unit
-) {
+private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVector, filledIcon: ImageVector, selectedRoute: String, onNavigate: (String) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val selected = selectedRoute == route
     NavigationBarItem(
@@ -66,8 +55,7 @@ private fun RowScope.NavItem(
         onClick = { onNavigate(route) },
         icon = {
             Box(
-                Modifier
-                    .clip(RoundedCornerShape(MaterialTheme.shapes.medium.topStart))
+                Modifier.clip(RoundedCornerShape(16.dp))
                     .then(if (selected) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = .12f)) else Modifier)
                     .padding(horizontal = (13f * tokens.densityScale).dp, vertical = (6f * tokens.densityScale).dp)
             ) {
@@ -103,17 +91,8 @@ fun ScreenHeader(title: String, onBack: (() -> Unit)? = null, trailing: @Composa
 @Composable
 fun PurpleHeroCard(title: String, value: String, subtitle: String) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = tokens.cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = (4f * tokens.elevationScale).dp)
-    ) {
-        Box(
-            Modifier.fillMaxWidth().background(
-                Brush.linearGradient(listOf(tokens.gradientStart, tokens.gradientEnd))
-            )
-        ) {
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.cardColor), elevation = CardDefaults.cardElevation(defaultElevation = (4f * tokens.elevationScale).dp)) {
+        Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(tokens.gradientStart, tokens.gradientEnd)))) {
             Row(Modifier.fillMaxWidth().padding(horizontal = (22f * tokens.densityScale).dp, vertical = (18f * tokens.densityScale).dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("🔥", style = MaterialTheme.typography.displaySmall)
                 Spacer(Modifier.width(tokens.contentGap))
