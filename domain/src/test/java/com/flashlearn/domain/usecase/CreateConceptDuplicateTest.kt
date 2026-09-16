@@ -54,12 +54,14 @@ class CreateConceptDuplicateTest {
         require(state.nextReviewAt!! <= after)
     }
 
-    @Test fun sameSourceWithDifferentTargetIsAllowed() = runBlocking {
+    @Test fun sameSourceWithDifferentTargetMergesIntoOneConcept() = runBlocking {
         val concepts = FakeConceptRepo(); val contents = FakeContentRepo()
         val useCase = CreateConceptUseCase(concepts, contents, FakeLearningRepo(), FakeDifficultyRepo(), FakeTagRepo(), FakeDb())
-        useCase(CreateConceptCommand("hola", "سلام"))
-        useCase(CreateConceptCommand("hola", "درود"))
-        assertEquals(2, concepts.items.size)
+        val firstId = useCase(CreateConceptCommand("hola", "سلام"))
+        val secondId = useCase(CreateConceptCommand("hola", "درود"))
+        assertEquals(firstId, secondId)
+        assertEquals(1, concepts.items.size)
+        assertEquals(listOf("سلام", "درود"), contents.items.filter { it.conceptId == firstId && it.languageCode == "fa" }.sortedBy { it.translationIndex }.map { it.text })
     }
 
     private class FakeDb : FlashLearnDatabase { override suspend fun <T> withTransaction(block: suspend () -> T): T = block() }
@@ -78,8 +80,10 @@ class CreateConceptDuplicateTest {
     private class FakeContentRepo : ContentRepository {
         val items = mutableListOf<Content>()
         override suspend fun findByUuid(uuid: UUID) = items.find { it.id == uuid }
-        override suspend fun find(conceptId: UUID, languageCode: String) = items.find { it.conceptId == conceptId && it.languageCode == languageCode }
-        override suspend fun upsert(content: Content) { items.removeIf { it.conceptId == content.conceptId && it.languageCode == content.languageCode }; items += content }
+        override suspend fun find(conceptId: UUID, languageCode: String) = items.filter { it.conceptId == conceptId && it.languageCode == languageCode }.minByOrNull { it.translationIndex }
+        override suspend fun findAll(conceptId: UUID, languageCode: String) = items.filter { it.conceptId == conceptId && it.languageCode == languageCode }.sortedBy { it.translationIndex }
+        override suspend fun upsert(content: Content) { items.removeIf { it.id == content.id }; items += content }
+        override suspend fun insertTranslation(content: Content) { items += content }
         override suspend fun getAll() = items.toList()
     }
     private class FakeLearningRepo : LearningStateRepository {
@@ -94,9 +98,7 @@ class CreateConceptDuplicateTest {
         override suspend fun get(conceptId: UUID) = states.find { it.conceptId == conceptId }
         override suspend fun upsert(state: LearningState) { states.removeIf { it.conceptId == state.conceptId }; states += state }
         override suspend fun getAllByStage(stage: Stage) = states.filter { it.stage == stage }
-        override suspend fun getDueNonLearned(now: Instant) = states.filter { state ->
-            state.stage != Stage.LEARNED && state.nextReviewAt?.let { reviewAt -> reviewAt <= now } == true
-        }
+        override suspend fun getDueNonLearned(now: Instant) = states.filter { state -> state.stage != Stage.LEARNED && state.nextReviewAt?.let { reviewAt -> reviewAt <= now } == true }
         override suspend fun getAll() = states.toList()
     }
     private class FakeDifficultyRepo : DifficultyStateRepository {
@@ -111,12 +113,9 @@ class CreateConceptDuplicateTest {
         override suspend fun getConceptsForTag(tagId: UUID) = emptyList<UUID>()
     }
 
-    @Test
-    fun canonicalKey_normalizesUnicodeAndLocaleConsistently() {
-        val composed = "CAFÉ"
-        val decomposed = "CAFE\u0301"
+    @Test fun canonicalKey_normalizesUnicodeAndLocaleConsistently() {
+        val composed = "CAFÉ"; val decomposed = "CAFE\u0301"
         assertEquals(computeCanonicalKey(composed), computeCanonicalKey(decomposed))
         assertEquals("café", computeCanonicalKey(composed))
     }
-
 }
