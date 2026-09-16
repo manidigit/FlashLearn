@@ -4,6 +4,7 @@ import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
 import com.flashlearn.domain.settings.SettingsKeys
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 
@@ -27,7 +28,8 @@ class SelectReviewQueueUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository,
     private val difficultyStateRepository: DifficultyStateRepository,
-    private val conceptTagRepository: ConceptTagRepository
+    private val conceptTagRepository: ConceptTagRepository,
+    private val reviewHistoryRepository: ReviewHistoryRepository
 ) {
     suspend operator fun invoke(filters: ReviewSelectionFilters): List<ReviewCandidate> {
         val states = when (filters.reviewType) {
@@ -38,11 +40,21 @@ class SelectReviewQueueUseCase @Inject constructor(
             ReviewType.LEARNED -> learningStateRepository.getAllByStage(Stage.LEARNED)
         }
 
+        // A concept that has already been answered/practiced today is globally excluded
+        // from every review mode. The comparison is based on the device's local calendar date, not UTC.
+        val today = filters.now.atZone(ZoneId.systemDefault()).toLocalDate()
+        val practicedToday = reviewHistoryRepository.getAll()
+            .asSequence()
+            .filter { it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == today }
+            .map { it.conceptId }
+            .toSet()
+
         val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
         val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
         val tagsByConcept = conceptTagRepository.getAll().groupBy(ConceptTag::conceptId).mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
         val candidates = ArrayList<ReviewCandidate>(states.size)
         for (learning in states) {
+            if (learning.conceptId in practicedToday) continue
             val concept = conceptsById[learning.conceptId] ?: continue
             val difficulty = difficultiesById[learning.conceptId] ?: continue
             val tags = tagsByConcept[learning.conceptId].orEmpty()

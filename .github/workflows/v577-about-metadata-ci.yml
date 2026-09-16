@@ -1,0 +1,60 @@
+name: FlashLearn v5.77 About Metadata CI
+
+on:
+  push:
+    branches: ["v5.77-global-same-day-review-exclusion"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify-about-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Install Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.2"
+      - name: Verify release metadata source
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'versionCode = 77' app/build.gradle.kts
+          grep -q 'versionName = "5.77"' app/build.gradle.kts
+          grep -q 'APP_GITHUB_URL' app/build.gradle.kts
+          grep -q 'APP_AI_ASSISTANT' app/build.gradle.kts
+          grep -q 'APP_BUILD_DATE' app/build.gradle.kts
+          grep -q 'APP_DATABASE' app/build.gradle.kts
+          grep -q 'APP_LANGUAGE' app/build.gradle.kts
+          grep -q 'APP_AUTHOR' app/build.gradle.kts
+          grep -q 'BuildConfig.APP_GITHUB_URL' app/src/main/java/com/flashlearn/app/ui/about/AboutScreen.kt
+          grep -q 'BuildConfig.APP_AI_ASSISTANT' app/src/main/java/com/flashlearn/app/ui/about/AboutScreen.kt
+          grep -q 'BuildConfig.APP_BUILD_DATE' app/src/main/java/com/flashlearn/app/ui/about/AboutScreen.kt
+          grep -q 'BuildConfig.APP_DATABASE' app/src/main/java/com/flashlearn/app/ui/about/AboutScreen.kt
+          grep -q 'BuildConfig.APP_LANGUAGE' app/src/main/java/com/flashlearn/app/ui/about/AboutScreen.kt
+      - name: Clean
+        run: gradle --no-daemon clean
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+      - name: Verify debug APK
+        run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+      - name: Unit tests
+        run: gradle --no-daemon test
