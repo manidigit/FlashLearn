@@ -67,19 +67,14 @@ class RoomBackupRepository @Inject constructor(
         }
         val missing = SECTIONS.filterNot(root::has)
         if (missing.isNotEmpty() && schema >= 2) {
-            // the v5.74 typed FULL exporter accidentally emitted a partial schema-2 snapshot.
-            // Recognize that exact historical shape so already-created backups remain restorable,
-            // while continuing to reject arbitrary/truncated FULL backups.
-            val legacyTypedCore = setOf(
+            // v5.74 TypedBackupRepository FULL exports contained exactly this legacy shape.
+            // Accept only that exact historical shape; reject current FULL backups with a section removed.
+            val legacyTypedFullSections = setOf(
                 "concepts", "contents", "learningStates", "difficultyStates", "tags", "categories",
                 "relations", "variants", "reviewSessions", "reviewHistory", "languages", "languagePairs"
             )
-            val legacyTypedOptional = setOf("conceptTags", "settings", "achievements", "parserMetadata", "reviewQueue")
             val present = SECTIONS.filter(root::has).toSet()
-            val isKnownTypedFull =
-                present.containsAll(legacyTypedCore) &&
-                    missing.all { it in legacyTypedOptional }
-            if (isKnownTypedFull) {
+            if (present == legacyTypedFullSections) {
                 missing.forEach { root.put(it, JSONArray()) }
             } else {
                 return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
