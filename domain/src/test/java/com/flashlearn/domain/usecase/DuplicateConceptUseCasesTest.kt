@@ -35,7 +35,7 @@ class DuplicateConceptUseCasesTest {
     private class Db : FlashLearnDatabase { override suspend fun <T> withTransaction(block: suspend () -> T): T = block() }
 
     private fun concept(id: UUID, createdAt: Instant) = Concept(id, EntryType.WORD, null, false, true, createdAt, createdAt)
-    private fun content(conceptId: UUID, language: String, text: String, index: Int = 0) = Content(UUID.randomUUID(), conceptId, language, text, computeCanonicalKey(text), translationIndex = index)
+    private fun content(conceptId: UUID, language: String, text: String, index: Int = 0, key: String = computeCanonicalKey(text)) = Content(UUID.randomUUID(), conceptId, language, text, key, translationIndex = index)
 
     @Test
     fun exactDuplicateConcepts_keepOne_andPreserveAdditionalMeaning() = runBlocking {
@@ -58,5 +58,19 @@ class DuplicateConceptUseCasesTest {
         val removed = RemoveExactDuplicateConceptsUseCase(concepts, contents, Db())("es", "fa")
         assertEquals(1, removed); assertEquals(1, concepts.values.values.count { it.active })
         assertEquals(listOf("کشیش", "درمان"), contents.findAll(first, "fa").map { it.text })
+    }
+
+    @Test
+    fun staleCanonicalKeys_areIgnored_duringCleanup() = runBlocking {
+        val first = UUID.randomUUID(); val second = UUID.randomUUID()
+        val concepts = Concepts(listOf(concept(first, now.minusSeconds(60)), concept(second, now)))
+        val contents = Contents(listOf(
+            content(first, "es", "ellos", key = "old-key"), content(first, "fa", "آن‌ها", key = "old-target"),
+            content(second, "es", "  ELLOS  ", key = "another-old-key"), content(second, "fa", " آن‌ها ", key = "another-old-target")
+        ))
+        val removed = RemoveExactDuplicateConceptsUseCase(concepts, contents, Db())("es", "fa")
+        assertEquals(1, removed)
+        assertEquals(1, concepts.values.values.count { it.active })
+        assertEquals(listOf("آن‌ها"), contents.findAll(first, "fa").map { it.text })
     }
 }
