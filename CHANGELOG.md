@@ -1,5 +1,12 @@
 # FlashLearn Changelog
 
+## v5.81 — Minimal Home Dashboard + Learning Statistics
+- Simplified the Home screen header to a clean greeting and language flags, reducing visual clutter at the top.
+- Replaced the large intermediate Home content with a compact learning-statistics summary showing total words, practiced words, unpracticed words, and learned words.
+- Kept the streak card and ready-review actions, while presenting Daily, Weekly, and Monthly review counts in a compact layout.
+- Kept the existing Add Word action available without changing its behavior.
+- No changes were made to other application screens or settings behavior.
+
 ## v5.80 — Main-branch integration of multiple-meaning and review hardening
 - Integrated the multiple-meaning source/translation contract into main without replacing the existing themed UI work.
 - Existing source words receive distinct new meanings on the same Concept; exact source+meaning repeats remain duplicates.

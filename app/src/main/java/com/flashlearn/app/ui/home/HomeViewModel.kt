@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.ProgressSummary
 import com.flashlearn.domain.repository.ReviewHistoryRepository
+import com.flashlearn.domain.statistics.BasicStatistics
 import com.flashlearn.domain.statistics.CalculateStreakUseCase
+import com.flashlearn.domain.statistics.GetBasicStatistics
 import com.flashlearn.domain.statistics.StreakSnapshot
-import com.flashlearn.domain.usecase.GetProgressSummaryUseCase
 import com.flashlearn.domain.usecase.EnsureStarterDataUseCase
+import com.flashlearn.domain.usecase.GetProgressSummaryUseCase
 import java.time.Instant
 import java.time.ZoneId
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val isLoading: Boolean = true,
     val summary: ProgressSummary? = null,
+    val basicStats: BasicStatistics? = null,
     val streak: StreakSnapshot? = null,
     val error: String? = null
 )
@@ -27,6 +30,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getProgressSummary: GetProgressSummaryUseCase,
+    private val getBasicStatistics: GetBasicStatistics,
     private val ensureStarterData: EnsureStarterDataUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository
@@ -36,9 +40,7 @@ class HomeViewModel @Inject constructor(
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
     private var refreshGeneration = 0L
 
-    init {
-        refresh()
-    }
+    init { refresh() }
 
     fun refresh() {
         val generation = ++refreshGeneration
@@ -48,13 +50,19 @@ class HomeViewModel @Inject constructor(
                 ensureStarterData()
                 val now = Instant.now()
                 val summary = getProgressSummary(now)
+                val basicStats = getBasicStatistics()
                 val streak = calculateStreak.calculate(
                     historyRepository.getAll(), now, ZoneId.systemDefault()
                 )
-                summary to streak
-            }.onSuccess { (summary, streak) ->
+                Triple(summary, basicStats, streak)
+            }.onSuccess { (summary, basicStats, streak) ->
                 if (generation == refreshGeneration) {
-                    _state.value = HomeUiState(isLoading = false, summary = summary, streak = streak)
+                    _state.value = HomeUiState(
+                        isLoading = false,
+                        summary = summary,
+                        basicStats = basicStats,
+                        streak = streak
+                    )
                 }
             }.onFailure {
                 if (generation == refreshGeneration) {

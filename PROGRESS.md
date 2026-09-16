@@ -1,13 +1,15 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.79 — Settings theme list compact + program color cleanup
-**Application identity:** `versionName = 5.79`, `versionCode = 79`
+## Current checkpoint: v5.81 — Minimal Home dashboard + learning statistics
+**Application identity:** `versionName = 5.81`, `versionCode = 81`
 
-### v5.79 checkpoint changes
-- Settings → full program theme list is now a compact horizontally scrollable row; theme choices remain selectable and all existing themes remain available.
-- Removed only the separate Settings → program/accent color section; no other Settings sections or behaviors were changed.
-- Updated the Settings-visible version text to 5.79.
-- CHANGELOG.md and PROGRESS.md are updated in the same checkpoint commit.
+### v5.81 checkpoint changes
+- Home header simplified to the minimal greeting + language flags layout.
+- Large unused Home space replaced with a compact statistics summary: total words, practiced words, unpracticed words, and learned words.
+- Streak card retained.
+- Daily, Weekly, and Monthly ready-review counts retained in a compact card layout.
+- Add Word action remains available with its existing behavior.
+- No other application screen or Settings behavior was changed in this checkpoint.
 
 ### Current implementation status
 - Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
@@ -37,6 +39,11 @@
 
 ## Historical checkpoints
 
+v5.80 — Main-branch integration of multiple-meaning and review hardening.
+v5.79 — Settings theme list compact + program color cleanup.
+v5.78 — Multiple-Meaning Import/Merge + Duplicate Cleanup Hardening.
+v5.77 — Global Same-Day Review Exclusion.
+v5.74 — Review Help + About + Library category selection.
 v5.73 — Large-library review/performance + Quiz UX hardening.
 v5.72 — previous performance checkpoint before 30-card review batching and bulk Progress/Statistics joins.
 v5.71 — Legacy restore + Quiz mode + update-path hardening.
