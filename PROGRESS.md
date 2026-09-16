@@ -12,7 +12,10 @@
 - CI version metadata and artifact names are aligned to 5.80/80.
 - CI debug builds now use the same pinned public Android development test key on every runner instead of silently falling back to a runner-generated debug key, preventing future update-install failures caused by changing APK signatures.
 - The public Android development test key is used only for CI debug artifacts; production/release signing remains separate.
-- Multiple-meaning import, duplicate cleanup, Library multi-meaning display, and concept-edit preservation remain covered by the previous hardening checkpoint.
+- Add Word and Bulk Import use the same Concept-level multiple-meaning contract: an existing normalized source receives a new distinct target meaning on the existing Concept; an exact source+target repeat is rejected without adding another row.
+- Source and target duplicate checks are recalculated from actual Content text, so stale legacy canonical keys cannot bypass merge/deduplication.
+- The Library loads every target-language Content for each Concept and renders all meanings.
+- The `تکراری‌ها` action finds duplicate source words, merges all distinct meanings into the surviving Concept, removes repeated meanings, and soft-deletes duplicate Concepts.
 - Same-day global review exclusion remains enforced at selection/answer boundaries as part of the review hardening path.
 - CI now verifies the APK certificate fingerprint directly against the exact keystore certificate used for the build.
 - CI remains the authoritative build/test gate.
