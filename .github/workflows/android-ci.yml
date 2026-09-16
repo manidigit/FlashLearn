@@ -108,18 +108,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          CREATE_FILE="domain/src/main/java/com/flashlearn/domain/usecase/UseCases.kt"
           IMPORT_FILE="domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt"
           LIBRARY_VM="app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt"
           DUPLICATE_FILE="domain/src/main/java/com/flashlearn/domain/usecase/DuplicateConceptUseCases.kt"
-          for required in "$IMPORT_FILE" "$LIBRARY_VM" "$DUPLICATE_FILE"; do
+          for required in "$CREATE_FILE" "$IMPORT_FILE" "$LIBRARY_VM" "$DUPLICATE_FILE"; do
             test -s "$required"
           done
+          grep -Fq 'val mergeExistingSource: Boolean = true' "$CREATE_FILE"
+          grep -Fq 'computeCanonicalKey(it.text) == targetKey' "$CREATE_FILE"
+          grep -Fq 'computeCanonicalKey(it.text) } == sourceKey' "$CREATE_FILE"
           grep -Fq 'val newTranslations' "$IMPORT_FILE"
           grep -Fq 'computeCanonicalKey(it) !in existingKeys' "$IMPORT_FILE"
           grep -Fq 'val targets: List<Content>' "$LIBRARY_VM"
           grep -Fq 'languageCode==targetLanguage' "$LIBRARY_VM" || grep -Fq 'languageCode == targetLanguage' "$LIBRARY_VM"
           grep -Fq 'class RemoveExactDuplicateConceptsUseCase' "$DUPLICATE_FILE"
-          grep -Fq 'existingTargetKeys.add(content.canonicalKey)' "$DUPLICATE_FILE"
+          grep -Fq 'existingTargetKeys.add(targetKey)' "$DUPLICATE_FILE"
           grep -Fq 'softDelete(duplicate.id' "$DUPLICATE_FILE"
           echo "Multiple-meaning merge and duplicate cleanup implementation verified."
       - name: Stage artifacts
