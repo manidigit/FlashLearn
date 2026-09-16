@@ -80,6 +80,19 @@ class FullBackupRestoreTest {
         assertTrue(result.issues.any { it.contains("DUPLICATE_ATTEMPT:reviewHistory") })
     }
 
+    @Test fun fullRestoreAcceptsKnownV574TypedFullShape() = runBlocking {
+        val original = createConcept(CreateConceptCommand("hola", "سلام"))
+        val json = JSONObject(backup.exportFull())
+        // v5.74 schema-2 FULL exports were produced by combining vocabulary + progress
+        // and therefore contained exactly the historical 12-section shape.
+        listOf("conceptTags", "settings", "achievements", "parserMetadata", "reviewQueue", "conceptReferences")
+            .forEach(json::remove)
+
+        val result = backup.restoreFull(json.toString())
+
+        assertTrue(result.issues.toString(), result.issues.isEmpty())
+        assertNotNull(db.conceptDao().getById(original))
+    }
 
     @Test fun fullBackupRoundTripsEveryCurrentEntityAndRelationship() = runBlocking {
         val categoryId = java.util.UUID.randomUUID()
