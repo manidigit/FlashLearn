@@ -1,3 +1,5 @@
+import java.time.LocalDate
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -23,7 +25,7 @@ android {
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"AI-assisted development\"")
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"${java.time.LocalDate.now()}\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"${LocalDate.now()}\"")
     }
 
     signingConfigs {
