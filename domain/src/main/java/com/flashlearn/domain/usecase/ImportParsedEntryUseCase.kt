@@ -37,7 +37,7 @@ class ImportParsedEntryUseCase @Inject constructor(
         val activeIds = conceptRepository.getAllActive().map { it.id }.toSet()
         val existingSource = contentRepository.getAll().firstOrNull { it.conceptId in activeIds && it.languageCode == sourceLanguage && it.canonicalKey == sourceKey }
         val conceptId = if (existingSource == null || mode == ImportMode.ADD_NEW) {
-            createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType()))
+            createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType(), mergeExistingSource = false))
         } else existingSource.conceptId
 
         val existingTranslations = contentRepository.findAll(conceptId, targetLanguage)
