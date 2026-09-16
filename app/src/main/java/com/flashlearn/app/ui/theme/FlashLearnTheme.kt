@@ -2,15 +2,13 @@ package com.flashlearn.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.AccentColor
@@ -48,63 +46,90 @@ fun FlashLearnTheme(
         AppearanceMode.DARK -> true
     }
 
-    val colors = if (dark) {
-        darkColorScheme(
-            primary = accentDark,
-            onPrimary = if (spec.id == "luxury") Color(0xFF211707) else Color.White,
-            secondary = Color(spec.darkSecondary),
-            background = Color(spec.darkBackground),
-            surface = Color(spec.darkSurface),
-            surfaceVariant = Color(spec.darkSurfaceVariant),
-            onSurface = Color(spec.darkOnSurface),
-            onSurfaceVariant = Color(spec.darkOnSurfaceVariant),
-            outline = Color(spec.darkOutline)
-        )
-    } else {
-        lightColorScheme(
-            primary = accentLight,
-            onPrimary = if (spec.id == "luxury") Color.White else Color.White,
-            secondary = Color(spec.lightSecondary),
-            background = Color(spec.lightBackground),
-            surface = Color(spec.lightSurface),
-            surfaceVariant = Color(spec.lightSurfaceVariant),
-            onSurface = Color(spec.lightOnSurface),
-            onSurfaceVariant = Color(spec.lightOnSurfaceVariant),
-            outline = Color(spec.lightOutline)
-        )
-    }
+    val primary = if (dark) accentDark else accentLight
+    val colors = if (dark) darkColorScheme(
+        primary = primary,
+        onPrimary = if (spec.id == "luxury") Color(0xFF211707) else Color.White,
+        secondary = Color(spec.darkSecondary),
+        background = Color(spec.darkBackground),
+        surface = Color(spec.darkSurface),
+        surfaceVariant = Color(spec.darkSurfaceVariant),
+        onSurface = Color(spec.darkOnSurface),
+        onSurfaceVariant = Color(spec.darkOnSurfaceVariant),
+        outline = Color(spec.darkOutline),
+        error = Color(0xFFFF8A9A)
+    ) else lightColorScheme(
+        primary = primary,
+        onPrimary = Color.White,
+        secondary = Color(spec.lightSecondary),
+        background = Color(spec.lightBackground),
+        surface = Color(spec.lightSurface),
+        surfaceVariant = Color(spec.lightSurfaceVariant),
+        onSurface = Color(spec.lightOnSurface),
+        onSurfaceVariant = Color(spec.lightOnSurfaceVariant),
+        outline = Color(spec.lightOutline),
+        error = Color(0xFFD92D48)
+    )
 
     val base = Typography()
     val scale = spec.typographyScale
+    fun androidx.compose.ui.text.TextStyle.scaled(weight: FontWeight? = null) =
+        copy(fontSize = fontSize * scale, fontWeight = weight ?: fontWeight)
+
     val typography = Typography(
-        displayLarge = base.displayLarge.copy(fontSize = base.displayLarge.fontSize * scale, fontWeight = FontWeight.Bold),
-        displayMedium = base.displayMedium.copy(fontSize = base.displayMedium.fontSize * scale, fontWeight = FontWeight.Bold),
-        displaySmall = base.displaySmall.copy(fontSize = base.displaySmall.fontSize * scale, fontWeight = FontWeight.Bold),
-        headlineLarge = base.headlineLarge.copy(fontSize = base.headlineLarge.fontSize * scale, fontWeight = FontWeight.Bold),
-        headlineMedium = base.headlineMedium.copy(fontSize = base.headlineMedium.fontSize * scale, fontWeight = FontWeight.Bold),
-        headlineSmall = base.headlineSmall.copy(fontSize = base.headlineSmall.fontSize * scale, fontWeight = FontWeight.SemiBold),
-        titleLarge = base.titleLarge.copy(fontSize = base.titleLarge.fontSize * scale, fontWeight = FontWeight.Bold),
-        titleMedium = base.titleMedium.copy(fontSize = base.titleMedium.fontSize * scale, fontWeight = FontWeight.SemiBold),
-        titleSmall = base.titleSmall.copy(fontSize = base.titleSmall.fontSize * scale, fontWeight = FontWeight.Medium),
-        bodyLarge = base.bodyLarge.copy(fontSize = base.bodyLarge.fontSize * scale),
-        bodyMedium = base.bodyMedium.copy(fontSize = base.bodyMedium.fontSize * scale),
-        bodySmall = base.bodySmall.copy(fontSize = base.bodySmall.fontSize * scale),
-        labelLarge = base.labelLarge.copy(fontSize = base.labelLarge.fontSize * scale, fontWeight = FontWeight.SemiBold),
-        labelMedium = base.labelMedium.copy(fontSize = base.labelMedium.fontSize * scale),
-        labelSmall = base.labelSmall.copy(fontSize = base.labelSmall.fontSize * scale)
+        displayLarge = base.displayLarge.scaled(FontWeight.Bold),
+        displayMedium = base.displayMedium.scaled(FontWeight.Bold),
+        displaySmall = base.displaySmall.scaled(FontWeight.Bold),
+        headlineLarge = base.headlineLarge.scaled(FontWeight.Bold),
+        headlineMedium = base.headlineMedium.scaled(FontWeight.Bold),
+        headlineSmall = base.headlineSmall.scaled(FontWeight.SemiBold),
+        titleLarge = base.titleLarge.scaled(FontWeight.Bold),
+        titleMedium = base.titleMedium.scaled(FontWeight.SemiBold),
+        titleSmall = base.titleSmall.scaled(FontWeight.Medium),
+        bodyLarge = base.bodyLarge.scaled(),
+        bodyMedium = base.bodyMedium.scaled(),
+        bodySmall = base.bodySmall.scaled(),
+        labelLarge = base.labelLarge.scaled(FontWeight.SemiBold),
+        labelMedium = base.labelMedium.scaled(),
+        labelSmall = base.labelSmall.scaled()
     )
 
     val tokens = FlashLearnThemeTokens(
+        background = if (dark) Color(spec.darkBackground) else Color(spec.lightBackground),
+        surface = if (dark) Color(spec.darkSurface) else Color(spec.lightSurface),
+        surfaceVariant = if (dark) Color(spec.darkSurfaceVariant) else Color(spec.lightSurfaceVariant),
         cardColor = if (dark) Color(spec.darkCard) else Color(spec.lightCard),
+        elevatedCardColor = if (dark) Color(spec.darkCard).compositeOver(Color.White) else Color(spec.lightCard),
+        primary = primary,
+        secondary = if (dark) Color(spec.darkSecondary) else Color(spec.lightSecondary),
+        onSurface = if (dark) Color(spec.darkOnSurface) else Color(spec.lightOnSurface),
+        onSurfaceVariant = if (dark) Color(spec.darkOnSurfaceVariant) else Color(spec.lightOnSurfaceVariant),
         outlineColor = if (dark) Color(spec.darkOutline) else Color(spec.lightOutline),
+        dividerColor = (if (dark) Color(spec.darkOutline) else Color(spec.lightOutline)).copy(alpha = .65f),
+        success = if (dark) Color(0xFF52D49A) else Color(0xFF138A5B),
+        warning = if (dark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+        error = colors.error,
         gradientStart = if (dark) Color(spec.darkPrimary) else Color(spec.gradientStart),
         gradientEnd = if (dark) Color(spec.darkSecondary) else Color(spec.gradientEnd),
         iconStyle = if (spec.iconStyle.equals("filled", true)) IconStyle.FILLED else IconStyle.OUTLINED,
         elevationScale = spec.elevationScale,
-        densityScale = spec.densityScale
+        densityScale = spec.densityScale,
+        typographyScale = spec.typographyScale,
+        cornerSmall = spec.cornerSmall.dp,
+        cornerMedium = spec.cornerMedium.dp,
+        cornerLarge = spec.cornerLarge.dp
     )
 
-    CompositionLocalProvider(LocalFlashLearnThemeTokens provides tokens) {
+    val baseDensity = LocalDensity.current
+    val themedDensity = Density(
+        density = baseDensity.density * spec.densityScale,
+        fontScale = baseDensity.fontScale
+    )
+
+    CompositionLocalProvider(
+        LocalFlashLearnThemeTokens provides tokens,
+        LocalDensity provides themedDensity
+    ) {
         MaterialTheme(
             colorScheme = colors,
             typography = typography,
@@ -118,3 +143,5 @@ fun FlashLearnTheme(
         )
     }
 }
+
+private fun Color.compositeOver(background: Color): Color = this.copy(alpha = 1f)
