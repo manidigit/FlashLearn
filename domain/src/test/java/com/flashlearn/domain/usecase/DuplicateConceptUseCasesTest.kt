@@ -32,44 +32,31 @@ class DuplicateConceptUseCasesTest {
         override suspend fun getAll() = values.toList()
     }
 
-    private class Db : FlashLearnDatabase {
-        override suspend fun <T> withTransaction(block: suspend () -> T): T = block()
-    }
+    private class Db : FlashLearnDatabase { override suspend fun <T> withTransaction(block: suspend () -> T): T = block() }
 
     private fun concept(id: UUID, createdAt: Instant) = Concept(id, EntryType.WORD, null, false, true, createdAt, createdAt)
     private fun content(conceptId: UUID, language: String, text: String, index: Int = 0) = Content(UUID.randomUUID(), conceptId, language, text, computeCanonicalKey(text), translationIndex = index)
 
     @Test
     fun exactDuplicateConcepts_keepOne_andPreserveAdditionalMeaning() = runBlocking {
-        val first = UUID.randomUUID()
-        val duplicate = UUID.randomUUID()
+        val first = UUID.randomUUID(); val duplicate = UUID.randomUUID()
         val concepts = Concepts(listOf(concept(first, now.minusSeconds(60)), concept(duplicate, now)))
         val contents = Contents(listOf(
             content(first, "es", "cura"), content(first, "fa", "کشیش"),
             content(duplicate, "es", "cura"), content(duplicate, "fa", "کشیش"), content(duplicate, "fa", "درمان", 1)
         ))
-
         val removed = RemoveExactDuplicateConceptsUseCase(concepts, contents, Db())("es", "fa")
-
-        assertEquals(1, removed)
-        assertEquals(true, concepts.values[first]?.active)
-        assertFalse(concepts.values[duplicate]?.active ?: true)
+        assertEquals(1, removed); assertEquals(true, concepts.values[first]?.active); assertFalse(concepts.values[duplicate]?.active ?: true)
         assertEquals(listOf("کشیش", "درمان"), contents.findAll(first, "fa").map { it.text })
     }
 
     @Test
-    fun sameSourceDifferentMeaning_isNotRemoved() = runBlocking {
-        val first = UUID.randomUUID()
-        val second = UUID.randomUUID()
+    fun sameSourceDifferentMeaning_consolidatesIntoOneConcept() = runBlocking {
+        val first = UUID.randomUUID(); val second = UUID.randomUUID()
         val concepts = Concepts(listOf(concept(first, now.minusSeconds(60)), concept(second, now)))
-        val contents = Contents(listOf(
-            content(first, "es", "cura"), content(first, "fa", "کشیش"),
-            content(second, "es", "cura"), content(second, "fa", "درمان")
-        ))
-
+        val contents = Contents(listOf(content(first, "es", "cura"), content(first, "fa", "کشیش"), content(second, "es", "cura"), content(second, "fa", "درمان")))
         val removed = RemoveExactDuplicateConceptsUseCase(concepts, contents, Db())("es", "fa")
-
-        assertEquals(0, removed)
-        assertEquals(2, concepts.values.values.count { it.active })
+        assertEquals(1, removed); assertEquals(1, concepts.values.values.count { it.active })
+        assertEquals(listOf("کشیش", "درمان"), contents.findAll(first, "fa").map { it.text })
     }
 }
