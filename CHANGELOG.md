@@ -1,5 +1,13 @@
 # FlashLearn Changelog
 
+## v5.82 — Add Word Method redesign + Restore reliability
+- Redesigned only the Add Word Method page toward the supplied minimal reference: three compact method cards and a compact bottom actions/statistics area.
+- Kept Single Words, Bulk Words, and Restore Backup actions intact.
+- Added live library count, Refresh, and Find Duplicates actions to the Add Word Method page without changing their underlying behavior.
+- Hardened Restore input handling for UTF-8 BOM/leading whitespace and routed legacy FULL backups explicitly to the legacy restore implementation.
+- Made current-schema FULL restore tolerant of already-existing relation/tag/variant rows so restoring the same backup does not fail on duplicate-link inserts.
+- Updated application identity to v5.82 / versionCode 82.
+
 ## v5.81 — Minimal Home Dashboard + Learning Statistics
 - Simplified the Home screen header to a clean greeting and language flags, reducing visual clutter at the top.
 - Replaced the large intermediate Home content with a compact learning-statistics summary showing total words, practiced words, unpracticed words, and learned words.

@@ -1,15 +1,16 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.81 — Minimal Home dashboard + learning statistics
-**Application identity:** `versionName = 5.81`, `versionCode = 81`
+## Current checkpoint: v5.82 — Add Word Method redesign + Restore reliability
+**Application identity:** `versionName = 5.82`, `versionCode = 82`
 
-### v5.81 checkpoint changes
-- Home header simplified to the minimal greeting + language flags layout.
-- Large unused Home space replaced with a compact statistics summary: total words, practiced words, unpracticed words, and learned words.
-- Streak card retained.
-- Daily, Weekly, and Monthly ready-review counts retained in a compact card layout.
-- Add Word action remains available with its existing behavior.
-- No other application screen or Settings behavior was changed in this checkpoint.
+### v5.82 checkpoint changes
+- Add Word Method page follows the supplied minimal reference: three method cards for Single Words, Bulk Words, and Restore Backup.
+- Compact bottom area shows the current total vocabulary count plus Refresh and Find Duplicates actions.
+- Existing navigation/actions remain wired to their previous functionality.
+- Restore input strips UTF-8 BOM/leading whitespace before JSON parsing.
+- Legacy FULL backups are routed explicitly to the legacy restore implementation.
+- Current-schema FULL restore no longer fails the whole transaction when already-existing concept-tag, variant, or relation rows are encountered during repeated restore.
+- No unrelated screens or features were changed in this checkpoint.
 
 ### Current implementation status
 - Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
@@ -39,6 +40,7 @@
 
 ## Historical checkpoints
 
+v5.81 — Minimal Home dashboard + learning statistics.
 v5.80 — Main-branch integration of multiple-meaning and review hardening.
 v5.79 — Settings theme list compact + program color cleanup.
 v5.78 — Multiple-Meaning Import/Merge + Duplicate Cleanup Hardening.

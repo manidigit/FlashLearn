@@ -8,8 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
                 AppRoutes.NEEDS_REVIEW -> NeedsReviewScreen(needsReviewViewModel) { appViewModel.navigate(AppRoutes.HOME) }
                 AppRoutes.ABOUT -> AboutScreen { appViewModel.navigate(AppRoutes.SETTINGS) }
                 AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
-                AppRoutes.ADD_WORD -> AddWordMethodScreen(onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onSingleWord = { appViewModel.navigate(AppRoutes.ADD_WORD_FORM) }, onBulkWords = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onRestoreBackup = { appViewModel.navigate(AppRoutes.BACKUP) })
+                AppRoutes.ADD_WORD -> AddWordMethodScreen(onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onSingleWord = { appViewModel.navigate(AppRoutes.ADD_WORD_FORM) }, onBulkWords = { appViewModel.navigate(AppRoutes.BULK_IMPORT) }, onRestoreBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, libraryState = libraryViewModel.state.value, onRefreshLibrary = { libraryViewModel.refresh() }, onFindDuplicates = { libraryViewModel.removeExactDuplicates() })
                 AppRoutes.ADD_WORD_FORM -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) })
                 AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
                 AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })

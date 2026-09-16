@@ -50,9 +50,13 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         pendingFile = null
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) scope.launch(Dispatchers.IO) { runCatching { context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }.onSuccess { json -> if (json.trimStart().startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.") }.onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطا"}") } }
+        if (uri != null) scope.launch(Dispatchers.IO) {
+            runCatching { context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
+                .map { it.removePrefix("\uFEFF").trimStart() }
+                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.") }
+                .onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطا"}") }
+        }
     }
-
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(Modifier.fillMaxWidth().height(56.dp)) {
             IconButton(onClick = onBack, enabled = !state.busy, modifier = Modifier.align(Alignment.CenterEnd)) { Icon(Icons.Outlined.ArrowBack, "بازگشت") }
@@ -61,7 +65,6 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 Text("حفظ واژه‌ها، پیشرفت و تنظیمات", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = BackupPurple.copy(alpha = .09f))) {
             Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(Modifier.size(56.dp), shape = RoundedCornerShape(18.dp), color = BackupPurple.copy(alpha = .16f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.SettingsBackupRestore, null, tint = BackupPurple, modifier = Modifier.size(30.dp)) } }
@@ -72,7 +75,6 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 }
             }
         }
-
         Text("نوع پشتیبان", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BackupType.entries.forEach { type ->
@@ -80,22 +82,15 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 FilterChip(selected = false, onClick = { viewModel.export(type) }, enabled = !state.busy, label = { Text(label) }, leadingIcon = { Icon(if (type == BackupType.VOCABULARY) Icons.Outlined.Backup else Icons.Outlined.SettingsBackupRestore, null) })
             }
         }
-
         Button(onClick = { open.launch(arrayOf("application/json", "text/plain", "*/*")) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(58.dp), shape = RoundedCornerShape(29.dp), colors = ButtonDefaults.buttonColors(containerColor = BackupPurple)) {
             Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(8.dp)); Text("انتخاب فایل برای Import / Restore", fontWeight = FontWeight.Bold)
         }
-
         Text("خروجی داده", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ExportFormat.values().forEach { format -> OutlinedButton(onClick = { viewModel.exportData(format) }, enabled = !state.busy, modifier = Modifier.weight(1f), shape = RoundedCornerShape(22.dp)) { Text(format.name) } }
         }
-
-        state.exportedJson?.let { json ->
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { Text("${state.exportedType.name} آماده است", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text("${json.length} نویسه", color = MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(6.dp)); Text("ذخیره JSON") } } }
-        }
-        state.exportedFile?.let { file ->
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { Text("خروجی ${state.exportedFormat?.name} آماده است", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(file.name, color = MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(6.dp)); Text("ذخیره فایل") } } }
-        }
+        state.exportedJson?.let { json -> Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { Text("${state.exportedType.name} آماده است", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text("${json.length} نویسه", color = MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(6.dp)); Text("ذخیره JSON") } } } }
+        state.exportedFile?.let { file -> Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { Text("خروجی ${state.exportedFormat?.name} آماده است", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(file.name, color = MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(6.dp)); Text("ذخیره فایل") } } } }
         if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         state.message?.let { Text(it, Modifier.fillMaxWidth(), color = if (it.contains("ناموفق") || it.contains("معتبر")) MaterialTheme.colorScheme.error else BackupGreen, textAlign = TextAlign.End) }
     }
