@@ -35,13 +35,15 @@ class ImportParsedEntryUseCase @Inject constructor(
 
         val sourceKey = computeCanonicalKey(source)
         val activeIds = conceptRepository.getAllActive().map { it.id }.toSet()
-        val existingSource = contentRepository.getAll().firstOrNull { it.conceptId in activeIds && it.languageCode == sourceLanguage && it.canonicalKey == sourceKey }
+        val existingSource = contentRepository.getAll().firstOrNull {
+            it.conceptId in activeIds && it.languageCode == sourceLanguage && computeCanonicalKey(it.text) == sourceKey
+        }
         val conceptId = if (existingSource == null || mode == ImportMode.ADD_NEW) {
             createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType(), mergeExistingSource = false))
         } else existingSource.conceptId
 
         val existingTranslations = contentRepository.findAll(conceptId, targetLanguage)
-        val existingKeys = existingTranslations.map { it.canonicalKey }.toSet()
+        val existingKeys = existingTranslations.map { computeCanonicalKey(it.text) }.toSet()
         var nextIndex = (existingTranslations.maxOfOrNull { it.translationIndex } ?: -1) + 1
         val newTranslations = if (existingSource == null || mode == ImportMode.ADD_NEW) translations.drop(1) else translations.filter { computeCanonicalKey(it) !in existingKeys }
         if (existingSource != null && mode == ImportMode.MERGE && newTranslations.isEmpty()) {
@@ -53,20 +55,21 @@ class ImportParsedEntryUseCase @Inject constructor(
         }
         if (existingSource != null && mode == ImportMode.UPDATE) {
             translations.filter { computeCanonicalKey(it) in existingKeys }.forEach { text ->
-                val existing = existingTranslations.first { it.canonicalKey == computeCanonicalKey(text) }
-                contentRepository.upsert(existing.copy(grammarNote = entry.grammarNote, possibleCorrection = correction))
+                val key = computeCanonicalKey(text)
+                val existing = existingTranslations.first { computeCanonicalKey(it.text) == key }
+                contentRepository.upsert(existing.copy(grammarNote = entry.grammarNote, possibleCorrection = correction, canonicalKey = key))
             }
         }
         val sourceContent = contentRepository.find(conceptId, sourceLanguage)
         if (sourceContent != null && (sourceContent.possibleCorrection != correction || sourceContent.grammarNote != entry.grammarNote || sourceContent.notes != extractPlainNotes(entry))) {
-            contentRepository.upsert(sourceContent.copy(possibleCorrection = correction, grammarNote = entry.grammarNote, notes = extractPlainNotes(entry)))
+            contentRepository.upsert(sourceContent.copy(possibleCorrection = correction, grammarNote = entry.grammarNote, notes = extractPlainNotes(entry), canonicalKey = sourceKey))
         }
         entry.relationships.forEach { relationship ->
             val label = relationship.label.trim().uppercase()
             val type = when { label.contains("DERIVED") || label.contains("مشتق") -> VocabularyRelationType.DERIVED_FROM; label.contains("USED") || label.contains("استفاده") -> VocabularyRelationType.USED_IN; label.contains("SYNON") || label.contains("مترادف") -> VocabularyRelationType.SYNONYM; else -> null }
             if (type != null) {
                 val targetKey = computeCanonicalKey(relationship.text)
-                val target = contentRepository.getAll().firstOrNull { it.languageCode == sourceLanguage && it.canonicalKey == targetKey }
+                val target = contentRepository.getAll().firstOrNull { it.languageCode == sourceLanguage && computeCanonicalKey(it.text) == targetKey }
                 relationRepository.insert(VocabularyRelation(UUID.randomUUID(), conceptId, target?.conceptId, type, if (target == null) relationship.text else null))
             }
         }
