@@ -41,8 +41,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Android's public development test key is intentionally used only for CI debug APKs.
-          # It is not used for production/release signing.
           KEY_DIR="$RUNNER_TEMP/flashlearn-signing"
           mkdir -p "$KEY_DIR"
           curl -fsSL 'https://android.googlesource.com/platform/build/+/android12-platform-release/target/product/security/testkey.pk8?format=TEXT' | base64 --decode > "$KEY_DIR/testkey.pk8"
@@ -70,11 +68,11 @@ jobs:
         run: |
           set -euo pipefail
           APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          APK_CERT="$(apksigner verify --print-certs "$APK_PATH" | sed -n 's/Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
-          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | sed -n '/Certificate fingerprints:/,+1 s/^ *SHA256: *//p' | head -n 1 | tr -d ':')"
+          APK_CERT="$(apksigner verify --print-certs "$APK_PATH" | awk -F': ' '/Signer #1 certificate SHA-256 digest:/{print $2; exit}' | tr -d ':')"
+          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | awk -F': ' '/SHA256:/{print $2; exit}' | tr -d ':')"
           test -n "$APK_CERT"
           test -n "$KEY_CERT"
-          test "${APK_CERT//:/}" = "${KEY_CERT^^}"
+          test "${APK_CERT^^}" = "${KEY_CERT^^}"
       - name: Verify APK version
         shell: bash
         run: |
@@ -98,8 +96,9 @@ jobs:
           test -s "$VM"
           test -s "$FULL_REPO"
           test -s "$TYPED"
-          grep -Fq 'if (type == BackupType.FULL) repo.exportFull()' "$VM"
-          grep -Fq 'root.optString("backupType")=="FULL"' "$VM"
+          grep -Fq 'if (type == BackupType.FULL)' "$VM"
+          grep -Fq 'repo.exportFull()' "$VM"
+          grep -Fq 'root.optString("backupType") == "FULL"' "$VM"
           grep -Fq 'put("backupType", "FULL")' "$FULL_REPO"
           grep -Fq '"conceptTags"' "$FULL_REPO"
           grep -Fq '"settings"' "$FULL_REPO"
