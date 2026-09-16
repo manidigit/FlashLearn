@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.78"
-  FL_VERSION_CODE: "78"
+  FL_VERSION_NAME: "5.80"
+  FL_VERSION_CODE: "80"
 
 jobs:
   build-and-test:
@@ -37,6 +37,26 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+      - name: Prepare stable CI debug signing
+        shell: bash
+        env:
+          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
+          FL_DEBUG_STORE_PASSWORD: ${{ secrets.FL_DEBUG_STORE_PASSWORD }}
+          FL_DEBUG_KEY_ALIAS: ${{ secrets.FL_DEBUG_KEY_ALIAS }}
+          FL_DEBUG_KEY_PASSWORD: ${{ secrets.FL_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$FL_DEBUG_KEYSTORE_B64"
+          test -n "$FL_DEBUG_STORE_PASSWORD"
+          test -n "$FL_DEBUG_KEY_ALIAS"
+          test -n "$FL_DEBUG_KEY_PASSWORD"
+          KEYSTORE_PATH="$RUNNER_TEMP/flashlearn-debug.keystore"
+          printf '%s' "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          echo "FL_DEBUG_STORE_FILE=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_STORE_PASSWORD=$FL_DEBUG_STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_ALIAS=$FL_DEBUG_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_PASSWORD=$FL_DEBUG_KEY_PASSWORD" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -46,6 +66,16 @@ jobs:
         run: gradle --no-daemon assembleDebug
       - name: Verify APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify stable APK signing identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          APK_CERT="$(apksigner verify --print-certs "$APK_PATH" | sed -n 's/Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | sed -n 's/^Certificate fingerprints:$/&/p' -A 1 | sed -n 's/^ *SHA256: *//p' | head -n 1 | tr -d ':')"
+          test -n "$APK_CERT"
+          test -n "$KEY_CERT"
+          test "${APK_CERT//:/}" = "${KEY_CERT^^}"
       - name: Verify APK version
         shell: bash
         run: |
@@ -59,6 +89,23 @@ jobs:
           test "$VERSION_NAME" = "${FL_VERSION_NAME}"
       - name: Unit tests
         run: gradle --no-daemon test
+      - name: Verify backup compatibility implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          VM="app/src/main/java/com/flashlearn/app/ui/backup/BackupViewModel.kt"
+          FULL_REPO="data/src/main/java/com/flashlearn/data/backup/RoomBackupRepository.kt"
+          TYPED="data/src/main/java/com/flashlearn/data/backup/TypedBackupRepository.kt"
+          test -s "$VM"
+          test -s "$FULL_REPO"
+          test -s "$TYPED"
+          grep -Fq 'if (type == BackupType.FULL) repo.exportFull()' "$VM"
+          grep -Fq 'root.optString("backupType")=="FULL"' "$VM"
+          grep -Fq 'put("backupType", "FULL")' "$FULL_REPO"
+          grep -Fq '"conceptTags"' "$FULL_REPO"
+          grep -Fq '"settings"' "$FULL_REPO"
+          grep -Fq '"reviewQueue"' "$FULL_REPO"
+          echo "Current FULL backup export/restore compatibility verified."
       - name: Verify multiple-meaning merge implementation
         shell: bash
         run: |
@@ -74,8 +121,7 @@ jobs:
           grep -Fq 'val targets: List<Content>' "$LIBRARY_VM"
           grep -Fq 'languageCode==targetLanguage' "$LIBRARY_VM" || grep -Fq 'languageCode == targetLanguage' "$LIBRARY_VM"
           grep -Fq 'class RemoveExactDuplicateConceptsUseCase' "$DUPLICATE_FILE"
-          grep -Fq 'val targetKey = computeCanonicalKey(content.text)' "$DUPLICATE_FILE"
-          grep -Fq 'existingTargetKeys.add(targetKey)' "$DUPLICATE_FILE"
+          grep -Fq 'existingTargetKeys.add(content.canonicalKey)' "$DUPLICATE_FILE"
           grep -Fq 'softDelete(duplicate.id' "$DUPLICATE_FILE"
           echo "Multiple-meaning merge and duplicate cleanup implementation verified."
       - name: Stage artifacts
@@ -85,11 +131,11 @@ jobs:
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v5.78-debug-apk
-          path: dist/FlashLearn_v5.78_DEBUG.apk
-          if-no-files-found: ignore
+          name: flashlearn-v5.80-debug-apk
+          path: dist/FlashLearn_v5.80_DEBUG.apk
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v5.78-source
-          path: dist/FlashLearn_v5.78_SOURCE.zip
+          name: flashlearn-v5.80-source
+          path: dist/FlashLearn_v5.80_SOURCE.zip
           if-no-files-found: error
