@@ -5,6 +5,11 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
+val appBuildDate = java.text.SimpleDateFormat(
+    "yyyy-MM-dd'T'HH:mm:ssXXX",
+    java.util.Locale.US
+).format(java.util.Date())
+
 android {
     namespace = "com.flashlearn.app"
     compileSdk = 34
@@ -17,7 +22,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"${java.text.SimpleDateFormat(\"yyyy-MM-dd'T'HH:mm:ssXXX\", java.util.Locale.US).format(java.util.Date())}\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"$appBuildDate\"")
         buildConfigField("String", "APP_DATABASE", "\"Room / SQLite\"")
         buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
         buildConfigField("String", "APP_AUTHOR", "\"ManiDigit\"")
@@ -42,19 +47,32 @@ android {
     }
     buildTypes {
         getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
-        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
     }
     buildFeatures {
         compose = true
         buildConfig = true
     }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.4"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
-    implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":database"))
+    implementation(project(":core"))
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
