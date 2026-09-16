@@ -4,6 +4,7 @@ import com.flashlearn.domain.algorithm.calculateDifficulty
 import com.flashlearn.domain.algorithm.calculateLearningTransition
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
+import com.flashlearn.domain.settings.SettingsKeys
 import java.time.Instant
 import java.time.ZoneId
 import java.text.Normalizer
@@ -71,7 +72,12 @@ class CreateConceptUseCase @Inject constructor(
     }
 }
 
-data class UpdateConceptCommand(val conceptId: UUID, val sourceText: String, val targetText: String, val notes: String? = null, val pronunciation: String? = null, val example: String? = null, val entryType: EntryType? = null, val categoryId: UUID? = null, val preserveCategory: Boolean = true)
+data class UpdateConceptCommand(
+    val conceptId: UUID, val sourceText: String, val targetText: String,
+    val notes: String? = null, val pronunciation: String? = null, val example: String? = null,
+    val entryType: EntryType? = null, val categoryId: UUID? = null, val preserveCategory: Boolean = true,
+    val sourceLanguage: String = "es", val targetLanguage: String = "fa"
+)
 
 class ToggleFavoriteUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val database: FlashLearnDatabase) {
     suspend operator fun invoke(conceptId: UUID): Boolean = database.withTransaction { val concept = conceptRepository.get(conceptId) ?: error("Concept not found: $conceptId"); val updated = concept.copy(favorite = !concept.favorite, updatedAt = Instant.now()); conceptRepository.update(updated); updated.favorite }
@@ -80,14 +86,66 @@ class ToggleFavoriteUseCase @Inject constructor(private val conceptRepository: C
 class UpdateConceptUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val contentRepository: ContentRepository, private val database: FlashLearnDatabase) {
     suspend operator fun invoke(command: UpdateConceptCommand): UUID = database.withTransaction {
         val concept = conceptRepository.get(command.conceptId) ?: error("Concept not found: ${command.conceptId}")
-        val sourceKey = computeCanonicalKey(command.sourceText); val targetKey = computeCanonicalKey(command.targetText)
-        require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
-        val duplicate = conceptRepository.getAllActive().asSequence().filter { it.id != command.conceptId }.any { other -> contentRepository.find(other.id, "es")?.canonicalKey == sourceKey && contentRepository.find(other.id, "fa")?.canonicalKey == targetKey }
+        require(command.sourceLanguage.isNotBlank() && command.targetLanguage.isNotBlank() && command.sourceLanguage != command.targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
+        val sourceKey = computeCanonicalKey(command.sourceText)
+        val requestedTranslations = command.targetText
+            .split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinctBy(::computeCanonicalKey)
+        require(sourceKey.isNotBlank() && requestedTranslations.isNotEmpty()) { "متن واژه نمی‌تواند خالی باشد" }
+
+        val activeConcepts = conceptRepository.getAllActive().filter { it.id != command.conceptId }
+        val requestedKeys = requestedTranslations.map(::computeCanonicalKey).toSet()
+        val duplicate = activeConcepts.any { other ->
+            contentRepository.find(other.id, command.sourceLanguage)?.canonicalKey == sourceKey &&
+                contentRepository.findAll(other.id, command.targetLanguage).any { it.canonicalKey in requestedKeys }
+        }
         if (duplicate) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
-        val now = Instant.now(); conceptRepository.update(concept.copy(entryType = command.entryType ?: concept.entryType, categoryId = if (command.preserveCategory) concept.categoryId else command.categoryId, updatedAt = now))
-        val source = contentRepository.find(command.conceptId, "es"); val target = contentRepository.find(command.conceptId, "fa")
-        contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, "es", command.sourceText, computeCanonicalKey(command.sourceText), command.notes, command.pronunciation, command.example))
-        contentRepository.upsert(Content(target?.id ?: UUID.randomUUID(), command.conceptId, "fa", command.targetText, computeCanonicalKey(command.targetText))); command.conceptId
+
+        val now = Instant.now()
+        conceptRepository.update(concept.copy(
+            entryType = command.entryType ?: concept.entryType,
+            categoryId = if (command.preserveCategory) concept.categoryId else command.categoryId,
+            updatedAt = now
+        ))
+
+        val source = contentRepository.find(command.conceptId, command.sourceLanguage)
+        contentRepository.upsert(Content(
+            source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage,
+            command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example,
+            translationIndex = source?.translationIndex ?: 0,
+            grammarNote = source?.grammarNote,
+            possibleCorrection = source?.possibleCorrection
+        ))
+
+        val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage)
+        val firstRequested = requestedTranslations.first()
+        val firstKey = computeCanonicalKey(firstRequested)
+        val firstExisting = existingTranslations.firstOrNull()
+        contentRepository.upsert(Content(
+            firstExisting?.id ?: UUID.randomUUID(), command.conceptId, command.targetLanguage,
+            firstRequested, firstKey,
+            translationIndex = firstExisting?.translationIndex ?: 0,
+            grammarNote = firstExisting?.grammarNote,
+            possibleCorrection = firstExisting?.possibleCorrection
+        ))
+
+        val existingKeysAfterFirst = existingTranslations.drop(1).map { it.canonicalKey }.toMutableSet()
+        var nextIndex = maxOf(
+            existingTranslations.maxOfOrNull { it.translationIndex } ?: 0,
+            firstExisting?.translationIndex ?: 0
+        ) + 1
+        requestedTranslations.drop(1).forEach { text ->
+            val key = computeCanonicalKey(text)
+            if (existingKeysAfterFirst.add(key) && key != firstKey) {
+                contentRepository.insertTranslation(Content(
+                    UUID.randomUUID(), command.conceptId, command.targetLanguage, text, key,
+                    translationIndex = nextIndex++
+                ))
+            }
+        }
+        command.conceptId
     }
 }
 
@@ -121,7 +179,7 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         if (alreadyPracticedToday) error("Concept has already been practiced today: ${request.conceptId}")
         if (request.reviewType != ReviewType.LEARNED) {
             val dueAt = learning.nextReviewAt
-            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt)")
+            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt")
         }
         val transition = calculateLearningTransition(learning, request.isCorrect, request.reviewedAt)
         val threshold = settingsRepository.getInt("threshold_difficulty", default = 3)
