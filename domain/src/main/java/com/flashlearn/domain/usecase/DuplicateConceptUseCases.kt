@@ -1,6 +1,7 @@
 package com.flashlearn.domain.usecase
 
 import com.flashlearn.domain.model.Content
+import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.FlashLearnDatabase
@@ -11,8 +12,8 @@ import javax.inject.Inject
 /**
  * Cleans the active library by source word. One active concept survives for each
  * normalized source; every distinct target meaning is preserved on that concept.
- * Comparisons are always derived from Content.text, not the persisted canonicalKey,
- * so legacy/imported rows with stale canonical keys are cleaned too.
+ * Comparisons are derived from Content.text rather than persisted canonicalKey so
+ * legacy/imported rows with stale canonical keys are cleaned too.
  */
 class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
@@ -28,7 +29,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
         if (activeConcepts.size < 2) return@withTransaction 0
 
         val contentsByConcept = contentRepository.getAll().groupBy(Content::conceptId)
-        val groups = activeConcepts
+        val groups: Collection<List<Concept>> = activeConcepts
             .mapNotNull { concept ->
                 val source = contentsByConcept[concept.id].orEmpty()
                     .firstOrNull { it.languageCode == sourceLanguage && it.text.isNotBlank() }
@@ -40,8 +41,8 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
 
         var removed = 0
         for (group in groups) {
-            val ordered = group.sortedWith(compareBy<Any> { (it as com.flashlearn.domain.model.Concept).createdAt }.thenBy { (it as com.flashlearn.domain.model.Concept).id.toString() })
-            val survivor = ordered.first() as com.flashlearn.domain.model.Concept
+            val ordered = group.sortedWith(compareBy<Concept> { it.createdAt }.thenBy { it.id.toString() })
+            val survivor = ordered.first()
             val survivorTargets = contentRepository.findAll(survivor.id, targetLanguage)
                 .sortedBy { it.translationIndex }
             val existingTargetKeys = survivorTargets
@@ -50,8 +51,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
                 .toMutableSet()
             var nextIndex = (survivorTargets.maxOfOrNull { it.translationIndex } ?: -1) + 1
 
-            ordered.drop(1).forEach { rawDuplicate ->
-                val duplicate = rawDuplicate as com.flashlearn.domain.model.Concept
+            ordered.drop(1).forEach { duplicate ->
                 contentsByConcept[duplicate.id].orEmpty()
                     .asSequence()
                     .filter { it.languageCode == targetLanguage && it.text.isNotBlank() }
