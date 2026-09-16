@@ -16,7 +16,8 @@ data class CreateConceptCommand(
     val sourceLanguage: String = "es", val targetLanguage: String = "fa",
     val categoryId: UUID? = null, val notes: String? = null,
     val pronunciation: String? = null, val example: String? = null,
-    val entryType: EntryType = EntryType.WORD, val tags: List<UUID> = emptyList()
+    val entryType: EntryType = EntryType.WORD, val tags: List<UUID> = emptyList(),
+    val mergeExistingSource: Boolean = true
 )
 
 data class SubmitReviewAnswerRequest(
@@ -49,15 +50,25 @@ class CreateConceptUseCase @Inject constructor(
     internal suspend fun createInTransaction(command: CreateConceptCommand): UUID {
         val sourceKey = computeCanonicalKey(command.sourceText); val targetKey = computeCanonicalKey(command.targetText)
         require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
-        val activeIds = conceptRepository.getAllActive().map { it.id }.toSet()
-        if (activeIds.isNotEmpty()) {
-            val duplicate = contentRepository.getAll().any { it.conceptId in activeIds && it.languageCode == command.sourceLanguage && it.canonicalKey == sourceKey && contentRepository.find(it.conceptId, command.targetLanguage)?.canonicalKey == targetKey }
-            if (duplicate) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
+        val activeConcepts = conceptRepository.getAllActive()
+        if (command.mergeExistingSource) {
+            val existing = activeConcepts.firstOrNull { concept ->
+                contentRepository.find(concept.id, command.sourceLanguage)?.canonicalKey == sourceKey
+            }
+            if (existing != null) {
+                val translations = contentRepository.findAll(existing.id, command.targetLanguage)
+                if (translations.any { it.canonicalKey == targetKey }) {
+                    throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
+                }
+                val nextIndex = (translations.maxOfOrNull { it.translationIndex } ?: -1) + 1
+                contentRepository.insertTranslation(Content(UUID.randomUUID(), existing.id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = nextIndex))
+                return existing.id
+            }
         }
         val id = UUID.randomUUID(); val now = Instant.now()
         conceptRepository.insert(Concept(id, command.entryType, command.categoryId, false, true, now, now))
         contentRepository.upsert(Content(UUID.randomUUID(), id, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example))
-        contentRepository.upsert(Content(UUID.randomUUID(), id, command.targetLanguage, command.targetText.trim(), targetKey))
+        contentRepository.upsert(Content(UUID.randomUUID(), id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = 0))
         learningStateRepository.upsert(LearningState(UUID.randomUUID(), id, Stage.DAILY, now, 0, false, 0, 0, null))
         difficultyStateRepository.upsert(DifficultyState(UUID.randomUUID(), id, VocabularyDifficulty.EASY, 0, 0, false))
         command.tags.forEach { conceptTagRepository.insert(ConceptTag(id, it)) }; return id
@@ -109,18 +120,12 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         val learning = learningStateRepository.get(request.conceptId) ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${request.conceptId}")
         val difficulty = difficultyStateRepository.get(request.conceptId) ?: error("DATA_INTEGRITY_ERROR: DifficultyState not found for concept ${request.conceptId}")
         if (reviewHistoryRepository.existsByAttemptId(request.sessionId, request.reviewAttemptId)) error("Duplicate review attempt: ${request.reviewAttemptId}")
-
-        // Global same-day rule: a successfully submitted answer makes this concept unavailable
-        // for the rest of the user's local calendar date, across all review modes.
         val reviewedLocalDate = request.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate()
-        val alreadyPracticedToday = reviewHistoryRepository.getAll().any {
-            it.conceptId == request.conceptId && it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == reviewedLocalDate
-        }
+        val alreadyPracticedToday = reviewHistoryRepository.getAll().any { it.conceptId == request.conceptId && it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == reviewedLocalDate }
         if (alreadyPracticedToday) error("Concept has already been practiced today: ${request.conceptId}")
-
         if (request.reviewType != ReviewType.LEARNED) {
             val dueAt = learning.nextReviewAt
-            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt)")
+            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt")
         }
         val transition = calculateLearningTransition(learning, request.isCorrect, request.reviewedAt)
         val threshold = settingsRepository.getInt("threshold_difficulty", default = 3)
