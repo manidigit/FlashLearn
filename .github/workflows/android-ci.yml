@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
           export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
           test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
@@ -51,15 +51,12 @@ jobs:
         run: |
           set -euo pipefail
           APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          APKANALYZER="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
-          if [[ ! -x "$APKANALYZER" ]]; then
-            APKANALYZER="${ANDROID_HOME}/cmdline-tools/bin/apkanalyzer"
-          fi
-          if [[ ! -x "$APKANALYZER" ]]; then
-            APKANALYZER="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer.bat"
-          fi
-          test -x "$APKANALYZER"
-          test "$("$APKANALYZER" manifest version-code "$APK_PATH")" = "${FL_VERSION_CODE}"
+          AAPT="${ANDROID_HOME}/build-tools/34.0.0/aapt"
+          test -x "$AAPT"
+          VERSION_CODE="$("$AAPT" dump badging "$APK_PATH" | sed -n 's/.*versionCode='\''\([^'\'' ]*\)'\''.*/\1/p' | head -n 1)"
+          VERSION_NAME="$("$AAPT" dump badging "$APK_PATH" | sed -n 's/.*versionName='\''\([^'\'' ]*\)'\''.*/\1/p' | head -n 1)"
+          test "$VERSION_CODE" = "${FL_VERSION_CODE}"
+          test "$VERSION_NAME" = "${FL_VERSION_NAME}"
       - name: Unit tests
         run: gradle --no-daemon test
       - name: Verify multiple-meaning merge implementation
@@ -77,8 +74,10 @@ jobs:
           grep -Fq 'val targets: List<Content>' "$LIBRARY_VM"
           grep -Fq 'languageCode==targetLanguage' "$LIBRARY_VM" || grep -Fq 'languageCode == targetLanguage' "$LIBRARY_VM"
           grep -Fq 'class RemoveExactDuplicateConceptsUseCase' "$DUPLICATE_FILE"
-          grep -Fq 'existingTargetKeys.add(content.canonicalKey)' "$DUPLICATE_FILE"
-          echo "Multiple-meaning merge implementation verified."
+          grep -Fq 'val targetKey = computeCanonicalKey(content.text)' "$DUPLICATE_FILE"
+          grep -Fq 'existingTargetKeys.add(targetKey)' "$DUPLICATE_FILE"
+          grep -Fq 'softDelete(duplicate.id' "$DUPLICATE_FILE"
+          echo "Multiple-meaning merge and duplicate cleanup implementation verified."
       - name: Stage artifacts
         run: |
           mkdir -p dist
