@@ -14,7 +14,7 @@ class DuplicateConceptUseCasesTest {
 
     private class Concepts(initial: List<Concept>) : ConceptRepository {
         val values = initial.associateBy { it.id }.toMutableMap()
-        override suspend fun insert(concept: Concept) { values[concept.id] = concept }
+        override suspend fun insert(concept: Concept): UUID { values[concept.id] = concept; return concept.id }
         override suspend fun get(conceptId: UUID) = values[conceptId]
         override suspend fun getAllActive() = values.values.filter { it.active }
         override suspend fun searchActive(query: String) = getAllActive()
