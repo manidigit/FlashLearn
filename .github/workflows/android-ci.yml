@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.82"
-  FL_VERSION_CODE: "82"
+  FL_VERSION_NAME: "5.85"
+  FL_VERSION_CODE: "85"
 
 jobs:
   build-and-test:
@@ -131,11 +131,11 @@ jobs:
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v5.82-debug-apk
-          path: dist/FlashLearn_v5.82_DEBUG.apk
+          name: flashlearn-v5.85-debug-apk
+          path: dist/FlashLearn_v5.85_DEBUG.apk
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v5.82-source
-          path: dist/FlashLearn_v5.82_SOURCE.zip
+          name: flashlearn-v5.85-source
+          path: dist/FlashLearn_v5.85_SOURCE.zip
           if-no-files-found: error
