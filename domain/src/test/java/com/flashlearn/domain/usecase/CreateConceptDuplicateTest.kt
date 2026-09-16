@@ -64,6 +64,19 @@ class CreateConceptDuplicateTest {
         assertEquals(listOf("سلام", "درود"), contents.items.filter { it.conceptId == firstId && it.languageCode == "fa" }.sortedBy { it.translationIndex }.map { it.text })
     }
 
+    @Test fun staleCanonicalKeys_areIgnored_duringCreateMerge() = runBlocking {
+        val concepts = FakeConceptRepo(); val contents = FakeContentRepo()
+        val useCase = CreateConceptUseCase(concepts, contents, FakeLearningRepo(), FakeDifficultyRepo(), FakeTagRepo(), FakeDb())
+        val firstId = useCase(CreateConceptCommand("ellos", "آن‌ها"))
+        contents.items.first { it.conceptId == firstId && it.languageCode == "es" }.let { old ->
+            contents.items[contents.items.indexOf(old)] = old.copy(canonicalKey = "stale-source-key")
+        }
+        val secondId = useCase(CreateConceptCommand(" ELLOS ", "ایشان"))
+        assertEquals(firstId, secondId)
+        assertEquals(1, concepts.items.size)
+        assertEquals(listOf("آن‌ها", "ایشان"), contents.findAll(firstId, "fa").map { it.text })
+    }
+
     private class FakeDb : FlashLearnDatabase { override suspend fun <T> withTransaction(block: suspend () -> T): T = block() }
     private class FakeConceptRepo : ConceptRepository {
         val items = mutableListOf<Concept>()
