@@ -39,24 +39,23 @@ jobs:
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
       - name: Prepare stable CI debug signing
         shell: bash
-        env:
-          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
-          FL_DEBUG_STORE_PASSWORD: ${{ secrets.FL_DEBUG_STORE_PASSWORD }}
-          FL_DEBUG_KEY_ALIAS: ${{ secrets.FL_DEBUG_KEY_ALIAS }}
-          FL_DEBUG_KEY_PASSWORD: ${{ secrets.FL_DEBUG_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          test -n "$FL_DEBUG_KEYSTORE_B64"
-          test -n "$FL_DEBUG_STORE_PASSWORD"
-          test -n "$FL_DEBUG_KEY_ALIAS"
-          test -n "$FL_DEBUG_KEY_PASSWORD"
-          KEYSTORE_PATH="$RUNNER_TEMP/flashlearn-debug.keystore"
-          printf '%s' "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > "$KEYSTORE_PATH"
-          test -s "$KEYSTORE_PATH"
-          echo "FL_DEBUG_STORE_FILE=$KEYSTORE_PATH" >> "$GITHUB_ENV"
-          echo "FL_DEBUG_STORE_PASSWORD=$FL_DEBUG_STORE_PASSWORD" >> "$GITHUB_ENV"
-          echo "FL_DEBUG_KEY_ALIAS=$FL_DEBUG_KEY_ALIAS" >> "$GITHUB_ENV"
-          echo "FL_DEBUG_KEY_PASSWORD=$FL_DEBUG_KEY_PASSWORD" >> "$GITHUB_ENV"
+          # Android's public development test key is intentionally used only for CI debug APKs.
+          # It is not used for production/release signing.
+          KEY_DIR="$RUNNER_TEMP/flashlearn-signing"
+          mkdir -p "$KEY_DIR"
+          curl -fsSL 'https://android.googlesource.com/platform/build/+/android12-platform-release/target/product/security/testkey.pk8?format=TEXT' | base64 --decode > "$KEY_DIR/testkey.pk8"
+          curl -fsSL 'https://android.googlesource.com/platform/build/+/android12-platform-release/target/product/security/testkey.x509.pem?format=TEXT' | base64 --decode > "$KEY_DIR/testkey.x509.pem"
+          test -s "$KEY_DIR/testkey.pk8"
+          test -s "$KEY_DIR/testkey.x509.pem"
+          openssl pkcs8 -inform DER -nocrypt -in "$KEY_DIR/testkey.pk8" -out "$KEY_DIR/testkey.pem"
+          openssl pkcs12 -export -in "$KEY_DIR/testkey.x509.pem" -inkey "$KEY_DIR/testkey.pem" -out "$KEY_DIR/flashlearn-debug.p12" -password pass:android -name androiddebugkey
+          keytool -importkeystore -noprompt -deststorepass android -destkeystore "$KEY_DIR/flashlearn-debug.keystore" -destalias androiddebugkey -srckeystore "$KEY_DIR/flashlearn-debug.p12" -srcstoretype PKCS12 -srcstorepass android
+          echo "FL_DEBUG_STORE_FILE=$KEY_DIR/flashlearn-debug.keystore" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_STORE_PASSWORD=android" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_PASSWORD=android" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -72,7 +71,7 @@ jobs:
           set -euo pipefail
           APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
           APK_CERT="$(apksigner verify --print-certs "$APK_PATH" | sed -n 's/Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
-          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | sed -n 's/^Certificate fingerprints:$/&/p' -A 1 | sed -n 's/^ *SHA256: *//p' | head -n 1 | tr -d ':')"
+          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | sed -n '/Certificate fingerprints:/,+1 s/^ *SHA256: *//p' | head -n 1 | tr -d ':')"
           test -n "$APK_CERT"
           test -n "$KEY_CERT"
           test "${APK_CERT//:/}" = "${KEY_CERT^^}"
