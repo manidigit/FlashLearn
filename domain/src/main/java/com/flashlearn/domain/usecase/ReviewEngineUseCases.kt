@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 data class ReviewSelectionFilters(val reviewType: ReviewType,val difficulty: VocabularyDifficulty?=null,val categoryId: UUID?=null,val tagId: UUID?=null,val now: Instant,val maxCards:Int=SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS)
 data class ReviewCandidate(val concept: Concept,val learningState: LearningState,val difficulty: DifficultyState,val tagIds: List<UUID>)
-private object EmptyReviewHistoryRepository: ReviewHistoryRepository { override suspend fun insert(entry: ReviewHistory)=Unit; override suspend fun existsByAttemptId(sessionId:UUID,reviewAttemptId:UUID)=false; override suspend fun getAll():List<ReviewHistory>=emptyList() }
+private object EmptyReviewHistoryRepository: ReviewHistoryRepository { override suspend fun insert(entry: ReviewHistory)=Unit; override suspend fun existsByAttemptId(sessionId:UUID,reviewAttemptId:UUID)=false; override suspend fun getAll(): List<ReviewHistory> = emptyList() }
 class SelectReviewQueueUseCase @Inject constructor(private val conceptRepository:ConceptRepository,private val learningStateRepository:LearningStateRepository,private val difficultyStateRepository:DifficultyStateRepository,private val conceptTagRepository:ConceptTagRepository,private val reviewHistoryRepository:ReviewHistoryRepository){
     constructor(conceptRepository:ConceptRepository,learningStateRepository:LearningStateRepository,difficultyStateRepository:DifficultyStateRepository,conceptTagRepository:ConceptTagRepository):this(conceptRepository,learningStateRepository,difficultyStateRepository,conceptTagRepository,EmptyReviewHistoryRepository)
     suspend operator fun invoke(filters:ReviewSelectionFilters):List<ReviewCandidate>{
