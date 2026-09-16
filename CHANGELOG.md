@@ -1,5 +1,17 @@
 # FlashLearn Changelog
 
+## v5.84 — Review Session Exit Navigation + Add Word Bottom Navigation
+- Added the existing bottom navigation shell to the Add Word Method page so Home, Review, Vocabulary, Statistics, and Settings remain directly reachable.
+- Kept the Add Word Method page content and actions unchanged.
+- Added a visible close/exit control while an active Review session is running; it ends the active session and returns to the Review setup screen instead of Home.
+- Intercepted Android back during an active Review session so it returns to Review setup rather than navigating directly to Home.
+- Kept the existing Review completion behavior and all review content unchanged.
+- Updated application identity to v5.84 / versionCode 84.
+
+## v5.83 — Bulk Import Preview Layout Only
+- Refined only the Bulk Import preview page layout and spacing.
+- Kept import content, parsing, validation, duplicate handling, and import behavior unchanged.
+
 ## v5.82 — Add Word Method redesign + Restore reliability
 - Redesigned only the Add Word Method page toward the supplied minimal reference: three compact method cards and a compact bottom actions/statistics area.
 - Kept Single Words, Bulk Words, and Restore Backup actions intact.
