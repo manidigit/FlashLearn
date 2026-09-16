@@ -123,6 +123,7 @@ private fun RetentionCard(state: ProgressUiState) {
 private fun WeeklyChart(daily: List<DailyReviewStat>) {
     val tokens = LocalFlashLearnThemeTokens.current
     val surfaceColor = MaterialTheme.colorScheme.surface
+    val primaryColor = MaterialTheme.colorScheme.primary
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(18.dp)) {
             Text("فعالیت مرور در هفت روز اخیر", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
@@ -143,12 +144,12 @@ private fun WeeklyChart(daily: List<DailyReviewStat>) {
                         val y = bottom - (item.total.toFloat() / maxValue) * (bottom - top)
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
-                    drawPath(path, MaterialTheme.colorScheme.primary, style = Stroke(width = 5f, cap = StrokeCap.Round))
+                    drawPath(path, primaryColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
                     daily.forEachIndexed { index, item ->
                         val x = left + step * index
                         val y = bottom - (item.total.toFloat() / maxValue) * (bottom - top)
                         drawCircle(surfaceColor, 7f, Offset(x, y))
-                        drawCircle(MaterialTheme.colorScheme.primary, 5f, Offset(x, y))
+                        drawCircle(primaryColor, 5f, Offset(x, y))
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
