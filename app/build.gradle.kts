@@ -28,12 +28,6 @@ android {
         buildConfigField("String", "APP_AUTHOR", "\"ManiDigit\"")
     }
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("../keystore/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "androiddebugkey"
-        }
         create("release") {
             val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
             val storePasswordValue = System.getenv("FL_RELEASE_STORE_PASSWORD")
@@ -46,7 +40,6 @@ android {
         }
     }
     buildTypes {
-        getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
