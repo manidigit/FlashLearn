@@ -4,10 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,8 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.navigation.AppRoutes
+import com.flashlearn.app.ui.theme.IconStyle
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
 fun FlashLearnShell(
@@ -25,18 +33,19 @@ fun FlashLearnShell(
     onNavigate: (String) -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val tokens = LocalFlashLearnThemeTokens.current
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
         NavigationBar(
-            modifier = Modifier.fillMaxWidth().height(76.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            modifier = Modifier.fillMaxWidth().height((76f * tokens.densityScale).dp),
+            containerColor = tokens.cardColor,
+            tonalElevation = (5f * tokens.elevationScale).dp
         ) {
-            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, selectedRoute, onNavigate)
-            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, selectedRoute, onNavigate)
-            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.Book, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, selectedRoute, onNavigate)
-            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, selectedRoute, onNavigate)
+            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
         }
     }
 }
@@ -45,19 +54,29 @@ fun FlashLearnShell(
 private fun RowScope.NavItem(
     route: String,
     label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    outlinedIcon: ImageVector,
+    filledIcon: ImageVector,
     selectedRoute: String,
     onNavigate: (String) -> Unit
 ) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    val selected = selectedRoute == route
     NavigationBarItem(
-        selected = selectedRoute == route,
+        selected = selected,
         onClick = { onNavigate(route) },
         icon = {
             Box(
-                Modifier.clip(RoundedCornerShape(14.dp))
-                    .then(if (selectedRoute == route) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)) else Modifier)
-                    .padding(horizontal = 13.dp, vertical = 5.dp)
-            ) { Icon(icon, contentDescription = label) }
+                Modifier
+                    .clip(RoundedCornerShape(MaterialTheme.shapes.medium.topStart))
+                    .then(if (selected) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = .12f)) else Modifier)
+                    .padding(horizontal = (13f * tokens.densityScale).dp, vertical = (6f * tokens.densityScale).dp)
+            ) {
+                Icon(
+                    imageVector = if (selected && tokens.iconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                    contentDescription = label,
+                    modifier = Modifier.size((24f * tokens.densityScale).dp)
+                )
+            }
         },
         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
@@ -72,21 +91,32 @@ private fun RowScope.NavItem(
 
 @Composable
 fun ScreenHeader(title: String, onBack: (() -> Unit)? = null, trailing: @Composable (() -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = (14f * tokens.densityScale).dp), verticalAlignment = Alignment.CenterVertically) {
         if (onBack != null) IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) }
-        else Spacer(Modifier.width(48.dp))
+        else Spacer(Modifier.width((48f * tokens.densityScale).dp))
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-        trailing?.invoke() ?: Spacer(Modifier.width(48.dp))
+        trailing?.invoke() ?: Spacer(Modifier.width((48f * tokens.densityScale).dp))
     }
 }
 
 @Composable
 fun PurpleHeroCard(title: String, value: String, subtitle: String) {
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-        Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .72f))))) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = tokens.cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = (4f * tokens.elevationScale).dp)
+    ) {
+        Box(
+            Modifier.fillMaxWidth().background(
+                Brush.linearGradient(listOf(tokens.gradientStart, tokens.gradientEnd))
+            )
+        ) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = (22f * tokens.densityScale).dp, vertical = (18f * tokens.densityScale).dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("🔥", style = MaterialTheme.typography.displaySmall)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(tokens.contentGap))
                 Column(Modifier.weight(1f)) {
                     Text(title, color = Color.White, style = MaterialTheme.typography.titleMedium)
                     Text(value, color = Color.White, style = MaterialTheme.typography.displaySmall)
@@ -99,5 +129,6 @@ fun PurpleHeroCard(title: String, value: String, subtitle: String) {
 
 @Composable
 fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+    val tokens = LocalFlashLearnThemeTokens.current
+    Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = (4f * tokens.densityScale).dp, vertical = (2f * tokens.densityScale).dp))
 }
