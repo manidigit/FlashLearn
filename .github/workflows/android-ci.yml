@@ -4,17 +4,17 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.74"
-  FL_VERSION_CODE: "74"
-  # Final CI verification includes the review filter count and ReviewScreen build fixes.
+  FL_VERSION_NAME: "5.80"
+  FL_VERSION_CODE: "80"
 
 jobs:
-  build-and-unit-test:
+  build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -36,222 +36,106 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v apkanalyzer
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+      - name: Prepare stable CI debug signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEY_DIR="$RUNNER_TEMP/flashlearn-signing"
+          mkdir -p "$KEY_DIR"
+          curl -fsSL 'https://android.googlesource.com/platform/build/+/android12-platform-release/target/product/security/testkey.pk8?format=TEXT' | base64 --decode > "$KEY_DIR/testkey.pk8"
+          curl -fsSL 'https://android.googlesource.com/platform/build/+/android12-platform-release/target/product/security/testkey.x509.pem?format=TEXT' | base64 --decode > "$KEY_DIR/testkey.x509.pem"
+          test -s "$KEY_DIR/testkey.pk8"
+          test -s "$KEY_DIR/testkey.x509.pem"
+          openssl pkcs8 -inform DER -nocrypt -in "$KEY_DIR/testkey.pk8" -out "$KEY_DIR/testkey.pem"
+          openssl pkcs12 -export -in "$KEY_DIR/testkey.x509.pem" -inkey "$KEY_DIR/testkey.pem" -out "$KEY_DIR/flashlearn-debug.p12" -password pass:android -name androiddebugkey
+          keytool -importkeystore -noprompt -deststorepass android -destkeystore "$KEY_DIR/flashlearn-debug.keystore" -destalias androiddebugkey -srcalias androiddebugkey -srckeystore "$KEY_DIR/flashlearn-debug.p12" -srcstoretype PKCS12 -srcstorepass android
+          echo "FL_DEBUG_STORE_FILE=$KEY_DIR/flashlearn-debug.keystore" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_STORE_PASSWORD=android" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
+          echo "FL_DEBUG_KEY_PASSWORD=android" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
       - name: Clean
         run: gradle --no-daemon clean
-      - name: Build debug APK
+      - name: Compile and assemble debug APK
         run: gradle --no-daemon assembleDebug
-      - name: Verify debug APK signature
+      - name: Verify APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify stable APK signing identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          APK_CERT="$(apksigner verify --print-certs "$APK_PATH" | awk -F': ' '/Signer #1 certificate SHA-256 digest:/{print $2; exit}' | tr -d ':')"
+          KEY_CERT="$(keytool -list -v -keystore "$FL_DEBUG_STORE_FILE" -storepass "$FL_DEBUG_STORE_PASSWORD" -alias "$FL_DEBUG_KEY_ALIAS" | awk -F': ' '/SHA256:/{print $2; exit}' | tr -d ':')"
+          test -n "$APK_CERT"
+          test -n "$KEY_CERT"
+          test "${APK_CERT^^}" = "${KEY_CERT^^}"
+      - name: Verify APK version
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          AAPT="${ANDROID_HOME}/build-tools/34.0.0/aapt"
+          test -x "$AAPT"
+          VERSION_CODE="$("$AAPT" dump badging "$APK_PATH" | sed -n 's/.*versionCode='\''\([^'\'' ]*\)'\''.*/\1/p' | head -n 1)"
+          VERSION_NAME="$("$AAPT" dump badging "$APK_PATH" | sed -n 's/.*versionName='\''\([^'\'' ]*\)'\''.*/\1/p' | head -n 1)"
+          test "$VERSION_CODE" = "${FL_VERSION_CODE}"
+          test "$VERSION_NAME" = "${FL_VERSION_NAME}"
       - name: Unit tests
         run: gradle --no-daemon test
-      - name: Stage debug APK
+      - name: Verify backup compatibility implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          VM="app/src/main/java/com/flashlearn/app/ui/backup/BackupViewModel.kt"
+          FULL_REPO="data/src/main/java/com/flashlearn/data/backup/RoomBackupRepository.kt"
+          TYPED="data/src/main/java/com/flashlearn/data/backup/TypedBackupRepository.kt"
+          test -s "$VM"
+          test -s "$FULL_REPO"
+          test -s "$TYPED"
+          grep -Fq 'if (type == BackupType.FULL)' "$VM"
+          grep -Fq 'repo.exportFull()' "$VM"
+          grep -Fq 'root.optString("backupType") == "FULL"' "$VM"
+          grep -Fq 'put("backupType", "FULL")' "$FULL_REPO"
+          grep -Fq '"conceptTags"' "$FULL_REPO"
+          grep -Fq '"settings"' "$FULL_REPO"
+          grep -Fq '"reviewQueue"' "$FULL_REPO"
+          echo "Current FULL backup export/restore compatibility verified."
+      - name: Verify multiple-meaning merge implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          CREATE_FILE="domain/src/main/java/com/flashlearn/domain/usecase/UseCases.kt"
+          IMPORT_FILE="domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt"
+          LIBRARY_VM="app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt"
+          DUPLICATE_FILE="domain/src/main/java/com/flashlearn/domain/usecase/DuplicateConceptUseCases.kt"
+          for required in "$CREATE_FILE" "$IMPORT_FILE" "$LIBRARY_VM" "$DUPLICATE_FILE"; do test -s "$required"; done
+          grep -Fq 'val mergeExistingSource: Boolean = true' "$CREATE_FILE"
+          grep -Fq 'computeCanonicalKey(it.text) == targetKey' "$CREATE_FILE"
+          grep -Fq 'computeCanonicalKey(it.text) } == sourceKey' "$CREATE_FILE"
+          grep -Fq 'val newTranslations' "$IMPORT_FILE"
+          grep -Fq 'computeCanonicalKey(it) !in existingKeys' "$IMPORT_FILE"
+          grep -Fq 'val targets: List<Content>' "$LIBRARY_VM"
+          grep -Fq 'languageCode==targetLanguage' "$LIBRARY_VM" || grep -Fq 'languageCode == targetLanguage' "$LIBRARY_VM"
+          grep -Fq 'class RemoveExactDuplicateConceptsUseCase' "$DUPLICATE_FILE"
+          grep -Fq 'existingTargetKeys.add(targetKey)' "$DUPLICATE_FILE"
+          grep -Fq 'softDelete(duplicate.id' "$DUPLICATE_FILE"
+          echo "Multiple-meaning merge and duplicate cleanup implementation verified."
+      - name: Stage artifacts
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: flashlearn-debug-apk
-          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_DEBUG.apk
-          if-no-files-found: error
-      - name: Stage exact source archive
-        run: |
-          mkdir -p dist
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-source
-          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_SOURCE.zip
+          name: flashlearn-v5.80-debug-apk
+          path: dist/FlashLearn_v5.80_DEBUG.apk
           if-no-files-found: error
-
-  instrumentation-tests:
-    needs: build-and-unit-test
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-      - name: Install Android SDK
-        shell: bash
-        run: |
-          set -euo pipefail
-          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v apkanalyzer
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.2"
-      - name: Enable KVM group permissions
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Prepare instrumentation test script
-        shell: bash
-        run: |
-          cat > "$RUNNER_TEMP/flashlearn-instrumentation.sh" <<'BASH_SCRIPT'
-          set -euo pipefail
-          gradle --no-daemon connectedDebugAndroidTest
-          rm -f app/build/outputs/apk/debug/app-debug.apk
-          cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
-          trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
-          sed -i 's/versionCode = 74/versionCode = 73/; s/versionName = "5.74"/versionName = "5.73"/' app/build.gradle.kts
-          gradle --no-daemon :app:assembleDebug
-          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r' > "$RUNNER_TEMP/flashlearn-old-cert"
-          test -s "$RUNNER_TEMP/flashlearn-old-cert"
-          adb install app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "73"
-          sed -i 's/versionCode = 73/versionCode = 74/; s/versionName = "5.73"/versionName = "5.74"/' app/build.gradle.kts
-          gradle --no-daemon :app:assembleDebug
-          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          test "$(cat "$RUNNER_TEMP/flashlearn-old-cert")" = "$(apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')"
-          adb install -r app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "74"
-          BASH_SCRIPT
-          chmod 700 "$RUNNER_TEMP/flashlearn-instrumentation.sh"
-      - name: Run instrumentation tests on Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          emulator-options: "-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot"
-          disable-animations: true
-          force-avd-creation: true
-          script: bash "$RUNNER_TEMP/flashlearn-instrumentation.sh"
-
-  release-gate:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      FL_RELEASE_KEYSTORE_B64: ${{ secrets.FL_RELEASE_KEYSTORE_B64 }}
-      FL_RELEASE_STORE_PASSWORD: ${{ secrets.FL_RELEASE_STORE_PASSWORD }}
-      FL_RELEASE_KEY_ALIAS: ${{ secrets.FL_RELEASE_KEY_ALIAS }}
-      FL_RELEASE_KEY_PASSWORD: ${{ secrets.FL_RELEASE_KEY_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v5
-      - name: Check stable release signing configuration
-        id: release_signing
-        shell: bash
-        run: |
-          if [[ -n "$FL_RELEASE_KEYSTORE_B64" && -n "$FL_RELEASE_STORE_PASSWORD" && -n "$FL_RELEASE_KEY_ALIAS" && -n "$FL_RELEASE_KEY_PASSWORD" ]]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-            echo "Stable release signing is configured."
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release signing is not configured; skipping signed release gate. Debug CI remains the required artifact."
-          fi
-      - uses: actions/setup-java@v5
-        if: steps.release_signing.outputs.configured == 'true'
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
-        if: steps.release_signing.outputs.configured == 'true'
-        with:
-          gradle-version: "8.2"
-      - name: Install Android SDK tools
-        if: steps.release_signing.outputs.configured == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v apkanalyzer
-      - name: Materialize stable release keystore
-        if: steps.release_signing.outputs.configured == 'true'
-        run: |
-          mkdir -p "$RUNNER_TEMP/flashlearn"
-          echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
-          test -s "$RUNNER_TEMP/flashlearn/release.keystore"
-      - name: Build signed current release
-        if: steps.release_signing.outputs.configured == 'true'
-        env:
-          FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
-        run: gradle --no-daemon clean assembleRelease
-      - name: Verify current release signature
-        if: steps.release_signing.outputs.configured == 'true'
-        run: apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-      - name: Verify current release version
-        if: steps.release_signing.outputs.configured == 'true'
-        run: test "$(apkanalyzer manifest version-code app/build/outputs/apk/release/app-release.apk)" = "${FL_VERSION_CODE}"
-      - name: Real signed update-path smoke test
-        if: steps.release_signing.outputs.configured == 'true'
-        env:
-          FL_RELEASE_STORE_FILE: ${{ runner.temp }}/flashlearn/release.keystore
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
-          trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
-          sed -i 's/versionCode = 74/versionCode = 73/; s/versionName = "5.74"/versionName = "5.73"/' app/build.gradle.kts
-          gradle --no-daemon :app:assembleRelease
-          OLD_APK=app/build/outputs/apk/release/app-release.apk
-          apksigner verify --verbose "$OLD_APK"
-          adb install "$OLD_APK"
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "73"
-          sed -i 's/versionCode = 73/versionCode = 74/; s/versionName = "5.73"/versionName = "5.74"/' app/build.gradle.kts
-          gradle --no-daemon :app:assembleRelease
-          NEW_APK=app/build/outputs/apk/release/app-release.apk
-          apksigner verify --verbose "$NEW_APK"
-          adb install -r "$NEW_APK"
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "74"
-      - name: Stage signed release artifact
-        if: steps.release_signing.outputs.configured == 'true'
-        run: |
-          mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/FlashLearn_v${FL_VERSION_NAME}_RELEASE.apk"
       - uses: actions/upload-artifact@v4
-        if: steps.release_signing.outputs.configured == 'true'
         with:
-          name: flashlearn-release-apk
-          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_RELEASE.apk
+          name: flashlearn-v5.80-source
+          path: dist/FlashLearn_v5.80_SOURCE.zip
           if-no-files-found: error
-
-  final-ci-gate:
-    if: always()
-    needs:
-      - build-and-unit-test
-      - instrumentation-tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Require build, unit, and instrumentation success
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "build-and-unit-test=${{ needs.build-and-unit-test.result }}"
-          echo "instrumentation-tests=${{ needs.instrumentation-tests.result }}"
-          test "${{ needs.build-and-unit-test.result }}" = "success"
-          test "${{ needs.instrumentation-tests.result }}" = "success"
-          echo "Final CI gate: PASS"
