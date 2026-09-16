@@ -21,8 +21,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 78
-        versionName = "5.78"
+        versionCode = 79
+        versionName = "5.79"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
@@ -42,8 +42,23 @@ android {
             if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
+        val debugStoreFilePath = System.getenv("FL_DEBUG_STORE_FILE")
+        if (!debugStoreFilePath.isNullOrBlank()) {
+            create("ciDebug") {
+                storeFile = file(debugStoreFilePath)
+                storePassword = System.getenv("FL_DEBUG_STORE_PASSWORD") ?: "flashlearn-debug"
+                keyAlias = System.getenv("FL_DEBUG_KEY_ALIAS") ?: "flashlearn"
+                keyPassword = System.getenv("FL_DEBUG_KEY_PASSWORD") ?: "flashlearn-debug"
+            }
+        }
     }
     buildTypes {
+        getByName("debug") {
+            val debugStoreFilePath = System.getenv("FL_DEBUG_STORE_FILE")
+            if (!debugStoreFilePath.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("ciDebug")
+            }
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
