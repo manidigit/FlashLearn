@@ -9,10 +9,10 @@ import java.util.UUID
 import javax.inject.Inject
 
 /**
- * Consolidates active concepts that represent the same source word.
- * The oldest concept is retained; every distinct target meaning is preserved on it,
- * and redundant concepts are soft-deleted. Exact source+translation copies therefore
- * collapse to one while different translations remain as separate meanings.
+ * Cleans the active library by source word. One active concept survives for each
+ * normalized source; every distinct target meaning is preserved on that concept.
+ * Comparisons are always derived from Content.text, not the persisted canonicalKey,
+ * so legacy/imported rows with stale canonical keys are cleaned too.
  */
 class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
@@ -20,17 +20,19 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val database: FlashLearnDatabase
 ) {
     suspend operator fun invoke(sourceLanguage: String = "es", targetLanguage: String = "fa"): Int = database.withTransaction {
+        require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) {
+            "زبان‌های مبدأ و مقصد باید متفاوت باشند"
+        }
+
         val activeConcepts = conceptRepository.getAllActive()
         if (activeConcepts.size < 2) return@withTransaction 0
 
         val contentsByConcept = contentRepository.getAll().groupBy(Content::conceptId)
         val groups = activeConcepts
             .mapNotNull { concept ->
-                val sourceKey = contentsByConcept[concept.id].orEmpty()
-                    .firstOrNull { it.languageCode == sourceLanguage }
-                    ?.canonicalKey
-                    ?.takeIf { it.isNotBlank() }
-                sourceKey?.let { it to concept }
+                val source = contentsByConcept[concept.id].orEmpty()
+                    .firstOrNull { it.languageCode == sourceLanguage && it.text.isNotBlank() }
+                source?.let { computeCanonicalKey(it.text) to concept }
             }
             .groupBy({ it.first }, { it.second })
             .values
@@ -38,26 +40,32 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
 
         var removed = 0
         for (group in groups) {
-            val ordered = group.sortedBy { it.createdAt }
-            val survivor = ordered.first()
+            val ordered = group.sortedWith(compareBy<Any> { (it as com.flashlearn.domain.model.Concept).createdAt }.thenBy { (it as com.flashlearn.domain.model.Concept).id.toString() })
+            val survivor = ordered.first() as com.flashlearn.domain.model.Concept
             val survivorTargets = contentRepository.findAll(survivor.id, targetLanguage)
-            val existingTargetKeys = survivorTargets.map { it.canonicalKey }.toMutableSet()
+                .sortedBy { it.translationIndex }
+            val existingTargetKeys = survivorTargets
+                .map { computeCanonicalKey(it.text) }
+                .filter(String::isNotBlank)
+                .toMutableSet()
             var nextIndex = (survivorTargets.maxOfOrNull { it.translationIndex } ?: -1) + 1
 
-            ordered.drop(1).forEach { duplicate ->
+            ordered.drop(1).forEach { rawDuplicate ->
+                val duplicate = rawDuplicate as com.flashlearn.domain.model.Concept
                 contentsByConcept[duplicate.id].orEmpty()
                     .asSequence()
-                    .filter { it.languageCode == targetLanguage }
+                    .filter { it.languageCode == targetLanguage && it.text.isNotBlank() }
                     .sortedBy { it.translationIndex }
                     .forEach { content ->
-                        if (existingTargetKeys.add(content.canonicalKey)) {
+                        val targetKey = computeCanonicalKey(content.text)
+                        if (targetKey.isNotBlank() && existingTargetKeys.add(targetKey)) {
                             contentRepository.insertTranslation(
                                 Content(
                                     id = UUID.randomUUID(),
                                     conceptId = survivor.id,
                                     languageCode = targetLanguage,
-                                    text = content.text,
-                                    canonicalKey = content.canonicalKey,
+                                    text = content.text.trim(),
+                                    canonicalKey = targetKey,
                                     notes = content.notes,
                                     pronunciation = content.pronunciation,
                                     example = content.example,
