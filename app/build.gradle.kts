@@ -1,9 +1,19 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
 }
+
+val appBuildDate = SimpleDateFormat(
+    "yyyy-MM-dd'T'HH:mm:ssXXX",
+    Locale.US
+).format(Date())
+
 android {
     namespace = "com.flashlearn.app"
     compileSdk = 34
@@ -11,17 +21,17 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 74
-        versionName = "5.74"
+        versionCode = 79
+        versionName = "5.79"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"$appBuildDate\"")
+        buildConfigField("String", "APP_DATABASE", "\"Room / SQLite\"")
+        buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
+        buildConfigField("String", "APP_AUTHOR", "\"ManiDigit\"")
     }
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("../keystore/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
         create("release") {
             val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
             val storePasswordValue = System.getenv("FL_RELEASE_STORE_PASSWORD")
@@ -32,18 +42,49 @@ android {
             if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
+        val debugStoreFilePath = System.getenv("FL_DEBUG_STORE_FILE")
+        if (!debugStoreFilePath.isNullOrBlank()) {
+            create("ciDebug") {
+                storeFile = file(debugStoreFilePath)
+                storePassword = System.getenv("FL_DEBUG_STORE_PASSWORD") ?: "flashlearn-debug"
+                keyAlias = System.getenv("FL_DEBUG_KEY_ALIAS") ?: "flashlearn"
+                keyPassword = System.getenv("FL_DEBUG_KEY_PASSWORD") ?: "flashlearn-debug"
+            }
+        }
     }
     buildTypes {
-        getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
-        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
+        getByName("debug") {
+            val debugStoreFilePath = System.getenv("FL_DEBUG_STORE_FILE")
+            if (!debugStoreFilePath.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("ciDebug")
+            }
+        }
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
     }
-    buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.4"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
+
 dependencies {
-    implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":database"))
+    implementation(project(":core"))
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -56,10 +97,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test:core:1.6.1")
-    testImplementation("junit:junit:4.13.2")
 }

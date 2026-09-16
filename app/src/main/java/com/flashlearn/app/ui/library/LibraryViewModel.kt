@@ -6,7 +6,6 @@ import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.domain.model.Category
 import com.flashlearn.domain.model.Concept
 import com.flashlearn.domain.model.Content
-import com.flashlearn.domain.model.LearningState
 import com.flashlearn.domain.model.Stage
 import com.flashlearn.domain.model.Tag
 import com.flashlearn.domain.model.VocabularyDifficulty
@@ -21,6 +20,7 @@ import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.repository.TagRepository
 import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
+import com.flashlearn.domain.usecase.RemoveExactDuplicateConceptsUseCase
 import com.flashlearn.domain.usecase.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-data class LibraryItem(val concept: Concept,val source: Content?,val target: Content?,val category: Category?,val difficulty: VocabularyDifficulty? = null)
+data class LibraryItem(val concept: Concept, val source: Content?, val targets: List<Content>, val category: Category?, val difficulty: VocabularyDifficulty? = null)
 enum class LibraryFilter { ALL, LEARNED, LEARNING, NEW }
 
 data class LibraryUiState(
@@ -40,7 +40,7 @@ data class LibraryUiState(
     val categoryCounts: Map<UUID, Int> = emptyMap(), val categoryTotalCount: Int = 0,
     val tagCounts: Map<UUID, Int> = emptyMap(), val totalCount: Int = 0, val learnedCount: Int = 0,
     val learningCount: Int = 0, val newCount: Int = 0, val items: List<LibraryItem> = emptyList(),
-    val isLoading: Boolean = true, val isTagBusy: Boolean = false, val error: String? = null,
+    val isLoading: Boolean = true, val isTagBusy: Boolean = false, val isDuplicateCleanupBusy: Boolean = false, val error: String? = null,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa"
 ) {
     @Deprecated("Use selectedCategoryIds for multi-category filtering")
@@ -54,14 +54,15 @@ class LibraryViewModel @Inject constructor(
     private val conceptTags: ConceptTagRepository, private val difficultyRepository: DifficultyStateRepository,
     private val learningRepository: LearningStateRepository, private val reviewHistoryRepository: ReviewHistoryRepository,
     private val calculateProgress: CalculateProgressUseCase, private val createTagUseCase: CreateTagUseCase,
-    private val updateTagUseCase: UpdateTagUseCase, private val deleteTagUseCase: DeleteTagUseCase
+    private val updateTagUseCase: UpdateTagUseCase, private val deleteTagUseCase: DeleteTagUseCase,
+    private val removeExactDuplicates: RemoveExactDuplicateConceptsUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(LibraryUiState())
     val state: StateFlow<LibraryUiState> = _state.asStateFlow()
     private var refreshGeneration = 0L
 
     init { refresh() }
-    fun setLanguagePair(pair: LanguagePair) { if (_state.value.sourceLanguage == pair.source.code && _state.value.targetLanguage == pair.target.code) return; _state.value = _state.value.copy(sourceLanguage = pair.source.code,targetLanguage = pair.target.code);refresh() }
+    fun setLanguagePair(pair: LanguagePair) { if (_state.value.sourceLanguage == pair.source.code && _state.value.targetLanguage == pair.target.code) return; _state.value = _state.value.copy(sourceLanguage = pair.source.code, targetLanguage = pair.target.code); refresh() }
     fun onQueryChange(value:String){_state.value=_state.value.copy(query=value);refresh()}
     fun onFavoritesChange(value:Boolean){_state.value=_state.value.copy(favoritesOnly=value);refresh()}
     fun onFilterChange(value:LibraryFilter){_state.value=_state.value.copy(filter=value);refresh()}
@@ -72,6 +73,7 @@ class LibraryViewModel @Inject constructor(
     fun renameTag(id:UUID,name:String,onDone:(String?)->Unit={})=runTagMutation(onDone){updateTagUseCase(id,name)}
     fun removeTag(id:UUID,onDone:(String?)->Unit={})=runTagMutation(onDone){deleteTagUseCase(id);if(_state.value.selectedTagId==id)_state.value=_state.value.copy(selectedTagId=null)}
     private fun runTagMutation(onDone:(String?)->Unit,block:suspend()->Unit){if(_state.value.isTagBusy)return;viewModelScope.launch{_state.value=_state.value.copy(isTagBusy=true,error=null);runCatching{block();refresh()}.onSuccess{onDone(null)}.onFailure{onDone(it.message?:"خطا در مدیریت Tag")};_state.value=_state.value.copy(isTagBusy=false)}}
+    fun removeExactDuplicates(onDone:(Int)->Unit={}){if(_state.value.isDuplicateCleanupBusy)return;viewModelScope.launch{_state.value=_state.value.copy(isDuplicateCleanupBusy=true,error=null);runCatching{removeExactDuplicates(_state.value.sourceLanguage,_state.value.targetLanguage)}.onSuccess{count->refresh();onDone(count)}.onFailure{_state.value=_state.value.copy(error=it.message?:"خطا در پاکسازی تکراری‌ها")};_state.value=_state.value.copy(isDuplicateCleanupBusy=false)}}
 
     fun refresh(){
         val generation=++refreshGeneration;val snapshot=_state.value;val query=snapshot.query.trim();val selectedCategories=snapshot.selectedCategoryIds;val selectedTag=snapshot.selectedTagId;val favoritesOnly=snapshot.favoritesOnly;val filter=snapshot.filter;val sourceLanguage=snapshot.sourceLanguage;val targetLanguage=snapshot.targetLanguage
@@ -83,11 +85,10 @@ class LibraryViewModel @Inject constructor(
                 val learningById=learningRepository.getAll().associateBy{it.conceptId};val tagLinks=conceptTags.getAll().groupBy{it.conceptId}.mapValues{(_,links)->links.map{it.tagId}.toSet()};val difficultyById=difficultyRepository.getAll().associateBy{it.conceptId}
                 val filteredBase=cs.asSequence().filter{!favoritesOnly||it.favorite}.filter{selectedTag==null||selectedTag in tagLinks[it.id].orEmpty()}.toList()
                 val counts=filteredBase.asSequence().mapNotNull{it.categoryId}.groupingBy{it}.eachCount();val tagCounts=filteredBase.asSequence().flatMap{tagLinks[it.id].orEmpty().asSequence()}.groupingBy{it}.eachCount()
-                val learnedIds=filteredBase.asSequence().filter{learningById[it.id]?.stage==Stage.LEARNED}.map{it.id}.toSet()
-                val learningIds=filteredBase.asSequence().filter{it.id in reviewedIds && it.id !in learnedIds}.map{it.id}.toSet()
-                val newIds=filteredBase.asSequence().filter{it.id !in reviewedIds}.map{it.id}.toSet()
+                val learnedIds=filteredBase.asSequence().filter{learningById[it.id]?.stage==Stage.LEARNED}.map{it.id}.toSet();val learningIds=filteredBase.asSequence().filter{it.id in reviewedIds&&it.id !in learnedIds}.map{it.id}.toSet();val newIds=filteredBase.asSequence().filter{it.id !in reviewedIds}.map{it.id}.toSet()
                 val filteredConcepts=filteredBase.asSequence().filter{selectedCategories.isEmpty()||it.categoryId in selectedCategories}.filter{concept->when(filter){LibraryFilter.ALL->true;LibraryFilter.LEARNED->concept.id in learnedIds;LibraryFilter.LEARNING->concept.id in learningIds;LibraryFilter.NEW->concept.id in newIds}}.toList()
-                val catMap=cats.associateBy{it.id};val contentMap=contents.findForConcepts(filteredConcepts.map{it.id}).groupBy{it.conceptId};val items=filteredConcepts.map{c->val cc=contentMap[c.id].orEmpty();LibraryItem(c,cc.firstOrNull{it.languageCode==sourceLanguage},cc.firstOrNull{it.languageCode==targetLanguage},c.categoryId?.let(catMap::get),difficultyById[c.id]?.current)}
+                val catMap=cats.associateBy{it.id};val contentMap=contents.findForConcepts(filteredConcepts.map{it.id}).groupBy{it.conceptId}
+                val items=filteredConcepts.map{c->val cc=contentMap[c.id].orEmpty();LibraryItem(c,cc.firstOrNull{it.languageCode==sourceLanguage},cc.filter{it.languageCode==targetLanguage}.sortedBy{it.translationIndex},c.categoryId?.let(catMap::get),difficultyById[c.id]?.current)}
                 if(generation!=refreshGeneration)return@launch
                 _state.value=_state.value.copy(tags=tags,categories=cats,tagCounts=tagCounts,categoryCounts=counts,categoryTotalCount=filteredBase.size,totalCount=filteredBase.size,learnedCount=learnedIds.size,learningCount=learningIds.size,newCount=newIds.size,items=items,isLoading=false)
             }catch(e:Exception){if(generation!=refreshGeneration)return@launch;_state.value=_state.value.copy(isLoading=false,error=e.message?:"خطا در بارگذاری لغات")}
