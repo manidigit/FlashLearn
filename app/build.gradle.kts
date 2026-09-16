@@ -4,9 +4,11 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
 }
+
 android {
     namespace = "com.flashlearn.app"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "com.flashlearn.app"
         minSdk = 26
@@ -14,7 +16,16 @@ android {
         versionCode = 86
         versionName = "5.86"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Keep the About screen metadata in the generated BuildConfig.
+        buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
+        buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
+        buildConfigField("String", "APP_DATABASE", "\"Room\"")
+        buildConfigField("String", "APP_AI_ASSISTANT", "\"AI-assisted development\"")
+        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"${java.time.LocalDate.now()}\"")
     }
+
     signingConfigs {
         getByName("debug") {
             storeFile = file("../keystore/debug.keystore")
@@ -33,15 +44,24 @@ android {
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
+
     buildTypes {
         getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
         getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
     }
-    buildFeatures { compose = true }
+
+    // AGP 8.x does not generate BuildConfig unless explicitly enabled.
+    // AboutScreen depends on both standard and custom BuildConfig fields.
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
 }
+
 dependencies {
     implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
     implementation("com.google.dagger:hilt-android:2.51.1")
