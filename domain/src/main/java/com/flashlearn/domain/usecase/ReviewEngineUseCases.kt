@@ -24,6 +24,12 @@ data class ReviewCandidate(
     val tagIds: List<UUID>
 )
 
+private object EmptyReviewHistoryRepository : ReviewHistoryRepository {
+    override suspend fun insert(entry: ReviewHistory) = Unit
+    override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
+    override suspend fun getAll(): List<ReviewHistory> = emptyList()
+}
+
 class SelectReviewQueueUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository,
@@ -31,6 +37,19 @@ class SelectReviewQueueUseCase @Inject constructor(
     private val conceptTagRepository: ConceptTagRepository,
     private val reviewHistoryRepository: ReviewHistoryRepository
 ) {
+    constructor(
+        conceptRepository: ConceptRepository,
+        learningStateRepository: LearningStateRepository,
+        difficultyStateRepository: DifficultyStateRepository,
+        conceptTagRepository: ConceptTagRepository
+    ) : this(
+        conceptRepository,
+        learningStateRepository,
+        difficultyStateRepository,
+        conceptTagRepository,
+        EmptyReviewHistoryRepository
+    )
+
     suspend operator fun invoke(filters: ReviewSelectionFilters): List<ReviewCandidate> {
         val states = when (filters.reviewType) {
             ReviewType.RANDOM -> learningStateRepository.getDueNonLearned(filters.now)
