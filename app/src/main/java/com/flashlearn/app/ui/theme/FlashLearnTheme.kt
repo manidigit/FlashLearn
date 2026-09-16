@@ -1,71 +1,24 @@
 package com.flashlearn.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.flashlearn.app.ui.AccentColor
+import androidx.compose.ui.unit.sp
 import com.flashlearn.app.ui.AppearanceMode
 
-private val DarkBackground = Color(0xFF0B0D12)
-private val DarkSurface = Color(0xFF151820)
-private val LightBackground = Color(0xFFF8F7FC)
-
-private data class AccentPalette(val light: Color, val dark: Color, val secondaryLight: Color, val secondaryDark: Color)
-
-private fun accentPalette(accent: AccentColor) = when (accent) {
-    AccentColor.PURPLE -> AccentPalette(Color(0xFF7C3AED), Color(0xFF9B6CFF), Color(0xFF536DFE), Color(0xFF8191FF))
-    AccentColor.BLUE -> AccentPalette(Color(0xFF2563EB), Color(0xFF60A5FA), Color(0xFF0EA5E9), Color(0xFF38BDF8))
-    AccentColor.GREEN -> AccentPalette(Color(0xFF16A34A), Color(0xFF4ADE80), Color(0xFF0D9488), Color(0xFF2DD4BF))
-    AccentColor.ORANGE -> AccentPalette(Color(0xFFEA580C), Color(0xFFFB923C), Color(0xFFF59E0B), Color(0xFFFBBF24))
-    AccentColor.PINK -> AccentPalette(Color(0xFFDB2777), Color(0xFFF472B6), Color(0xFFE11D48), Color(0xFFFB7185))
-}
-
 @Composable
-fun FlashLearnTheme(
-    appearance: AppearanceMode = AppearanceMode.SYSTEM,
-    accentColor: AccentColor = AccentColor.PURPLE,
-    content: @Composable () -> Unit
-) {
-    val dark = when (appearance) {
-        AppearanceMode.SYSTEM -> isSystemInDarkTheme()
-        AppearanceMode.LIGHT -> false
-        AppearanceMode.DARK -> true
-    }
-    val accent = accentPalette(accentColor)
-    val lightColors = lightColorScheme(
-        primary = accent.light,
-        onPrimary = Color.White,
-        secondary = accent.secondaryLight,
-        background = LightBackground,
-        surface = Color.White,
-        surfaceVariant = Color(0xFFF0EDF6),
-        onSurface = Color(0xFF17141C),
-        onSurfaceVariant = Color(0xFF68636F)
-    )
-    val darkColors = darkColorScheme(
-        primary = accent.dark,
-        onPrimary = Color.White,
-        secondary = accent.secondaryDark,
-        background = DarkBackground,
-        surface = DarkSurface,
-        surfaceVariant = Color(0xFF20232D),
-        onSurface = Color(0xFFF5F2F8),
-        onSurfaceVariant = Color(0xFFB7B2BE)
-    )
-    MaterialTheme(
-        colorScheme = if (dark) darkColors else lightColors,
-        typography = Typography(
-            headlineLarge = Typography().headlineLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
-            headlineMedium = Typography().headlineMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
-            titleLarge = Typography().titleLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-        ),
-        shapes = Shapes(
-            extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(10),
-            small = androidx.compose.foundation.shape.RoundedCornerShape(14),
-            medium = androidx.compose.foundation.shape.RoundedCornerShape(18),
-            large = androidx.compose.foundation.shape.RoundedCornerShape(24)
-        ),
-        content = content
-    )
+fun FlashLearnTheme(appearance:AppearanceMode=AppearanceMode.SYSTEM,themeId:String="modern_purple",content:@Composable()->Unit){
+ val spec=FlashLearnThemeSpec.BUILT_IN.firstOrNull{it.id==themeId}?:FlashLearnThemeSpec.MODERN_PURPLE
+ val dark=when(appearance){AppearanceMode.SYSTEM->isSystemInDarkTheme();AppearanceMode.LIGHT->false;AppearanceMode.DARK->true}
+ val colors=if(dark)darkColorScheme(primary=Color(spec.darkPrimary),onPrimary=Color.White,secondary=Color(spec.darkSecondary),background=Color(spec.darkBackground),surface=Color(spec.darkSurface),surfaceVariant=Color(spec.darkSurfaceVariant),onSurface=Color(spec.darkOnSurface),onSurfaceVariant=Color(spec.darkOnSurfaceVariant)) else lightColorScheme(primary=Color(spec.lightPrimary),onPrimary=Color.White,secondary=Color(spec.lightSecondary),background=Color(spec.lightBackground),surface=Color(spec.lightSurface),surfaceVariant=Color(spec.lightSurfaceVariant),onSurface=Color(spec.lightOnSurface),onSurfaceVariant=Color(spec.lightOnSurfaceVariant))
+ val base=Typography();val t=spec.typographyScale
+ MaterialTheme(colorScheme=colors,typography=base.copy(
+  displayLarge=base.displayLarge.copy(fontSize=base.displayLarge.fontSize*t),displayMedium=base.displayMedium.copy(fontSize=base.displayMedium.fontSize*t),displaySmall=base.displaySmall.copy(fontSize=base.displaySmall.fontSize*t),
+  headlineLarge=base.headlineLarge.copy(fontSize=base.headlineLarge.fontSize*t,fontWeight=androidx.compose.ui.text.font.FontWeight.Bold),headlineMedium=base.headlineMedium.copy(fontSize=base.headlineMedium.fontSize*t,fontWeight=androidx.compose.ui.text.font.FontWeight.Bold),headlineSmall=base.headlineSmall.copy(fontSize=base.headlineSmall.fontSize*t),
+  titleLarge=base.titleLarge.copy(fontSize=base.titleLarge.fontSize*t,fontWeight=androidx.compose.ui.text.font.FontWeight.Bold),titleMedium=base.titleMedium.copy(fontSize=base.titleMedium.fontSize*t),titleSmall=base.titleSmall.copy(fontSize=base.titleSmall.fontSize*t),
+  bodyLarge=base.bodyLarge.copy(fontSize=base.bodyLarge.fontSize*t),bodyMedium=base.bodyMedium.copy(fontSize=base.bodyMedium.fontSize*t),bodySmall=base.bodySmall.copy(fontSize=base.bodySmall.fontSize*t),labelLarge=base.labelLarge.copy(fontSize=base.labelLarge.fontSize*t),labelMedium=base.labelMedium.copy(fontSize=base.labelMedium.fontSize*t),labelSmall=base.labelSmall.copy(fontSize=base.labelSmall.fontSize*t)
+ ),shapes=Shapes(extraSmall=RoundedCornerShape(spec.cornerSmall.sp()),small=RoundedCornerShape(spec.cornerSmall.sp()),medium=RoundedCornerShape(spec.cornerMedium.sp()),large=RoundedCornerShape(spec.cornerLarge.sp())),content=content)
 }
+private fun Float.sp()=this.sp
