@@ -4,12 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +29,7 @@ fun HomeScreen(
     onStartReview: (ReviewType) -> Unit,
     onAddWord: () -> Unit
 ) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val state by viewModel.state.collectAsState()
     val summary = state.summary
     val due = summary?.dueConceptCount ?: 0
@@ -51,22 +52,22 @@ fun HomeScreen(
             }
         }
 
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) {
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
             Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .72f))))) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                        Text("روز پیوسته", color = Color.White.copy(alpha = .92f), style = MaterialTheme.typography.labelLarge)
-                        Text("${state.streak?.currentStreakDays ?: 0}", color = Color.White, style = MaterialTheme.typography.displayMedium)
-                        Text("ادامه بده و زنجیره را حفظ کن", color = Color.White.copy(alpha = .9f), style = MaterialTheme.typography.bodySmall)
+                        Text("روز پیوسته", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .92f), style = MaterialTheme.typography.labelLarge)
+                        Text("${state.streak?.currentStreakDays ?: 0}", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.displayMedium)
+                        Text("ادامه بده و زنجیره را حفظ کن", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .9f), style = MaterialTheme.typography.bodySmall)
                     }
-                    Surface(shape = RoundedCornerShape(18.dp), color = Color.White.copy(alpha = .14f)) { Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) { Text("🔥", style = MaterialTheme.typography.headlineLarge) } }
+                    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .14f)) { Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) { Text("🔥", style = MaterialTheme.typography.headlineLarge) } }
                 }
             }
         }
 
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(50.dp).clip(RoundedCornerShape(15.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) { Text("📖", style = MaterialTheme.typography.titleLarge) }
+                Box(Modifier.size(50.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = .10f)), contentAlignment = Alignment.Center) { Text("📖", style = MaterialTheme.typography.titleLarge) }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text("$total", style = MaterialTheme.typography.headlineMedium)
@@ -76,14 +77,14 @@ fun HomeScreen(
         }
 
         Text("ادامه بده", style = MaterialTheme.typography.titleMedium)
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Text("☀️") }
+                    Box(Modifier.size(40.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Text("☀️") }
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) { Text("روزانه", style = MaterialTheme.typography.titleMedium); Text("$daily از $due", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
                 }
-                LinearProgressIndicator(progress = { if (due == 0) 0f else (daily.toFloat() / due).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)), trackColor = MaterialTheme.colorScheme.surfaceVariant)
+                LinearProgressIndicator(progress = { if (due == 0) 0f else (daily.toFloat() / due).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(MaterialTheme.shapes.extraSmall), trackColor = MaterialTheme.colorScheme.surfaceVariant)
             }
         }
 
@@ -96,9 +97,10 @@ fun HomeScreen(
 
 @Composable
 private fun QuickAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Card(modifier = modifier, shape = RoundedCornerShape(18.dp)) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Card(modifier = modifier, shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 17.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)) }
+            Box(Modifier.size(44.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = .09f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)) }
             Spacer(Modifier.height(7.dp)); Text(label, style = MaterialTheme.typography.labelLarge)
         }
     }
