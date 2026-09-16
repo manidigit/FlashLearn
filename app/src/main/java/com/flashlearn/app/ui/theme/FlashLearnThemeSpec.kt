@@ -138,8 +138,15 @@ data class FlashLearnThemeSpec(
             )
         }
 
-        fun loadCustom(context:Context):List<FlashLearnThemeSpec> = context.getSharedPreferences("flashlearn_themes",0).getStringSet("custom",emptySet()).orEmpty().mapNotNull{runCatching{fromJson(it)}.getOrNull()}
-        fun saveCustom(context:Context,spec:FlashLearnThemeSpec){val p=context.getSharedPreferences("flashlearn_themes",0);val s=p.getStringSet("custom",emptySet()).orEmpty().toMutableSet();s.removeIf{runCatching{fromJson(it).id==spec.id}.getOrDefault(false)};s.add(spec.toJson());p.edit().putStringSet("custom",s).apply()}
+        fun loadCustom(context:Context):List<FlashLearnThemeSpec> =
+            context.getSharedPreferences("flashlearn_themes",0).getStringSet("custom",emptySet()).orEmpty()
+                .mapNotNull{runCatching{fromJson(it)}.getOrNull()}
+        fun saveCustom(context:Context,spec:FlashLearnThemeSpec){
+            val p=context.getSharedPreferences("flashlearn_themes",0)
+            val s=p.getStringSet("custom",emptySet()).orEmpty().toMutableSet()
+            s.removeIf{runCatching{fromJson(it).id==spec.id}.getOrDefault(false)}
+            s.add(spec.toJson());p.edit().putStringSet("custom",s).apply()
+        }
         private fun parseColor(v:String):Long{val x=v.removePrefix("#");return (if(x.length==6)"FF$x" else x).toLong(16)}
         private fun hex(v:Long)="#${v.toString(16).padStart(8,'0')}"
     }
