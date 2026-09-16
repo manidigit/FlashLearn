@@ -11,112 +11,15 @@ import java.time.Instant
 import java.util.UUID
 
 class CreateConceptDuplicateTest {
-    @Test fun duplicateSourceAndTargetIsRejected() = runBlocking {
-        val concepts = FakeConceptRepo()
-        val contents = FakeContentRepo()
-        val learning = FakeLearningRepo()
-        val difficulty = FakeDifficultyRepo()
-        val tags = FakeTagRepo()
-        val useCase = CreateConceptUseCase(concepts, contents, learning, difficulty, tags, FakeDb())
-        useCase(CreateConceptCommand(" Hola ", "سلام"))
-
-        val error = assertThrows(DuplicateConceptException::class.java) {
-            runBlocking { useCase(CreateConceptCommand("hola", "سلام")) }
-        }
-        assertEquals("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد", error.message)
-    }
-
-    @Test fun sameSourceAndTargetCanBeReaddedAfterSoftDelete() = runBlocking {
-        val concepts = FakeConceptRepo(); val contents = FakeContentRepo()
-        val useCase = CreateConceptUseCase(concepts, contents, FakeLearningRepo(), FakeDifficultyRepo(), FakeTagRepo(), FakeDb())
-        val firstId = useCase(CreateConceptCommand("hola", "سلام"))
-        concepts.softDelete(firstId, Instant.parse("2026-09-12T10:00:00Z"))
-
-        val secondId = useCase(CreateConceptCommand(" hola ", " سلام "))
-        assertEquals(2, concepts.items.size)
-        assertEquals(false, concepts.items.first { it.id == firstId }.active)
-        assertEquals(true, concepts.items.first { it.id == secondId }.active)
-    }
-
-    @Test fun newConcept_isImmediatelyScheduledForFirstReview() = runBlocking {
-        val concepts = FakeConceptRepo(); val contents = FakeContentRepo()
-        val learning = CapturingLearningRepo()
-        val useCase = CreateConceptUseCase(concepts, contents, learning, FakeDifficultyRepo(), FakeTagRepo(), FakeDb())
-
-        val before = Instant.now()
-        val id = useCase(CreateConceptCommand("hola", "سلام"))
-        val after = Instant.now()
-        val state = learning.states.single { it.conceptId == id }
-
-        assertNotNull(state.nextReviewAt)
-        assertEquals(Stage.DAILY, state.stage)
-        require(state.nextReviewAt!! >= before)
-        require(state.nextReviewAt!! <= after)
-    }
-
-    @Test fun sameSourceWithDifferentTargetIsAllowed() = runBlocking {
-        val concepts = FakeConceptRepo(); val contents = FakeContentRepo()
-        val useCase = CreateConceptUseCase(concepts, contents, FakeLearningRepo(), FakeDifficultyRepo(), FakeTagRepo(), FakeDb())
-        useCase(CreateConceptCommand("hola", "سلام"))
-        useCase(CreateConceptCommand("hola", "درود"))
-        assertEquals(2, concepts.items.size)
-    }
-
-    private class FakeDb : FlashLearnDatabase { override suspend fun <T> withTransaction(block: suspend () -> T): T = block() }
-    private class FakeConceptRepo : ConceptRepository {
-        val items = mutableListOf<Concept>()
-        override suspend fun insert(concept: Concept): UUID { items += concept; return concept.id }
-        override suspend fun get(conceptId: UUID) = items.find { it.id == conceptId }
-        override suspend fun getAllActive() = items.filter { it.active }
-        override suspend fun searchActive(query: String) = getAllActive()
-        override suspend fun update(concept: Concept) { items[items.indexOfFirst { it.id == concept.id }] = concept }
-        override suspend fun softDelete(conceptId: UUID, now: Instant) {
-            val index = items.indexOfFirst { it.id == conceptId }
-            if (index >= 0) items[index] = items[index].copy(active = false, updatedAt = now)
-        }
-    }
-    private class FakeContentRepo : ContentRepository {
-        val items = mutableListOf<Content>()
-        override suspend fun findByUuid(uuid: UUID) = items.find { it.id == uuid }
-        override suspend fun find(conceptId: UUID, languageCode: String) = items.find { it.conceptId == conceptId && it.languageCode == languageCode }
-        override suspend fun upsert(content: Content) { items.removeIf { it.conceptId == content.conceptId && it.languageCode == content.languageCode }; items += content }
-        override suspend fun getAll() = items.toList()
-    }
-    private class FakeLearningRepo : LearningStateRepository {
-        override suspend fun get(conceptId: UUID) = null
-        override suspend fun upsert(state: LearningState) {}
-        override suspend fun getAllByStage(stage: Stage) = emptyList<LearningState>()
-        override suspend fun getDueNonLearned(now: Instant) = emptyList<LearningState>()
-        override suspend fun getAll() = emptyList<LearningState>()
-    }
-    private class CapturingLearningRepo : LearningStateRepository {
-        val states = mutableListOf<LearningState>()
-        override suspend fun get(conceptId: UUID) = states.find { it.conceptId == conceptId }
-        override suspend fun upsert(state: LearningState) { states.removeIf { it.conceptId == state.conceptId }; states += state }
-        override suspend fun getAllByStage(stage: Stage) = states.filter { it.stage == stage }
-        override suspend fun getDueNonLearned(now: Instant) = states.filter { state ->
-            state.stage != Stage.LEARNED && state.nextReviewAt?.let { reviewAt -> reviewAt <= now } == true
-        }
-        override suspend fun getAll() = states.toList()
-    }
-    private class FakeDifficultyRepo : DifficultyStateRepository {
-        override suspend fun get(conceptId: UUID) = null
-        override suspend fun upsert(state: DifficultyState) {}
-        override suspend fun delete(conceptId: UUID) {}
-        override suspend fun getAll() = emptyList<DifficultyState>()
-    }
-    private class FakeTagRepo : ConceptTagRepository {
-        override suspend fun insert(conceptTag: ConceptTag) {}
-        override suspend fun getTagsForConcept(conceptId: UUID): List<UUID> = emptyList()
-        override suspend fun getConceptsForTag(tagId: UUID) = emptyList<UUID>()
-    }
-
-    @Test
-    fun canonicalKey_normalizesUnicodeAndLocaleConsistently() {
-        val composed = "CAFÉ"
-        val decomposed = "CAFE\u0301"
-        assertEquals(computeCanonicalKey(composed), computeCanonicalKey(decomposed))
-        assertEquals("café", computeCanonicalKey(composed))
-    }
-
+ @Test fun duplicateSourceAndTargetIsRejected()=runBlocking{val concepts=FakeConceptRepo();val contents=FakeContentRepo();val useCase=CreateConceptUseCase(concepts,contents,FakeLearningRepo(),FakeDifficultyRepo(),FakeTagRepo(),FakeDb());useCase(CreateConceptCommand(" Hola ","سلام"));val error=assertThrows(DuplicateConceptException::class.java){runBlocking{useCase(CreateConceptCommand("hola","سلام"))}};assertEquals("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد",error.message)}
+ @Test fun sameSourceAndTargetCanBeReaddedAfterSoftDelete()=runBlocking{val concepts=FakeConceptRepo();val contents=FakeContentRepo();val useCase=CreateConceptUseCase(concepts,contents,FakeLearningRepo(),FakeDifficultyRepo(),FakeTagRepo(),FakeDb());val firstId=useCase(CreateConceptCommand("hola","سلام"));concepts.softDelete(firstId,Instant.parse("2026-09-12T10:00:00Z"));val secondId=useCase(CreateConceptCommand(" hola "," سلام "));assertEquals(2,concepts.items.size);assertEquals(false,concepts.items.first{it.id==firstId}.active);assertEquals(true,concepts.items.first{it.id==secondId}.active)}
+ @Test fun newConcept_isImmediatelyScheduledForFirstReview()=runBlocking{val concepts=FakeConceptRepo();val contents=FakeContentRepo();val learning=CapturingLearningRepo();val useCase=CreateConceptUseCase(concepts,contents,learning,FakeDifficultyRepo(),FakeTagRepo(),FakeDb());val before=Instant.now();val id=useCase(CreateConceptCommand("hola","سلام"));val after=Instant.now();val state=learning.states.single{it.conceptId==id};assertNotNull(state.nextReviewAt);assertEquals(Stage.DAILY,state.stage);require(state.nextReviewAt!!>=before);require(state.nextReviewAt!!<=after)}
+ @Test fun sameSourceWithDifferentTargetMergesIntoOneConcept()=runBlocking{val concepts=FakeConceptRepo();val contents=FakeContentRepo();val useCase=CreateConceptUseCase(concepts,contents,FakeLearningRepo(),FakeDifficultyRepo(),FakeTagRepo(),FakeDb());val firstId=useCase(CreateConceptCommand("hola","سلام"));val secondId=useCase(CreateConceptCommand("hola","درود"));assertEquals(firstId,secondId);assertEquals(1,concepts.items.size);assertEquals(listOf("سلام","درود"),contents.items.filter{it.conceptId==firstId&&it.languageCode=="fa"}.sortedBy{it.translationIndex}.map{it.text})}
+ @Test fun staleCanonicalKeys_areIgnored_duringCreateMerge()=runBlocking{val concepts=FakeConceptRepo();val contents=FakeContentRepo();val useCase=CreateConceptUseCase(concepts,contents,FakeLearningRepo(),FakeDifficultyRepo(),FakeTagRepo(),FakeDb());val firstId=useCase(CreateConceptCommand("ellos","آن‌ها"));contents.items.first{it.conceptId==firstId&&it.languageCode=="es"}.let{old->contents.items[contents.items.indexOf(old)]=old.copy(canonicalKey="stale-source-key")};val secondId=useCase(CreateConceptCommand(" ELLOS ","ایشان"));assertEquals(firstId,secondId);assertEquals(1,concepts.items.size);assertEquals(listOf("آن‌ها","ایشان"),contents.findAll(firstId,"fa").map{it.text})}
+ private class FakeDb:FlashLearnDatabase{override suspend fun <T> withTransaction(block:suspend()->T):T=block()};private class FakeConceptRepo:ConceptRepository{val items=mutableListOf<Concept>();override suspend fun insert(concept:Concept):UUID{items+=concept;return concept.id};override suspend fun get(conceptId:UUID)=items.find{it.id==conceptId};override suspend fun getAllActive()=items.filter{it.active};override suspend fun searchActive(query:String)=getAllActive();override suspend fun update(concept:Concept){items[items.indexOfFirst{it.id==concept.id}]=concept};override suspend fun softDelete(conceptId:UUID,now:Instant){val i=items.indexOfFirst{it.id==conceptId};if(i>=0)items[i]=items[i].copy(active=false,updatedAt=now)}}
+ private class FakeContentRepo:ContentRepository{val items=mutableListOf<Content>();override suspend fun findByUuid(uuid:UUID)=items.find{it.id==uuid};override suspend fun find(conceptId:UUID,languageCode:String)=items.filter{it.conceptId==conceptId&&it.languageCode==languageCode}.minByOrNull{it.translationIndex};override suspend fun findAll(conceptId:UUID,languageCode:String)=items.filter{it.conceptId==conceptId&&it.languageCode==languageCode}.sortedBy{it.translationIndex};override suspend fun upsert(content:Content){items.removeIf{it.id==content.id};items+=content};override suspend fun insertTranslation(content:Content){items+=content};override suspend fun getAll()=items.toList()}
+ private class FakeLearningRepo:LearningStateRepository{override suspend fun get(conceptId:UUID)=null;override suspend fun upsert(state:LearningState){};override suspend fun getAllByStage(stage:Stage)=emptyList<LearningState>();override suspend fun getDueNonLearned(now:Instant)=emptyList<LearningState>();override suspend fun getAll()=emptyList<LearningState>()}
+ private class CapturingLearningRepo:LearningStateRepository{val states=mutableListOf<LearningState>();override suspend fun get(conceptId:UUID)=states.find{it.conceptId==conceptId};override suspend fun upsert(state:LearningState){states.removeIf{it.conceptId==state.conceptId};states+=state};override suspend fun getAllByStage(stage:Stage)=states.filter{it.stage==stage};override suspend fun getDueNonLearned(now:Instant)=states.filter{state->state.stage!=Stage.LEARNED&&state.nextReviewAt?.let{it<=now}==true};override suspend fun getAll()=states.toList()}
+ private class FakeDifficultyRepo:DifficultyStateRepository{override suspend fun get(conceptId:UUID)=null;override suspend fun upsert(state:DifficultyState){};override suspend fun delete(conceptId:UUID){};override suspend fun getAll()=emptyList<DifficultyState>()};private class FakeTagRepo:ConceptTagRepository{override suspend fun insert(conceptTag:ConceptTag){};override suspend fun getTagsForConcept(conceptId:UUID):List<UUID>=emptyList();override suspend fun getConceptsForTag(tagId:UUID)=emptyList<UUID>()}
+ @Test fun canonicalKey_normalizesUnicodeAndLocaleConsistently(){val composed="CAFÉ";val decomposed="CAFE\u0301";assertEquals(computeCanonicalKey(composed),computeCanonicalKey(decomposed));assertEquals("café",computeCanonicalKey(composed))}
 }
