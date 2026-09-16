@@ -1,5 +1,13 @@
 # FlashLearn Changelog
 
+## v5.87 — Previous-Version FULL Backup Compatibility Hardening
+- Audited the supplied historical FULL backup archive containing a schema-2 FULL JSON with 8,242 concepts, 20,443 contents, 8,242 learning states, 8,242 difficulty states, 163 review sessions, and 1,987 review-history records.
+- Confirmed the historical backup uses the known v5.74 partial schema-2 FULL section shape and contains `RANDOM` review-session/history types.
+- Fixed FULL restore validation so `RANDOM` is accepted as a valid review type instead of being reported as `INVALID_VALUE:reviewSession_reviewType` / `INVALID_VALUE:history_reviewType`.
+- Added regression coverage for `RANDOM` review sessions/history and for the known v5.74 partial FULL schema shape.
+- Verified the historical backup's core UUID uniqueness and concept/category/content/learning/difficulty/session/history references before accepting it as a compatibility target.
+- Bumped application identity to 5.87 / versionCode 87.
+
 ## v5.86 — Backup FULL export/restore fix
 - Fixed the typed FULL backup exporter so it now uses the authoritative complete FULL backup contract instead of combining only vocabulary and progress sections.
 - FULL backups now include all current persisted sections required by FULL restore, including concept tags, settings, achievements, parser metadata, review queue, relations, variants, languages, and language pairs.
