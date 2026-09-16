@@ -22,6 +22,7 @@ import com.flashlearn.domain.model.ReviewQueueItem
 
 @Composable
 fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val items by viewModel.items.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
     Column(
@@ -49,6 +50,7 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
 
 @Composable
 private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewModel) {
+    val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(14.dp),
