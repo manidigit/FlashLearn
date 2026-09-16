@@ -15,8 +15,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 86
-        versionName = "5.86"
+        versionCode = 87
+        versionName = "5.87"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Keep the About screen metadata in the generated BuildConfig.
@@ -33,7 +33,7 @@ android {
             storeFile = file("../keystore/debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
-            keyPassword = "android"
+            keyPassword = "androiddebugkey"
         }
         create("release") {
             val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
