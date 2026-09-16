@@ -1,8 +1,65 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.kapt"); id("com.google.dagger.hilt.android") }
-val appBuildDate=SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).format(Date())
-android { namespace="com.flashlearn.app";compileSdk=34;defaultConfig{applicationId="com.flashlearn.app";minSdk=26;targetSdk=34;versionCode=85;versionName="5.85";testInstrumentationRunner="androidx.test.runner.AndroidJUnitRunner";buildConfigField("String","APP_GITHUB_URL","\"https://github.com/manidigit/FlashLearn\"");buildConfigField("String","APP_AI_ASSISTANT","\"OpenAI GPT-5.6 Luna\"");buildConfigField("String","APP_BUILD_DATE","\"$appBuildDate\"");buildConfigField("String","APP_DATABASE","\"Room / SQLite\"");buildConfigField("String","APP_LANGUAGE","\"Kotlin\"");buildConfigField("String","APP_AUTHOR","\"ManiDigit\"")};signingConfigs{create("release"){val p=System.getenv("FL_RELEASE_STORE_FILE");val sp=System.getenv("FL_RELEASE_STORE_PASSWORD");val a=System.getenv("FL_RELEASE_KEY_ALIAS");val kp=System.getenv("FL_RELEASE_KEY_PASSWORD");if(!p.isNullOrBlank())storeFile=file(p);if(!sp.isNullOrBlank())storePassword=sp;if(!a.isNullOrBlank())keyAlias=a;if(!kp.isNullOrBlank())keyPassword=kp};val debug=System.getenv("FL_DEBUG_STORE_FILE");if(!debug.isNullOrBlank())create("ciDebug"){storeFile=file(debug);storePassword=System.getenv("FL_DEBUG_STORE_PASSWORD")?:"flashlearn-debug";keyAlias=System.getenv("FL_DEBUG_KEY_ALIAS")?:"flashlearn";keyPassword=System.getenv("FL_DEBUG_KEY_PASSWORD")?:"flashlearn-debug"}};buildTypes{getByName("debug"){val debug=System.getenv("FL_DEBUG_STORE_FILE");if(!debug.isNullOrBlank())signingConfig=signingConfigs.getByName("ciDebug")};getByName("release"){signingConfig=signingConfigs.getByName("release");isMinifyEnabled=false}};buildFeatures{compose=true;buildConfig=true};composeOptions{kotlinCompilerExtensionVersion="1.5.4"};compileOptions{sourceCompatibility=JavaVersion.VERSION_17;targetCompatibility=JavaVersion.VERSION_17};kotlinOptions{jvmTarget="17"}}
-dependencies{implementation(project(":domain"));implementation(project(":data"));implementation(project(":database"));implementation(project(":core"));implementation("com.google.dagger:hilt-android:2.51.1");kapt("com.google.dagger:hilt-compiler:2.51.1");implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3");implementation(platform("androidx.compose:compose-bom:2024.02.00"));implementation("androidx.activity:activity-compose:1.9.2");implementation("androidx.compose.ui:ui");implementation("androidx.compose.ui:ui-graphics");implementation("androidx.compose.ui:ui-tooling-preview");implementation("androidx.compose.material3:material3");implementation("androidx.compose.material:material-icons-extended");implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4");debugImplementation("androidx.compose.ui:ui-tooling");testImplementation("junit:junit:4.13.2");androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"));androidTestImplementation("androidx.compose.ui:ui-test-junit4");androidTestImplementation("androidx.test:runner:1.6.1");androidTestImplementation("androidx.test.ext:junit:1.2.1")}
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.kapt")
+    id("com.google.dagger.hilt.android")
+}
+android {
+    namespace = "com.flashlearn.app"
+    compileSdk = 34
+    defaultConfig {
+        applicationId = "com.flashlearn.app"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 86
+        versionName = "5.86"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("../keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+        create("release") {
+            val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
+            val storePasswordValue = System.getenv("FL_RELEASE_STORE_PASSWORD")
+            val keyAliasValue = System.getenv("FL_RELEASE_KEY_ALIAS")
+            val keyPasswordValue = System.getenv("FL_RELEASE_KEY_PASSWORD")
+            if (!storeFilePath.isNullOrBlank()) storeFile = file(storeFilePath)
+            if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
+            if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
+            if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
+        }
+    }
+    buildTypes {
+        getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
+        getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
+    }
+    buildFeatures { compose = true }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
+    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    kotlinOptions { jvmTarget = "17" }
+}
+dependencies {
+    implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test:runner:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    testImplementation("junit:junit:4.13.2")
+}
