@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           grep -q 'val newTranslations' domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt
           grep -q 'computeCanonicalKey(it) !in existingKeys' domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt
-          grep -q 'val targets: List<Content>' app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt
+          grep -q 'targets: List<Content>' app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt
           grep -q 'languageCode == targetLanguage' app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt
       - name: Stage artifacts
         run: |
