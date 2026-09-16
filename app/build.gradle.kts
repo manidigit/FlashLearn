@@ -12,8 +12,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 77
-        versionName = "5.77"
+        versionCode = 78
+        versionName = "5.78"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
@@ -27,7 +27,7 @@ android {
             storeFile = file("../keystore/debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
-            keyPassword = "android"
+            keyPassword = "androiddebugkey"
         }
         create("release") {
             val storeFilePath = System.getenv("FL_RELEASE_STORE_FILE")
