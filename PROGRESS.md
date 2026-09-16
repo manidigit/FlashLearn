@@ -1,7 +1,13 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.74 — Review Help + About + Library category selection
-**Application identity:** `versionName = 5.74`, `versionCode = 74`
+## Current checkpoint: v5.79 — Settings theme list compact + program color cleanup
+**Application identity:** `versionName = 5.79`, `versionCode = 79`
+
+### v5.79 checkpoint changes
+- Settings → full program theme list is now a compact horizontally scrollable row; theme choices remain selectable and all existing themes remain available.
+- Removed only the separate Settings → program/accent color section; no other Settings sections or behaviors were changed.
+- Updated the Settings-visible version text to 5.79.
+- CHANGELOG.md and PROGRESS.md are updated in the same checkpoint commit.
 
 ### Current implementation status
 - Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.

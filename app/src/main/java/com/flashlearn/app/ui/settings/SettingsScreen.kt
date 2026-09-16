@@ -85,7 +85,12 @@ fun SettingsScreen(
         Section("تم کامل برنامه")
         Text("تم روی رنگ‌ها، پس‌زمینه‌ها، کارت‌ها، تایپوگرافی، تراکم، گوشه‌ها، ارتفاع کنترل‌ها، elevation و سبک آیکون‌ها اثر می‌گذارد.", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(tokens.compactGap))
-        themes.forEach { spec -> ThemeChoice(spec, themeId, onThemeChange) }
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)
+        ) {
+            themes.forEach { spec -> ThemeChoice(spec, themeId, onThemeChange) }
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
             OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json")) }, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("وارد کردن")
@@ -99,15 +104,6 @@ fun SettingsScreen(
         }
         if (importError) Text("فایل تم معتبر نیست یا قابل خواندن نیست.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
         if (exportError) Text("ذخیره فایل تم ناموفق بود.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(tokens.sectionGap))
-        Section("رنگ تأکیدی")
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            AccentChoice("بنفش", AccentColor.PURPLE, accentColor, onAccentColorChange, MaterialTheme.colorScheme.primary)
-            AccentChoice("آبی", AccentColor.BLUE, accentColor, onAccentColorChange, MaterialTheme.colorScheme.secondary)
-            AccentChoice("سبز", AccentColor.GREEN, accentColor, onAccentColorChange, tokens.success)
-            AccentChoice("نارنجی", AccentColor.ORANGE, accentColor, onAccentColorChange, tokens.warning)
-            AccentChoice("صورتی", AccentColor.PINK, accentColor, onAccentColorChange, MaterialTheme.colorScheme.secondary)
-        }
         Spacer(Modifier.height(tokens.sectionGap))
         Section("زبان برنامه")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
@@ -125,29 +121,48 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.compactGap))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(8f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
         Spacer(Modifier.height(tokens.sectionGap)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onBackup)
-        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(Icons.Outlined.Info, "درباره برنامه", "نسخه 5.76 • تاریخچه و اطلاعات سازنده", onAbout)
+        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(Icons.Outlined.Info, "درباره برنامه", "نسخه 5.79 • تاریخچه و به‌روزرسانی‌ها", onAbout)
     }
 }
 
 @Composable private fun ThemeChoice(spec: FlashLearnThemeSpec, selected: String, onSelect: (String) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val chosen = spec.id == selected
-    OutlinedCard(onClick = { onSelect(spec.id) }, modifier = Modifier.fillMaxWidth().padding(vertical = tokens.dp(4f)), border = BorderStroke(if (chosen) tokens.dp(2f) else tokens.dp(1f), if (chosen) tokens.primary else tokens.outlineColor)) {
-        Column(Modifier.fillMaxWidth().padding(tokens.dp(12f))) {
+    OutlinedCard(
+        onClick = { onSelect(spec.id) },
+        modifier = Modifier.width(tokens.dp(190f)),
+        border = BorderStroke(
+            if (chosen) tokens.dp(2f) else tokens.dp(1f),
+            if (chosen) tokens.primary else tokens.outlineColor
+        )
+    ) {
+        Column(Modifier.fillMaxWidth().padding(tokens.dp(10f))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text(spec.name, style = MaterialTheme.typography.titleSmall); Text(if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) "تم داخلی" else "تم واردشده", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }
+                Column(Modifier.weight(1f)) {
+                    Text(spec.name, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                    Text(
+                        if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) "تم داخلی" else "تم واردشده",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = tokens.onSurfaceVariant
+                    )
+                }
                 if (chosen) Icon(Icons.Outlined.CheckCircle, "انتخاب شده", tint = tokens.primary)
             }
             Spacer(Modifier.height(tokens.compactGap))
-            Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(6f))) {
-                listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground, spec.lightCard).forEach { color -> Surface(color = Color(color), shape = MaterialTheme.shapes.small, border = BorderStroke(tokens.dp(1f), tokens.outlineColor), modifier = Modifier.size(tokens.dp(28f))) {} }
-                Surface(color = Color(spec.darkBackground), shape = MaterialTheme.shapes.small, modifier = Modifier.size(tokens.dp(28f))) {}
+            Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(5f))) {
+                listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground, spec.lightCard, spec.darkBackground).forEach { color ->
+                    Surface(
+                        color = Color(color),
+                        shape = MaterialTheme.shapes.small,
+                        border = BorderStroke(tokens.dp(1f), tokens.outlineColor),
+                        modifier = Modifier.size(tokens.dp(22f))
+                    ) {}
+                }
             }
             Spacer(Modifier.height(tokens.compactGap))
-            Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(4f))) {
                 AssistChip(onClick = {}, label = { Text("تراکم ${spec.densityScale}") })
-                AssistChip(onClick = {}, label = { Text(if (spec.iconStyle.equals("filled", true)) "آیکون پر" else "آیکون خطی") })
-                AssistChip(onClick = {}, label = { Text("تایپو ${spec.typographyScale}") })
+                AssistChip(onClick = {}, label = { Text(if (spec.iconStyle.equals("filled", true)) "پر" else "خطی") })
             }
         }
     }

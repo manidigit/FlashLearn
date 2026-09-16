@@ -1,5 +1,11 @@
 # FlashLearn Changelog
 
+## v5.79 — Settings Theme List Compact + Program Color Cleanup
+- Kept the existing Settings functionality and all other sections unchanged.
+- Changed only the full-program theme list presentation to a compact horizontally scrollable row so all available themes no longer create a long vertical page.
+- Removed the separate program/accent-color section from Settings as requested; no other Settings controls were changed.
+- Updated the visible Settings version text to 5.79 and retained the changelog/update history.
+
 ## v5.74 — Review Help + About + Library Category Selection
 - Added an explicit domain-level Review Help contract for Hint and Show Note so help actions remain separate from answer/session state.
 - Hint content is deliberately non-answer-revealing; Show Note returns only an explicitly requested note and does not mutate review results.
