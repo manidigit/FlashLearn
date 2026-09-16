@@ -30,12 +30,13 @@ jobs:
           set -euo pipefail
           export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
           test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -46,7 +47,19 @@ jobs:
       - name: Verify APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - name: Verify APK version
-        run: test "$(apkanalyzer manifest version-code app/build/outputs/apk/debug/app-debug.apk)" = "${FL_VERSION_CODE}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          APKANALYZER="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
+          if [[ ! -x "$APKANALYZER" ]]; then
+            APKANALYZER="${ANDROID_HOME}/cmdline-tools/bin/apkanalyzer"
+          fi
+          if [[ ! -x "$APKANALYZER" ]]; then
+            APKANALYZER="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer.bat"
+          fi
+          test -x "$APKANALYZER"
+          test "$("$APKANALYZER" manifest version-code "$APK_PATH")" = "${FL_VERSION_CODE}"
       - name: Unit tests
         run: gradle --no-daemon test
       - name: Verify multiple-meaning merge implementation
