@@ -37,8 +37,8 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) { AccentChoice("بنفش", AccentColor.PURPLE, accentColor, onAccentColorChange, Color(0xFF7C3AED)); AccentChoice("آبی", AccentColor.BLUE, accentColor, onAccentColorChange, Color(0xFF2563EB)); AccentChoice("سبز", AccentColor.GREEN, accentColor, onAccentColorChange, Color(0xFF16A34A)); AccentChoice("نارنجی", AccentColor.ORANGE, accentColor, onAccentColorChange, Color(0xFFEA580C)); AccentChoice("صورتی", AccentColor.PINK, accentColor, onAccentColorChange, Color(0xFFDB2777)) }
         Spacer(Modifier.height(12.dp)); Section("زبان برنامه")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SettingsRow(Icons.Outlined.Language, "زبان رابط کاربری", "فارسی", modifier = Modifier.weight(1f))
-            SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست", { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }, Modifier.weight(1f))
+            SettingsRow(Icons.Outlined.Language, "زبان رابط کاربری", "فارسی", onClick = null, modifier = Modifier.weight(1f))
+            SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست", onClick = { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }, modifier = Modifier.weight(1f))
         }
         Spacer(Modifier.height(12.dp)); Section("زبان پیش‌فرض یادگیری")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -49,8 +49,8 @@ fun SettingsScreen(appearance: AppearanceMode, onAppearanceChange: (AppearanceMo
         Spacer(Modifier.height(12.dp)); Section("تعداد پاسخ برای تغییر سطح")
         Text("تعداد پاسخ صحیح یا غلط پیاپی برای جابه‌جایی بین آسان، متوسط، سخت و خیلی سخت", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(6.dp))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
-        Spacer(Modifier.height(12.dp)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان") { onBackup() }
-        Spacer(Modifier.height(10.dp)); Section("درباره"); SettingsRow(Icons.Outlined.Language, "درباره برنامه", "نسخه 5.73 • تاریخچه و اطلاعات سازنده") { onAbout() }
+        Spacer(Modifier.height(12.dp)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onClick = { onBackup() })
+        Spacer(Modifier.height(10.dp)); Section("درباره"); SettingsRow(Icons.Outlined.Language, "درباره برنامه", "نسخه 5.73 • تاریخچه و اطلاعات سازنده", onClick = { onAbout() })
     }
 }
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
