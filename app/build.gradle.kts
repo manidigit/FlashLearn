@@ -1,3 +1,7 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,10 +9,10 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
-val appBuildDate = java.text.SimpleDateFormat(
+val appBuildDate = SimpleDateFormat(
     "yyyy-MM-dd'T'HH:mm:ssXXX",
-    java.util.Locale.US
-).format(java.util.Date())
+    Locale.US
+).format(Date())
 
 android {
     namespace = "com.flashlearn.app"
