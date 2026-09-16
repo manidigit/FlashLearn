@@ -8,7 +8,8 @@
 - Kept restore validation fail-before-mutation so malformed/incomplete backups are rejected without partially changing the database.
 - Added CI checks that keep FULL export and FULL restore requirements aligned.
 - Advanced application identity to version 5.80 / versionCode 80.
-- Added a required stable CI debug signing configuration so future downloadable debug APKs do not silently change signing identity between runners.
+- CI debug APKs now use the same pinned public Android development test key on every runner, preventing future update-install failures caused by changing ephemeral debug signatures.
+- The public development key is restricted to CI debug artifacts; production/release signing remains separate.
 - Documented the one-time signing migration limitation for installations created by older ephemeral CI debug keys.
 
 ## v5.79 — Stable CI Debug Signing Preparation + Multiple-Meaning Edit Preservation
