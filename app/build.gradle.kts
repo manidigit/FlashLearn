@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"${java.time.Instant.now()}\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"${java.text.SimpleDateFormat(\"yyyy-MM-dd'T'HH:mm:ssXXX\", java.util.Locale.US).format(java.util.Date())}\"")
         buildConfigField("String", "APP_DATABASE", "\"Room / SQLite\"")
         buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
         buildConfigField("String", "APP_AUTHOR", "\"ManiDigit\"")
@@ -44,7 +44,10 @@ android {
         getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
         getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
@@ -68,6 +71,4 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test:core:1.6.1")
-    testImplementation("junit:junit:4.13.2")
 }
