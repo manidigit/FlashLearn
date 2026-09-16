@@ -66,10 +66,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'val newTranslations' domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt
-          grep -q 'computeCanonicalKey(it) !in existingKeys' domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt
-          grep -q 'targets: List<Content>' app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt
-          grep -q 'languageCode == targetLanguage' app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt
+          IMPORT_FILE="domain/src/main/java/com/flashlearn/domain/usecase/ImportParsedEntryUseCase.kt"
+          LIBRARY_VM="app/src/main/java/com/flashlearn/app/ui/library/LibraryViewModel.kt"
+          DUPLICATE_FILE="domain/src/main/java/com/flashlearn/domain/usecase/DuplicateConceptUseCases.kt"
+          for required in "$IMPORT_FILE" "$LIBRARY_VM" "$DUPLICATE_FILE"; do
+            test -s "$required"
+          done
+          grep -Fq 'val newTranslations' "$IMPORT_FILE"
+          grep -Fq 'computeCanonicalKey(it) !in existingKeys' "$IMPORT_FILE"
+          grep -Fq 'val targets: List<Content>' "$LIBRARY_VM"
+          grep -Fq 'languageCode==targetLanguage' "$LIBRARY_VM" || grep -Fq 'languageCode == targetLanguage' "$LIBRARY_VM"
+          grep -Fq 'class RemoveExactDuplicateConceptsUseCase' "$DUPLICATE_FILE"
+          grep -Fq 'existingTargetKeys.add(content.canonicalKey)' "$DUPLICATE_FILE"
+          echo "Multiple-meaning merge implementation verified."
       - name: Stage artifacts
         run: |
           mkdir -p dist
