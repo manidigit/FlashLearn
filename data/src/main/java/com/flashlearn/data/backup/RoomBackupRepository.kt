@@ -30,7 +30,7 @@ class RoomBackupRepository @Inject constructor(
             "relations", "variants", "reviewQueue", "languages", "languagePairs"
         )
         private val STAGES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")
-        private val REVIEW_TYPES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")
+        private val REVIEW_TYPES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED", "RANDOM")
     }
 
     override suspend fun exportFull(): String = db.withTransaction {
