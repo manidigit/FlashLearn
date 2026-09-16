@@ -53,10 +53,12 @@ class CreateConceptUseCase @Inject constructor(
         require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
         val activeConcepts = conceptRepository.getAllActive()
         if (command.mergeExistingSource) {
-            val existing = activeConcepts.firstOrNull { concept -> contentRepository.find(concept.id, command.sourceLanguage)?.canonicalKey == sourceKey }
+            val existing = activeConcepts.firstOrNull { concept ->
+                contentRepository.find(concept.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey
+            }
             if (existing != null) {
                 val translations = contentRepository.findAll(existing.id, command.targetLanguage)
-                if (translations.any { it.canonicalKey == targetKey }) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
+                if (translations.any { computeCanonicalKey(it.text) == targetKey }) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
                 val nextIndex = (translations.maxOfOrNull { it.translationIndex } ?: -1) + 1
                 contentRepository.insertTranslation(Content(UUID.randomUUID(), existing.id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = nextIndex))
                 return existing.id
@@ -98,8 +100,8 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
         val activeConcepts = conceptRepository.getAllActive().filter { it.id != command.conceptId }
         val requestedKeys = requestedTranslations.map(::computeCanonicalKey).toSet()
         val duplicate = activeConcepts.any { other ->
-            contentRepository.find(other.id, command.sourceLanguage)?.canonicalKey == sourceKey &&
-                contentRepository.findAll(other.id, command.targetLanguage).any { it.canonicalKey in requestedKeys }
+            contentRepository.find(other.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey &&
+                contentRepository.findAll(other.id, command.targetLanguage).any { computeCanonicalKey(it.text) in requestedKeys }
         }
         if (duplicate) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
 
@@ -131,7 +133,7 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
             possibleCorrection = firstExisting?.possibleCorrection
         ))
 
-        val existingKeysAfterFirst = existingTranslations.drop(1).map { it.canonicalKey }.toMutableSet()
+        val existingKeysAfterFirst = existingTranslations.drop(1).map { computeCanonicalKey(it.text) }.toMutableSet()
         var nextIndex = maxOf(
             existingTranslations.maxOfOrNull { it.translationIndex } ?: 0,
             firstExisting?.translationIndex ?: 0
