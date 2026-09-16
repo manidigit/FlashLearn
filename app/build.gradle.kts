@@ -82,8 +82,15 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.20")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
