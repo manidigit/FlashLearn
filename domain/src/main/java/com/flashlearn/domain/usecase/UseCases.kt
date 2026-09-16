@@ -52,14 +52,10 @@ class CreateConceptUseCase @Inject constructor(
         require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
         val activeConcepts = conceptRepository.getAllActive()
         if (command.mergeExistingSource) {
-            val existing = activeConcepts.firstOrNull { concept ->
-                contentRepository.find(concept.id, command.sourceLanguage)?.canonicalKey == sourceKey
-            }
+            val existing = activeConcepts.firstOrNull { concept -> contentRepository.find(concept.id, command.sourceLanguage)?.canonicalKey == sourceKey }
             if (existing != null) {
                 val translations = contentRepository.findAll(existing.id, command.targetLanguage)
-                if (translations.any { it.canonicalKey == targetKey }) {
-                    throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
-                }
+                if (translations.any { it.canonicalKey == targetKey }) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
                 val nextIndex = (translations.maxOfOrNull { it.translationIndex } ?: -1) + 1
                 contentRepository.insertTranslation(Content(UUID.randomUUID(), existing.id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = nextIndex))
                 return existing.id
@@ -125,7 +121,7 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         if (alreadyPracticedToday) error("Concept has already been practiced today: ${request.conceptId}")
         if (request.reviewType != ReviewType.LEARNED) {
             val dueAt = learning.nextReviewAt
-            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt")
+            if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt)")
         }
         val transition = calculateLearningTransition(learning, request.isCorrect, request.reviewedAt)
         val threshold = settingsRepository.getInt("threshold_difficulty", default = 3)
