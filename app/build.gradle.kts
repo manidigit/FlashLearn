@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
 }
+
 android {
     namespace = "com.flashlearn.app"
     compileSdk = 34
@@ -11,9 +12,15 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 74
-        versionName = "5.74"
+        versionCode = 77
+        versionName = "5.77"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_AI_ASSISTANT", "\"OpenAI GPT-5.6 Luna\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"${java.time.Instant.now()}\"")
+        buildConfigField("String", "APP_DATABASE", "\"Room / SQLite\"")
+        buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
+        buildConfigField("String", "APP_AUTHOR", "\"ManiDigit\"")
     }
     signingConfigs {
         getByName("debug") {
@@ -42,6 +49,7 @@ android {
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
 }
+
 dependencies {
     implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
     implementation("com.google.dagger:hilt-android:2.51.1")
