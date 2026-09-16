@@ -4,13 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +21,7 @@ import com.flashlearn.domain.model.EntryType
 
 @Composable
 fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val state by viewModel.state.collectAsState()
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
@@ -38,10 +39,10 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             FilterChip(selected = duplicateInfoVisible, onClick = { duplicateInfoVisible = !duplicateInfoVisible }, label = { Text("کلمات تکراری") }, leadingIcon = { Icon(Icons.Outlined.WarningAmber, null) })
             Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = { viewModel.refreshCategories() }, enabled = !state.isSaving, shape = RoundedCornerShape(22.dp)) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(5.dp)); Text("رفرش") }
+            OutlinedButton(onClick = { viewModel.refreshCategories() }, enabled = !state.isSaving, shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(5.dp)); Text("رفرش") }
         }
         if (duplicateInfoVisible) {
-            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                 Text("تشخیص کلمات تکراری فعال است: هنگام ذخیره، واژه با همان متن و ترجمه که قبلاً در کتابخانه وجود داشته باشد، به‌عنوان تکراری رد می‌شود.", Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -73,11 +74,13 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
 }
 
 @Composable private fun LanguageField(code: String, label: String, onClick: () -> Unit, modifier: Modifier) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val language = LearningLanguage.entries.firstOrNull { it.code == code } ?: LearningLanguage.PERSIAN
     OutlinedCard(onClick = onClick, modifier = modifier) { Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(7.dp)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } }
 }
 
 @Composable private fun LanguageMenu(expanded: Boolean, dismiss: () -> Unit, excludedCode: String, onSelect: (LearningLanguage) -> Unit) {
+    val tokens = LocalFlashLearnThemeTokens.current
     DropdownMenu(expanded = expanded, onDismissRequest = dismiss) { LearningLanguage.entries.filter { it.code != excludedCode }.forEach { lang -> DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text(lang.flag); Spacer(Modifier.width(8.dp)); Text(lang.labelFa) } }, onClick = { onSelect(lang) }) } }
 }
 
