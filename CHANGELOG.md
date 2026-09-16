@@ -1,5 +1,12 @@
 # FlashLearn Changelog
 
+## v5.85 — Quiz Answer State Visual Clarity
+- Refined only the Quiz answer-choice presentation so selected, correct, and incorrect answers are visually distinct at a glance.
+- Correct answers now use stronger green emphasis, incorrect selected answers use stronger red emphasis, and the active selection uses a clear purple state.
+- Increased answer-choice visual hierarchy with stronger borders, spacing, typography weight, and status marks.
+- Kept all quiz content, answer logic, scoring, timing, and interaction behavior unchanged.
+- Updated application identity to v5.85 / versionCode 85.
+
 ## v5.84 — Review Session Exit Navigation + Add Word Bottom Navigation
 - Added the existing bottom navigation shell to the Add Word Method page so Home, Review, Vocabulary, Statistics, and Settings remain directly reachable.
 - Kept the Add Word Method page content and actions unchanged.

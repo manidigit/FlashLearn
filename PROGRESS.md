@@ -1,14 +1,15 @@
 # FlashLearn — PROGRESS TRACKER
 
-## Current checkpoint: v5.84 — Review Session Exit Navigation + Add Word Bottom Navigation
-**Application identity:** `versionName = 5.84`, `versionCode = 84`
+## Current checkpoint: v5.85 — Quiz Answer State Visual Clarity
+**Application identity:** `versionName = 5.85`, `versionCode = 85`
 
-### v5.84 checkpoint changes
-- Add Word Method now uses the existing bottom navigation shell, allowing direct navigation to Home, Review, Vocabulary, Statistics, and Settings while preserving the Add Word content/actions.
-- During an active Review session, a visible close control returns to the Review setup screen after ending the active session.
-- Android back during an active Review session is intercepted and returns to Review setup instead of Home.
-- Review completion behavior remains unchanged.
-- No Review content, answer logic, or Add Word action behavior was changed.
+### v5.85 checkpoint changes
+- Quiz answer choices now have stronger visual states for selected, correct, and incorrect answers.
+- Correct answers use a clear green container/border and check mark.
+- A selected wrong answer uses a clear red container/border and cross mark.
+- A selected unanswered choice uses a clear purple container/border and selection mark.
+- Answer spacing, border weight, typography emphasis, and feedback presentation were refined without changing quiz content or answer logic.
+- No other application screen or feature was changed in this checkpoint.
 
 ### Current implementation status
 - Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
@@ -21,12 +22,13 @@
 - Progress and Progress Summary no longer query LearningState/DifficultyState once per concept; they bulk-load state tables and join in memory for large libraries.
 - Library and Review content lookup already use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
 - Vocabulary and legacy FULL restore remain on `Dispatchers.IO` with batch Room writes; post-restore Progress/Statistics calculations now avoid the previous N+1 state queries.
-- Four-option Quiz UI follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
+- Four-option Quiz UI follows the specified interaction: four large answer buttons, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
 - Quiz prompt, progress, Hint and Note controls are retained; Quiz mode never silently renders as Flashcard when a Quiz question is unavailable.
 - Review Help keeps Hint and Show Note separate from answer/session state; Hint is non-answer-revealing and Show Note returns only the requested note without mutating review results.
 - A standalone About page is registered as a dedicated route and Settings → About navigates to it.
 - Library category selection supports multiple selected categories, preserves the legacy single-category API compatibility, wires the selection into navigation, and reflects the selected category count in the filter card.
 - Category lists expose word counts and support multi-select/apply/clear-all behavior without removing existing app functionality.
+- Add Word Method uses the existing bottom navigation shell and Review sessions expose an exit path back to Review setup.
 - CI remains the authoritative build/test gate.
 
 ### Verification gate
@@ -38,6 +40,7 @@
 
 ## Historical checkpoints
 
+v5.84 — Review Session Exit Navigation + Add Word Bottom Navigation.
 v5.83 — Bulk Import preview layout only.
 v5.82 — Add Word Method redesign + Restore reliability.
 v5.81 — Minimal Home dashboard + learning statistics.
