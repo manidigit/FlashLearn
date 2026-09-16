@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.86"
-  FL_VERSION_CODE: "86"
-  # Final CI verification includes the review filter count and ReviewScreen build fixes.
+  FL_VERSION_NAME: "5.87"
+  FL_VERSION_CODE: "87"
+  FL_PREVIOUS_VERSION_NAME: "5.86"
+  FL_PREVIOUS_VERSION_CODE: "86"
 
 jobs:
   build-and-unit-test:
@@ -39,6 +40,23 @@ jobs:
           command -v adb
           command -v apksigner
           command -v apkanalyzer
+      - name: Create clean CI debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          rm -f keystore/debug.keystore
+          keytool -genkeypair -v \
+            -keystore keystore/debug.keystore \
+            -storepass android \
+            -keypass androiddebugkey \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -noprompt
+          keytool -list -keystore keystore/debug.keystore -storepass android -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -48,6 +66,8 @@ jobs:
         run: gradle --no-daemon assembleDebug
       - name: Verify debug APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify debug APK version
+        run: test "$(apkanalyzer manifest version-code app/build/outputs/apk/debug/app-debug.apk)" = "${FL_VERSION_CODE}"
       - name: Unit tests
         run: gradle --no-daemon test
       - name: Stage debug APK
@@ -95,6 +115,22 @@ jobs:
           command -v adb
           command -v apksigner
           command -v apkanalyzer
+      - name: Create clean CI debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          rm -f keystore/debug.keystore
+          keytool -genkeypair -v \
+            -keystore keystore/debug.keystore \
+            -storepass android \
+            -keypass androiddebugkey \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -noprompt
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -112,19 +148,19 @@ jobs:
           rm -f app/build/outputs/apk/debug/app-debug.apk
           cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
           trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
-          sed -i 's/versionCode = 86/versionCode = 85/; s/versionName = "5.86"/versionName = "5.85"/' app/build.gradle.kts
+          sed -i "s/versionCode = ${FL_VERSION_CODE}/versionCode = ${FL_PREVIOUS_VERSION_CODE}/; s/versionName = \"${FL_VERSION_NAME}\"/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/" app/build.gradle.kts
           gradle --no-daemon :app:assembleDebug
           apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
           apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r' > "$RUNNER_TEMP/flashlearn-old-cert"
           test -s "$RUNNER_TEMP/flashlearn-old-cert"
           adb install app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "85"
-          sed -i 's/versionCode = 85/versionCode = 86/; s/versionName = "5.85"/versionName = "5.86"/' app/build.gradle.kts
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_PREVIOUS_VERSION_CODE}"
+          sed -i "s/versionCode = ${FL_PREVIOUS_VERSION_CODE}/versionCode = ${FL_VERSION_CODE}/; s/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/versionName = \"${FL_VERSION_NAME}\"/" app/build.gradle.kts
           gradle --no-daemon :app:assembleDebug
           apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
           test "$(cat "$RUNNER_TEMP/flashlearn-old-cert")" = "$(apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')"
           adb install -r app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "86"
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_VERSION_CODE}"
           BASH_SCRIPT
           chmod 700 "$RUNNER_TEMP/flashlearn-instrumentation.sh"
       - name: Run instrumentation tests on Android emulator
@@ -194,6 +230,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/flashlearn"
           echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
           test -s "$RUNNER_TEMP/flashlearn/release.keystore"
+          keytool -list -keystore "$RUNNER_TEMP/flashlearn/release.keystore" -storepass "$FL_RELEASE_STORE_PASSWORD" -alias "$FL_RELEASE_KEY_ALIAS" >/dev/null
       - name: Build signed current release
         if: steps.release_signing.outputs.configured == 'true'
         env:
@@ -214,18 +251,20 @@ jobs:
           set -euo pipefail
           cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
           trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
-          sed -i 's/versionCode = 86/versionCode = 85/; s/versionName = "5.86"/versionName = "5.85"/' app/build.gradle.kts
+          sed -i "s/versionCode = ${FL_VERSION_CODE}/versionCode = ${FL_PREVIOUS_VERSION_CODE}/; s/versionName = \"${FL_VERSION_NAME}\"/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/" app/build.gradle.kts
           gradle --no-daemon :app:assembleRelease
           OLD_APK=app/build/outputs/apk/release/app-release.apk
           apksigner verify --verbose "$OLD_APK"
+          test "$(apkanalyzer manifest version-code "$OLD_APK")" = "${FL_PREVIOUS_VERSION_CODE}"
           adb install "$OLD_APK"
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "85"
-          sed -i 's/versionCode = 85/versionCode = 86/; s/versionName = "5.85"/versionName = "5.86"/' app/build.gradle.kts
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_PREVIOUS_VERSION_CODE}"
+          sed -i "s/versionCode = ${FL_PREVIOUS_VERSION_CODE}/versionCode = ${FL_VERSION_CODE}/; s/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/versionName = \"${FL_VERSION_NAME}\"/" app/build.gradle.kts
           gradle --no-daemon :app:assembleRelease
           NEW_APK=app/build/outputs/apk/release/app-release.apk
           apksigner verify --verbose "$NEW_APK"
+          test "$(apkanalyzer manifest version-code "$NEW_APK")" = "${FL_VERSION_CODE}"
           adb install -r "$NEW_APK"
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "86"
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_VERSION_CODE}"
       - name: Stage signed release artifact
         if: steps.release_signing.outputs.configured == 'true'
         run: |
