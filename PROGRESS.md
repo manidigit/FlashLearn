@@ -1,5 +1,20 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.97 — Quiz Difficulty Distractor Selection Overhaul
+- Advanced the application identity to 5.97 / versionCode 97.
+- Reworked `GenerateQuizQuestion` so `QuizDifficulty` (`EASY`, `MEDIUM`, `HARD`) is a real distractor-selection signal instead of a proxy for `VocabularyDifficulty`.
+- Preserved the documented Vocabulary Difficulty candidate-pool order: same difficulty → adjacent difficulty → whole bank.
+- EASY now ranks clearly different distractors higher.
+- MEDIUM now ranks plausible distractors higher, with same-category and compatible-entry-type matches preferred.
+- HARD now ranks highly confusable distractors higher, using same category, same entry type, and local lexical similarity.
+- Added local normalized lexical scoring (token overlap, character similarity, and n-gram overlap) without external/network dependencies.
+- Kept the existing validity rules: active Concept, both sides of the active language pair, different Concept, normalized uniqueness, no duplicate options, and three valid distractors or `FlashcardFallback`.
+- Added `QuizDifficultySelectionTest` regression coverage for all three quiz levels and for the separation between quiz difficulty and vocabulary difficulty.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- v5.97 is fully verified only after Build/Unit and Instrumentation jobs complete successfully.
+
 ## v5.96 — CI Version Alignment Fix
 - Root cause confirmed from GitHub Actions run: the 5.96 APK built successfully, but `.github/workflows/android-ci.yml` still declared `FL_VERSION_CODE=95` and `FL_VERSION_NAME=5.95`.
 - Updated CI current version to 5.96 / 96 and previous version to 5.95 / 95.
