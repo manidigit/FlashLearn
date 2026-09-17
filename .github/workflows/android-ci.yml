@@ -48,7 +48,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v2
+          key: flashlearn-debug-keystore-v3
       - name: Materialize stable CI debug keystore
         shell: bash
         env:
@@ -57,11 +57,24 @@ jobs:
           set -euo pipefail
           mkdir -p keystore
           valid_key=false
+          validate_private_key() {
+            local source="$1"
+            local probe="$RUNNER_TEMP/flashlearn-keystore-probe.jks"
+            rm -f "$probe"
+            keytool -importkeystore -srckeystore "$source" -srcstoretype JKS -srcstorepass android -srcalias androiddebugkey -srckeypass androiddebugkey -destkeystore "$probe" -deststoretype JKS -deststorepass android -destalias androiddebugkey -destkeypass androiddebugkey -noprompt >/dev/null 2>&1
+            rm -f "$probe"
+          }
           if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
             echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
-            echo "Using repository-configured stable debug signing key."
-            valid_key=true
-          elif [[ -s keystore/debug.keystore ]] && keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null 2>&1; then
+            if validate_private_key keystore/debug.keystore; then
+              echo "Using repository-configured stable debug signing key."
+              valid_key=true
+            else
+              echo "Configured debug signing key is invalid; replacing it with a fresh CI key."
+              rm -f keystore/debug.keystore
+            fi
+          fi
+          if [[ "$valid_key" != true && -s keystore/debug.keystore ]] && validate_private_key keystore/debug.keystore; then
             echo "Using cached stable CI debug signing key."
             valid_key=true
           fi
@@ -70,7 +83,8 @@ jobs:
             echo "Creating a new initial CI debug signing key to seed the cache."
             keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
-          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
+          validate_private_key keystore/debug.keystore
+          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -85,7 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
-          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" | head -n 1)"
           test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
       - name: Unit tests
         run: gradle --no-daemon test
@@ -135,7 +149,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v2
+          key: flashlearn-debug-keystore-v3
       - name: Materialize stable CI debug keystore
         shell: bash
         env:
@@ -144,11 +158,24 @@ jobs:
           set -euo pipefail
           mkdir -p keystore
           valid_key=false
+          validate_private_key() {
+            local source="$1"
+            local probe="$RUNNER_TEMP/flashlearn-keystore-probe.jks"
+            rm -f "$probe"
+            keytool -importkeystore -srckeystore "$source" -srcstoretype JKS -srcstorepass android -srcalias androiddebugkey -srckeypass androiddebugkey -destkeystore "$probe" -deststoretype JKS -deststorepass android -destalias androiddebugkey -destkeypass androiddebugkey -noprompt >/dev/null 2>&1
+            rm -f "$probe"
+          }
           if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
             echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
-            echo "Using repository-configured stable debug signing key."
-            valid_key=true
-          elif [[ -s keystore/debug.keystore ]] && keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null 2>&1; then
+            if validate_private_key keystore/debug.keystore; then
+              echo "Using repository-configured stable debug signing key."
+              valid_key=true
+            else
+              echo "Configured debug signing key is invalid; replacing it with a fresh CI key."
+              rm -f keystore/debug.keystore
+            fi
+          fi
+          if [[ "$valid_key" != true && -s keystore/debug.keystore ]] && validate_private_key keystore/debug.keystore; then
             echo "Using cached stable CI debug signing key."
             valid_key=true
           fi
@@ -157,7 +184,8 @@ jobs:
             echo "Creating a new initial CI debug signing key to seed the cache."
             keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
-          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
+          validate_private_key keystore/debug.keystore
+          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -264,7 +292,7 @@ jobs:
         run: |
           set -euo pipefail
           APK="app/build/outputs/apk/release/app-release.apk"
-          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" | head -n 1)"
           test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
       - name: Stage signed release artifact
         if: steps.release_signing.outputs.configured == 'true'
