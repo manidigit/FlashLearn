@@ -1,5 +1,14 @@
 # FlashLearn Changelog
 
+## v5.92 — Add Word Simplification + Category Picker
+- Advanced the application identity to 5.92 / versionCode 92.
+- Removed the `کلمات تکراری` and `رفرش` controls from the Add Word screen.
+- Removed the `تلفظ` and `جمله نمونه` input fields from the Add Word screen while preserving the underlying data model and save contract for compatibility.
+- Changed Add Word category selection to an explicit choice between an existing category and `+ افزودن دسته جدید`.
+- Existing categories are selectable directly from the category menu; a new category can be entered only after choosing the add-new option.
+- Preserved the existing `GetOrCreateCategoryUseCase` save behavior so newly entered category names continue to be created/reused safely.
+- CI version/upgrade verification is aligned to `5.91 → 5.92` and versionCode `91 → 92`.
+
 ## v5.91 — Home RTL Layout + Review Pool Totals
 - Advanced the application identity to 5.91 / versionCode 91.
 - Applied the requested RTL Home layout: Persian labels are right-aligned and numeric values are placed on the left side of their rows/cards.
@@ -70,7 +79,7 @@
 - Reworked Quiz distractor selection to use bulk difficulty data and a cached quiz bank instead of full-table/per-candidate Room reads for every question.
 - Quiz selection now expands from the selected category to the full language-pair bank when a category does not contain enough distinct answers for four choices.
 - Reworked Progress and Progress Summary to bulk-load LearningState/DifficultyState instead of querying once per concept.
-- Kept vocabulary/legacy restore on IO with batch Room writes and aligned CI/update smoke testing to v5.73/73.
+- Kept vocabulary/legacy restore on IO with batch Room writes and aligned CI/update smoke testing to v5.73.
 - Redesigned the four-option Quiz screen toward the supplied reference: large prompt card, four large answer choices, Hint/Note controls, and clear progress.
 - Quiz answer feedback now follows the requested interaction: correct answer becomes green; when the selected answer is wrong it becomes red and the correct answer becomes green; choices lock after submission and remain visible for 2 seconds before advancing.
 
