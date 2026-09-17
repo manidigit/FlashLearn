@@ -18,13 +18,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.LearningLanguage
-import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.Category
 import com.flashlearn.domain.model.EntryType
 import com.flashlearn.domain.repository.CategoryRepository
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.ContentRepository
-import com.flashlearn.domain.usecase.DeleteConceptUseCase
 import com.flashlearn.domain.usecase.DeleteConceptUseCase
 import com.flashlearn.domain.usecase.GetAllCategoriesUseCase
 import com.flashlearn.domain.usecase.GetOrCreateCategoryUseCase
@@ -63,7 +61,8 @@ class LibraryDetailViewModel @Inject constructor(
         runCatching {
             val c = concepts.get(id) ?: error("لغت پیدا نشد")
             val cc = contents.getAll().filter { it.conceptId == id }
-            LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, c.categoryId?.let { categoryId -> categories.getAll().firstOrNull { it.id == categoryId } })
+            val category = c.categoryId?.let { categoryId -> categories.getAll().firstOrNull { it.id == categoryId } }
+            LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, category)
         }.onSuccess { _item.value = it }.onFailure { _message.value = it.message }
         runCatching { getAllCategories() }.onSuccess { _categories.value = it }
     }
@@ -96,7 +95,6 @@ class LibraryDetailViewModel @Inject constructor(
 
 @Composable
 fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {}) {
-    val tokens = LocalFlashLearnThemeTokens.current
     LaunchedEffect(conceptId, languagePair) { viewModel.load(conceptId, languagePair.source.code, languagePair.target.code) }
     val item by viewModel.item.collectAsState()
     val categories by viewModel.categories.collectAsState()
