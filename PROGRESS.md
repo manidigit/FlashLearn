@@ -1,5 +1,17 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.94 — Bulk Vocabulary Import UI Simplification
+- Advanced the application identity to `versionName = 5.94`, `versionCode = 94`.
+- Removed the `انتخاب فایل واژگان` control from the Bulk Import editor so vocabulary input is entered directly in the text area.
+- Removed the `رفرش` control from the Bulk Import editor/preview UI; the main `پیش‌نمایش` action remains the explicit way to process the entered vocabulary text.
+- Preserved the existing Bulk Import parsing, preview, duplicate reporting, warning reporting, and import behavior.
+- CI upgrade verification is aligned to `5.93 → 5.94` and versionCode `93 → 94`.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The latest v5.94 run must complete Build/Unit and Instrumentation successfully before v5.94 is considered fully verified.
+- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
+
 ## v5.93 — Vocabulary Edit Form
 - Advanced the application identity to `versionName = 5.93`, `versionCode = 93`.
 - Tapping a vocabulary item now opens an editable word-details form styled consistently with the Add Word form.

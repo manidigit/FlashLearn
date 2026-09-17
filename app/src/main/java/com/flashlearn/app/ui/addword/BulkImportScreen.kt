@@ -82,26 +82,6 @@ private fun BulkImportEditor(
             Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                OutlinedButton(
-                    onClick = onPickFile,
-                    enabled = !state.isImporting && !state.isPreviewing,
-                    modifier = Modifier.weight(1f).height(tokens.controlHeight),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text("انتخاب فایل واژگان")
-                }
-                OutlinedButton(
-                    onClick = { if (state.rawText.isNotBlank()) onPreview() },
-                    enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing,
-                    modifier = Modifier.weight(.55f).height(tokens.controlHeight),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(tokens.compactGap)); Text("رفرش")
-                }
-            }
-        }
-        item {
             OutlinedTextField(
                 value = state.rawText,
                 onValueChange = onTextChange,
@@ -145,12 +125,7 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
         Surface(color = tokens.surface, tonalElevation = tokens.dp(1f)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(16f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                        OutlinedButton(onClick = onRefresh, enabled = !state.isImporting && !state.isPreviewing && state.rawText.isNotBlank(), modifier = Modifier.height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
-                            Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(tokens.compactGap)); Text("رفرش")
-                        }
-                        OutlinedButton(onClick = onBack, modifier = Modifier.height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text("بازگشت") }
-                    }
+                    OutlinedButton(onClick = onBack, modifier = Modifier.height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text("بازگشت") }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("لغات گروهی", style = MaterialTheme.typography.headlineSmall, color = tokens.onSurface)
                         Text("پیش‌نمایش (${results.size} مورد)", style = MaterialTheme.typography.bodyMedium, color = tokens.onSurfaceVariant)
