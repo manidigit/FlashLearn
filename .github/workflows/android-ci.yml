@@ -48,7 +48,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v1
+          key: flashlearn-debug-keystore-v2
       - name: Materialize stable CI debug keystore
         shell: bash
         env:
@@ -56,14 +56,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p keystore
+          valid_key=false
           if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
             echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
             echo "Using repository-configured stable debug signing key."
-          elif [[ ! -s keystore/debug.keystore ]]; then
-            echo "No stable debug key was found; generating the initial CI key to seed the cache."
-            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
-          else
+            valid_key=true
+          elif [[ -s keystore/debug.keystore ]] && keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null 2>&1; then
             echo "Using cached stable CI debug signing key."
+            valid_key=true
+          fi
+          if [[ "$valid_key" != true ]]; then
+            rm -f keystore/debug.keystore
+            echo "Creating a new initial CI debug signing key to seed the cache."
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
@@ -130,7 +135,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v1
+          key: flashlearn-debug-keystore-v2
       - name: Materialize stable CI debug keystore
         shell: bash
         env:
@@ -138,14 +143,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p keystore
+          valid_key=false
           if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
             echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
             echo "Using repository-configured stable debug signing key."
-          elif [[ ! -s keystore/debug.keystore ]]; then
-            echo "No stable debug key was found; generating the initial CI key to seed the cache."
-            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
-          else
+            valid_key=true
+          elif [[ -s keystore/debug.keystore ]] && keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null 2>&1; then
             echo "Using cached stable CI debug signing key."
+            valid_key=true
+          fi
+          if [[ "$valid_key" != true ]]; then
+            rm -f keystore/debug.keystore
+            echo "Creating a new initial CI debug signing key to seed the cache."
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
