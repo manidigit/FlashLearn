@@ -1,5 +1,21 @@
 # FlashLearn Changelog
 
+## v5.91 — Home RTL Layout + Review Pool Totals
+- Advanced the application identity to 5.91 / versionCode 91.
+- Applied the requested RTL Home layout: Persian labels are right-aligned and numeric values are placed on the left side of their rows/cards.
+- Moved the current streak display into the header line between the greeting and the language flags.
+- Changed the ready-review cards to show both the currently ready count and the total word pool for that review type, e.g. `20 آماده از 100 کلمه` when 20 of 100 weekly words are due.
+- Preserved the existing daily, weekly, and monthly review actions and their underlying review counts.
+- This checkpoint must be verified by the GitHub Actions Build/Unit and Instrumentation jobs before being considered fully verified.
+
+## v5.90 — FULL Restore Category-ID Conflict Tolerance
+- Made FULL restore tolerant of category ID conflicts when an incoming category has the same name as an existing category but a different UUID.
+- FULL restore now maps the incoming category UUID to the existing category UUID by name instead of attempting a conflicting insert, while preserving the incoming category when no conflict exists.
+- Updated restored concepts to use the resolved category UUID mapping.
+- Added regression coverage for category-name restore conflicts.
+- Optimized FULL restore content identity lookup to avoid the previous O(n²) scan pattern on large content sets.
+- This checkpoint corresponds to the v5.90 restore-hardening commits and is preserved as history rather than overwritten by v5.91.
+
 ## v5.89 — Supplied FULL Backup Restore Alignment
 - Advanced the application identity to 5.89 / versionCode 89; v5.88 remains the previous released checkpoint.
 - Aligned the active FULL restore path with the supplied schema-2 FULL backup shape and its real category/concept relationships.
