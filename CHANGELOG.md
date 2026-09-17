@@ -1,13 +1,14 @@
 # FlashLearn Changelog
 
-## v5.88 — Backup Restore Complete + Typed Backup Coverage
-- Fixed Restore routing so legacy schema-1 `VOCABULARY` and `FULL` files are handled by their dedicated compatibility repositories.
-- Added explicit restore support for schema-2 typed `VOCABULARY` backups; the flat typed representation is adapted to the established vocabulary restore contract so existing merge behavior remains intact.
-- Added explicit restore support for schema-2 typed `PROGRESS` backups, including learning states, difficulty states, review sessions, and review history.
-- Added pre-mutation validation for typed PROGRESS UUIDs, concept/session references, stages, review types, timestamps, and duplicate review attempts.
-- Unsupported or mismatched backup discriminators now fail with an explicit unsupported-format result instead of falling through to an unrelated restore path.
-- Preserved the hardened schema-2 FULL restore path, including complete-section validation, known v5.74 partial FULL compatibility, `RANDOM` review types, canonical-key recalculation, duplicate detection, and transactional pre-restore protection.
-- Bumped application identity to 5.88 / versionCode 88.
+## v5.88 — Four-Part Functional Hardening + Global Theme Audit
+- Completed the four-part hardening track covering Library Refresh/Duplicate, Bulk Import, Restore Backup, and Global Theme Audit.
+- Library Refresh and exact-duplicate cleanup are now exposed in the active Library UI while preserving the existing ViewModel/use-case behavior.
+- Bulk Import duplicate detection, review classification, failure accounting, and UI theme-token usage were hardened without changing the established import flow.
+- Restore routing now distinguishes legacy schema-1 VOCABULARY/FULL from typed schema-2 VOCABULARY/PROGRESS/FULL and keeps the authoritative FULL compatibility path.
+- Typed PROGRESS restore validates UUIDs, concept/session references, stages, review types, timestamps, and duplicate review attempts before database mutation.
+- Audited the shared theme foundation: FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens provide the active palette, typography, density, elevation, corner, gradient, and icon-style controls.
+- Migrated BackupScreen away from its private hard-coded palette and RoundedCornerShape values to the shared theme tokens and MaterialTheme shapes, making custom themes apply consistently to backup/restore UI.
+- Application identity for this completed four-part checkpoint is 5.88 / versionCode 88.
 
 ## v5.87 — Previous-Version FULL Backup Compatibility Hardening
 - Audited the supplied historical FULL backup archive containing a schema-2 FULL JSON with 8,242 concepts, 20,443 contents, 8,242 learning states, 8,242 difficulty states, 163 review sessions, and 1,987 review-history records.
