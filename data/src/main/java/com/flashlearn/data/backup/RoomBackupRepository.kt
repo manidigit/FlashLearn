@@ -92,12 +92,14 @@ class RoomBackupRepository @Inject constructor(
                 fun uuid(o: JSONObject, key: String) = UUID.fromString(o.getString(key))
                 fun instant(o: JSONObject, key: String): Instant? = if (o.isNull(key)) null else Instant.parse(o.getString(key))
                 fun text(o: JSONObject, key: String) = o.optString(key).takeIf { it.isNotBlank() }
+                // Restore parent rows before children. In particular, categories must exist before
+                // concepts reference categoryId when SQLite foreign-key enforcement is enabled.
+                root.arr("categories").forEach { val e=CategoryEntity(uuid(it,"id"),it.getString("name")); if(db.categoryDao().getById(e.id)==null){db.categoryDao().insert(e);added++}else{db.categoryDao().update(e);merged++} }
+                root.arr("tags").forEach { val e=TagEntity(uuid(it,"id"),it.getString("name")); if(db.tagDao().getById(e.id)==null){db.tagDao().insert(e);added++}else{db.tagDao().update(e);merged++} }
                 val concepts = root.arr("concepts").map { ConceptEntity(uuid(it,"id"), it.getString("entryType"), text(it,"categoryId")?.let(UUID::fromString), it.getBoolean("favorite"), it.getBoolean("active"), Instant.parse(it.getString("createdAt")), Instant.parse(it.getString("updatedAt"))) }
                 val conceptIds = concepts.map { it.id }.toSet()
                 val existingConceptIds = db.conceptDao().getAll().map { it.id }.toSet()
                 concepts.forEach { if (it.id in existingConceptIds) { db.conceptDao().update(it); merged++ } else { db.conceptDao().insert(it); added++ } }
-                root.arr("categories").forEach { val e=CategoryEntity(uuid(it,"id"),it.getString("name")); if(db.categoryDao().getById(e.id)==null){db.categoryDao().insert(e);added++}else{db.categoryDao().update(e);merged++} }
-                root.arr("tags").forEach { val e=TagEntity(uuid(it,"id"),it.getString("name")); if(db.tagDao().getById(e.id)==null){db.tagDao().insert(e);added++}else{db.tagDao().update(e);merged++} }
                 root.arr("contents").filter { uuid(it,"conceptId") in conceptIds }.forEach { o ->
                     val conceptId=uuid(o,"conceptId"); val lang=o.getString("languageCode"); val index=o.optInt("translationIndex",0); val incomingId=uuid(o,"id")
                     val e0=ContentEntity(incomingId,conceptId,lang,o.getString("text"),computeCanonicalKey(o.getString("text")),text(o,"notes"),text(o,"pronunciation"),text(o,"example"),index,text(o,"grammarNote"),text(o,"possibleCorrection"))
