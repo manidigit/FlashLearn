@@ -9,6 +9,8 @@
 - Global theme audit confirmed FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens are the active theme foundation; active Library, Bulk Import, Settings, Progress, About, and Home surfaces use MaterialTheme/FlashLearn tokens rather than separate color palettes.
 - BackupScreen was migrated from private hard-coded purple/green colors and RoundedCornerShape values to the shared FlashLearn theme tokens and MaterialTheme shapes, so custom themes and density/typography settings now apply consistently there too.
 - Theme specifications retain light/dark primary, secondary, background, surface, card, outline, gradient, icon-style, elevation, corner, typography, and density controls.
+- CI debug-signing continuity was hardened: the workflow no longer deletes and regenerates a different debug keystore on every run. It restores a stable cached key and also supports an optional `FL_DEBUG_KEYSTORE_B64` secret for an explicitly configured stable CI debug key.
+- The instrumentation upgrade test now uses the same stable CI signing identity for the synthetic v5.87 install and the v5.88 `adb install -r`, preventing future CI APKs from silently changing signing identity between runs.
 - Application identity remains `versionName = 5.88`, `versionCode = 88` for this completed four-part checkpoint.
 
 ## Current checkpoint: v5.88 — Four-Part Functional Hardening + Global Theme Audit
