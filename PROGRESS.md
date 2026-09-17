@@ -1,5 +1,18 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.92 — Add Word Simplification + Category Picker
+- Advanced the application identity to `versionName = 5.92`, `versionCode = 92`.
+- Removed the `کلمات تکراری` and `رفرش` controls from the Add Word screen.
+- Removed the `تلفظ` and `جمله نمونه` input fields from the Add Word screen while retaining their underlying ViewModel/domain compatibility.
+- Changed Add Word category handling to an explicit picker for existing categories plus `+ افزودن دسته جدید` for creating a new category.
+- Existing category selection and new-category creation continue through the existing `GetOrCreateCategoryUseCase` save path.
+- CI upgrade verification is aligned to `5.91 → 5.92` and versionCode `91 → 92`.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The latest v5.92 run must complete Build/Unit and Instrumentation successfully before v5.92 is considered fully verified.
+- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
+
 ## v5.91 — Home RTL Layout + Review Pool Totals
 - Advanced the application identity to `versionName = 5.91`, `versionCode = 91`.
 - Applied the requested RTL Home layout: Persian labels are right-aligned and numeric values are placed on the left side of their rows/cards.
