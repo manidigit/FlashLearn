@@ -214,10 +214,12 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             else -> candidates
         }
 
-        // Rank by Quiz Difficulty, then randomize only inside the best 12 candidates.
-        // This prevents a fixed trio from repeating while keeping distractor quality.
-        val drawPool = selectedPool.sortedByDescending { quizScore(it) }.take(min(12, selectedPool.size))
-        val wrongOptions = drawPool.shuffled().take(3).map { it.content.text }
+        // Keep the three highest-quality distractors. Answer positions are shuffled
+        // below, but a low-quality distractor is never introduced merely by chance.
+        val wrongOptions = selectedPool
+            .sortedByDescending { quizScore(it) }
+            .take(3)
+            .map { it.content.text }
         if (wrongOptions.size < 3) return QuizQuestionResult.FlashcardFallback
 
         return QuizQuestionResult.QuizQuestion(
