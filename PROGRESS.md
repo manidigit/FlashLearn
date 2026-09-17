@@ -1,21 +1,27 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.95 — CI Instrumentation Emulator Fix
+- Added a headless Android Emulator to the instrumentation-test job.
+- CI now installs the Android 34 Google APIs x86_64 system image and emulator tooling.
+- CI waits for the emulator to report `sys.boot_completed=1` before `connectedDebugAndroidTest`.
+- The previous `No connected devices!` failure was a CI environment/setup failure, not an application test assertion failure.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- v5.95 is fully verified only after Build/Unit and Instrumentation jobs complete successfully.
+
 ## v5.95 — Build Fix: Library Detail & Backup Screen Kotlin Compilation
 - Renamed the injected `CategoryRepository` property in `LibraryDetailViewModel` to `categoryRepository` so it no longer conflicts with the public `categories` `StateFlow`.
 - Updated the category lookup to use the renamed repository property.
 - Removed the invalid `androidx.compose.foundation.lazy.item` import from `BackupScreen.kt`.
 - This checkpoint addresses the reported `compileDebugKotlin` and `kaptDebugKotlin` errors without changing intended application behavior.
 
-### Verification gate
-- GitHub Actions is the authoritative build/test gate.
-- The latest v5.95 run must complete Build/Unit and Instrumentation successfully before v5.95 is considered fully verified.
-
 ## v5.95 — Backup/Restore UI Separation & Layout Cleanup
 - Separated Restore and Backup into distinct visual sections instead of mixing their controls together.
 - Restore has a dedicated card with a single primary file-selection action.
 - Backup types are displayed as clear full-width actions, improving readability and touch targets.
 - `خروجی داده` remains visually separate from both Restore and Backup.
-- Screen content is now scrollable so the complete workflow fits on smaller displays.
+- Screen content is now scrollable so the complete workflow fits on smaller screens.
 - Existing backup, restore, export, save, progress, and message behavior is preserved.
 
 ## v5.94 — Build Hotfix: MainActivity syntax correction

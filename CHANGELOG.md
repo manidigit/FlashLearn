@@ -1,5 +1,11 @@
 # FlashLearn Changelog
 
+## v5.95 — CI Instrumentation Emulator Fix
+- Added a headless Android Emulator to the instrumentation-test job.
+- Installed the Android 34 Google APIs x86_64 system image and emulator tooling in CI.
+- Waits for `sys.boot_completed` before running `connectedDebugAndroidTest`, eliminating the previous `No connected devices!` failure.
+- No application behavior was changed by this CI-only fix.
+
 ## v5.95 — Build Fix: Library Detail & Backup Screen Kotlin Compilation
 - Renamed the injected `CategoryRepository` property in `LibraryDetailViewModel` to `categoryRepository` to remove the collision with the public `categories` `StateFlow`.
 - Updated category lookup to use the renamed repository property, resolving the resulting overload ambiguity and lambda error.
