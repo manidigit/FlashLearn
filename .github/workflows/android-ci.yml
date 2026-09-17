@@ -9,10 +9,10 @@ permissions:
   contents: read
 
 env:
-  FL_VERSION_NAME: "5.87"
-  FL_VERSION_CODE: "87"
-  FL_PREVIOUS_VERSION_NAME: "5.86"
-  FL_PREVIOUS_VERSION_CODE: "86"
+  FL_VERSION_NAME: "5.88"
+  FL_VERSION_CODE: "88"
+  FL_PREVIOUS_VERSION_NAME: "5.87"
+  FL_PREVIOUS_VERSION_CODE: "87"
 
 jobs:
   build-and-unit-test:
@@ -46,17 +46,7 @@ jobs:
           set -euo pipefail
           mkdir -p keystore
           rm -f keystore/debug.keystore
-          keytool -genkeypair -v \
-            -keystore keystore/debug.keystore \
-            -storetype JKS \
-            -storepass android \
-            -keypass androiddebugkey \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -noprompt
+          keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -118,27 +108,13 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v aapt
       - name: Create clean CI debug keystore
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p keystore
           rm -f keystore/debug.keystore
-          keytool -genkeypair -v \
-            -keystore keystore/debug.keystore \
-            -storetype JKS \
-            -storepass android \
-            -keypass androiddebugkey \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -noprompt
-          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
+          keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
@@ -201,10 +177,9 @@ jobs:
         run: |
           if [[ -n "$FL_RELEASE_KEYSTORE_B64" && -n "$FL_RELEASE_STORE_PASSWORD" && -n "$FL_RELEASE_KEY_ALIAS" && -n "$FL_RELEASE_KEY_PASSWORD" ]]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
-            echo "Stable release signing is configured."
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release signing is not configured; skipping signed release gate. Debug CI remains the required artifact."
+            echo "Stable release signing is not configured; skipping signed release gate."
           fi
       - uses: actions/setup-java@v5
         if: steps.release_signing.outputs.configured == 'true'
@@ -224,20 +199,13 @@ jobs:
           export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v aapt
       - name: Materialize stable release keystore
         if: steps.release_signing.outputs.configured == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/flashlearn"
           echo "$FL_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flashlearn/release.keystore"
-          test -s "$RUNNER_TEMP/flashlearn/release.keystore"
           keytool -list -keystore "$RUNNER_TEMP/flashlearn/release.keystore" -storepass "$FL_RELEASE_STORE_PASSWORD" -alias "$FL_RELEASE_KEY_ALIAS" >/dev/null
       - name: Build signed current release
         if: steps.release_signing.outputs.configured == 'true'
