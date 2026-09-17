@@ -54,10 +54,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text("🔥", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "${state.streak?.currentStreakDays ?: 0} روز پیوسته",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text("${state.streak?.currentStreakDays ?: 0} روز پیوسته", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -67,10 +64,7 @@ fun HomeScreen(
             }
 
             Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                Column(
-                    Modifier.fillMaxWidth().padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("خلاصه آمار", style = MaterialTheme.typography.titleLarge)
                     StatRow("تعداد کل کلمات", total)
                     StatRow("کلمات تمرین‌شده", stats?.practicedWords ?: 0)
@@ -111,25 +105,9 @@ private fun StatRow(label: String, value: Int) {
 private fun ReviewCard(title: String, readyCount: Int, totalCount: Int, onClick: () -> Unit) {
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
         Row(
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 18.dp, vertical = 14.dp),
+            Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(horizontalAlignment = Alignment.Start) {
-                Text(
-                    readyCount.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    "آماده از $totalCount کلمه",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Spacer(Modifier.weight(1f))
             Column(horizontalAlignment = Alignment.End) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -141,6 +119,11 @@ private fun ReviewCard(title: String, readyCount: Int, totalCount: Int, onClick:
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+            Spacer(Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(readyCount.toString(), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                Text("آماده از $totalCount کلمه", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.width(12.dp))
             Icon(Icons.Outlined.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
