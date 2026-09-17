@@ -18,7 +18,7 @@ class RuntimeGatePreflightTest {
     @Test fun releaseVersionMatchesCurrentBuild() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        assertEquals("5.87", packageInfo.versionName)
-        assertEquals(87, packageInfo.longVersionCode.toInt())
+        assertEquals("5.88", packageInfo.versionName)
+        assertEquals(88, packageInfo.longVersionCode.toInt())
     }
 }
