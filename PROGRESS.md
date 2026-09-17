@@ -1,5 +1,25 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.91 — Home RTL Layout + Review Pool Totals
+- Advanced the application identity to `versionName = 5.91`, `versionCode = 91`.
+- Applied the requested RTL Home layout: Persian labels are right-aligned and numeric values are placed on the left side of their rows/cards.
+- Moved the current streak display into the header line between the greeting and the language flags.
+- Review cards now show the ready count together with the total word pool for that review type, so a weekly pool of 100 words can correctly show 20 ready words as `20 آماده از 100 کلمه`.
+- Preserved the existing daily, weekly, and monthly review actions and their underlying ready counts.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The latest v5.91 run must complete Build/Unit and Instrumentation successfully before v5.91 is considered fully verified.
+- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
+
+## v5.90 — FULL Restore Category-ID Conflict Tolerance
+- Made FULL restore tolerant of category ID conflicts when an incoming category has the same name as an existing category but a different UUID.
+- FULL restore maps the incoming category UUID to the existing category UUID by name instead of attempting a conflicting insert, while preserving the incoming category when no conflict exists.
+- Restored concepts use the resolved category UUID mapping.
+- Added regression coverage for category-name restore conflicts.
+- Optimized FULL restore content identity lookup to avoid the previous O(n²) scan pattern on large content sets.
+- v5.90 is retained as the previous checkpoint and is not overwritten by v5.91.
+
 ## v5.89 — Supplied FULL Backup Restore Alignment
 - Advanced the application identity to `versionName = 5.89`, `versionCode = 89`; v5.88 is retained as the previous checkpoint and is not overwritten.
 - Aligned the active FULL restore implementation with the supplied schema-2 FULL backup shape and its real category → concept relationships.
@@ -9,24 +29,7 @@
 - Added regression coverage for the supplied backup shape, including category/concept relationship ordering and RANDOM review data.
 - CI version/upgrade verification is aligned to `5.88 → 5.89` and versionCode `88 → 89` using the stable debug signing identity.
 
-### Verification gate
-- GitHub Actions is the authoritative build/test gate.
-- The latest v5.89 run must complete Build/Unit and Instrumentation successfully before v5.89 is considered fully verified.
-- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
-
-## Previous checkpoint: v5.88 — Four-Part Functional Hardening + Global Theme Audit
-- Completed the four-part hardening track: Library Refresh/Duplicate, Bulk Import, Restore Backup, and Global Theme Audit.
-- Library Refresh and exact-duplicate cleanup are exposed in the active LibraryScreenV2 UI and remain connected to the existing ViewModel/use-case logic.
-- Bulk Import duplicate detection, review classification, failure accounting, and theme-token usage were hardened without changing the established editor → parse → preview → import flow.
-- Restore routing distinguishes legacy schema-1 VOCABULARY/FULL from typed schema-2 VOCABULARY/PROGRESS/FULL and preserves the authoritative FULL compatibility contract.
-- Typed PROGRESS restore validates UUIDs, references, stages, review types, timestamps, and duplicate review attempts before mutation.
-- Global theme audit confirmed FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens as the active theme foundation.
-- BackupScreen was migrated from private hard-coded colors/shapes to shared FlashLearn theme tokens and MaterialTheme shapes.
-- CI debug-signing continuity was hardened so the workflow can reuse a stable cached debug keystore or an explicitly configured stable key.
-- The v5.87 → v5.88 instrumentation upgrade check used the same stable CI signing identity.
-- Application identity was `versionName = 5.88`, `versionCode = 88` for that checkpoint.
-
-## Historical checkpoints
+### Historical checkpoints
 
 v5.89 — Supplied FULL backup restore alignment; category-parent ordering; supplied-shape regression coverage; CI aligned to 5.88 → 5.89.
 v5.88 — Four-part functional hardening + Global Theme Audit.
