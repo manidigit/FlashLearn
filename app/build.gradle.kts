@@ -42,8 +42,6 @@ android {
             if (!storeFilePath.isNullOrBlank()) storeFile = file(storeFilePath)
             if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
             if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
-            if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
-            if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
