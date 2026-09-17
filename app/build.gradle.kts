@@ -15,8 +15,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 92
-        versionName = "5.92"
+        versionCode = 93
+        versionName = "5.93"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
@@ -40,6 +40,8 @@ android {
             val keyAliasValue = System.getenv("FL_RELEASE_KEY_ALIAS")
             val keyPasswordValue = System.getenv("FL_RELEASE_KEY_PASSWORD")
             if (!storeFilePath.isNullOrBlank()) storeFile = file(storeFilePath)
+            if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
+            if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
             if (!storePasswordValue.isNullOrBlank()) storePassword = storePasswordValue
             if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
