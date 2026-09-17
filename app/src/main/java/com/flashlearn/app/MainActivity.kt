@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             when (uiState.selectedRoute) {
                 AppRoutes.NEEDS_REVIEW -> NeedsReviewScreen(needsReviewViewModel) { appViewModel.navigate(AppRoutes.HOME) }
                 AppRoutes.ABOUT -> AboutScreen { appViewModel.navigate(AppRoutes.SETTINGS) }
-                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
+                AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, languagePair = uiState.languagePair, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
                 AppRoutes.ADD_WORD -> FlashLearnShell(selectedRoute = AppRoutes.LIBRARY, onNavigate = { route ->
                     appViewModel.navigate(route)
                     when (route) {
@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                             Text("${reviewState.remaining} کارت باقی‌مانده از ${reviewState.total}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                }
+                )
             }
             Box(Modifier.weight(1f).fillMaxWidth()) { ReviewScreen(viewModel, personalDifficulty = personalDifficulty, quizDifficulty = quizDifficulty, onFinished = onFinished) }
         }
