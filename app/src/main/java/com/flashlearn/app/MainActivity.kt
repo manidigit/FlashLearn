@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                             Text("${reviewState.remaining} کارت باقی‌مانده از ${reviewState.total}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                )
+                }
             }
             Box(Modifier.weight(1f).fillMaxWidth()) { ReviewScreen(viewModel, personalDifficulty = personalDifficulty, quizDifficulty = quizDifficulty, onFinished = onFinished) }
         }

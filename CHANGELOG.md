@@ -1,5 +1,10 @@
 # FlashLearn Changelog
 
+## v5.94 — Build Hotfix: MainActivity syntax correction
+- Corrected the closing delimiter of the review-session `Surface` content block in `MainActivity.kt`.
+- This fixes the Kotlin parser errors `Expecting an element` at line 153 and `Missing '}'` at line 158 reported by `:app:kaptGenerateStubsDebugKotlin`.
+- No application behavior or UI requirements were changed by this hotfix.
+
 ## v5.94 — Bulk Vocabulary Import UI Simplification
 - Advanced the application identity to 5.94 / versionCode 94.
 - Removed the `انتخاب فایل واژگان` control from the Bulk Import editor.
@@ -38,13 +43,6 @@
 - Restored concepts use the resolved category UUID mapping.
 - Added regression coverage for category-name restore conflicts.
 - Optimized FULL restore content identity lookup to avoid the previous O(n²) scan pattern on large content sets.
-
-## v5.89 — Supplied FULL Backup Restore Alignment
-- Advanced the application identity to 5.89 / versionCode 89.
-- Aligned the active FULL restore path with the supplied schema-2 FULL backup shape and its real category/concept relationships.
-- Corrected FULL restore parent ordering so categories are restored before concepts that reference them.
-- Preserved acceptance of the known historical v5.74 partial schema-2 FULL shape without weakening validation for arbitrary incomplete backups.
-- Preserved `RANDOM` review-session/history support and regression coverage.
 
 ## Historical checkpoints
 - v5.88 — Four-part functional hardening + Global Theme Audit.

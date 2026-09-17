@@ -1,5 +1,15 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.94 — Build Hotfix: MainActivity syntax correction
+- Corrected the closing delimiter of the review-session `Surface` content block in `MainActivity.kt`.
+- This addresses the Kotlin parser errors `Expecting an element` at line 153 and `Missing '}'` at line 158 reported by `:app:kaptGenerateStubsDebugKotlin`.
+- No application behavior or UI requirements were changed by this hotfix.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The corrected v5.94 commit must complete Build/Unit and Instrumentation successfully before v5.94 is considered fully verified.
+- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
+
 ## v5.94 — Bulk Vocabulary Import UI Simplification
 - Advanced the application identity to `versionName = 5.94`, `versionCode = 94`.
 - Removed the `انتخاب فایل واژگان` control from the Bulk Import editor so vocabulary input is entered directly in the text area.
