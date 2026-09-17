@@ -1,5 +1,14 @@
 # FlashLearn Changelog
 
+## v5.93 — Vocabulary Edit Form
+- Advanced the application identity to 5.93 / versionCode 93.
+- Tapping a vocabulary item now opens an editable word-details form styled consistently with the Add Word form.
+- The edit form keeps the same learning-language presentation, source word, translation, category picker, entry type picker, notes field, and save/cancel action pattern as Add Word.
+- Category editing supports selecting an existing category, removing the category, or choosing `+ افزودن دسته جدید` and entering a new category name.
+- Existing pronunciation and example data are preserved during edit even though those fields remain hidden to match the current Add Word UI.
+- Existing favorite and delete actions remain available from the edit page.
+- CI upgrade verification is aligned to `5.92 → 5.93` and versionCode `92 → 93`.
+
 ## v5.92 — Add Word Simplification + Category Picker
 - Advanced the application identity to 5.92 / versionCode 92.
 - Removed the `کلمات تکراری` and `رفرش` controls from the Add Word screen.
