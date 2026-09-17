@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: flashlearn-android-ci
+  cancel-in-progress: true
+
 env:
   FL_VERSION_NAME: "5.88"
   FL_VERSION_CODE: "88"
