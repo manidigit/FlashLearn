@@ -57,35 +57,42 @@ class TypedBackupRepository @Inject constructor(
         val concepts = root.optJSONArray("concepts") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_VOCABULARY_SECTION:concepts"))
         val contents = root.optJSONArray("contents") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_VOCABULARY_SECTION:contents"))
         val categories = root.optJSONArray("categories") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_VOCABULARY_SECTION:categories"))
-        val categoryNames = (0 until categories.length()).associateNotNull { i ->
-            val o = categories.optJSONObject(i) ?: return@associateNotNull null
+        val categoryNames = mutableMapOf<String, String>()
+        for (i in 0 until categories.length()) {
+            val o = categories.optJSONObject(i) ?: return RestoreResult(0, 0, listOf("INVALID_ENTRY:categories[$i]"))
             val id = o.optString("id")
             val name = o.optString("name").trim()
-            if (id.isBlank() || name.isBlank()) null else id to name
+            if (id.isBlank() || runCatching { UUID.fromString(id) }.isFailure) return RestoreResult(0, 0, listOf("INVALID_UUID:categories"))
+            if (name.isBlank()) return RestoreResult(0, 0, listOf("INVALID_VALUE:category_name"))
+            categoryNames[id] = name
         }
         val nested = JSONObject().put("schemaVersion", 1).put("backupMode", "VOCABULARY").put("exportedAt", System.currentTimeMillis())
         nested.put("languages", root.optJSONArray("languages") ?: JSONArray())
-        nested.put("categories", JSONArray(categoryNames.values.map { JSONObject().put("name", it) }))
+        nested.put("categories", JSONArray(categoryNames.values.distinct().map { JSONObject().put("name", it) }))
         val contentByConcept = mutableMapOf<String, MutableList<JSONObject>>()
         for (i in 0 until contents.length()) {
             val o = contents.optJSONObject(i) ?: return RestoreResult(0, 0, listOf("INVALID_ENTRY:contents[$i]"))
             val conceptId = o.optString("conceptId")
             if (runCatching { UUID.fromString(conceptId) }.isFailure) return RestoreResult(0, 0, listOf("INVALID_UUID:contents"))
+            if (o.optString("languageCode").isBlank() || o.optString("text").isBlank()) return RestoreResult(0, 0, listOf("INVALID_VALUE:contents"))
             contentByConcept.getOrPut(conceptId) { mutableListOf() }.add(JSONObject().put("languageCode", o.optString("languageCode")).put("text", o.optString("text")))
         }
         val nestedConcepts = JSONArray()
+        val seenConceptIds = mutableSetOf<String>()
         for (i in 0 until concepts.length()) {
             val o = concepts.optJSONObject(i) ?: return RestoreResult(0, 0, listOf("INVALID_ENTRY:concepts[$i]"))
             val id = o.optString("id")
-            if (runCatching { UUID.fromString(id) }.isFailure) return RestoreResult(0, 0, listOf("INVALID_UUID:concepts"))
-            val item = JSONObject()
+            if (runCatching { UUID.fromString(id) }.isFailure || !seenConceptIds.add(id)) return RestoreResult(0, 0, listOf("INVALID_UUID:concepts"))
+            if (contentByConcept[id].isNullOrEmpty()) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_contents"))
+            val categoryId = o.optString("categoryId")
+            if (categoryId.isNotBlank() && categoryId !in categoryNames) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_category"))
+            nestedConcepts.put(JSONObject()
                 .put("uuid", id)
                 .put("contentType", o.optString("entryType", "WORD"))
                 .put("favorite", o.optBoolean("favorite", false))
                 .put("active", o.optBoolean("active", true))
-                .put("categoryName", categoryNames[o.optString("categoryId")])
-                .put("contents", JSONArray(contentByConcept[id] ?: emptyList()))
-            nestedConcepts.put(item)
+                .put("categoryName", categoryNames[categoryId])
+                .put("contents", JSONArray(contentByConcept[id]!!)))
         }
         nested.put("concepts", nestedConcepts)
         return vocabularyBackupRepository.restore(nested.toString())
@@ -111,6 +118,8 @@ class TypedBackupRepository @Inject constructor(
             if (!learningIds.add(id)) issues += "DUPLICATE_UUID:learningStates"
             if (conceptId !in conceptIds) issues += "INVALID_REFERENCE:learningStates_concept"
             if (o.optString("stage") !in setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")) issues += "INVALID_VALUE:stage"
+            if (o.optString("nextReviewAt").isNotBlank() && o.optString("nextReviewAt") != "null") runCatching { Instant.parse(o.optString("nextReviewAt")) }.onFailure { issues += "INVALID_VALUE:nextReviewAt" }
+            if (o.optString("lastReviewedAt").isNotBlank() && o.optString("lastReviewedAt") != "null") runCatching { Instant.parse(o.optString("lastReviewedAt")) }.onFailure { issues += "INVALID_VALUE:lastReviewedAt" }
         }
         for (i in 0 until difficulty.length()) {
             val o = difficulty.optJSONObject(i) ?: return RestoreResult(0, 0, listOf("INVALID_ENTRY:difficultyStates[$i]"))
@@ -165,6 +174,4 @@ class TypedBackupRepository @Inject constructor(
 
     private fun parseUuid(o: JSONObject, key: String, section: String, issues: MutableList<String>): UUID? =
         runCatching { UUID.fromString(o.optString(key)) }.getOrElse { issues += "INVALID_UUID:$section"; null }
-
-    private fun <K, V> Iterable<Pair<K, V>>.associateNotNull(): Map<K, V> = filter { it.first != null }.associate { it.first!! to it.second }
 }
