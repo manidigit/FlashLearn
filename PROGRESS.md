@@ -1,44 +1,34 @@
 # FlashLearn — PROGRESS TRACKER
 
-## v5.88 — Four-Part Functional Hardening + Global Theme Audit
+## v5.89 — Supplied FULL Backup Restore Alignment
+- Advanced the application identity to `versionName = 5.89`, `versionCode = 89`; v5.88 is retained as the previous checkpoint and is not overwritten.
+- Aligned the active FULL restore implementation with the supplied schema-2 FULL backup shape and its real category → concept relationships.
+- FULL restore now restores parent categories before concepts that reference those categories, preventing foreign-key failures when importing into an empty Room database.
+- Kept the strict historical v5.74 partial schema-2 FULL compatibility rule exact, so arbitrary missing-section backups are not silently accepted as historical backups.
+- Kept `RANDOM` review-session/history support and regression coverage.
+- Added regression coverage for the supplied backup shape, including category/concept relationship ordering and RANDOM review data.
+- CI version/upgrade verification is aligned to `5.88 → 5.89` and versionCode `88 → 89` using the stable debug signing identity.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The latest v5.89 run must complete Build/Unit and Instrumentation successfully before v5.89 is considered fully verified.
+- Release Gate remains non-blocking when stable production signing secrets are absent; debug APK/source artifacts remain the normal CI outputs.
+
+## Previous checkpoint: v5.88 — Four-Part Functional Hardening + Global Theme Audit
 - Completed the four-part hardening track: Library Refresh/Duplicate, Bulk Import, Restore Backup, and Global Theme Audit.
 - Library Refresh and exact-duplicate cleanup are exposed in the active LibraryScreenV2 UI and remain connected to the existing ViewModel/use-case logic.
 - Bulk Import duplicate detection, review classification, failure accounting, and theme-token usage were hardened without changing the established editor → parse → preview → import flow.
 - Restore routing distinguishes legacy schema-1 VOCABULARY/FULL from typed schema-2 VOCABULARY/PROGRESS/FULL and preserves the authoritative FULL compatibility contract.
 - Typed PROGRESS restore validates UUIDs, references, stages, review types, timestamps, and duplicate review attempts before mutation.
-- Global theme audit confirmed FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens are the active theme foundation; active Library, Bulk Import, Settings, Progress, About, and Home surfaces use MaterialTheme/FlashLearn tokens rather than separate color palettes.
-- BackupScreen was migrated from private hard-coded purple/green colors and RoundedCornerShape values to the shared FlashLearn theme tokens and MaterialTheme shapes, so custom themes and density/typography settings now apply consistently there too.
-- Theme specifications retain light/dark primary, secondary, background, surface, card, outline, gradient, icon-style, elevation, corner, typography, and density controls.
-- CI debug-signing continuity was hardened: the workflow no longer deletes and regenerates a different debug keystore on every run. It restores a stable cached key and also supports an optional `FL_DEBUG_KEYSTORE_B64` secret for an explicitly configured stable CI debug key.
-- The instrumentation upgrade test now uses the same stable CI signing identity for the synthetic v5.87 install and the v5.88 `adb install -r`, preventing future CI APKs from silently changing signing identity between runs.
-- Application identity remains `versionName = 5.88`, `versionCode = 88` for this completed four-part checkpoint.
-
-## Current checkpoint: v5.88 — Four-Part Functional Hardening + Global Theme Audit
-**Application identity:** `versionName = 5.88`, `versionCode = 88`
-
-### Current implementation status
-- Review sessions are capped at 30 eligible cards per session instead of opening an entire restored due queue (8k/100k cards) at once.
-- Review queue selection is shuffled before taking the 30-card batch so cards do not follow the database/UUID ordering rhythm.
-- Review queue joins concepts, learning states, difficulty states, and tags with bulk reads instead of per-card Room calls.
-- Review language-pair validation loads candidate content in bulk and reuses it for the session.
-- Quiz generation bulk-loads the quiz bank and caches it for the active process/session path.
-- Quiz distractor selection expands beyond a small category when necessary, so a category with fewer than four distinct answers does not unnecessarily break a four-choice quiz.
-- Missing DifficultyState still cannot silently switch an explicit Quiz session into Flashcards.
-- Progress and Progress Summary bulk-load state tables and join in memory for large libraries.
-- Library and Review content lookup use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
-- Legacy and typed backup restore paths are explicitly routed and validated before mutation.
-- Library, Bulk Import, Backup, Progress, About, and Home UI surfaces use the shared FlashLearn theme foundation; Backup no longer owns a private palette.
-- CI remains the authoritative build/test gate.
-
-### Verification gate
-- GitHub Actions is the authoritative build/test gate.
-- The latest pushed run must complete Build/Unit and Instrumentation successfully before the checkpoint is considered fully verified.
-- Release Gate is non-blocking when stable production signing secrets are absent; the debug APK/source artifacts remain the normal downloadable CI outputs.
-
----
+- Global theme audit confirmed FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens as the active theme foundation.
+- BackupScreen was migrated from private hard-coded colors/shapes to shared FlashLearn theme tokens and MaterialTheme shapes.
+- CI debug-signing continuity was hardened so the workflow can reuse a stable cached debug keystore or an explicitly configured stable key.
+- The v5.87 → v5.88 instrumentation upgrade check used the same stable CI signing identity.
+- Application identity was `versionName = 5.88`, `versionCode = 88` for that checkpoint.
 
 ## Historical checkpoints
 
+v5.89 — Supplied FULL backup restore alignment; category-parent ordering; supplied-shape regression coverage; CI aligned to 5.88 → 5.89.
 v5.88 — Four-part functional hardening + Global Theme Audit.
 v5.87 — Previous-Version FULL Backup Compatibility Hardening.
 v5.86 — Backup FULL export/restore fix.
