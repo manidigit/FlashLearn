@@ -84,9 +84,6 @@ class RoomBackupRepository @Inject constructor(
                 fun instant(o: JSONObject, key: String): Instant? = if (o.isNull(key)) null else Instant.parse(o.getString(key))
                 fun text(o: JSONObject, key: String) = o.optString(key).takeIf { it.isNotBlank() }
 
-                // Category names are unique in Room, while a restored backup may contain the same
-                // category with a different UUID. Reuse the existing category by name instead of
-                // attempting an INSERT that violates categories.name UNIQUE.
                 val categoryIds = mutableMapOf<UUID, UUID>()
                 root.arr("categories").forEach { o ->
                     val incomingId = uuid(o, "id")
@@ -123,18 +120,23 @@ class RoomBackupRepository @Inject constructor(
                 val existingConceptIds = db.conceptDao().getAll().map { it.id }.toSet()
                 concepts.forEach { if (it.id in existingConceptIds) { db.conceptDao().update(it); merged++ } else { db.conceptDao().insert(it); added++ } }
 
+                // Load the existing content index once. The previous implementation called getAll()
+                // for every imported content row, turning a 20k-row restore into an O(n^2) operation.
+                val existingContents = db.contentDao().getAll()
+                val existingContentsById = existingContents.associateBy { it.id }
+                val existingContentsByIdentity = existingContents.associateBy { "${it.conceptId}|${it.languageCode}|${it.translationIndex}" }
                 root.arr("contents").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
                     val conceptId = uuid(o, "conceptId"); val lang = o.getString("languageCode"); val index = o.optInt("translationIndex", 0); val incomingId = uuid(o, "id")
                     val entity = ContentEntity(incomingId, conceptId, lang, o.getString("text"), computeCanonicalKey(o.getString("text")), text(o, "notes"), text(o, "pronunciation"), text(o, "example"), index, text(o, "grammarNote"), text(o, "possibleCorrection"))
-                    val byId = db.contentDao().getById(incomingId)
-                    val byIdentity = db.contentDao().getAll().firstOrNull { it.conceptId == conceptId && it.languageCode == lang && it.translationIndex == index }
+                    val byId = existingContentsById[incomingId]
+                    val byIdentity = existingContentsByIdentity["${conceptId}|${lang}|${index}"]
                     when { byIdentity != null -> { db.contentDao().update(entity.copy(id = byIdentity.id)); merged++ }; byId != null -> { db.contentDao().update(entity); merged++ }; else -> { db.contentDao().insert(entity); added++ } }
                 }
                 root.arr("learningStates").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
                     val e = LearningStateEntity(uuid(o,"id"), uuid(o,"conceptId"), o.getString("stage"), instant(o,"nextReviewAt"), o.getInt("monthlyWrongCount"), o.getBoolean("hasPathFailure"), o.getInt("totalCorrect"), o.getInt("totalWrong"), instant(o,"lastReviewedAt"))
                     val old = db.learningStateDao().getByConceptId(e.conceptId); db.learningStateDao().upsert(if (old == null) e else e.copy(id = old.id)); if (old == null) added++ else merged++
                 }
-                root.arr("difficultyStates").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
+                root.arr("difficultyStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o ->
                     val e = DifficultyStateEntity(uuid(o,"id"), uuid(o,"conceptId"), o.getString("current"), o.getInt("consecutiveCorrect"), o.getInt("consecutiveWrong"), o.getBoolean("hasReachedVeryHard"))
                     val old = db.difficultyStateDao().getByConceptId(e.conceptId); db.difficultyStateDao().upsert(if (old == null) e else e.copy(id = old.id)); if (old == null) added++ else merged++
                 }
