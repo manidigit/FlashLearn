@@ -1,5 +1,6 @@
 package com.flashlearn.data.backup
 
+import androidx.room.withTransaction
 import com.flashlearn.database.*
 import com.flashlearn.domain.backup.BackupType
 import com.flashlearn.domain.repository.RestoreResult
@@ -86,13 +87,7 @@ class TypedBackupRepository @Inject constructor(
             if (contentByConcept[id].isNullOrEmpty()) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_contents"))
             val categoryId = o.optString("categoryId")
             if (categoryId.isNotBlank() && categoryId !in categoryNames) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_category"))
-            nestedConcepts.put(JSONObject()
-                .put("uuid", id)
-                .put("contentType", o.optString("entryType", "WORD"))
-                .put("favorite", o.optBoolean("favorite", false))
-                .put("active", o.optBoolean("active", true))
-                .put("categoryName", categoryNames[categoryId])
-                .put("contents", JSONArray(contentByConcept[id]!!)))
+            nestedConcepts.put(JSONObject().put("uuid", id).put("contentType", o.optString("entryType", "WORD")).put("favorite", o.optBoolean("favorite", false)).put("active", o.optBoolean("active", true)).put("categoryName", categoryNames[categoryId]).put("contents", JSONArray(contentByConcept[id]!!)))
         }
         nested.put("concepts", nestedConcepts)
         return vocabularyBackupRepository.restore(nested.toString())
