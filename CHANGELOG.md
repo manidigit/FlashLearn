@@ -1,5 +1,16 @@
 # FlashLearn Changelog
 
+## v5.97 — Quiz Difficulty Distractor Selection Overhaul
+- Advanced the application identity to 5.97 / versionCode 97.
+- Separated `QuizDifficulty` from `VocabularyDifficulty`: quiz difficulty now controls how close/plausible distractors are, while vocabulary difficulty only controls the documented candidate-pool priority.
+- `ابتدایی` / `EASY` prefers clearly different distractors instead of merely random alternatives.
+- `متوسط` / `MEDIUM` prioritizes plausible distractors from the same category and compatible entry type when available.
+- `حرفه‌ای` / `HARD` prioritizes highly confusable distractors using category, entry type, and local lexical similarity.
+- Added local text-similarity scoring using normalized tokens, character similarity, and n-gram overlap; no external service or network dependency is introduced.
+- Preserved all hard safety rules: target language, different Concept, active Concept, source/target language availability, normalized uniqueness, and exactly three valid distractors or `FlashcardFallback`.
+- Preserved the specification's Vocabulary Difficulty fallback order: same difficulty → adjacent difficulty → whole bank.
+- Added dedicated regression tests covering EASY/MEDIUM/HARD distractor quality and independence from Vocabulary Difficulty.
+
 ## v5.96 — CI Version Alignment Fix
 - Updated `.github/workflows/android-ci.yml` from 5.95 / versionCode 95 to 5.96 / versionCode 96.
 - Updated the CI previous-version expectation from 5.94 / 94 to 5.95 / 95.
