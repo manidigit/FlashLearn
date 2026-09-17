@@ -15,11 +15,10 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 87
-        versionName = "5.87"
+        versionCode = 88
+        versionName = "5.88"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Keep the About screen metadata in the generated BuildConfig.
         buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
         buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
@@ -52,8 +51,6 @@ android {
         getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
     }
 
-    // AGP 8.x does not generate BuildConfig unless explicitly enabled.
-    // AboutScreen depends on both standard and custom BuildConfig fields.
     buildFeatures {
         compose = true
         buildConfig = true
