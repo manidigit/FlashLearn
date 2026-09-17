@@ -1,16 +1,17 @@
 # FlashLearn — PROGRESS TRACKER
 
-## v5.88 — Backup Restore Complete + Typed Backup Coverage
-- Completed the Restore Backup stage across legacy and typed backup formats.
-- Restore routing now distinguishes legacy schema-1 VOCABULARY/FULL backups from schema-2 typed VOCABULARY/PROGRESS/FULL backups instead of sending every non-legacy file through the FULL restore path.
-- Typed VOCABULARY backups are converted through the existing legacy-compatible vocabulary restore contract so concepts, contents, categories, and language metadata can be restored without replacing the established merge behavior.
-- Typed PROGRESS backups now have a real restore path for learning states, difficulty states, review sessions, and review history.
-- Typed PROGRESS restore validates UUIDs, concept/session references, stages, review types, timestamps, and duplicate review attempts before any database mutation.
-- Unsupported or mismatched backup discriminators are rejected explicitly instead of being guessed into another restore format.
-- Existing FULL restore hardening remains authoritative: schema validation, known v5.74 partial schema-2 compatibility, RANDOM review types, duplicate detection, canonical-key recalculation, and transactional pre-restore backup are preserved.
-- Application identity is now `versionName = 5.88`, `versionCode = 88`.
+## v5.88 — Four-Part Functional Hardening + Global Theme Audit
+- Completed the four-part hardening track: Library Refresh/Duplicate, Bulk Import, Restore Backup, and Global Theme Audit.
+- Library Refresh and exact-duplicate cleanup are exposed in the active LibraryScreenV2 UI and remain connected to the existing ViewModel/use-case logic.
+- Bulk Import duplicate detection, review classification, failure accounting, and theme-token usage were hardened without changing the established editor → parse → preview → import flow.
+- Restore routing distinguishes legacy schema-1 VOCABULARY/FULL from typed schema-2 VOCABULARY/PROGRESS/FULL and preserves the authoritative FULL compatibility contract.
+- Typed PROGRESS restore validates UUIDs, references, stages, review types, timestamps, and duplicate review attempts before mutation.
+- Global theme audit confirmed FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens are the active theme foundation; active Library, Bulk Import, Settings, Progress, About, and Home surfaces use MaterialTheme/FlashLearn tokens rather than separate color palettes.
+- BackupScreen was migrated from private hard-coded purple/green colors and RoundedCornerShape values to the shared FlashLearn theme tokens and MaterialTheme shapes, so custom themes and density/typography settings now apply consistently there too.
+- Theme specifications retain light/dark primary, secondary, background, surface, card, outline, gradient, icon-style, elevation, corner, typography, and density controls.
+- Application identity remains `versionName = 5.88`, `versionCode = 88` for this completed four-part checkpoint.
 
-## Current checkpoint: v5.88 — Backup Restore Complete + Typed Backup Coverage
+## Current checkpoint: v5.88 — Four-Part Functional Hardening + Global Theme Audit
 **Application identity:** `versionName = 5.88`, `versionCode = 88`
 
 ### Current implementation status
@@ -18,21 +19,13 @@
 - Review queue selection is shuffled before taking the 30-card batch so cards do not follow the database/UUID ordering rhythm.
 - Review queue joins concepts, learning states, difficulty states, and tags with bulk reads instead of per-card Room calls.
 - Review language-pair validation loads candidate content in bulk and reuses it for the session.
-- Quiz generation now bulk-loads the quiz bank and caches it for the active process/session path instead of reading the full contents table and difficulty rows for every question.
+- Quiz generation bulk-loads the quiz bank and caches it for the active process/session path.
 - Quiz distractor selection expands beyond a small category when necessary, so a category with fewer than four distinct answers does not unnecessarily break a four-choice quiz.
 - Missing DifficultyState still cannot silently switch an explicit Quiz session into Flashcards.
-- Progress and Progress Summary no longer query LearningState/DifficultyState once per concept; they bulk-load state tables and join in memory for large libraries.
-- Library and Review content lookup already use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
-- Vocabulary and legacy FULL restore remain on `Dispatchers.IO` with batch Room writes; post-restore Progress/Statistics calculations now avoid the previous N+1 state queries.
-- Legacy schema-1 VOCABULARY and FULL restore remain supported.
-- Typed schema-2 VOCABULARY and PROGRESS restore are now supported through explicit format routing.
-- Typed schema-2 FULL restore continues to use the authoritative complete FULL contract.
-- Four-option Quiz UI follows the specified interaction: four large answer buttons in a 2×2-style layout, selected wrong answer turns red, the correct answer turns green, selected correct answer turns green, answers are disabled after submission, and the result remains visible for 2 seconds before the next card.
-- Quiz prompt, progress, Hint and Note controls are retained; Quiz mode never silently renders as Flashcard when a Quiz question is unavailable.
-- Review Help keeps Hint and Show Note separate from answer/session state; Hint is non-answer-revealing and Show Note returns only the requested note without mutating review results.
-- A standalone About page is registered as a dedicated route and Settings → About navigates to it.
-- Library category selection supports multiple selected categories, preserves the legacy single-category API compatibility, wires the selection into navigation, and reflects the selected category count in the filter card.
-- Category lists expose word counts and support multi-select/apply/clear-all behavior without removing existing app functionality.
+- Progress and Progress Summary bulk-load state tables and join in memory for large libraries.
+- Library and Review content lookup use chunked bulk content queries designed to remain below SQLite bound-variable limits for large libraries.
+- Legacy and typed backup restore paths are explicitly routed and validated before mutation.
+- Library, Bulk Import, Backup, Progress, About, and Home UI surfaces use the shared FlashLearn theme foundation; Backup no longer owns a private palette.
 - CI remains the authoritative build/test gate.
 
 ### Verification gate
@@ -44,6 +37,7 @@
 
 ## Historical checkpoints
 
+v5.88 — Four-part functional hardening + Global Theme Audit.
 v5.87 — Previous-Version FULL Backup Compatibility Hardening.
 v5.86 — Backup FULL export/restore fix.
 v5.85 — Previous checkpoint before Backup FULL restore fix.
