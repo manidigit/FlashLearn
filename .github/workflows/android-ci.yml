@@ -39,14 +39,7 @@ jobs:
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
           command -v adb
           command -v apksigner
-          command -v apkanalyzer || test -x "$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" || test -x "$ANDROID_HOME/cmdline-tools/bin/apkanalyzer"
-          if ! command -v apkanalyzer >/dev/null 2>&1; then
-            APKANALYZER_BIN="$(find "$ANDROID_HOME" -type f -name apkanalyzer 2>/dev/null | head -n 1)"
-            test -n "$APKALYZER_BIN"
-            echo "$(dirname "$APKALYZER_BIN")" >> "$GITHUB_PATH"
-            export PATH="$(dirname "$APKALYZER_BIN"):$PATH"
-          fi
-          command -v apkanalyzer
+          command -v aapt
       - name: Create clean CI debug keystore
         shell: bash
         run: |
@@ -75,7 +68,12 @@ jobs:
       - name: Verify debug APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - name: Verify debug APK version
-        run: test "$(apkanalyzer manifest version-code app/build/outputs/apk/debug/app-debug.apk)" = "${FL_VERSION_CODE}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
       - name: Unit tests
         run: gradle --no-daemon test
       - name: Stage debug APK
@@ -112,7 +110,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk} }"
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
           test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
@@ -122,7 +120,7 @@ jobs:
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
           command -v adb
           command -v apksigner
-          command -v apkanalyzer || true
+          command -v aapt
       - name: Create clean CI debug keystore
         shell: bash
         run: |
@@ -233,6 +231,7 @@ jobs:
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
           command -v adb
           command -v apksigner
+          command -v aapt
       - name: Materialize stable release keystore
         if: steps.release_signing.outputs.configured == 'true'
         run: |
@@ -250,7 +249,12 @@ jobs:
         run: apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
       - name: Verify current release version
         if: steps.release_signing.outputs.configured == 'true'
-        run: test "$(apkanalyzer manifest version-code app/build/outputs/apk/release/app-release.apk)" = "${FL_VERSION_CODE}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
       - name: Stage signed release artifact
         if: steps.release_signing.outputs.configured == 'true'
         run: |
