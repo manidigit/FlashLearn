@@ -8,6 +8,8 @@
 - Typed PROGRESS restore validates UUIDs, concept/session references, stages, review types, timestamps, and duplicate review attempts before database mutation.
 - Audited the shared theme foundation: FlashLearnTheme, FlashLearnThemeSpec, and LocalFlashLearnThemeTokens provide the active palette, typography, density, elevation, corner, gradient, and icon-style controls.
 - Migrated BackupScreen away from its private hard-coded palette and RoundedCornerShape values to the shared theme tokens and MaterialTheme shapes, making custom themes apply consistently to backup/restore UI.
+- Fixed CI debug-signing continuity: CI no longer deliberately regenerates a different debug certificate on every run. A stable cached debug keystore is now reused across v5.x CI APKs, with optional `FL_DEBUG_KEYSTORE_B64` support for an explicitly configured stable key.
+- The instrumentation upgrade check now runs under that stable CI signing identity, so a 5.87 → 5.88 `adb install -r` check also exercises the same signing continuity used by subsequent CI debug artifacts.
 - Application identity for this completed four-part checkpoint is 5.88 / versionCode 88.
 
 ## v5.87 — Previous-Version FULL Backup Compatibility Hardening
@@ -30,7 +32,6 @@
 - Quiz mode visibly renders the Hint and Show Note controls and their content without exposing the correct answer before submission.
 - Added a standalone About page with application description, version, date, creator, and changelog history.
 - Registered the About page as a dedicated application route and changed Settings → About to navigate to it instead of opening an inline dialog.
-- Added domain tests covering non-revealing Hint behavior, purity, and note handling.
 - Added multi-category selection for Library/category flows while keeping the legacy single-category API compatible.
 - Wired selected category sets through navigation and reflected the selected category count in the Library filter card.
 - Category lists expose word counts and support multi-select, Apply, and Clear All behavior without removing existing app functionality.
