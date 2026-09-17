@@ -1,17 +1,22 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.95 — Build Fix: Library Detail & Backup Screen Kotlin Compilation
+- Renamed the injected `CategoryRepository` property in `LibraryDetailViewModel` to `categoryRepository` so it no longer conflicts with the public `categories` `StateFlow`.
+- Updated the category lookup to use the renamed repository property.
+- Removed the invalid `androidx.compose.foundation.lazy.item` import from `BackupScreen.kt`.
+- This checkpoint addresses the reported `compileDebugKotlin` and `kaptDebugKotlin` errors without changing intended application behavior.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- The latest v5.95 run must complete Build/Unit and Instrumentation successfully before v5.95 is considered fully verified.
+
 ## v5.95 — Backup/Restore UI Separation & Layout Cleanup
-- Advanceded application identity to `versionName = 5.95`, `versionCode = 95`.
 - Separated Restore and Backup into distinct visual sections instead of mixing their controls together.
 - Restore has a dedicated card with a single primary file-selection action.
 - Backup types are displayed as clear full-width actions, improving readability and touch targets.
 - `خروجی داده` remains visually separate from both Restore and Backup.
 - Screen content is now scrollable so the complete workflow fits on smaller displays.
 - Existing backup, restore, export, save, progress, and message behavior is preserved.
-
-### Verification gate
-- GitHub Actions is the authoritative build/test gate.
-- The latest v5.95 run must complete Build/Unit and Instrumentation successfully before v5.95 is considered fully verified.
 
 ## v5.94 — Build Hotfix: MainActivity syntax correction
 - Corrected the closing delimiter of the review-session `Surface` content block in `MainActivity.kt`.

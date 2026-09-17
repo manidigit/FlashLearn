@@ -1,5 +1,11 @@
 # FlashLearn Changelog
 
+## v5.95 — Build Fix: Library Detail & Backup Screen Kotlin Compilation
+- Renamed the injected `CategoryRepository` property in `LibraryDetailViewModel` to `categoryRepository` to remove the collision with the public `categories` `StateFlow`.
+- Updated category lookup to use the renamed repository property, resolving the resulting overload ambiguity and lambda error.
+- Removed the invalid `androidx.compose.foundation.lazy.item` import from `BackupScreen.kt`; `LazyColumn` provides `item {}` through its scope.
+- No backup/restore or library behavior was intentionally changed.
+
 ## v5.95 — Backup/Restore UI Separation & Layout Cleanup
 - Separated the Restore flow from the Backup flow into clearly labeled sections.
 - Restore now has its own dedicated card and primary `انتخاب فایل پشتیبان` action.

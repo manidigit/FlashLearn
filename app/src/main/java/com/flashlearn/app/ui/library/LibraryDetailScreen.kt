@@ -41,7 +41,7 @@ import javax.inject.Inject
 class LibraryDetailViewModel @Inject constructor(
     private val concepts: ConceptRepository,
     private val contents: ContentRepository,
-    private val categories: CategoryRepository,
+    private val categoryRepository: CategoryRepository,
     private val getAllCategories: GetAllCategoriesUseCase,
     private val getOrCreateCategory: GetOrCreateCategoryUseCase,
     private val toggleFavorite: ToggleFavoriteUseCase,
@@ -61,7 +61,7 @@ class LibraryDetailViewModel @Inject constructor(
         runCatching {
             val c = concepts.get(id) ?: error("لغت پیدا نشد")
             val cc = contents.getAll().filter { it.conceptId == id }
-            val category = c.categoryId?.let { categoryId -> categories.getAll().firstOrNull { it.id == categoryId } }
+            val category = c.categoryId?.let { categoryId -> categoryRepository.getAll().firstOrNull { it.id == categoryId } }
             LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, category)
         }.onSuccess { _item.value = it }.onFailure { _message.value = it.message }
         runCatching { getAllCategories() }.onSuccess { _categories.value = it }
