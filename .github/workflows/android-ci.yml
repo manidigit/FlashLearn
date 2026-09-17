@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "5.89"
-  FL_VERSION_CODE: "89"
-  FL_PREVIOUS_VERSION_NAME: "5.88"
-  FL_PREVIOUS_VERSION_CODE: "88"
+  FL_VERSION_NAME: "5.92"
+  FL_VERSION_CODE: "92"
+  FL_PREVIOUS_VERSION_NAME: "5.91"
+  FL_PREVIOUS_VERSION_CODE: "91"
 
 jobs:
   build-and-unit-test:
@@ -218,3 +218,5 @@ jobs:
           test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_VERSION_CODE}"
           BASH_SCRIPT
           chmod 700 "$RUNNER_TEMP/flashlearn-instrumentation.sh"
+      - name: Run instrumentation tests
+        run: "$RUNNER_TEMP/flashlearn-instrumentation.sh"
