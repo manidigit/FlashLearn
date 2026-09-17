@@ -1,18 +1,33 @@
 package com.flashlearn.app.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flashlearn.app.ui.LanguagePair
+import com.flashlearn.app.ui.LearningLanguage
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
+import com.flashlearn.domain.model.Category
+import com.flashlearn.domain.model.EntryType
+import com.flashlearn.domain.repository.CategoryRepository
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.usecase.DeleteConceptUseCase
+import com.flashlearn.domain.usecase.DeleteConceptUseCase
+import com.flashlearn.domain.usecase.GetAllCategoriesUseCase
+import com.flashlearn.domain.usecase.GetOrCreateCategoryUseCase
 import com.flashlearn.domain.usecase.ToggleFavoriteUseCase
 import com.flashlearn.domain.usecase.UpdateConceptCommand
 import com.flashlearn.domain.usecase.UpdateConceptUseCase
@@ -28,23 +43,29 @@ import javax.inject.Inject
 class LibraryDetailViewModel @Inject constructor(
     private val concepts: ConceptRepository,
     private val contents: ContentRepository,
+    private val categories: CategoryRepository,
+    private val getAllCategories: GetAllCategoriesUseCase,
+    private val getOrCreateCategory: GetOrCreateCategoryUseCase,
     private val toggleFavorite: ToggleFavoriteUseCase,
     private val updateConcept: UpdateConceptUseCase,
     private val deleteConcept: DeleteConceptUseCase
 ) : ViewModel() {
     private val _item = MutableStateFlow<LibraryItem?>(null)
     val item: StateFlow<LibraryItem?> = _item.asStateFlow()
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
     private val _isBusy = MutableStateFlow(false)
     val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
 
-    fun load(id: UUID) = viewModelScope.launch {
+    fun load(id: UUID, sourceLanguage: String = "es", targetLanguage: String = "fa") = viewModelScope.launch {
         runCatching {
             val c = concepts.get(id) ?: error("لغت پیدا نشد")
             val cc = contents.getAll().filter { it.conceptId == id }
-            LibraryItem(c, cc.firstOrNull { it.languageCode == "es" }, cc.filter { it.languageCode == "fa" }.sortedBy { it.translationIndex }, null)
+            LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, c.categoryId?.let { categoryId -> categories.getAll().firstOrNull { it.id == categoryId } })
         }.onSuccess { _item.value = it }.onFailure { _message.value = it.message }
+        runCatching { getAllCategories() }.onSuccess { _categories.value = it }
     }
 
     fun toggleFavorite() = viewModelScope.launch {
@@ -54,15 +75,15 @@ class LibraryDetailViewModel @Inject constructor(
         runCatching { toggleFavorite(id) }.onSuccess { load(id) }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
-    fun save(source: String, target: String, notes: String?, pronunciation: String?, example: String?, onSuccess: () -> Unit = {}) = viewModelScope.launch {
+    fun save(source: String, target: String, notes: String?, pronunciation: String?, example: String?, entryType: EntryType, categoryId: UUID?, createCategoryName: String?, sourceLanguage: String, targetLanguage: String, onSuccess: () -> Unit = {}) = viewModelScope.launch {
         if (_isBusy.value) return@launch
         val current = _item.value?.concept ?: return@launch
-        if (source.isBlank() || target.isBlank()) { _message.value = "متن اسپانیایی و فارسی الزامی است"; return@launch }
+        if (source.isBlank() || target.isBlank()) { _message.value = "متن واژه و معنی الزامی است"; return@launch }
         _isBusy.value = true
-        runCatching { updateConcept(UpdateConceptCommand(current.id, source.trim(), target.trim(), notes?.trim()?.ifBlank { null }, pronunciation?.trim()?.ifBlank { null }, example?.trim()?.ifBlank { null })) }
-            .onSuccess { _message.value = "ذخیره شد"; load(current.id); onSuccess() }
-            .onFailure { _message.value = it.message }
-            .also { _isBusy.value = false }
+        runCatching {
+            val resolvedCategoryId = createCategoryName?.trim()?.takeIf { it.isNotEmpty() }?.let { getOrCreateCategory(it) }
+            updateConcept(UpdateConceptCommand(current.id, source.trim(), target.trim(), notes?.trim()?.ifBlank { null }, pronunciation?.trim()?.ifBlank { null }, example?.trim()?.ifBlank { null }, entryType = entryType, categoryId = resolvedCategoryId ?: categoryId, preserveCategory = resolvedCategoryId == null && categoryId == current.categoryId, sourceLanguage = sourceLanguage, targetLanguage = targetLanguage))
+        }.onSuccess { _message.value = "ذخیره شد"; load(current.id, sourceLanguage, targetLanguage); onSuccess() }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
     fun delete(onDeleted: () -> Unit) = viewModelScope.launch {
@@ -74,18 +95,24 @@ class LibraryDetailViewModel @Inject constructor(
 }
 
 @Composable
-fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, onBack: () -> Unit, onDeleted: () -> Unit = {}) {
+fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {}) {
     val tokens = LocalFlashLearnThemeTokens.current
-    LaunchedEffect(conceptId) { viewModel.load(conceptId) }
+    LaunchedEffect(conceptId, languagePair) { viewModel.load(conceptId, languagePair.source.code, languagePair.target.code) }
     val item by viewModel.item.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     val message by viewModel.message.collectAsState()
     val isBusy by viewModel.isBusy.collectAsState()
-    var editing by remember { mutableStateOf(false) }
     var source by remember { mutableStateOf("") }
     var target by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var pronunciation by remember { mutableStateOf("") }
     var example by remember { mutableStateOf("") }
+    var entryType by remember { mutableStateOf(EntryType.WORD) }
+    var selectedCategoryId by remember { mutableStateOf<UUID?>(null) }
+    var categoryName by remember { mutableStateOf("") }
+    var addingNewCategory by remember { mutableStateOf(false) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var typeMenuExpanded by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(item?.concept?.id) {
@@ -95,41 +122,70 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, onBa
             notes = it.source?.notes.orEmpty()
             pronunciation = it.source?.pronunciation.orEmpty()
             example = it.source?.example.orEmpty()
+            entryType = it.concept.entryType
+            selectedCategoryId = it.concept.categoryId
+            categoryName = it.category?.name.orEmpty()
+            addingNewCategory = false
         }
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("جزئیات لغت", style = MaterialTheme.typography.headlineSmall)
-        item?.let { current ->
-            if (editing) {
-                OutlinedTextField(source, { source = it }, modifier = Modifier.fillMaxWidth(), label = { Text("اسپانیایی") })
-                OutlinedTextField(target, { target = it }, modifier = Modifier.fillMaxWidth(), label = { Text("معنی‌ها (با / جدا کنید)") })
-                OutlinedTextField(notes, { notes = it }, modifier = Modifier.fillMaxWidth(), label = { Text("یادداشت") })
-                OutlinedTextField(pronunciation, { pronunciation = it }, modifier = Modifier.fillMaxWidth(), label = { Text("تلفظ") })
-                OutlinedTextField(example, { example = it }, modifier = Modifier.fillMaxWidth(), label = { Text("مثال") })
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.save(source, target, notes, pronunciation, example) { editing = false } }, enabled = !isBusy) { Text("ذخیره") }
-                    OutlinedButton(onClick = { editing = false }, enabled = !isBusy) { Text("انصراف") }
-                }
-            } else {
-                Text("اسپانیایی", style = MaterialTheme.typography.labelLarge)
-                Text(current.source?.text ?: "—", style = MaterialTheme.typography.titleLarge)
-                Text("معنی‌ها", style = MaterialTheme.typography.labelLarge)
-                if (current.targets.isEmpty()) Text("—", style = MaterialTheme.typography.titleLarge)
-                else current.targets.forEachIndexed { i, c -> Text("${i + 1}. ${c.text}", style = MaterialTheme.typography.titleLarge) }
-                current.source?.notes?.let { Text("یادداشت: $it") }
-                current.source?.pronunciation?.let { Text("تلفظ: $it") }
-                current.source?.example?.let { Text("مثال: $it") }
-                Text("نوع: ${current.concept.entryType}")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { editing = true }, enabled = !isBusy) { Text("ویرایش") }
-                    OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy) { Text(if (current.concept.favorite) "★ موردعلاقه" else "☆ افزودن به موردعلاقه") }
-                    OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy) { Text("حذف") }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
+            Text("جزئیات لغت", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+        }
+        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ReadOnlyLanguageField(languagePair.source.code, "زبان مبدأ", Modifier.weight(1f))
+                ReadOnlyLanguageField(languagePair.target.code, "زبان مقصد", Modifier.weight(1f))
+            }
+            OutlinedTextField(source, { source = it }, Modifier.fillMaxWidth(), label = { Text("واژه یا عبارت") }, singleLine = true)
+            OutlinedTextField(target, { target = it }, Modifier.fillMaxWidth(), label = { Text("ترجمه") }, singleLine = true)
+            Box(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = if (addingNewCategory) categoryName else categories.firstOrNull { it.id == selectedCategoryId }?.name ?: categoryName.ifBlank { "انتخاب دسته‌بندی" },
+                    onValueChange = { if (addingNewCategory) categoryName = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(if (addingNewCategory) "دسته‌بندی جدید" else "دسته‌بندی") },
+                    placeholder = { Text("انتخاب از دسته‌بندی‌ها یا افزودن دسته جدید") },
+                    readOnly = !addingNewCategory,
+                    singleLine = true
+                )
+                if (!addingNewCategory) Spacer(Modifier.matchParentSize().clickable { categoryMenuExpanded = true })
+                DropdownMenu(categoryMenuExpanded, { categoryMenuExpanded = false }) {
+                    DropdownMenuItem(text = { Text("بدون دسته‌بندی") }, onClick = { selectedCategoryId = null; categoryName = ""; addingNewCategory = false; categoryMenuExpanded = false })
+                    categories.forEach { category ->
+                        DropdownMenuItem(text = { Text(category.name) }, onClick = { selectedCategoryId = category.id; categoryName = category.name; addingNewCategory = false; categoryMenuExpanded = false })
+                    }
+                    HorizontalDivider()
+                    DropdownMenuItem(text = { Text("+ افزودن دسته جدید") }, onClick = { selectedCategoryId = null; categoryName = ""; addingNewCategory = true; categoryMenuExpanded = false })
                 }
             }
-        } ?: CircularProgressIndicator()
-        message?.let { Text(it) }
-        OutlinedButton(onClick = onBack) { Text("بازگشت") }
+            if (addingNewCategory) TextButton(onClick = { addingNewCategory = false; selectedCategoryId = item?.concept?.categoryId; categoryName = item?.category?.name.orEmpty() }) { Text("انتخاب از دسته‌بندی‌های موجود") }
+            Box(Modifier.fillMaxWidth()) {
+                OutlinedTextField(entryType.labelFa(), {}, Modifier.fillMaxWidth(), label = { Text("نوع ورودی") }, readOnly = true, singleLine = true)
+                Spacer(Modifier.matchParentSize().clickable { typeMenuExpanded = true })
+                DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) { EntryType.entries.forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { entryType = type; typeMenuExpanded = false }) } }
+            }
+            OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(48.dp)) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
+                OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(48.dp)) { Text("انصراف") }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
+                OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(6.dp)); Text("حذف") }
+            }
+            message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+        }
     }
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("حذف لغت؟") }, text = { Text("این لغت از کتابخانه فعال حذف می‌شود؛ سابقه مرور آن حفظ می‌شود.") }, confirmButton = { TextButton(onClick = { confirmDelete = false; viewModel.delete(onDeleted) }, enabled = !isBusy) { Text("حذف") } }, dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("انصراف") } })
 }
+
+@Composable private fun ReadOnlyLanguageField(code: String, label: String, modifier: Modifier) {
+    val language = LearningLanguage.entries.firstOrNull { it.code == code } ?: LearningLanguage.PERSIAN
+    OutlinedCard(modifier = modifier) { Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(7.dp)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } }
+}
+
+private fun EntryType.labelFa(): String = when (this) { EntryType.WORD -> "واژه"; EntryType.PHRASE -> "عبارت"; EntryType.SENTENCE -> "جمله"; EntryType.IDIOM -> "اصطلاح"; EntryType.COLLOCATION -> "هم‌آیند"; EntryType.STRUCTURE -> "ساختار" }
