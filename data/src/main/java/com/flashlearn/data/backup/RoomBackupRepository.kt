@@ -31,6 +31,10 @@ class RoomBackupRepository @Inject constructor(
         )
         private val STAGES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED")
         private val REVIEW_TYPES = setOf("DAILY", "WEEKLY", "MONTHLY", "LEARNED", "RANDOM")
+        private val LEGACY_TYPED_FULL_SECTIONS = setOf(
+            "concepts", "contents", "learningStates", "difficultyStates", "tags", "categories",
+            "relations", "variants", "reviewSessions", "reviewHistory", "languages", "languagePairs"
+        )
     }
 
     override suspend fun exportFull(): String = db.withTransaction {
@@ -62,27 +66,14 @@ class RoomBackupRepository @Inject constructor(
     override suspend fun restoreFull(json: String): RestoreResult {
         val root = runCatching { JSONObject(json) }.getOrElse { return RestoreResult(0, 0, listOf("INVALID_JSON")) }
         val schema = root.optInt("schemaVersion", -1)
-        if (schema !in 1..SCHEMA || root.optString("backupType") != "FULL") {
-            return RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP"))
-        }
+        if (schema !in 1..SCHEMA || root.optString("backupType") != "FULL") return RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP"))
         val missing = SECTIONS.filterNot(root::has)
         if (missing.isNotEmpty() && schema >= 2) {
-            // v5.74 TypedBackupRepository FULL exports contained exactly this legacy shape.
-            // Accept only that exact historical shape; reject current FULL backups with a section removed.
-            val legacyTypedFullSections = setOf(
-                "concepts", "contents", "learningStates", "difficultyStates", "tags", "categories",
-                "relations", "variants", "reviewSessions", "reviewHistory", "languages", "languagePairs"
-            )
-            val present = SECTIONS.filter(root::has).toSet()
-            if (present == legacyTypedFullSections) {
-                missing.forEach { root.put(it, JSONArray()) }
-            } else {
-                return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
-            }
+            if (SECTIONS.filter(root::has).toSet() == LEGACY_TYPED_FULL_SECTIONS) missing.forEach { root.put(it, JSONArray()) }
+            else return RestoreResult(0, 0, listOf("MISSING_SECTION:${missing.joinToString(",")}"))
         }
         val validationIssues = validateBeforeMutation(root)
         if (validationIssues.isNotEmpty()) return RestoreResult(0, 0, validationIssues)
-
         return try {
             File(context.filesDir, PRE_RESTORE).writeText(exportFull(), Charsets.UTF_8)
             db.withTransaction {
@@ -92,36 +83,80 @@ class RoomBackupRepository @Inject constructor(
                 fun uuid(o: JSONObject, key: String) = UUID.fromString(o.getString(key))
                 fun instant(o: JSONObject, key: String): Instant? = if (o.isNull(key)) null else Instant.parse(o.getString(key))
                 fun text(o: JSONObject, key: String) = o.optString(key).takeIf { it.isNotBlank() }
-                // Restore parent rows before children. In particular, categories must exist before
-                // concepts reference categoryId when SQLite foreign-key enforcement is enabled.
-                root.arr("categories").forEach { val e=CategoryEntity(uuid(it,"id"),it.getString("name")); if(db.categoryDao().getById(e.id)==null){db.categoryDao().insert(e);added++}else{db.categoryDao().update(e);merged++} }
-                root.arr("tags").forEach { val e=TagEntity(uuid(it,"id"),it.getString("name")); if(db.tagDao().getById(e.id)==null){db.tagDao().insert(e);added++}else{db.tagDao().update(e);merged++} }
-                val concepts = root.arr("concepts").map { ConceptEntity(uuid(it,"id"), it.getString("entryType"), text(it,"categoryId")?.let(UUID::fromString), it.getBoolean("favorite"), it.getBoolean("active"), Instant.parse(it.getString("createdAt")), Instant.parse(it.getString("updatedAt"))) }
+
+                // Category names are unique in Room, while a restored backup may contain the same
+                // category with a different UUID. Reuse the existing category by name instead of
+                // attempting an INSERT that violates categories.name UNIQUE.
+                val categoryIds = mutableMapOf<UUID, UUID>()
+                root.arr("categories").forEach { o ->
+                    val incomingId = uuid(o, "id")
+                    val name = o.getString("name").trim()
+                    val byId = db.categoryDao().getById(incomingId)
+                    val byName = db.categoryDao().findByName(name)
+                    when {
+                        byId != null && (byName == null || byName.id == incomingId) -> {
+                            if (byId.name != name) db.categoryDao().update(CategoryEntity(incomingId, name))
+                            categoryIds[incomingId] = incomingId
+                            merged++
+                        }
+                        byName != null -> {
+                            categoryIds[incomingId] = byName.id
+                            merged++
+                        }
+                        else -> {
+                            db.categoryDao().insert(CategoryEntity(incomingId, name))
+                            categoryIds[incomingId] = incomingId
+                            added++
+                        }
+                    }
+                }
+                root.arr("tags").forEach { o ->
+                    val e = TagEntity(uuid(o, "id"), o.getString("name"))
+                    if (db.tagDao().getById(e.id) == null) { db.tagDao().insert(e); added++ }
+                    else { db.tagDao().update(e); merged++ }
+                }
+                val concepts = root.arr("concepts").map { o ->
+                    val rawCategory = text(o, "categoryId")?.let(UUID::fromString)
+                    ConceptEntity(uuid(o, "id"), o.getString("entryType"), rawCategory?.let { categoryIds[it] }, o.getBoolean("favorite"), o.getBoolean("active"), Instant.parse(o.getString("createdAt")), Instant.parse(o.getString("updatedAt")))
+                }
                 val conceptIds = concepts.map { it.id }.toSet()
                 val existingConceptIds = db.conceptDao().getAll().map { it.id }.toSet()
                 concepts.forEach { if (it.id in existingConceptIds) { db.conceptDao().update(it); merged++ } else { db.conceptDao().insert(it); added++ } }
-                root.arr("contents").filter { uuid(it,"conceptId") in conceptIds }.forEach { o ->
-                    val conceptId=uuid(o,"conceptId"); val lang=o.getString("languageCode"); val index=o.optInt("translationIndex",0); val incomingId=uuid(o,"id")
-                    val e0=ContentEntity(incomingId,conceptId,lang,o.getString("text"),computeCanonicalKey(o.getString("text")),text(o,"notes"),text(o,"pronunciation"),text(o,"example"),index,text(o,"grammarNote"),text(o,"possibleCorrection"))
-                    val existingById=db.contentDao().getById(incomingId)
-                    val existingByIdentity=db.contentDao().getAll().firstOrNull { it.conceptId==conceptId && it.languageCode==lang && it.translationIndex==index }
-                    when { existingById != null -> { db.contentDao().update(e0); merged++ }; existingByIdentity != null -> { db.contentDao().update(e0.copy(id=existingByIdentity.id)); merged++ }; else -> { db.contentDao().insert(e0); added++ } }
+
+                root.arr("contents").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
+                    val conceptId = uuid(o, "conceptId"); val lang = o.getString("languageCode"); val index = o.optInt("translationIndex", 0); val incomingId = uuid(o, "id")
+                    val entity = ContentEntity(incomingId, conceptId, lang, o.getString("text"), computeCanonicalKey(o.getString("text")), text(o, "notes"), text(o, "pronunciation"), text(o, "example"), index, text(o, "grammarNote"), text(o, "possibleCorrection"))
+                    val byId = db.contentDao().getById(incomingId)
+                    val byIdentity = db.contentDao().getAll().firstOrNull { it.conceptId == conceptId && it.languageCode == lang && it.translationIndex == index }
+                    when { byIdentity != null -> { db.contentDao().update(entity.copy(id = byIdentity.id)); merged++ }; byId != null -> { db.contentDao().update(entity); merged++ }; else -> { db.contentDao().insert(entity); added++ } }
                 }
-                root.arr("learningStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=LearningStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("stage"),instant(o,"nextReviewAt"),o.getInt("monthlyWrongCount"),o.getBoolean("hasPathFailure"),o.getInt("totalCorrect"),o.getInt("totalWrong"),instant(o,"lastReviewedAt")); val old=db.learningStateDao().getByConceptId(e.conceptId); if(old==null){db.learningStateDao().upsert(e);added++}else{db.learningStateDao().upsert(e.copy(id=old.id));merged++} }
-                root.arr("difficultyStates").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> val e=DifficultyStateEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("current"),o.getInt("consecutiveCorrect"),o.getInt("consecutiveWrong"),o.getBoolean("hasReachedVeryHard")); val old=db.difficultyStateDao().getByConceptId(e.conceptId); if(old==null){db.difficultyStateDao().upsert(e);added++}else{db.difficultyStateDao().upsert(e.copy(id=old.id));merged++} }
-                root.arr("conceptTags").filter { uuid(it,"conceptId") in conceptIds && db.tagDao().getById(uuid(it,"tagId")) != null }.forEach { db.conceptTagDao().insert(ConceptTagEntity(uuid(it,"conceptId"),uuid(it,"tagId"))) }
-                root.arr("parserMetadata").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> db.parserMetadataDao().upsert(ParserMetadataEntity(uuid(o,"conceptId"),o.getString("breakdownJson"),o.getString("relationshipsJson"),o.getString("variantsJson"),o.getDouble("confidence"))) }
-                root.arr("variants").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> db.vocabularyVariantDao().insert(VocabularyVariantEntity(uuid(o,"id"),uuid(o,"conceptId"),o.getString("text"),o.getString("variantType"))) }
-                root.arr("relations").filter { uuid(it,"sourceConceptId") in conceptIds && (it.isNull("targetConceptId") || uuid(it,"targetConceptId") in conceptIds) }.forEach { o -> db.vocabularyRelationDao().insert(VocabularyRelationEntity(uuid(o,"id"),uuid(o,"sourceConceptId"),if(o.isNull("targetConceptId"))null else uuid(o,"targetConceptId"),o.getString("relationType"),text(o,"unresolvedText"))) }
-                root.arr("reviewQueue").filter { it.isNull("conceptId") || uuid(it,"conceptId") in conceptIds }.forEach { o -> db.reviewQueueDao().upsert(ReviewQueueEntity(uuid(o,"id"),if(o.isNull("conceptId"))null else uuid(o,"conceptId"),o.getString("sourceText"),text(o,"targetText"),o.getDouble("confidence"),text(o,"possibleCorrection"),o.getString("status"),if(o.isNull("lineNumber"))null else o.getInt("lineNumber"),text(o,"warning"))) }
-                root.arr("reviewSessions").forEach { o -> val e=ReviewSessionEntity(uuid(o,"id"),Instant.parse(o.getString("startedAt")),instant(o,"endedAt"),o.getString("reviewType")); if(db.reviewSessionDao().getById(e.id)==null){db.reviewSessionDao().insert(e);added++}else{db.reviewSessionDao().update(e);merged++} }
-                val sessionIds=db.reviewSessionDao().getAll().map{it.id}.toSet()
-                root.arr("reviewHistory").filter { uuid(it,"conceptId") in conceptIds && uuid(it,"sessionId") in sessionIds }.forEach { o -> val e=ReviewHistoryEntity(uuid(o,"id"),uuid(o,"sessionId"),uuid(o,"reviewAttemptId"),uuid(o,"conceptId"),Instant.parse(o.getString("reviewedAt")),o.getBoolean("isCorrect"),o.getString("reviewType")); if(!db.reviewHistoryDao().existsByAttemptId(e.sessionId,e.reviewAttemptId)){db.reviewHistoryDao().insert(e);added++}else{merged++} }
-                root.arr("settings").forEach { o -> db.settingsDao().put(SettingsEntity(o.getString("key"),o.getString("value"),Instant.parse(o.getString("updatedAt")))) }
-                root.arr("achievements").forEach { o -> db.achievementDao().upsert(AchievementEntity(o.getString("achievementId"),o.getBoolean("unlocked"))) }
-                root.arr("languages").forEach { o -> db.languageDao().upsert(LanguageEntity(o.getString("code"),o.getString("name"),o.getBoolean("active"))) }
-                root.arr("languagePairs").forEach { o -> db.languagePairDao().upsert(LanguagePairEntity(o.getString("sourceLanguageCode"),o.getString("targetLanguageCode"),o.getBoolean("active"))) }
-                val refs=root.optJSONArray("conceptReferences")?.let { a -> (0 until a.length()).mapNotNull { runCatching{UUID.fromString(a.getString(it))}.getOrNull() }.toSet() } ?: conceptIds
+                root.arr("learningStates").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
+                    val e = LearningStateEntity(uuid(o,"id"), uuid(o,"conceptId"), o.getString("stage"), instant(o,"nextReviewAt"), o.getInt("monthlyWrongCount"), o.getBoolean("hasPathFailure"), o.getInt("totalCorrect"), o.getInt("totalWrong"), instant(o,"lastReviewedAt"))
+                    val old = db.learningStateDao().getByConceptId(e.conceptId); db.learningStateDao().upsert(if (old == null) e else e.copy(id = old.id)); if (old == null) added++ else merged++
+                }
+                root.arr("difficultyStates").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
+                    val e = DifficultyStateEntity(uuid(o,"id"), uuid(o,"conceptId"), o.getString("current"), o.getInt("consecutiveCorrect"), o.getInt("consecutiveWrong"), o.getBoolean("hasReachedVeryHard"))
+                    val old = db.difficultyStateDao().getByConceptId(e.conceptId); db.difficultyStateDao().upsert(if (old == null) e else e.copy(id = old.id)); if (old == null) added++ else merged++
+                }
+                root.arr("conceptTags").filter { uuid(it,"conceptId") in conceptIds && db.tagDao().getById(uuid(it,"tagId")) != null }.forEach { db.conceptTagDao().insert(ConceptTagEntity(uuid(it,"conceptId"), uuid(it,"tagId"))) }
+                root.arr("parserMetadata").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> db.parserMetadataDao().upsert(ParserMetadataEntity(uuid(o,"conceptId"), o.getString("breakdownJson"), o.getString("relationshipsJson"), o.getString("variantsJson"), o.getDouble("confidence"))) }
+                root.arr("variants").filter { uuid(it,"conceptId") in conceptIds }.forEach { o -> db.vocabularyVariantDao().insert(VocabularyVariantEntity(uuid(o,"id"), uuid(o,"conceptId"), o.getString("text"), o.getString("variantType"))) }
+                root.arr("relations").filter { uuid(it,"sourceConceptId") in conceptIds && (it.isNull("targetConceptId") || uuid(it,"targetConceptId") in conceptIds) }.forEach { o -> db.vocabularyRelationDao().insert(VocabularyRelationEntity(uuid(o,"id"), uuid(o,"sourceConceptId"), if (o.isNull("targetConceptId")) null else uuid(o,"targetConceptId"), o.getString("relationType"), text(o,"unresolvedText"))) }
+                root.arr("reviewQueue").filter { it.isNull("conceptId") || uuid(it,"conceptId") in conceptIds }.forEach { o -> db.reviewQueueDao().upsert(ReviewQueueEntity(uuid(o,"id"), if (o.isNull("conceptId")) null else uuid(o,"conceptId"), o.getString("sourceText"), text(o,"targetText"), o.getDouble("confidence"), text(o,"possibleCorrection"), o.getString("status"), if (o.isNull("lineNumber")) null else o.getInt("lineNumber"), text(o,"warning"))) }
+                root.arr("reviewSessions").forEach { o ->
+                    val e = ReviewSessionEntity(uuid(o,"id"), Instant.parse(o.getString("startedAt")), instant(o,"endedAt"), o.getString("reviewType"))
+                    if (db.reviewSessionDao().getById(e.id) == null) { db.reviewSessionDao().insert(e); added++ } else { db.reviewSessionDao().update(e); merged++ }
+                }
+                val sessionIds = db.reviewSessionDao().getAll().map { it.id }.toSet()
+                root.arr("reviewHistory").filter { uuid(it,"conceptId") in conceptIds && uuid(it,"sessionId") in sessionIds }.forEach { o ->
+                    val e = ReviewHistoryEntity(uuid(o,"id"), uuid(o,"sessionId"), uuid(o,"reviewAttemptId"), uuid(o,"conceptId"), Instant.parse(o.getString("reviewedAt")), o.getBoolean("isCorrect"), o.getString("reviewType"))
+                    if (!db.reviewHistoryDao().existsByAttemptId(e.sessionId, e.reviewAttemptId)) { db.reviewHistoryDao().insert(e); added++ } else merged++
+                }
+                root.arr("settings").forEach { o -> db.settingsDao().put(SettingsEntity(o.getString("key"), o.getString("value"), Instant.parse(o.getString("updatedAt")))) }
+                root.arr("achievements").forEach { o -> db.achievementDao().upsert(AchievementEntity(o.getString("achievementId"), o.getBoolean("unlocked"))) }
+                root.arr("languages").forEach { o -> db.languageDao().upsert(LanguageEntity(o.getString("code"), o.getString("name"), o.getBoolean("active"))) }
+                root.arr("languagePairs").forEach { o -> db.languagePairDao().upsert(LanguagePairEntity(o.getString("sourceLanguageCode"), o.getString("targetLanguageCode"), o.getBoolean("active"))) }
+                val refs = root.optJSONArray("conceptReferences")?.let { a -> (0 until a.length()).mapNotNull { runCatching { UUID.fromString(a.getString(it)) }.getOrNull() }.toSet() } ?: conceptIds
                 if (!refs.all { it in conceptIds }) issues += "INVALID_CONCEPT_REFERENCE"
                 RestoreResult(added, merged, issues)
             }
@@ -132,56 +167,16 @@ class RoomBackupRepository @Inject constructor(
         val issues = mutableListOf<String>()
         val arrays = mapOf("concepts" to "id", "contents" to "id", "learningStates" to "id", "difficultyStates" to "id", "tags" to "id", "reviewSessions" to "id", "reviewHistory" to "id", "categories" to "id", "variants" to "id", "relations" to "id", "reviewQueue" to "id")
         arrays.forEach { (section, key) ->
-            val seen = mutableSetOf<String>()
-            val array = root.optJSONArray(section)
-            if (array != null) {
-                for (i in 0 until array.length()) {
-                    val o = array.optJSONObject(i)
-                    if (o == null) {
-                        issues += "INVALID_ENTRY:$section[$i]"
-                    } else {
-                        val value = o.optString(key, "")
-                        if (value.isBlank() || runCatching { UUID.fromString(value) }.isFailure) issues += "INVALID_UUID:$section"
-                        else if (!seen.add(value)) issues += "DUPLICATE_UUID:$section"
-                    }
-                }
+            val seen = mutableSetOf<String>(); root.optJSONArray(section)?.let { a ->
+                for (i in 0 until a.length()) { val o = a.optJSONObject(i); if (o == null) issues += "INVALID_ENTRY:$section[$i]" else { val value = o.optString(key, ""); if (value.isBlank() || runCatching { UUID.fromString(value) }.isFailure) issues += "INVALID_UUID:$section" else if (!seen.add(value)) issues += "DUPLICATE_UUID:$section" } }
             }
         }
-        root.optJSONArray("learningStates")?.let { a -> for (i in 0 until a.length()) { val stage=a.getJSONObject(i).optString("stage"); if(stage !in STAGES) issues += "INVALID_VALUE:stage" } }
-        root.optJSONArray("reviewSessions")?.let { a ->
-            for (i in 0 until a.length()) {
-                val o=a.getJSONObject(i); val start=runCatching{Instant.parse(o.getString("startedAt"))}.getOrNull(); val end=runCatching{if(o.isNull("endedAt"))null else Instant.parse(o.getString("endedAt"))}.getOrNull()
-                if(start==null || (!o.isNull("endedAt") && end==null) || (start!=null && end!=null && end.isBefore(start))) issues += "INVALID_VALUE:reviewSession_time"
-                if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:reviewSession_reviewType"
-            }
-        }
-        root.optJSONArray("reviewHistory")?.let { a ->
-            val attempts=mutableSetOf<String>()
-            for (i in 0 until a.length()) {
-                val o=a.getJSONObject(i); val session=o.optString("sessionId"); val attempt=o.optString("reviewAttemptId")
-                if(!attempts.add("$session:$attempt")) issues += "DUPLICATE_ATTEMPT:reviewHistory"
-                if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:history_reviewType"
-                val reviewed=runCatching{Instant.parse(o.getString("reviewedAt"))}.getOrNull(); if(reviewed==null) issues += "INVALID_VALUE:reviewHistory_reviewedAt"
-            }
-            val sessions=root.optJSONArray("reviewSessions")
-            if(sessions!=null) {
-                val types=(0 until sessions.length()).associate { val s=sessions.getJSONObject(it); s.optString("id") to s.optString("reviewType") }
-                for(i in 0 until a.length()) { val o=a.getJSONObject(i); val st=types[o.optString("sessionId")]; if(st!=null && st != o.optString("reviewType")) issues += "INVALID_VALUE:history_session_reviewType" }
-            }
-        }
-        root.optJSONArray("contents")?.let { a ->
-            for(i in 0 until a.length()) {
-                val o=a.getJSONObject(i)
-                if(!o.has("canonicalKey") || o.isNull("canonicalKey")) issues += "INVALID_VALUE:canonicalKey"
-                if(o.optString("text").isBlank()) issues += "INVALID_VALUE:content_text"
-                if(o.optString("languageCode").isBlank()) issues += "INVALID_VALUE:languageCode"
-            }
-        }
-        root.optJSONArray("parserMetadata")?.let { a -> for(i in 0 until a.length()) { val c=a.getJSONObject(i).optDouble("confidence",Double.NaN); if(c.isNaN() || c !in 0.0..1.0) issues += "INVALID_VALUE:parserMetadata_confidence" } }
-        root.optJSONArray("conceptReferences")?.let { a ->
-            val concepts=root.optJSONArray("concepts")?.let { c -> (0 until c.length()).mapNotNull { c.optJSONObject(it)?.optString("id") }.toSet() } ?: emptySet()
-            for(i in 0 until a.length()) { val ref=a.optString(i); if(runCatching{UUID.fromString(ref)}.isFailure || ref !in concepts) issues += "INVALID_CONCEPT_REFERENCE" }
-        }
+        root.optJSONArray("learningStates")?.let { a -> for (i in 0 until a.length()) if (a.getJSONObject(i).optString("stage") !in STAGES) issues += "INVALID_VALUE:stage" }
+        root.optJSONArray("reviewSessions")?.let { a -> for (i in 0 until a.length()) { val o=a.getJSONObject(i); val start=runCatching{Instant.parse(o.getString("startedAt"))}.getOrNull(); val end=runCatching{if(o.isNull("endedAt"))null else Instant.parse(o.getString("endedAt"))}.getOrNull(); if(start==null || (!o.isNull("endedAt") && end==null) || (start!=null && end!=null && end.isBefore(start))) issues += "INVALID_VALUE:reviewSession_time"; if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:reviewSession_reviewType" } }
+        root.optJSONArray("reviewHistory")?.let { a -> val attempts=mutableSetOf<String>(); for (i in 0 until a.length()) { val o=a.getJSONObject(i); if(!attempts.add("${o.optString("sessionId")}:${o.optString("reviewAttemptId")}")) issues += "DUPLICATE_ATTEMPT:reviewHistory"; if(o.optString("reviewType") !in REVIEW_TYPES) issues += "INVALID_VALUE:history_reviewType"; if(runCatching{Instant.parse(o.getString("reviewedAt"))}.isFailure) issues += "INVALID_VALUE:reviewHistory_reviewedAt" }; val sessions=root.optJSONArray("reviewSessions"); if(sessions!=null){ val types=(0 until sessions.length()).associate{val s=sessions.getJSONObject(it);s.optString("id") to s.optString("reviewType")}; for(i in 0 until a.length()){val o=a.getJSONObject(i);val st=types[o.optString("sessionId")];if(st!=null&&st!=o.optString("reviewType"))issues+="INVALID_VALUE:history_session_reviewType"} } }
+        root.optJSONArray("contents")?.let { a -> for(i in 0 until a.length()){val o=a.getJSONObject(i);if(!o.has("canonicalKey")||o.isNull("canonicalKey"))issues+="INVALID_VALUE:canonicalKey";if(o.optString("text").isBlank())issues+="INVALID_VALUE:content_text";if(o.optString("languageCode").isBlank())issues+="INVALID_VALUE:languageCode"} }
+        root.optJSONArray("parserMetadata")?.let { a -> for(i in 0 until a.length()){val c=a.getJSONObject(i).optDouble("confidence",Double.NaN);if(c.isNaN()||c !in 0.0..1.0)issues+="INVALID_VALUE:parserMetadata_confidence"} }
+        root.optJSONArray("conceptReferences")?.let { a -> val concepts=root.optJSONArray("concepts")?.let{c->(0 until c.length()).mapNotNull{c.optJSONObject(it)?.optString("id")}.toSet()}?:emptySet();for(i in 0 until a.length()){val ref=a.optString(i);if(runCatching{UUID.fromString(ref)}.isFailure||ref !in concepts)issues+="INVALID_CONCEPT_REFERENCE"} }
         return issues.distinct()
     }
 
