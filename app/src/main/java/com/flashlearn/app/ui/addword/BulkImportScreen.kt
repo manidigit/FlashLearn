@@ -2,11 +2,10 @@ package com.flashlearn.app.ui.addword
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.FileOpen
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,91 +35,158 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, languagePair: LanguagePair 
     LaunchedEffect(Unit) { viewModel.resetForEntry(languagePair) }
     val openTextFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
-            val text = runCatching { withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") } }
-                .getOrElse { viewModel.showError(it.message ?: "خطا در خواندن فایل"); return@launch }
+            val text = runCatching {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use {
+                        BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText()
+                    } ?: error("فایل قابل خواندن نیست")
+                }
+            }.getOrElse { viewModel.showError(it.message ?: "خطا در خواندن فایل"); return@launch }
             viewModel.onTextChange(text)
         }
     }
     if (state.preview.isNotEmpty() || state.done) {
-        BulkImportPreview(state = state, onBack = { viewModel.resetForEntry(languagePair); onBack() }, onRefresh = viewModel::preview, onImport = viewModel::importAll)
+        BulkImportPreview(state, onBack = { viewModel.resetForEntry(languagePair); onBack() }, onRefresh = viewModel::preview, onImport = viewModel::importAll)
     } else {
-        BulkImportEditor(state, languagePair, onBack, viewModel::onTextChange, viewModel::preview) { openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*")) }
+        BulkImportEditor(state, languagePair, onBack, viewModel::onTextChange, viewModel::preview) {
+            openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*"))
+        }
     }
 }
 
 @Composable
-private fun BulkImportEditor(state: BulkImportUiState, languagePair: LanguagePair, onBack: () -> Unit, onTextChange: (String) -> Unit, onPreview: () -> Unit, onPickFile: () -> Unit) {
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp, 20.dp, 24.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }; Text("لغات گروهی", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.End) } }
-        item { Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), textAlign = TextAlign.End) }
-        item { Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End) }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = onPickFile, enabled = !state.isImporting && !state.isPreviewing, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(28.dp)) { Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(8.dp)); Text("انتخاب فایل واژگان", fontWeight = FontWeight.SemiBold) }; OutlinedButton(onClick = { if (state.rawText.isNotBlank()) onPreview() }, enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing, modifier = Modifier.weight(.55f).height(54.dp), shape = RoundedCornerShape(28.dp)) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(4.dp)); Text("رفرش") } } }
-        item { OutlinedTextField(value = state.rawText, onValueChange = onTextChange, modifier = Modifier.fillMaxWidth().heightIn(min = 230.dp, max = 360.dp), label = { Text("متن واژگان") }, placeholder = { Text("la piedra\nسنگ\n\nel nivel\nسطح، درجه") }, minLines = 8, maxLines = 16, shape = RoundedCornerShape(20.dp)) }
-        item { Button(onClick = onPreview, enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(28.dp)) { Text(if (state.isPreviewing) "در حال پردازش..." else "پیش‌نمایش", fontWeight = FontWeight.Bold) } }
-        state.error?.let { item { Text(it, Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.End) } }
+private fun BulkImportEditor(
+    state: BulkImportUiState,
+    languagePair: LanguagePair,
+    onBack: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onPreview: () -> Unit,
+    onPickFile: () -> Unit
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(tokens.screenPadding, tokens.dp(20f), tokens.screenPadding, tokens.dp(32f)),
+        verticalArrangement = Arrangement.spacedBy(tokens.itemGap)
+    ) {
+        item {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface) }
+                Text("لغات گروهی", style = MaterialTheme.typography.headlineMedium, color = tokens.onSurface, textAlign = TextAlign.End)
+            }
+        }
+        item {
+            Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = tokens.primary, textAlign = TextAlign.End)
+        }
+        item {
+            Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
+        }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
+                OutlinedButton(
+                    onClick = onPickFile,
+                    enabled = !state.isImporting && !state.isPreviewing,
+                    modifier = Modifier.weight(1f).height(tokens.controlHeight),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text("انتخاب فایل واژگان")
+                }
+                OutlinedButton(
+                    onClick = { if (state.rawText.isNotBlank()) onPreview() },
+                    enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing,
+                    modifier = Modifier.weight(.55f).height(tokens.controlHeight),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(tokens.compactGap)); Text("رفرش")
+                }
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = state.rawText,
+                onValueChange = onTextChange,
+                modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(230f), max = tokens.dp(360f)),
+                label = { Text("متن واژگان") },
+                placeholder = { Text("la piedra\nسنگ\n\nel nivel\nسطح، درجه", color = tokens.onSurfaceVariant) },
+                minLines = 8,
+                maxLines = 16,
+                shape = MaterialTheme.shapes.medium,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = tokens.surface,
+                    focusedContainerColor = tokens.surface,
+                    unfocusedBorderColor = tokens.outlineColor,
+                    focusedBorderColor = tokens.primary
+                )
+            )
+        }
+        item {
+            Button(
+                onClick = onPreview,
+                enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing,
+                modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
+                shape = MaterialTheme.shapes.medium
+            ) { Text(if (state.isPreviewing) "در حال پردازش..." else "پیش‌نمایش", fontWeight = FontWeight.Bold) }
+        }
+        state.error?.let { item { ErrorText(it) } }
     }
 }
 
 @Composable
 private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRefresh: () -> Unit, onImport: () -> Unit) {
+    val tokens = LocalFlashLearnThemeTokens.current
     var duplicateOnly by remember(state.done) { mutableStateOf(false) }
-    val results = if (state.done) state.results else state.preview.map { entry -> BulkImportItemResult(entry, if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else BulkImportItemStatus.READY) }
+    val results = if (state.done) state.results else state.preview.map { entry ->
+        BulkImportItemResult(entry, if (entry.sourceText.isBlank() || entry.translationText.isNullOrBlank()) BulkImportItemStatus.INCOMPLETE else if (entry.confidence < com.flashlearn.domain.usecase.ImportParsedEntryUseCase.LOW_CONFIDENCE_THRESHOLD) BulkImportItemStatus.NEEDS_REVIEW else BulkImportItemStatus.READY)
+    }
     val validCount = results.count { it.status != BulkImportItemStatus.INCOMPLETE && it.status != BulkImportItemStatus.DUPLICATE }
     val visibleResults = if (duplicateOnly) results.filter { it.status == BulkImportItemStatus.DUPLICATE } else results
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize()) {
+        Surface(color = tokens.surface, tonalElevation = tokens.dp(1f)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(16f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = onRefresh, enabled = !state.isImporting && !state.isPreviewing && state.rawText.isNotBlank(), modifier = Modifier.height(44.dp), shape = RoundedCornerShape(22.dp), contentPadding = PaddingValues(horizontal = 14.dp)) {
-                            Icon(Icons.Outlined.Refresh, null)
-                            Spacer(Modifier.width(5.dp))
-                            Text("رفرش", fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
+                        OutlinedButton(onClick = onRefresh, enabled = !state.isImporting && !state.isPreviewing && state.rawText.isNotBlank(), modifier = Modifier.height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
+                            Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(tokens.compactGap)); Text("رفرش")
                         }
-                        OutlinedButton(onClick = onBack, modifier = Modifier.height(44.dp), shape = RoundedCornerShape(22.dp), contentPadding = PaddingValues(horizontal = 14.dp)) {
-                            Text("بازگشت", fontWeight = FontWeight.SemiBold)
-                        }
+                        OutlinedButton(onClick = onBack, modifier = Modifier.height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text("بازگشت") }
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("لغات گروهی", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
-                        Text("پیش‌نمایش (${results.size} مورد)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("لغات گروهی", style = MaterialTheme.typography.headlineSmall, color = tokens.onSurface)
+                        Text("پیش‌نمایش (${results.size} مورد)", style = MaterialTheme.typography.bodyMedium, color = tokens.onSurfaceVariant)
                     }
                 }
-                Text("موارد تشخیص‌داده‌شده را بررسی کن و سپس همه موارد را وارد کن.", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
+                Text("موارد تشخیص‌داده‌شده را بررسی کن و سپس همه موارد را وارد کن.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     FilterChip(selected = !duplicateOnly, onClick = { duplicateOnly = false }, label = { Text("همه کلمات") })
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(tokens.compactGap))
                     FilterChip(selected = duplicateOnly, onClick = { duplicateOnly = true }, enabled = state.done, label = { Text("کلمات تکراری (${state.skippedDuplicateCount})") })
                 }
             }
         }
 
         if (state.warnings.isNotEmpty()) {
-            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(5.dp), horizontalAlignment = Alignment.End) {
-                    Text("گزارش هشدارها و موارد حل‌نشده (${state.warnings.size})", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
-                    state.warnings.forEach { warning -> Text("خط ${warning.lineNumber} • ${warning.warningType} • ${warning.message}\n${warning.rawText}", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End) }
+            Card(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(10f)), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.error.copy(alpha = .10f)), border = BorderStroke(tokens.dp(1f), tokens.error.copy(alpha = .25f))) {
+                Column(Modifier.fillMaxWidth().padding(tokens.dp(16f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.End) {
+                    Text("گزارش هشدارها و موارد حل‌نشده (${state.warnings.size})", Modifier.fillMaxWidth(), color = tokens.error, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                    state.warnings.forEach { warning -> Text("خط ${warning.lineNumber} • ${warning.warningType} • ${warning.message}\n${warning.rawText}", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End) }
                 }
             }
         }
 
-        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = tokens.screenPadding, vertical = tokens.dp(4f)), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             items(visibleResults) { result -> PreviewEntryCard(result, state.lineNumbers[result.entry.rawLines.firstOrNull()?.trim()]) }
-            if (visibleResults.isEmpty() && duplicateOnly) item { Text("هنوز مورد تکراری ثبت‌شده‌ای وجود ندارد.", Modifier.fillMaxWidth().padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center) }
-            if (results.size > BulkImportViewModel.PREVIEW_LIMIT && !duplicateOnly) item { Text("فقط ${BulkImportViewModel.PREVIEW_LIMIT} مورد اول برای پیش‌نمایش نمایش داده می‌شود؛ همه ${results.size} مورد وارد خواهند شد.", Modifier.fillMaxWidth().padding(vertical = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End, style = MaterialTheme.typography.bodySmall) }
+            if (visibleResults.isEmpty() && duplicateOnly) item { Text("هنوز مورد تکراری ثبت‌شده‌ای وجود ندارد.", Modifier.fillMaxWidth().padding(tokens.dp(24f)), color = tokens.onSurfaceVariant, textAlign = TextAlign.Center) }
         }
 
-        Surface(shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp), tonalElevation = 4.dp, shadowElevation = 4.dp, color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (!state.done) Text("قابل ورود: $validCount  •  ناقص: ${results.size - validCount}", Modifier.fillMaxWidth(), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                else Text("نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص  •  ${state.needsReviewCount} نیازمند بررسی  •  ${state.failedCount} خطادار", Modifier.fillMaxWidth(), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                Button(onClick = onImport, enabled = !state.isImporting && !state.isPreviewing && !state.done && !duplicateOnly, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(27.dp)) {
-                    Icon(Icons.Outlined.Upload, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
+        Surface(shape = MaterialTheme.shapes.large, tonalElevation = tokens.dp(4f), shadowElevation = tokens.dp(4f), color = tokens.surface) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(12f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
+                if (!state.done) Text("قابل ورود: $validCount  •  ناقص: ${results.size - validCount}", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                else Text("نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص  •  ${state.needsReviewCount} نیازمند بررسی  •  ${state.failedCount} خطادار", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Button(onClick = onImport, enabled = !state.isImporting && !state.isPreviewing && !state.done && !duplicateOnly, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
+                    Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
                 }
-                state.error?.let { Text(it, Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.End) }
+                state.error?.let { ErrorText(it) }
             }
         }
     }
@@ -127,24 +194,34 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
 
 @Composable
 private fun PreviewEntryCard(result: BulkImportItemResult, lineNumber: Int?) {
-    val incomplete = result.status == BulkImportItemStatus.INCOMPLETE
+    val tokens = LocalFlashLearnThemeTokens.current
+    val bad = result.status == BulkImportItemStatus.INCOMPLETE || result.status == BulkImportItemStatus.FAILED
     Card(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = tokens.cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = tokens.dp(1f)),
+        border = BorderStroke(tokens.dp(1f), if (bad) tokens.error.copy(alpha = .25f) else tokens.outlineColor)
     ) {
-        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Top) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp).background(if (incomplete) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))) {
-                Text(if (incomplete) "!" else "✓", textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth().padding(tokens.dp(12f)), verticalAlignment = Alignment.Top) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(tokens.dp(40f))) {
+                Surface(Modifier.fillMaxSize(), shape = MaterialTheme.shapes.small, color = if (bad) tokens.error.copy(alpha = .10f) else tokens.primary.copy(alpha = .10f)) {
+                    Box(contentAlignment = Alignment.Center) { Text(if (bad) "!" else "✓", color = if (bad) tokens.error else tokens.primary, fontWeight = FontWeight.Bold) }
+                }
             }
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp), horizontalAlignment = Alignment.End) {
-                lineNumber?.let { Text("خط $it", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.End) }
-                OutlinedTextField(value = result.entry.sourceText, onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), shape = RoundedCornerShape(14.dp), singleLine = true)
-                OutlinedTextField(value = result.entry.translationText.orEmpty(), onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.bodyLarge, shape = RoundedCornerShape(14.dp), minLines = 1, maxLines = 2)
-                if (result.status == BulkImportItemStatus.DUPLICATE) Text("کلمه تکراری — قبلاً در کتابخانه وجود دارد", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+            Spacer(Modifier.width(tokens.compactGap))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.End) {
+                lineNumber?.let { Text("خط $it", Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = tokens.primary, textAlign = TextAlign.End) }
+                OutlinedTextField(value = result.entry.sourceText, onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.titleMedium, shape = MaterialTheme.shapes.small, singleLine = true, colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = tokens.surface, focusedContainerColor = tokens.surface, unfocusedBorderColor = tokens.outlineColor, focusedBorderColor = tokens.primary))
+                OutlinedTextField(value = result.entry.translationText.orEmpty(), onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.small, minLines = 1, maxLines = 2, colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = tokens.surface, focusedContainerColor = tokens.surface, unfocusedBorderColor = tokens.outlineColor, focusedBorderColor = tokens.primary))
+                result.message?.let { Text(it, Modifier.fillMaxWidth(), color = if (result.status == BulkImportItemStatus.FAILED || result.status == BulkImportItemStatus.DUPLICATE) tokens.error else tokens.onSurfaceVariant, textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall) }
             }
         }
     }
+}
+
+@Composable
+private fun ErrorText(message: String) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Text(message, Modifier.fillMaxWidth(), color = tokens.error, textAlign = TextAlign.End, style = MaterialTheme.typography.bodySmall)
 }
