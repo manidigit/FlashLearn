@@ -1,5 +1,10 @@
 # FlashLearn Changelog
 
+## v5.96 — Review Setup Compile Fix & Version Alignment
+- Fixed the Review setup header alignment compile error by using the `BoxScope`-compatible `Alignment.CenterStart` value.
+- Advanced the application identity from 5.95 / versionCode 95 to 5.96 / versionCode 96 for the Review setup task.
+- Preserved the requested RTL Review setup ordering and existing review controls/behavior.
+
 ## v5.95 — Review Setup RTL Layout & Section Reordering
 - Reorganized the Review setup without removing existing review controls or behavior.
 - Applied explicit RTL layout to the review setup screen.

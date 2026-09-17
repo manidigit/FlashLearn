@@ -1,5 +1,14 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.96 — Review Setup Compile Fix & Version Alignment
+- Fixed the Review setup header alignment compile error by using the `BoxScope`-compatible `Alignment.CenterStart` value.
+- Advanced the application identity from 5.95 / versionCode 95 to 5.96 / versionCode 96.
+- Preserved the requested RTL Review setup ordering and existing review controls/behavior.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate.
+- v5.96 is fully verified only after Build/Unit and Instrumentation jobs complete successfully.
+
 ## v5.95 — Review Setup RTL Layout & Section Reordering
 - Reorganized the Review setup without removing existing review controls or behavior.
 - Applied explicit RTL layout to the review setup screen.
@@ -12,10 +21,6 @@
 - CI now installs the Android 34 Google APIs x86_64 system image and emulator tooling.
 - CI waits for the emulator to report `sys.boot_completed=1` before `connectedDebugAndroidTest`.
 - The previous `No connected devices!` failure was a CI environment/setup failure, not an application test assertion failure.
-
-### Verification gate
-- GitHub Actions is the authoritative build/test gate.
-- v5.95 is fully verified only after Build/Unit and Instrumentation jobs complete successfully.
 
 ## v5.95 — Build Fix: Library Detail & Backup Screen Kotlin Compilation
 - Renamed the injected `CategoryRepository` property in `LibraryDetailViewModel` to `categoryRepository` so it no longer conflicts with the public `categories` `StateFlow`.
