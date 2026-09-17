@@ -3,6 +3,8 @@ package com.flashlearn.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.ProgressSummary
+import com.flashlearn.domain.model.Stage
+import com.flashlearn.domain.repository.LearningStateRepository
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.statistics.BasicStatistics
 import com.flashlearn.domain.statistics.CalculateStreakUseCase
@@ -24,6 +26,9 @@ data class HomeUiState(
     val summary: ProgressSummary? = null,
     val basicStats: BasicStatistics? = null,
     val streak: StreakSnapshot? = null,
+    val dailyTotal: Int = 0,
+    val weeklyTotal: Int = 0,
+    val monthlyTotal: Int = 0,
     val error: String? = null
 )
 
@@ -33,7 +38,8 @@ class HomeViewModel @Inject constructor(
     private val getBasicStatistics: GetBasicStatistics,
     private val ensureStarterData: EnsureStarterDataUseCase,
     private val calculateStreak: CalculateStreakUseCase,
-    private val historyRepository: ReviewHistoryRepository
+    private val historyRepository: ReviewHistoryRepository,
+    private val learningStateRepository: LearningStateRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -54,14 +60,20 @@ class HomeViewModel @Inject constructor(
                 val streak = calculateStreak.calculate(
                     historyRepository.getAll(), now, ZoneId.systemDefault()
                 )
-                Triple(summary, basicStats, streak)
-            }.onSuccess { (summary, basicStats, streak) ->
+                val dailyTotal = learningStateRepository.getAllByStage(Stage.DAILY).size
+                val weeklyTotal = learningStateRepository.getAllByStage(Stage.WEEKLY).size
+                val monthlyTotal = learningStateRepository.getAllByStage(Stage.MONTHLY).size
+                HomeSnapshot(summary, basicStats, streak, dailyTotal, weeklyTotal, monthlyTotal)
+            }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
                     _state.value = HomeUiState(
                         isLoading = false,
-                        summary = summary,
-                        basicStats = basicStats,
-                        streak = streak
+                        summary = snapshot.summary,
+                        basicStats = snapshot.basicStats,
+                        streak = snapshot.streak,
+                        dailyTotal = snapshot.dailyTotal,
+                        weeklyTotal = snapshot.weeklyTotal,
+                        monthlyTotal = snapshot.monthlyTotal
                     )
                 }
             }.onFailure {
@@ -74,4 +86,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    private data class HomeSnapshot(
+        val summary: ProgressSummary,
+        val basicStats: BasicStatistics,
+        val streak: StreakSnapshot,
+        val dailyTotal: Int,
+        val weeklyTotal: Int,
+        val monthlyTotal: Int
+    )
 }
