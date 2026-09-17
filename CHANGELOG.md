@@ -1,5 +1,10 @@
 # FlashLearn Changelog
 
+## v5.96 — CI Version Alignment Fix
+- Updated `.github/workflows/android-ci.yml` from 5.95 / versionCode 95 to 5.96 / versionCode 96.
+- Updated the CI previous-version expectation from 5.94 / 94 to 5.95 / 95.
+- This fixes the `Verify debug APK version` gate, which was still comparing the 5.96 APK against the old CI value 95.
+
 ## v5.96 — Review Setup Compile Fix & Version Alignment
 - Fixed the Review setup header alignment compile error by using the `BoxScope`-compatible `Alignment.CenterStart` value.
 - Advanced the application identity from 5.95 / versionCode 95 to 5.96 / versionCode 96 for the Review setup task.

@@ -1,13 +1,18 @@
 # FlashLearn — PROGRESS TRACKER
 
-## v5.96 — Review Setup Compile Fix & Version Alignment
-- Fixed the Review setup header alignment compile error by using the `BoxScope`-compatible `Alignment.CenterStart` value.
-- Advanced the application identity from 5.95 / versionCode 95 to 5.96 / versionCode 96.
-- Preserved the requested RTL Review setup ordering and existing review controls/behavior.
+## v5.96 — CI Version Alignment Fix
+- Root cause confirmed from GitHub Actions run: the 5.96 APK built successfully, but `.github/workflows/android-ci.yml` still declared `FL_VERSION_CODE=95` and `FL_VERSION_NAME=5.95`.
+- Updated CI current version to 5.96 / 96 and previous version to 5.95 / 95.
+- The failing `Verify debug APK version` step will now compare the APK against the actual 5.96 version.
 
 ### Verification gate
 - GitHub Actions is the authoritative build/test gate.
 - v5.96 is fully verified only after Build/Unit and Instrumentation jobs complete successfully.
+
+## v5.96 — Review Setup Compile Fix & Version Alignment
+- Fixed the Review setup header alignment compile error by using the `BoxScope`-compatible `Alignment.CenterStart` value.
+- Advanced the application identity from 5.95 / versionCode 95 to 5.96 / versionCode 96.
+- Preserved the requested RTL Review setup ordering and existing review controls/behavior.
 
 ## v5.95 — Review Setup RTL Layout & Section Reordering
 - Reorganized the Review setup without removing existing review controls or behavior.
