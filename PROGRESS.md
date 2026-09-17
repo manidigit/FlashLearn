@@ -1,5 +1,12 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.95 — Review Setup RTL Layout & Section Reordering
+- Reorganized the Review setup without removing existing review controls or behavior.
+- Applied explicit RTL layout to the review setup screen.
+- Ordered the setup as requested: `حالت پاسخ اجرا` → `دسته‌بندی لغات` → `مرور ویژه` → `زمانبندی مرور` → `سطح دشواری کلمات` → `سطح دشواری آزمون تستی` → `تعداد کلمات`.
+- Kept all existing review filters, personal-difficulty information, filter summary, available-word count, and `شروع مرور` action.
+- Special review and scheduled review are now visually separated.
+
 ## v5.95 — CI Instrumentation Emulator Fix
 - Added a headless Android Emulator to the instrumentation-test job.
 - CI now installs the Android 34 Google APIs x86_64 system image and emulator tooling.
