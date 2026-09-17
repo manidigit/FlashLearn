@@ -1,5 +1,15 @@
 # FlashLearn Changelog
 
+## v5.89 — Supplied FULL Backup Restore Alignment
+- Advanced the application identity to 5.89 / versionCode 89; v5.88 remains the previous released checkpoint.
+- Aligned the active FULL restore path with the supplied schema-2 FULL backup shape and its real category/concept relationships.
+- Corrected FULL restore parent ordering so categories are restored before concepts that reference them, avoiding foreign-key failures on an empty target database.
+- Preserved acceptance of the known historical v5.74 partial schema-2 FULL shape without weakening validation for arbitrary incomplete backups.
+- Preserved `RANDOM` review-session/history support and the associated regression coverage.
+- Added regression coverage for the supplied backup shape, including category → concept references and RANDOM review data.
+- CI upgrade verification now explicitly checks 5.88 → 5.89 in-place installation under the stable debug signing identity.
+- This checkpoint is not considered fully verified until the latest GitHub Actions Build/Unit and Instrumentation jobs complete successfully.
+
 ## v5.88 — Four-Part Functional Hardening + Global Theme Audit
 - Completed the four-part hardening track covering Library Refresh/Duplicate, Bulk Import, Restore Backup, and Global Theme Audit.
 - Library Refresh and exact-duplicate cleanup are now exposed in the active Library UI while preserving the existing ViewModel/use-case behavior.
