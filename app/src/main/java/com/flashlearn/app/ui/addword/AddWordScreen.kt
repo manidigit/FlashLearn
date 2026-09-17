@@ -6,9 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Save
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
@@ -27,24 +25,13 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
     var typeMenuExpanded by remember { mutableStateOf(false) }
     var sourceMenuExpanded by remember { mutableStateOf(false) }
     var targetMenuExpanded by remember { mutableStateOf(false) }
-    var duplicateInfoVisible by remember { mutableStateOf(false) }
+    var addingNewCategory by remember { mutableStateOf(false) }
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair.source.code, languagePair.target.code) }
-    val filteredCategories = state.categories.filter { state.categoryName.isBlank() || it.name.contains(state.categoryName, ignoreCase = true) }
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
             Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            FilterChip(selected = duplicateInfoVisible, onClick = { duplicateInfoVisible = !duplicateInfoVisible }, label = { Text("کلمات تکراری") }, leadingIcon = { Icon(Icons.Outlined.WarningAmber, null) })
-            Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = { viewModel.refreshCategories() }, enabled = !state.isSaving, shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Refresh, null); Spacer(Modifier.width(5.dp)); Text("رفرش") }
-        }
-        if (duplicateInfoVisible) {
-            Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                Text("تشخیص کلمات تکراری فعال است: هنگام ذخیره، واژه با همان متن و ترجمه که قبلاً در کتابخانه وجود داشته باشد، به‌عنوان تکراری رد می‌شود.", Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
-            }
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
@@ -54,18 +41,52 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             }
             OutlinedTextField(state.sourceText, viewModel::onSourceTextChange, Modifier.fillMaxWidth(), label = { Text("واژه یا عبارت") }, placeholder = { Text("مثال: casa") }, singleLine = true)
             OutlinedTextField(state.targetText, viewModel::onTargetTextChange, Modifier.fillMaxWidth(), label = { Text("ترجمه") }, placeholder = { Text("مثال: خانه") }, singleLine = true)
-            OutlinedTextField(state.pronunciation, viewModel::onPronunciationChange, Modifier.fillMaxWidth(), label = { Text("تلفظ") }, singleLine = true)
-            OutlinedTextField(state.example, viewModel::onExampleChange, Modifier.fillMaxWidth(), label = { Text("جمله نمونه") }, minLines = 2, maxLines = 3)
-            OutlinedTextField(state.notes, viewModel::onNotesChange, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
+            Box(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = if (addingNewCategory) state.categoryName else state.categoryName.ifBlank { "انتخاب دسته‌بندی" },
+                    onValueChange = { if (addingNewCategory) viewModel.onCategoryNameChange(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(if (addingNewCategory) "دسته‌بندی جدید" else "دسته‌بندی") },
+                    placeholder = { Text("انتخاب از دسته‌بندی‌ها یا افزودن دسته جدید") },
+                    readOnly = !addingNewCategory,
+                    singleLine = true
+                )
+                if (!addingNewCategory) {
+                    Spacer(Modifier.matchParentSize().clickable { categoryMenuExpanded = true })
+                }
+                DropdownMenu(categoryMenuExpanded, { categoryMenuExpanded = false }) {
+                    state.categories.forEach { category ->
+                        DropdownMenuItem(
+                            text = { Text(category.name) },
+                            onClick = {
+                                viewModel.onCategoryNameChange(category.name)
+                                addingNewCategory = false
+                                categoryMenuExpanded = false
+                            }
+                        )
+                    }
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("+ افزودن دسته جدید") },
+                        onClick = {
+                            viewModel.onCategoryNameChange("")
+                            addingNewCategory = true
+                            categoryMenuExpanded = false
+                        }
+                    )
+                }
+            }
+            if (addingNewCategory) {
+                TextButton(onClick = { addingNewCategory = false; viewModel.onCategoryNameChange("") }) {
+                    Text("انتخاب از دسته‌بندی‌های موجود")
+                }
+            }
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(state.entryType.labelFa(), {}, Modifier.fillMaxWidth(), label = { Text("نوع ورودی") }, readOnly = true, singleLine = true)
                 Spacer(Modifier.matchParentSize().clickable { typeMenuExpanded = true })
                 DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) { EntryType.entries.forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { viewModel.onEntryTypeChange(type); typeMenuExpanded = false }) } }
             }
-            Box(Modifier.fillMaxWidth()) {
-                OutlinedTextField(state.categoryName, { viewModel.onCategoryNameChange(it); categoryMenuExpanded = true }, Modifier.fillMaxWidth(), label = { Text("دسته‌بندی") }, singleLine = true)
-                DropdownMenu(categoryMenuExpanded && filteredCategories.isNotEmpty(), { categoryMenuExpanded = false }) { filteredCategories.forEach { category -> DropdownMenuItem(text = { Text(category.name) }, onClick = { viewModel.onCategoryNameChange(category.name); categoryMenuExpanded = false }) } }
-            }
+            OutlinedTextField(state.notes, viewModel::onNotesChange, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
         }
