@@ -1,5 +1,14 @@
 # FlashLearn Changelog
 
+## v5.88 — Backup Restore Complete + Typed Backup Coverage
+- Fixed Restore routing so legacy schema-1 `VOCABULARY` and `FULL` files are handled by their dedicated compatibility repositories.
+- Added explicit restore support for schema-2 typed `VOCABULARY` backups; the flat typed representation is adapted to the established vocabulary restore contract so existing merge behavior remains intact.
+- Added explicit restore support for schema-2 typed `PROGRESS` backups, including learning states, difficulty states, review sessions, and review history.
+- Added pre-mutation validation for typed PROGRESS UUIDs, concept/session references, stages, review types, timestamps, and duplicate review attempts.
+- Unsupported or mismatched backup discriminators now fail with an explicit unsupported-format result instead of falling through to an unrelated restore path.
+- Preserved the hardened schema-2 FULL restore path, including complete-section validation, known v5.74 partial FULL compatibility, `RANDOM` review types, canonical-key recalculation, duplicate detection, and transactional pre-restore protection.
+- Bumped application identity to 5.88 / versionCode 88.
+
 ## v5.87 — Previous-Version FULL Backup Compatibility Hardening
 - Audited the supplied historical FULL backup archive containing a schema-2 FULL JSON with 8,242 concepts, 20,443 contents, 8,242 learning states, 8,242 difficulty states, 163 review sessions, and 1,987 review-history records.
 - Confirmed the historical backup uses the known v5.74 partial schema-2 FULL section shape and contains `RANDOM` review-session/history types.
