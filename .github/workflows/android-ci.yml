@@ -40,13 +40,27 @@ jobs:
           command -v adb
           command -v apksigner
           command -v aapt
-      - name: Create clean CI debug keystore
+      - name: Restore stable CI debug keystore cache
+        uses: actions/cache@v4
+        with:
+          path: keystore/debug.keystore
+          key: flashlearn-debug-keystore-v1
+      - name: Materialize stable CI debug keystore
         shell: bash
+        env:
+          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
         run: |
           set -euo pipefail
           mkdir -p keystore
-          rm -f keystore/debug.keystore
-          keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
+            echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
+            echo "Using repository-configured stable debug signing key."
+          elif [[ ! -s keystore/debug.keystore ]]; then
+            echo "No stable debug key was found; generating the initial CI key to seed the cache."
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          else
+            echo "Using cached stable CI debug signing key."
+          fi
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -108,13 +122,28 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-      - name: Create clean CI debug keystore
+      - name: Restore stable CI debug keystore cache
+        uses: actions/cache@v4
+        with:
+          path: keystore/debug.keystore
+          key: flashlearn-debug-keystore-v1
+      - name: Materialize stable CI debug keystore
         shell: bash
+        env:
+          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
         run: |
           set -euo pipefail
           mkdir -p keystore
-          rm -f keystore/debug.keystore
-          keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
+            echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
+            echo "Using repository-configured stable debug signing key."
+          elif [[ ! -s keystore/debug.keystore ]]; then
+            echo "No stable debug key was found; generating the initial CI key to seed the cache."
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          else
+            echo "Using cached stable CI debug signing key."
+          fi
+          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey >/dev/null
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
