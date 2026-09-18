@@ -73,7 +73,7 @@ private fun BulkImportEditor(
             }
         }
         item {
-            Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = tokens.primary, textAlign = TextAlign.End)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) { Text("${languagePair.source.flag} ${languagePair.source.labelFa}", style = MaterialTheme.typography.titleMedium, color = tokens.primary); Spacer(Modifier.width(tokens.compactGap)); Icon(mdiIcon("arrow-right"), contentDescription = null, tint = tokens.primary); Spacer(Modifier.width(tokens.compactGap)); Text("${languagePair.target.flag} ${languagePair.target.labelFa}", style = MaterialTheme.typography.titleMedium, color = tokens.primary) }
         }
         item {
             Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
@@ -178,7 +178,7 @@ private fun PreviewEntryCard(result: BulkImportItemResult, lineNumber: Int?) {
         Row(Modifier.fillMaxWidth().padding(tokens.dp(12f)), verticalAlignment = Alignment.Top) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(tokens.dp(40f))) {
                 Surface(Modifier.fillMaxSize(), shape = MaterialTheme.shapes.small, color = if (bad) tokens.error.copy(alpha = .10f) else tokens.primary.copy(alpha = .10f)) {
-                    Box(contentAlignment = Alignment.Center) { Text(if (bad) "!" else "✓", color = if (bad) tokens.error else tokens.primary, fontWeight = FontWeight.Bold) }
+                    Box(contentAlignment = Alignment.Center) { Icon(mdiIcon(if (bad) "alert-circle-outline" else "check-circle-outline"), contentDescription = null, tint = if (bad) tokens.error else tokens.primary) }
                 }
             }
             Spacer(Modifier.width(tokens.compactGap))
