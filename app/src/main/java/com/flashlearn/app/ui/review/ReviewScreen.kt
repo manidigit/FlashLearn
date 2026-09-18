@@ -1,25 +1,12 @@
 package com.flashlearn.app.ui.review
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.outlined.DoneAll
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.FormatListNumbered
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material.icons.outlined.Quiz
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Style
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -78,15 +65,15 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
 private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?, onBack: () -> Unit = {}, onOpenCategories: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
             Text("مرور کلمات", modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
 
         Text("حالت پاسخ اجرا", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Text("یکی را انتخاب کن: تستی یا فلش‌کارت", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReviewModeCard("تستی", state.selectedMode == ReviewMode.QUIZ, { vm.chooseMode(ReviewMode.QUIZ) }, Icons.Outlined.Quiz, Modifier.weight(1f))
-            ReviewModeCard("فلش‌کارت", state.selectedMode == ReviewMode.FLASHCARD, { vm.chooseMode(ReviewMode.FLASHCARD) }, Icons.Outlined.Style, Modifier.weight(1f))
+            ReviewModeCard("تستی", state.selectedMode == ReviewMode.QUIZ, { vm.chooseMode(ReviewMode.QUIZ) }, mdiIcon("help-circle-outline"), Modifier.weight(1f))
+            ReviewModeCard("فلش‌کارت", state.selectedMode == ReviewMode.FLASHCARD, { vm.chooseMode(ReviewMode.FLASHCARD) }, mdiIcon("shape-outline"), Modifier.weight(1f))
         }
 
         Text("دسته‌بندی لغات", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
@@ -96,16 +83,16 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
         Text("مرور ویژه", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Text("انتخاب حالت ویژه مرور", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReviewModeCard("تصادفی", state.selectedReviewType == ReviewType.RANDOM, { vm.chooseReviewType(ReviewType.RANDOM) }, Icons.Outlined.Style, Modifier.weight(1f))
-            ReviewModeCard("یادگرفته", state.selectedReviewType == ReviewType.LEARNED, { vm.chooseReviewType(ReviewType.LEARNED) }, Icons.Outlined.DoneAll, Modifier.weight(1f))
+            ReviewModeCard("تصادفی", state.selectedReviewType == ReviewType.RANDOM, { vm.chooseReviewType(ReviewType.RANDOM) }, mdiIcon("shape-outline"), Modifier.weight(1f))
+            ReviewModeCard("یادگرفته", state.selectedReviewType == ReviewType.LEARNED, { vm.chooseReviewType(ReviewType.LEARNED) }, mdiIcon("check-all"), Modifier.weight(1f))
         }
 
         Text("زمانبندی مرور", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
         Text("انتخاب یکی از حالت‌های مرور زمان‌بندی‌شده", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReviewModeCard("روزانه", state.selectedReviewType == ReviewType.DAILY, { vm.chooseReviewType(ReviewType.DAILY) }, Icons.Outlined.FormatListNumbered, Modifier.weight(1f))
-            ReviewModeCard("هفتگی", state.selectedReviewType == ReviewType.WEEKLY, { vm.chooseReviewType(ReviewType.WEEKLY) }, Icons.Outlined.Category, Modifier.weight(1f))
-            ReviewModeCard("ماهانه", state.selectedReviewType == ReviewType.MONTHLY, { vm.chooseReviewType(ReviewType.MONTHLY) }, Icons.Outlined.AutoAwesome, Modifier.weight(1f))
+            ReviewModeCard("روزانه", state.selectedReviewType == ReviewType.DAILY, { vm.chooseReviewType(ReviewType.DAILY) }, mdiIcon("format-list-numbered"), Modifier.weight(1f))
+            ReviewModeCard("هفتگی", state.selectedReviewType == ReviewType.WEEKLY, { vm.chooseReviewType(ReviewType.WEEKLY) }, mdiIcon("shape-outline"), Modifier.weight(1f))
+            ReviewModeCard("ماهانه", state.selectedReviewType == ReviewType.MONTHLY, { vm.chooseReviewType(ReviewType.MONTHLY) }, mdiIcon("creation"), Modifier.weight(1f))
         }
 
         Text("سطح دشواری کلمات", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
@@ -128,9 +115,9 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
             Text("سطح دشواری آزمون تستی", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
             Text("انتخاب سطح آزمون", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuizLevelTile("ابتدایی", state.selectedQuizDifficulty == QuizDifficulty.EASY, Icons.Outlined.School, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.EASY) }
-                QuizLevelTile("متوسط", state.selectedQuizDifficulty == QuizDifficulty.MEDIUM, Icons.Outlined.Tune, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.MEDIUM) }
-                QuizLevelTile("حرفه‌ای", state.selectedQuizDifficulty == QuizDifficulty.HARD, Icons.Outlined.EmojiEvents, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.HARD) }
+                QuizLevelTile("ابتدایی", state.selectedQuizDifficulty == QuizDifficulty.EASY, mdiIcon("school-outline"), Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.EASY) }
+                QuizLevelTile("متوسط", state.selectedQuizDifficulty == QuizDifficulty.MEDIUM, mdiIcon("tune"), Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.MEDIUM) }
+                QuizLevelTile("حرفه‌ای", state.selectedQuizDifficulty == QuizDifficulty.HARD, mdiIcon("trophy-outline"), Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.HARD) }
             }
         }
 
@@ -139,7 +126,7 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
         personalDifficulty?.let { Text("سطح شخصی فعلی: ${difficultyLabel(it)}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End) }
         val filterSummary = buildList { add(if (state.selectedDifficulties.isEmpty()) "همه سطوح" else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) }); add(if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${state.selectedCategoryIds.size} دسته"); add(reviewTypeLabel(state.selectedReviewType)); add(if (state.selectedMode == ReviewMode.QUIZ) "تست" else "فلش‌کارت") }.joinToString("  •  ")
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .42f))) { Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("${minOf(state.maximumReviewCards, state.availableReviewCount)} کلمه آماده مرور از ${state.availableReviewCount} کلمه فیلتر شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center); Spacer(Modifier.height(5.dp)); Text(filterSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center) } }
-        Button(enabled = state.availableReviewCount > 0, onClick = vm::startNewSession, modifier = Modifier.fillMaxWidth().height(58.dp), shape = MaterialTheme.shapes.extraLarge, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), contentPadding = PaddingValues(horizontal = 22.dp)) { Text("شروع مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Spacer(Modifier.width(8.dp)); Icon(Icons.Outlined.PlayArrow, contentDescription = null) }
+        Button(enabled = state.availableReviewCount > 0, onClick = vm::startNewSession, modifier = Modifier.fillMaxWidth().height(58.dp), shape = MaterialTheme.shapes.extraLarge, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), contentPadding = PaddingValues(horizontal = 22.dp)) { Text("شروع مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Spacer(Modifier.width(8.dp)); Icon(mdiIcon("play"), contentDescription = null) }
     }
 }
 
@@ -147,23 +134,24 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
     val selectedCount = state.selectedCategoryIds.size
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selectedCount > 0) 2.dp else 1.dp, if (selectedCount > 0) QuizSelected.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.ArrowBack, null, tint = QuizSelected, modifier = Modifier.size(22.dp)); Spacer(Modifier.weight(1f)); Column(horizontalAlignment = Alignment.End) { Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, textAlign = TextAlign.End) }; Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.large, color = QuizSelectedContainer) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = QuizSelected, modifier = Modifier.size(28.dp)) } }
+            Icon(mdiIcon("arrow-left"), null, tint = QuizSelected, modifier = Modifier.size(22.dp)); Spacer(Modifier.weight(1f)); Column(horizontalAlignment = Alignment.End) { Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, textAlign = TextAlign.End) }; Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.large, color = QuizSelectedContainer) { Box(contentAlignment = Alignment.Center) { Icon(mdiIcon("shape-outline"), null, tint = QuizSelected, modifier = Modifier.size(28.dp)) } }
         }
     }
 }
 
 @Composable private fun ReviewModeCard(label: String, selected: Boolean, onClick: () -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier) {
-    Card(modifier.height(108.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) QuizSelected.copy(alpha = .75f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .75f))) { Box(Modifier.fillMaxSize()) { if (selected) Surface(Modifier.align(Alignment.TopEnd).padding(8.dp).size(28.dp), shape = MaterialTheme.shapes.extraLarge, color = QuizSelected) { Icon(Icons.Outlined.DoneAll, null, tint = Color.White, modifier = Modifier.padding(6.dp)) }; Column(Modifier.fillMaxSize().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(34.dp)); Spacer(Modifier.height(6.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) } } }
+    Card(modifier.height(108.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) QuizSelected.copy(alpha = .75f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .75f))) { Box(Modifier.fillMaxSize()) { if (selected) Surface(Modifier.align(Alignment.TopEnd).padding(8.dp).size(28.dp), shape = MaterialTheme.shapes.extraLarge, color = QuizSelected) { Icon(mdiIcon("check-all"), null, tint = Color.White, modifier = Modifier.padding(6.dp)) }; Column(Modifier.fillMaxSize().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(34.dp)); Spacer(Modifier.height(6.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) } } }
 }
 
 @Composable private fun DifficultyTile(label: String, selected: Boolean, difficulty: VocabularyDifficulty, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, vm: ReviewViewModel) {
     val tint = when (difficulty) { VocabularyDifficulty.EASY -> Color(0xFF39B982); VocabularyDifficulty.MEDIUM -> Color(0xFFFFC84A); VocabularyDifficulty.HARD -> Color(0xFFFF7A3D); VocabularyDifficulty.VERY_HARD -> Color(0xFFE95C73) }
-    Surface(modifier.height(128.dp).clickable { vm.toggleDifficulty(difficulty) }, shape = MaterialTheme.shapes.extraLarge, color = if (selected) tint.copy(alpha = .07f) else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) tint.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .7f))) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = tint, modifier = Modifier.align(Alignment.TopEnd).padding(7.dp).size(18.dp)); Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(32.dp)); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } }
+    Surface(modifier.height(128.dp).clickable { vm.toggleDifficulty(difficulty) }, shape = MaterialTheme.shapes.extraLarge, color = if (selected) tint.copy(alpha = .07f) else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) tint.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .7f))) { Box(Modifier.fillMaxSize()) { if (selected) Icon(mdiIcon("check-all"), null, tint = tint, modifier = Modifier.align(Alignment.TopEnd).padding(7.dp).size(18.dp)); Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(32.dp)); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } }
 }
 
-private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> Icons.Outlined.Star; VocabularyDifficulty.MEDIUM -> Icons.Outlined.AutoAwesome; VocabularyDifficulty.HARD -> Icons.Outlined.LocalFireDepartment; VocabularyDifficulty.VERY_HARD -> Icons.Outlined.RocketLaunch }
+@Composable
+private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> mdiIcon("star"); VocabularyDifficulty.MEDIUM -> mdiIcon("creation"); VocabularyDifficulty.HARD -> mdiIcon("fire-station"); VocabularyDifficulty.VERY_HARD -> mdiIcon("rocket-launch-outline") }
 
-@Composable private fun QuizLevelTile(label: String, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) { Surface(modifier.height(96.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.large, color = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) QuizSelected.copy(alpha = .7f) else MaterialTheme.colorScheme.outlineVariant)) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = QuizSelected, modifier = Modifier.align(Alignment.TopEnd).padding(7.dp).size(18.dp)); Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp)); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } } }
+@Composable private fun QuizLevelTile(label: String, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) { Surface(modifier.height(96.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.large, color = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) QuizSelected.copy(alpha = .7f) else MaterialTheme.colorScheme.outlineVariant)) { Box(Modifier.fillMaxSize()) { if (selected) Icon(mdiIcon("check-all"), null, tint = QuizSelected, modifier = Modifier.align(Alignment.TopEnd).padding(7.dp).size(18.dp)); Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp)); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } } }
 
 @Composable private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) { Surface(modifier.height(50.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.large, color = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 1.5.dp else 1.dp, if (selected) QuizSelected.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant)) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } }
 
