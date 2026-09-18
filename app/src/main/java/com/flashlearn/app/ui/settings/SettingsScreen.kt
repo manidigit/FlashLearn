@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.settings
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,8 +11,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -77,9 +77,9 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.compactGap))
         Section("ظاهر برنامه")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.dp(7f))) {
-            AppearanceChoice("سیستمی", AppearanceMode.SYSTEM, Icons.Outlined.Computer, appearance, onAppearanceChange, Modifier.weight(1f))
-            AppearanceChoice("تم تاریک", AppearanceMode.DARK, Icons.Outlined.Brightness4, appearance, onAppearanceChange, Modifier.weight(1f))
-            AppearanceChoice("تم روشن", AppearanceMode.LIGHT, Icons.Outlined.Brightness7, appearance, onAppearanceChange, Modifier.weight(1f))
+            AppearanceChoice("سیستمی", AppearanceMode.SYSTEM, mdiIcon("monitor"), appearance, onAppearanceChange, Modifier.weight(1f))
+            AppearanceChoice("تم تاریک", AppearanceMode.DARK, mdiIcon("weather-night"), appearance, onAppearanceChange, Modifier.weight(1f))
+            AppearanceChoice("تم روشن", AppearanceMode.LIGHT, mdiIcon("white-balance-sunny"), appearance, onAppearanceChange, Modifier.weight(1f))
         }
         Spacer(Modifier.height(tokens.sectionGap))
         Section("تم کامل برنامه")
@@ -89,16 +89,16 @@ fun SettingsScreen(
             themes.forEach { spec -> ThemeChoice(spec, themeId, onThemeChange) }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("وارد کردن") }
-            OutlinedButton(onClick = { val spec = themes.firstOrNull { it.id == themeId } ?: FlashLearnThemeSpec.MODERN_PURPLE; pendingExport = spec.toJson(); exportLauncher.launch("flashlearn-theme-${spec.id}.json") }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileDownload, null); Spacer(Modifier.width(tokens.compactGap)); Text("خروجی JSON") }
+            OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json")) }, modifier = Modifier.weight(1f)) { Icon(mdiIcon("file-upload-outline"), null); Spacer(Modifier.width(tokens.compactGap)); Text("وارد کردن") }
+            OutlinedButton(onClick = { val spec = themes.firstOrNull { it.id == themeId } ?: FlashLearnThemeSpec.MODERN_PURPLE; pendingExport = spec.toJson(); exportLauncher.launch("flashlearn-theme-${spec.id}.json") }, modifier = Modifier.weight(1f)) { Icon(mdiIcon("file-download-outline"), null); Spacer(Modifier.width(tokens.compactGap)); Text("خروجی JSON") }
         }
         if (importError) Text("فایل تم معتبر نیست یا قابل خواندن نیست.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
         if (exportError) Text("ذخیره فایل تم ناموفق بود.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(tokens.sectionGap))
         Section("زبان برنامه")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            SettingsRow(Icons.Outlined.Language, "زبان رابط کاربری", "فارسی", null, Modifier.weight(1f))
-            SettingsRow(Icons.Outlined.Translate, "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست", { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }, Modifier.weight(1f))
+            SettingsRow(mdiIcon("language"), "زبان رابط کاربری", "فارسی", null, Modifier.weight(1f))
+            SettingsRow(mdiIcon("translate"), "جهت نمایش زبان", if (layoutDirection == AppLayoutDirection.RTL) "راست‌به‌چپ" else "چپ‌به‌راست", { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }, Modifier.weight(1f))
         }
         Spacer(Modifier.height(tokens.sectionGap)); Section("زبان پیش‌فرض یادگیری")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
@@ -109,13 +109,13 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.sectionGap)); Section("تعداد پاسخ برای تغییر سطح")
         Text("تعداد پاسخ صحیح یا غلط پیاپی برای جابه‌جایی بین آسان، متوسط، سخت و خیلی سخت", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(tokens.compactGap))
-        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(8f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
-        Spacer(Modifier.height(tokens.sectionGap)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onBackup)
-        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(Icons.Outlined.Info, "درباره برنامه", "نسخه 5.88 • تاریخچه و به‌روزرسانی‌ها", onAbout)
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(8f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(mdiIcon("minus"), "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(mdiIcon("plus"), "زیاد کردن") } } }
+        Spacer(Modifier.height(tokens.sectionGap)); Section("داده‌ها"); SettingsRow(mdiIcon("database-outline"), "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onBackup)
+        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(mdiIcon("information-outline"), "درباره برنامه", "نسخه 5.88 • تاریخچه و به‌روزرسانی‌ها", onAbout)
     }
 }
 
-@Composable private fun ThemeChoice(spec: FlashLearnThemeSpec, selected: String, onSelect: (String) -> Unit) { val tokens = LocalFlashLearnThemeTokens.current; val chosen = spec.id == selected; OutlinedCard(onClick = { onSelect(spec.id) }, modifier = Modifier.width(tokens.dp(190f)), border = BorderStroke(if (chosen) tokens.dp(2f) else tokens.dp(1f), if (chosen) tokens.primary else tokens.outlineColor)) { Column(Modifier.fillMaxWidth().padding(tokens.dp(10f))) { Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(spec.name, style = MaterialTheme.typography.titleSmall, maxLines = 1); Text(if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) "تم داخلی" else "تم واردشده", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; if (chosen) Icon(Icons.Outlined.CheckCircle, "انتخاب شده", tint = tokens.primary) }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(5f))) { listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground, spec.lightCard, spec.darkBackground).forEach { color -> Surface(color = Color(color), shape = MaterialTheme.shapes.small, border = BorderStroke(tokens.dp(1f), tokens.outlineColor), modifier = Modifier.size(tokens.dp(22f))) {} }; }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(4f))) { AssistChip(onClick = {}, label = { Text("تراکم ${spec.densityScale}") }); AssistChip(onClick = {}, label = { Text(if (spec.iconStyle.equals("filled", true)) "پر" else "خطی") }) } } } }
+@Composable private fun ThemeChoice(spec: FlashLearnThemeSpec, selected: String, onSelect: (String) -> Unit) { val tokens = LocalFlashLearnThemeTokens.current; val chosen = spec.id == selected; OutlinedCard(onClick = { onSelect(spec.id) }, modifier = Modifier.width(tokens.dp(190f)), border = BorderStroke(if (chosen) tokens.dp(2f) else tokens.dp(1f), if (chosen) tokens.primary else tokens.outlineColor)) { Column(Modifier.fillMaxWidth().padding(tokens.dp(10f))) { Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(spec.name, style = MaterialTheme.typography.titleSmall, maxLines = 1); Text(if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) "تم داخلی" else "تم واردشده", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; if (chosen) Icon(mdiIcon("check-circle-outline"), "انتخاب شده", tint = tokens.primary) }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(5f))) { listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground, spec.lightCard, spec.darkBackground).forEach { color -> Surface(color = Color(color), shape = MaterialTheme.shapes.small, border = BorderStroke(tokens.dp(1f), tokens.outlineColor), modifier = Modifier.size(tokens.dp(22f))) {} }; }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(4f))) { AssistChip(onClick = {}, label = { Text("تراکم ${spec.densityScale}") }); AssistChip(onClick = {}, label = { Text(if (spec.iconStyle.equals("filled", true)) "پر" else "خطی") }) } } } }
 @Composable private fun Section(text: String) { val tokens = LocalFlashLearnThemeTokens.current; Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = tokens.compactGap)) }
 @Composable private fun LanguageChoice(language: LearningLanguage, label: String, onClick: () -> Unit, modifier: Modifier) { val tokens = LocalFlashLearnThemeTokens.current; OutlinedCard(onClick = onClick, modifier = modifier) { Row(Modifier.fillMaxWidth().padding(tokens.dp(10f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(tokens.compactGap)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } } }
 @Composable private fun LanguageLabel(language: LearningLanguage) { val tokens = LocalFlashLearnThemeTokens.current; Row(verticalAlignment = Alignment.CenterVertically) { Text(language.flag); Spacer(Modifier.width(tokens.compactGap)); Text(language.labelFa) } }
