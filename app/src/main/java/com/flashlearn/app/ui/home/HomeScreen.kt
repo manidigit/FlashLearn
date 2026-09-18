@@ -53,7 +53,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("🔥", style = MaterialTheme.typography.titleLarge)
+                    Icon(mdiIcon("fire"), contentDescription = null, modifier = Modifier.size(24.dp))
                     Text("${state.streak?.currentStreakDays ?: 0} روز پیوسته", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.weight(1f))
