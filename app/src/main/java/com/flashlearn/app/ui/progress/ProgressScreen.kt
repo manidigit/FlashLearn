@@ -75,7 +75,7 @@ private fun SummaryTiles(state: ProgressUiState) {
     val stats = state.statistics
     val summary = state.summary
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        SummaryTile("کل واژه‌ها", fa(stats?.reviewedConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
         SummaryTile("یادگرفته", fa(summary?.learnedConceptCount ?: 0), Icons.Outlined.School, tokens.success, Modifier.weight(1f))
         SummaryTile("دقت کل", "${fa(stats?.accuracyPercent ?: 0)}٪", Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
     }
@@ -190,7 +190,12 @@ private fun StageRow(label: String, value: Int, color: Color) {
 private fun DifficultyCard(state: ProgressUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val p = state.progress ?: return
-    val rows = listOf("آسان" to p.dailyConcepts, "متوسط" to p.weeklyConcepts, "سخت" to p.monthlyConcepts, "خیلی سخت" to p.veryHardConcepts)
+    val rows = listOf(
+        "آسان" to p.easyConcepts,
+        "متوسط" to p.mediumConcepts,
+        "سخت" to p.hardConcepts,
+        "خیلی سخت" to p.veryHardConcepts
+    )
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
             Text("پروفایل سختی", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
@@ -214,9 +219,9 @@ private fun ReviewAccuracyCard(state: ProgressUiState) {
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Text("دقت مرور", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
-            AccuracyRow("امروز", stats.totalReviews, stats.totalCorrect, tokens.success)
-            AccuracyRow("این هفته", stats.totalReviews, stats.totalCorrect, MaterialTheme.colorScheme.secondary)
-            AccuracyRow("این ماه", stats.totalReviews, stats.totalCorrect, MaterialTheme.colorScheme.primary)
+            AccuracyRow("امروز", state.todayReviews.total, state.todayReviews.correct, tokens.success)
+            AccuracyRow("این هفته", state.weekReviews.total, state.weekReviews.correct, MaterialTheme.colorScheme.secondary)
+            AccuracyRow("این ماه", state.monthReviews.total, state.monthReviews.correct, MaterialTheme.colorScheme.primary)
             AccuracyRow("مجموع کل", stats.totalReviews, stats.totalCorrect, tokens.warning)
         }
     }
