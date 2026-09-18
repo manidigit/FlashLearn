@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.*
+import com.flashlearn.app.BuildConfig
 import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.QuizDifficulty
