@@ -1,16 +1,11 @@
 package com.flashlearn.app.ui.progress
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.Composable
@@ -76,9 +71,9 @@ private fun SummaryTiles(state: ProgressUiState) {
     val stats = state.statistics
     val summary = state.summary
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-        SummaryTile("یادگرفته", fa(summary?.learnedConceptCount ?: 0), Icons.Outlined.School, tokens.success, Modifier.weight(1f))
-        SummaryTile("دقت کل", "${fa(stats?.accuracyPercent ?: 0)}٪", Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
+        SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), mdiIcon("book-open-page-variant"), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        SummaryTile("یادگرفته", fa(summary?.learnedConceptCount ?: 0), mdiIcon("school-outline"), tokens.success, Modifier.weight(1f))
+        SummaryTile("دقت کل", "${fa(stats?.accuracyPercent ?: 0)}٪", mdiIcon("check-circle-outline"), tokens.warning, Modifier.weight(1f))
     }
 }
 
@@ -103,7 +98,7 @@ private fun RetentionCard(state: ProgressUiState) {
     Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = .08f))) {
         Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.End) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ShowChart, null, tint = MaterialTheme.colorScheme.secondary)
+                Icon(mdiIcon("show-chart"), null, tint = MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(7.dp))
                 Text("حفظ ماندگار", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
@@ -275,7 +270,7 @@ private fun AchievementsCard(state: ProgressUiState) {
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.EmojiEvents, null, tint = tokens.warning)
+                Icon(mdiIcon("trophy-outline"), null, tint = tokens.warning)
                 Spacer(Modifier.width(7.dp))
                 Text("دستاوردها", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End)
                 Text(fa(unlocked), color = tokens.warning, fontWeight = FontWeight.Bold)
@@ -291,7 +286,7 @@ private fun AchievementsCard(state: ProgressUiState) {
 private fun RefreshCard(viewModel: ProgressViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
     OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth().height(50.dp), shape = MaterialTheme.shapes.small) {
-        Icon(Icons.Outlined.Refresh, null)
+        Icon(mdiIcon("refresh"), null)
         Spacer(Modifier.width(7.dp))
         Text("به‌روزرسانی آمار")
     }
