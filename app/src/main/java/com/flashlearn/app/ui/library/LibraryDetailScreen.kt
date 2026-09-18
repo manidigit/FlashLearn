@@ -1,14 +1,11 @@
 package com.flashlearn.app.ui.library
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.Save
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -129,7 +126,7 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
+            IconButton(onClick = onBack) { Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت") }
             Text("جزئیات لغت", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -168,12 +165,12 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(48.dp)) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
+                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(48.dp)) { Icon(mdiIcon("content-save-outline"), null); Spacer(Modifier.width(8.dp)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
                 OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(48.dp)) { Text("انصراف") }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
-                OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(6.dp)); Text("حذف") }
+                OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(mdiIcon("star"), null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
+                OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(mdiIcon("delete-outline"), null); Spacer(Modifier.width(6.dp)); Text("حذف") }
             }
             message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
         }
