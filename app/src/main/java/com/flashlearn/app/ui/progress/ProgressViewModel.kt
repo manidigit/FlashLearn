@@ -27,6 +27,10 @@ data class DailyReviewStat(val dayLabel: String, val total: Int, val correct: In
     val accuracyPercent: Int get() = if (total == 0) 0 else (correct * 100) / total
 }
 
+data class ReviewPeriodStat(val total: Int, val correct: Int) {
+    val accuracyPercent: Int get() = if (total == 0) 0 else (correct * 100) / total
+}
+
 data class ProgressUiState(
     val loading: Boolean = true,
     val progress: com.flashlearn.domain.progress.ProgressSnapshot? = null,
@@ -35,6 +39,9 @@ data class ProgressUiState(
     val streak: StreakSnapshot? = null,
     val achievements: List<Pair<AchievementDefinition, AchievementState>> = emptyList(),
     val dailyReviews: List<DailyReviewStat> = emptyList(),
+    val todayReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
+    val weekReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
+    val monthReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
     val error: String? = null
 )
 
@@ -82,16 +89,44 @@ class ProgressViewModel @Inject constructor(
                     achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
                 }
                 val today = now.atZone(zoneId).toLocalDate()
+                val weekStart = today.minusDays(6)
+                val monthStart = today.minusDays(29)
+                val todayEntries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == today }
+                val weekEntries = history.filter {
+                    val date = it.reviewedAt.atZone(zoneId).toLocalDate()
+                    !date.isBefore(weekStart) && !date.isAfter(today)
+                }
+                val monthEntries = history.filter {
+                    val date = it.reviewedAt.atZone(zoneId).toLocalDate()
+                    !date.isBefore(monthStart) && !date.isAfter(today)
+                }
                 val dayNames = listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")
                 val daily = (6 downTo 0).map { offset ->
                     val date = today.minusDays(offset.toLong())
                     val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
                     DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                 }
-                ProgressPayload(progress, summary, stats, streak, achievements, daily)
+                ProgressPayload(
+                    progress, summary, stats, streak, achievements, daily,
+                    ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
+                    ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
+                    ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
+                )
             }.onSuccess { payload ->
                 if (generation == refreshGeneration) {
-                    _state.value = ProgressUiState(false, payload.progress, payload.summary, payload.stats, payload.streak, payload.achievements, payload.dailyReviews, null)
+                    _state.value = ProgressUiState(
+                        loading = false,
+                        progress = payload.progress,
+                        summary = payload.summary,
+                        statistics = payload.stats,
+                        streak = payload.streak,
+                        achievements = payload.achievements,
+                        dailyReviews = payload.dailyReviews,
+                        todayReviews = payload.todayReviews,
+                        weekReviews = payload.weekReviews,
+                        monthReviews = payload.monthReviews,
+                        error = null
+                    )
                 }
             }.onFailure {
                 if (generation == refreshGeneration) _state.value = _state.value.copy(loading = false, error = it.message ?: "خطا در محاسبه آمار")
@@ -106,5 +141,8 @@ private data class ProgressPayload(
     val stats: StatisticsSnapshot,
     val streak: StreakSnapshot,
     val achievements: List<Pair<AchievementDefinition, AchievementState>>,
-    val dailyReviews: List<DailyReviewStat>
+    val dailyReviews: List<DailyReviewStat>,
+    val todayReviews: ReviewPeriodStat,
+    val weekReviews: ReviewPeriodStat,
+    val monthReviews: ReviewPeriodStat
 )
