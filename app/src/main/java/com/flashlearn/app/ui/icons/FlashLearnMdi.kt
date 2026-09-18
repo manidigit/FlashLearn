@@ -1,18 +1,26 @@
 package com.flashlearn.app.ui.icons
 
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.vector.ImageVector
-import io.github.timoptr.mdiicons.Mdi
-import io.github.timoptr.mdiicons.rememberImageVector
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import com.mikepenz.iconics.compose.Image as IconicsImage
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 
-/**
- * Single icon gateway for FlashLearn.
- *
- * All UI icons come from the Pictogrammers Material Design Icons catalog.
- * Directional icons opt into RTL mirroring automatically.
- */
+fun mdiIcon(name: String): IIcon {
+    val key = "cmd_" + name.replace('-', '_')
+    return runCatching { CommunityMaterial.getIcon(key) }
+        .getOrElse { CommunityMaterial.getIcon("cmd_help_circle_outline") }
+}
+
 @Composable
-fun mdiIcon(name: String, autoMirror: Boolean = true): ImageVector {
-    val icon = Mdi.fromMdiName(name) ?: Mdi.fromMdiName("help-circle-outline")!!
-    return icon.rememberImageVector(autoMirror = autoMirror)
+fun Icon(
+    imageVector: IIcon,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current
+) {
+    IconicsImage(asset = imageVector, contentDescription = contentDescription, modifier = modifier, colorFilter = ColorFilter.tint(tint))
 }
