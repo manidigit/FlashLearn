@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.backup
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -118,7 +120,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     }
 }
 
-@Composable private fun SectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
+@Composable private fun SectionHeader(icon: com.mikepenz.iconics.typeface.IIcon, title: String, subtitle: String) {
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconMedium)); Spacer(Modifier.width(tokens.compactGap))

@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.library
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.compose.foundation.layout.*
@@ -55,7 +57,6 @@ private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onCli
     }
 }
 
-@Composable
 @Composable
 private fun categoryIcon(title: String) = when (title.trim().lowercase()) {
     "همه دسته‌ها" -> mdiIcon("folder-outline")

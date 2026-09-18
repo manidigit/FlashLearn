@@ -2,7 +2,7 @@ import java.time.LocalDate
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+        id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
 }
@@ -10,15 +10,13 @@ plugins {
 android {
     namespace = "com.flashlearn.app"
     compileSdk = 34
-
     defaultConfig {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 97
+        versionCode = 98
         versionName = "5.98"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
         buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
         buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
@@ -26,7 +24,6 @@ android {
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_BUILD_DATE", "\"${LocalDate.now()}\"")
     }
-
     signingConfigs {
         getByName("debug") {
             storeFile = file("../keystore/debug.keystore")
@@ -45,17 +42,11 @@ android {
             if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
-
     buildTypes {
         getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
         getByName("release") { signingConfig = signingConfigs.getByName("release"); isMinifyEnabled = false }
     }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
-
+    buildFeatures { compose = true; buildConfig = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
@@ -64,7 +55,7 @@ android {
 dependencies {
     implementation(project(":domain")); implementation(project(":data")); implementation(project(":database")); implementation(project(":core"))
     implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.56.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.activity:activity-compose:1.9.2")
@@ -72,7 +63,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("io.github.timoptr:mdi-icons:0.2.0")
+    implementation("com.mikepenz:iconics-core:5.5.0-compose01")
+    implementation("com.mikepenz:iconics-compose:5.5.0-compose01")
+    implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))

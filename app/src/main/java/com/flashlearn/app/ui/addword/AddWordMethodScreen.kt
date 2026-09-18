@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.addword
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.compose.foundation.BorderStroke
@@ -67,7 +69,7 @@ fun AddWordMethodScreen(
 }
 
 @Composable
-private fun MethodCard(title: String, subtitle: String, color: Color, background: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+private fun MethodCard(title: String, subtitle: String, color: Color, background: Color, icon: com.mikepenz.iconics.typeface.IIcon, onClick: () -> Unit) {
     Card(Modifier.fillMaxWidth().height(132.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = background), border = BorderStroke(1.dp, color.copy(alpha = .24f))) {
         Row(Modifier.fillMaxSize().padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = title, tint = color, modifier = Modifier.size(42.dp))
@@ -84,7 +86,7 @@ private fun MethodCard(title: String, subtitle: String, color: Color, background
 }
 
 @Composable
-private fun StatAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit, modifier: Modifier) {
+private fun StatAction(icon: com.mikepenz.iconics.typeface.IIcon, label: String, onClick: () -> Unit, modifier: Modifier) {
     FilledTonalButton(onClick = onClick, modifier = modifier.height(72.dp), shape = MaterialTheme.shapes.medium) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(25.dp))

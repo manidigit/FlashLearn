@@ -27,7 +27,7 @@ data class FlashLearnThemeSpec(
     val darkOutline: Long = 0xFF38333F,
     val gradientStart: Long = lightPrimary,
     val gradientEnd: Long = lightSecondary,
-    val iconStyle: String = "outlined",
+    val iconStyle: String = "mdi",
     val elevationScale: Float = 1f,
     val cornerSmall: Float = 14f,
     val cornerMedium: Float = 18f,
@@ -93,7 +93,7 @@ data class FlashLearnThemeSpec(
             lightSurfaceVariant=0xFFF2EBDD, darkSurfaceVariant=0xFF2A2318, lightOnSurface=0xFF211B12,
             darkOnSurface=0xFFF5EBD8, lightOnSurfaceVariant=0xFF766B5A, darkOnSurfaceVariant=0xFFC9BDA8,
             lightCard=0xFFFFFCF5, darkCard=0xFF1C1710, lightOutline=0xFFE6D5B5, darkOutline=0xFF5A4525,
-            gradientStart=0xFF6E4308, gradientEnd=0xFFD3A33D, iconStyle="filled", elevationScale=1.2f,
+            gradientStart=0xFF6E4308, gradientEnd=0xFFD3A33D, iconStyle="mdi", elevationScale=1.2f,
             cornerSmall=12f, cornerMedium=18f, cornerLarge=26f, typographyScale=1.03f, densityScale=0.98f
         )
         val ROSE_GOLD = MODERN_PURPLE.copy(
@@ -101,7 +101,7 @@ data class FlashLearnThemeSpec(
             lightSecondary=0xFFC47B83, darkSecondary=0xFFFFC4CC, lightBackground=0xFFFFF7F8,
             darkBackground=0xFF14090C, lightSurfaceVariant=0xFFF8E8EB, darkSurfaceVariant=0xFF2C171C,
             gradientStart=0xFFB45A6A, gradientEnd=0xFFD8A07C, cornerSmall=16f, cornerMedium=22f, cornerLarge=30f,
-            iconStyle="outlined", typographyScale=1.02f
+            iconStyle="mdi", typographyScale=1.02f
         )
         val FOREST = MODERN_PURPLE.copy(
             id="forest", name="جنگل عمیق", lightPrimary=0xFF276749, darkPrimary=0xFF7AD6A5,
@@ -128,7 +128,7 @@ data class FlashLearnThemeSpec(
                 c("lightCard",MODERN_PURPLE.lightCard), c("darkCard",MODERN_PURPLE.darkCard),
                 c("lightOutline",MODERN_PURPLE.lightOutline), c("darkOutline",MODERN_PURPLE.darkOutline),
                 c("gradientStart",MODERN_PURPLE.gradientStart), c("gradientEnd",MODERN_PURPLE.gradientEnd),
-                j.optString("iconStyle","outlined").ifBlank{"outlined"},
+                j.optString("iconStyle","mdi").ifBlank{"outlined"},
                 j.optDouble("elevationScale",1.0).toFloat().coerceIn(.7f,1.8f),
                 j.optDouble("cornerSmall",14.0).toFloat().coerceIn(0f,40f),
                 j.optDouble("cornerMedium",18.0).toFloat().coerceIn(0f,48f),

@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.library
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.compose.foundation.BorderStroke
@@ -171,7 +173,7 @@ fun LibraryScreenV2(
 }
 
 @Composable
-private fun StatCard(title: String, value: Int, color: Color, background: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, selected: Boolean, onClick: () -> Unit) {
+private fun StatCard(title: String, value: Int, color: Color, background: Color, icon: com.mikepenz.iconics.typeface.IIcon, modifier: Modifier, selected: Boolean, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(
         onClick = onClick,

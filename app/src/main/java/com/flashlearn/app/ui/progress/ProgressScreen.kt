@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.progress
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.compose.foundation.Canvas
@@ -78,7 +80,7 @@ private fun SummaryTiles(state: ProgressUiState) {
 }
 
 @Composable
-private fun SummaryTile(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, modifier: Modifier) {
+private fun SummaryTile(title: String, value: String, icon: com.mikepenz.iconics.typeface.IIcon, color: Color, modifier: Modifier) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(modifier, shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = color.copy(alpha = .10f))) {
         Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {

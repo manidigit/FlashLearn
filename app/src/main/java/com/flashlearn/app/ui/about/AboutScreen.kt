@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.about
 
+import com.flashlearn.app.ui.icons.Icon
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import android.content.Intent

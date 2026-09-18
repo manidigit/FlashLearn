@@ -1,5 +1,6 @@
 package com.flashlearn.app
 
+import com.flashlearn.app.ui.icons.Icon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import android.os.Bundle

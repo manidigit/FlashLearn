@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.components
 
+import com.flashlearn.app.ui.icons.Icon
 import com.flashlearn.app.ui.icons.mdiIcon
 
 import androidx.compose.foundation.background
@@ -9,8 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import com.mikepenz.iconics.typeface.IIcon
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -35,7 +37,7 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
 }
 
 @Composable
-private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVector, filledIcon: ImageVector, selectedRoute: String, onNavigate: (String) -> Unit) {
+private fun RowScope.NavItem(route: String, label: String, outlinedIcon: IIcon, filledIcon: IIcon, selectedRoute: String, onNavigate: (String) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val selected = selectedRoute == route
     NavigationBarItem(
