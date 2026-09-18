@@ -1,16 +1,11 @@
 package com.flashlearn.app.ui.addword
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Restore
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,7 +36,7 @@ fun AddWordMethodScreen(
     ) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
             }
             Text(
                 "افزودن واژه جدید",
@@ -51,16 +46,16 @@ fun AddWordMethodScreen(
             )
         }
         Spacer(Modifier.height(12.dp))
-        MethodCard("لغات تکی", "افزودن یک واژه جدید", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .07f), Icons.Outlined.Description, onSingleWord)
+        MethodCard("لغات تکی", "افزودن یک واژه جدید", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .07f), mdiIcon("file-document-outline"), onSingleWord)
         Spacer(Modifier.height(14.dp))
-        MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = .07f), Icons.Outlined.Group, onBulkWords)
+        MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = .07f), mdiIcon("account-group-outline"), onBulkWords)
         Spacer(Modifier.height(14.dp))
-        MethodCard("ریستور بکاپ", "بازیابی واژه‌ها و اطلاعات از فایل پشتیبان", tokens.success, tokens.success.copy(alpha = .07f), Icons.Outlined.Restore, onRestoreBackup)
+        MethodCard("ریستور بکاپ", "بازیابی واژه‌ها و اطلاعات از فایل پشتیبان", tokens.success, tokens.success.copy(alpha = .07f), mdiIcon("restore"), onRestoreBackup)
         Spacer(Modifier.height(18.dp))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
             Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatAction(Icons.Outlined.Search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
-                StatAction(Icons.Outlined.Refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
+                StatAction(mdiIcon("magnify"), "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
+                StatAction(mdiIcon("refresh"), "رفرش", onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("تعداد کل واژگان", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(libraryState.totalCount.toString(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
