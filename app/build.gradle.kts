@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.flashlearn.app"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         applicationId = "com.flashlearn.app"
         minSdk = 26
@@ -70,6 +70,22 @@ dependencies {
         exclude(group = "androidx.compose.material3")
     }
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    configurations.configureEach {
+        resolutionStrategy.force(
+            "androidx.compose.ui:ui:1.6.2",
+            "androidx.compose.ui:ui-android:1.6.2",
+            "androidx.compose.ui:ui-graphics:1.6.2",
+            "androidx.compose.runtime:runtime:1.6.2",
+            "androidx.compose.runtime:runtime-android:1.6.2",
+            "androidx.compose.foundation:foundation:1.6.2",
+            "androidx.core:core:1.13.1",
+            "androidx.core:core-ktx:1.13.1",
+            "androidx.lifecycle:lifecycle-runtime-compose:2.8.4",
+            "androidx.lifecycle:lifecycle-runtime-compose-android:2.8.4",
+            "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4",
+            "androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.4"
+        )
+    }
     debugImplementation("androidx.compose.ui:ui-tooling")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
