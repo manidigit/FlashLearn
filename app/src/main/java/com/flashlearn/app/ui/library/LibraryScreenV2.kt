@@ -1,12 +1,12 @@
 package com.flashlearn.app.ui.library
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +40,7 @@ fun LibraryScreenV2(
     ) {
         Box(Modifier.fillMaxWidth().height(tokens.dp(58f))) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface)
+                Icon(mdiIcon("arrow-left"), "بازگشت", tint = tokens.onSurface)
             }
             Text("واژگان", Modifier.align(Alignment.Center), color = tokens.onSurface, style = MaterialTheme.typography.headlineMedium)
         }
@@ -52,7 +52,7 @@ fun LibraryScreenV2(
             placeholder = {
                 Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign = TextAlign.End, color = tokens.onSurfaceVariant)
             },
-            trailingIcon = { Icon(Icons.Outlined.Search, "جستجو", tint = tokens.primary) },
+            trailingIcon = { Icon(mdiIcon("magnify"), "جستجو", tint = tokens.primary) },
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
@@ -65,17 +65,17 @@ fun LibraryScreenV2(
 
         Spacer(Modifier.height(tokens.sectionGap))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.dp(9f))) {
-            StatCard("جدید", state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), Icons.Outlined.Add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
-            StatCard("در حال یادگیری", state.learningCount, tokens.secondary, tokens.secondary.copy(alpha = .10f), Icons.Outlined.History, Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
-            StatCard("یادگرفته", state.learnedCount, tokens.success, tokens.success.copy(alpha = .10f), Icons.Outlined.CheckCircle, Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
-            StatCard("کل واژگان", state.totalCount, tokens.primary, tokens.surfaceVariant, Icons.Outlined.Book, Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
+            StatCard("جدید", state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), mdiIcon("plus"), Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
+            StatCard("در حال یادگیری", state.learningCount, tokens.secondary, tokens.secondary.copy(alpha = .10f), mdiIcon("history"), Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
+            StatCard("یادگرفته", state.learnedCount, tokens.success, tokens.success.copy(alpha = .10f), mdiIcon("check-circle-outline"), Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
+            StatCard("کل واژگان", state.totalCount, tokens.primary, tokens.surfaceVariant, mdiIcon("book"), Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
         }
 
         Spacer(Modifier.height(tokens.sectionGap))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
             Text("فیلترها", color = tokens.onSurface, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.width(tokens.compactGap))
-            Icon(Icons.Outlined.FilterList, "فیلترها", tint = tokens.onSurface)
+            Icon(mdiIcon("filter-variant"), "فیلترها", tint = tokens.onSurface)
         }
         Spacer(Modifier.height(tokens.compactGap))
 
@@ -86,7 +86,7 @@ fun LibraryScreenV2(
             border = BorderStroke(tokens.dp(1f), tokens.outlineColor)
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(12f)), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ArrowBack, "انتخاب دسته", tint = tokens.onSurface)
+                Icon(mdiIcon("arrow-left"), "انتخاب دسته", tint = tokens.onSurface)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
                     Text("دسته‌بندی‌ها", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
@@ -99,7 +99,7 @@ fun LibraryScreenV2(
                 Spacer(Modifier.width(tokens.compactGap))
                 Surface(Modifier.size(tokens.dp(48f)), MaterialTheme.shapes.small, color = tokens.surfaceVariant) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Folder, "دسته‌بندی‌ها", tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge))
+                        Icon(mdiIcon("folder-outline"), "دسته‌بندی‌ها", tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge))
                     }
                 }
             }
@@ -118,7 +118,7 @@ fun LibraryScreenV2(
                 modifier = Modifier.weight(1f).height(tokens.controlHeight),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(Icons.Outlined.Refresh, "رفرش واژگان", modifier = Modifier.size(tokens.iconMedium))
+                Icon(mdiIcon("refresh"), "رفرش واژگان", modifier = Modifier.size(tokens.iconMedium))
                 Spacer(Modifier.width(tokens.compactGap))
                 Text("رفرش")
             }
@@ -134,7 +134,7 @@ fun LibraryScreenV2(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Icon(
-                    if (state.isDuplicateCleanupBusy) Icons.Outlined.Sync else Icons.Outlined.Search,
+                    if (state.isDuplicateCleanupBusy) mdiIcon("sync") else mdiIcon("magnify"),
                     "تکراری‌ها",
                     modifier = Modifier.size(tokens.iconMedium)
                 )
@@ -194,7 +194,7 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
     val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = BorderStroke(tokens.dp(1f), tokens.outlineColor)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(12f), vertical = tokens.dp(11f)), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.MoreVert, "گزینه‌ها", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconMedium))
+            Icon(mdiIcon("dots-vertical"), "گزینه‌ها", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
             DifficultyPillV2(item.difficulty)
             Spacer(Modifier.weight(1f))
@@ -219,7 +219,7 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
                 item.category?.let { Text(it.name, color = tokens.secondary, style = MaterialTheme.typography.labelSmall) }
             }
             Spacer(Modifier.width(tokens.compactGap))
-            Icon(Icons.Outlined.StarBorder, "موردعلاقه", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge))
+            Icon(mdiIcon("star-outline"), "موردعلاقه", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge))
         }
     }
 }
