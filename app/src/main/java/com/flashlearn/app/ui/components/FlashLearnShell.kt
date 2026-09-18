@@ -1,18 +1,9 @@
 package com.flashlearn.app.ui.components
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,11 +25,11 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
             containerColor = tokens.cardColor,
             tonalElevation = tokens.cardElevation
         ) {
-            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            NavItem(AppRoutes.HOME, "خانه", mdiIcon("home"), mdiIcon("home"), selectedRoute, onNavigate)
+            NavItem(AppRoutes.REVIEW, "مرور", mdiIcon("history"), mdiIcon("history"), selectedRoute, onNavigate)
+            NavItem(AppRoutes.LIBRARY, "واژگان", mdiIcon("book-open-page-variant"), mdiIcon("book-open-page-variant"), selectedRoute, onNavigate)
+            NavItem(AppRoutes.PROGRESS, "آمار", mdiIcon("chart-bar"), mdiIcon("chart-bar"), selectedRoute, onNavigate)
+            NavItem(AppRoutes.SETTINGS, "تنظیمات", mdiIcon("cog-outline"), mdiIcon("cog-outline"), selectedRoute, onNavigate)
         }
     }
 }
