@@ -1,16 +1,13 @@
 package com.flashlearn.app.ui.addword
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.FileOpen
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,7 +68,7 @@ private fun BulkImportEditor(
     ) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface) }
+                IconButton(onClick = onBack) { Icon(mdiIcon("arrow-left"), "بازگشت", tint = tokens.onSurface) }
                 Text("لغات گروهی", style = MaterialTheme.typography.headlineMedium, color = tokens.onSurface, textAlign = TextAlign.End)
             }
         }
@@ -159,7 +156,7 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
                 if (!state.done) Text("قابل ورود: $validCount  •  ناقص: ${results.size - validCount}", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 else Text("نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص  •  ${state.needsReviewCount} نیازمند بررسی  •  ${state.failedCount} خطادار", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 Button(onClick = onImport, enabled = !state.isImporting && !state.isPreviewing && !state.done && !duplicateOnly, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
-                    Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
+                    Icon(mdiIcon("upload"), null); Spacer(Modifier.width(tokens.compactGap)); Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
                 }
                 state.error?.let { ErrorText(it) }
             }
