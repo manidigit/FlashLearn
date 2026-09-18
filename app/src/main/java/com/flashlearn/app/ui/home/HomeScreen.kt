@@ -1,12 +1,11 @@
 package com.flashlearn.app.ui.home
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -92,7 +91,7 @@ fun HomeScreen(
             ReviewCard("ماهانه", monthly, state.monthlyTotal) { onStartReview(ReviewType.MONTHLY) }
 
             OutlinedButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Add, null)
+                Icon(mdiIcon("plus"), null)
                 Spacer(Modifier.width(8.dp))
                 Text("افزودن واژه")
             }
@@ -134,7 +133,7 @@ private fun ReviewCard(title: String, readyCount: Int, totalCount: Int, onClick:
                 Text("آماده از $totalCount کلمه", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.width(12.dp))
-            Icon(Icons.Outlined.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
+            Icon(mdiIcon("calendar-month-outline"), null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
