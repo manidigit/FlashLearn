@@ -1,12 +1,11 @@
 package com.flashlearn.app.ui.addword
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
@@ -30,7 +29,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت") }
+            IconButton(onClick = onBack) { Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت") }
             Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -90,7 +89,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
         }
-        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه") }
+        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp), shape = MaterialTheme.shapes.medium) { Icon(mdiIcon("content-save-outline"), null); Spacer(Modifier.width(8.dp)); Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه") }
     }
 }
 
