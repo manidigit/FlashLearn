@@ -57,6 +57,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item { SummaryTiles(state) }
+                item { LearningMotivationCard(state) }
                 item { RetentionCard(state) }
                 item { WeeklyChart(state.dailyReviews) }
                 item { LearningStagesCard(state) }
@@ -119,6 +120,32 @@ private fun RetentionCard(state: ProgressUiState) {
     }
 }
 
+@Composable
+private fun LearningMotivationCard(state: ProgressUiState) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    val percentage = state.progressPercentage.coerceIn(0.0, 100.0)
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            Text("پیشرفت یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("${percentage.toInt()}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+            LinearProgressIndicator(
+                progress = { (percentage / 100f).toFloat() },
+                modifier = Modifier.fillMaxWidth().height(9.dp).clip(MaterialTheme.shapes.extraSmall),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surface
+            )
+            Text("امتیاز بر اساس مرحله فعلی یادگیری هر واژه محاسبه می‌شود.", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text("بدون مرور ۰٪ • مرورشده ۱۵٪ • روزانه ۳۵٪ • هفتگی ۶۰٪ • ماهانه ۸۰٪ • یادگرفته ۱۰۰٪", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
 @Composable
 private fun WeeklyChart(daily: List<DailyReviewStat>) {
     val tokens = LocalFlashLearnThemeTokens.current

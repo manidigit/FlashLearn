@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.ReviewType
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -62,6 +63,13 @@ fun HomeScreen(
                     Text(languagePair.target.flag, style = MaterialTheme.typography.titleLarge)
                 }
             }
+
+            Text(
+                "درصد پیشرفت یادگیری: ${state.progressPercentage.roundToInt()}٪",
+                style = MaterialTheme.typography.bodyMedium,
+                color = tokens.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -3,6 +3,7 @@ package com.flashlearn.app.ui.progress
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.progress.CalculateProgressUseCase
+import com.flashlearn.domain.progress.CalculateProgressPercentage
 import com.flashlearn.domain.statistics.CalculateStatisticsUseCase
 import com.flashlearn.domain.statistics.CalculateStreakUseCase
 import com.flashlearn.domain.statistics.StatisticsSnapshot
@@ -42,12 +43,14 @@ data class ProgressUiState(
     val todayReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
     val weekReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
     val monthReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
+    val progressPercentage: Double = 0.0,
     val error: String? = null
 )
 
 @HiltViewModel
 class ProgressViewModel @Inject constructor(
     private val calculateProgress: CalculateProgressUseCase,
+    private val calculateProgressPercentage: CalculateProgressPercentage,
     private val calculateStatistics: CalculateStatisticsUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val getProgressSummary: com.flashlearn.domain.usecase.GetProgressSummaryUseCase,
@@ -68,6 +71,7 @@ class ProgressViewModel @Inject constructor(
             runCatching {
                 val stats = calculateStatistics()
                 val progress = calculateProgress(now)
+                val progressPercentage = calculateProgressPercentage()
                 val summary = getProgressSummary(now)
                 val history = historyRepository.getAll()
                 val streak = calculateStreak.calculate(history, now, zoneId)
@@ -107,7 +111,7 @@ class ProgressViewModel @Inject constructor(
                     DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                 }
                 ProgressPayload(
-                    progress, summary, stats, streak, achievements, daily,
+                    progress, progressPercentage, summary, stats, streak, achievements, daily,
                     ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
                     ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
                     ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
@@ -117,6 +121,7 @@ class ProgressViewModel @Inject constructor(
                     _state.value = ProgressUiState(
                         loading = false,
                         progress = payload.progress,
+                        progressPercentage = payload.progressPercentage,
                         summary = payload.summary,
                         statistics = payload.stats,
                         streak = payload.streak,
@@ -137,6 +142,7 @@ class ProgressViewModel @Inject constructor(
 
 private data class ProgressPayload(
     val progress: com.flashlearn.domain.progress.ProgressSnapshot,
+    val progressPercentage: Double,
     val summary: ProgressSummary,
     val stats: StatisticsSnapshot,
     val streak: StreakSnapshot,
