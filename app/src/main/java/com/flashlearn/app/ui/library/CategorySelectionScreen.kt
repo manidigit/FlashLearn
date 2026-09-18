@@ -37,7 +37,7 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(54.dp), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = MaterialTheme.colorScheme.primary) }
-            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(54.dp), shape = MaterialTheme.shapes.large) { Text("اعمال ✓") }
+            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(54.dp), shape = MaterialTheme.shapes.large) { Icon(mdiIcon("check"), contentDescription = null); Spacer(Modifier.width(8.dp)); Text("اعمال") }
         }
     }
 }
