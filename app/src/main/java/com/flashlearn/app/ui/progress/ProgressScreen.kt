@@ -36,7 +36,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.headlineMedium) }
+            IconButton(onClick = onBack) { Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت") }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("آمار و گزارش", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -276,7 +276,7 @@ private fun AchievementsCard(state: ProgressUiState) {
                 Text(fa(unlocked), color = tokens.warning, fontWeight = FontWeight.Bold)
             }
             state.achievements.forEach { (definition, achievement) ->
-                Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}", color = if (achievement.unlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically) { Icon(mdiIcon(if (achievement.unlocked) "check-circle-outline" else "circle-outline"), contentDescription = null, tint = if (achievement.unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.width(8.dp)); Text(definition.title, color = if (achievement.unlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }
