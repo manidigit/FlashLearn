@@ -35,14 +35,19 @@ class ProgressUseCaseTest {
     }
     private fun concept(id: UUID) = Concept(id, EntryType.WORD, null, false, true, now, now)
     private fun state(id: UUID, stage: Stage, failed: Boolean = false) = LearningState(UUID.randomUUID(), id, stage, null, 0, failed, 0, 0, null)
-    private fun difficulty(id: UUID, veryHard: Boolean) = DifficultyState(UUID.randomUUID(), id, VocabularyDifficulty.EASY, 0, 0, veryHard)
+    private fun difficulty(id: UUID, current: VocabularyDifficulty) = DifficultyState(UUID.randomUUID(), id, current, 0, 0, current == VocabularyDifficulty.VERY_HARD)
 
     @Test
-    fun progress_counts_each_stage_and_flags_from_active_concepts_only() = runBlocking {
+    fun progress_counts_each_stage_and_current_difficulty_from_active_concepts_only() = runBlocking {
         val daily = UUID.randomUUID(); val weekly = UUID.randomUUID(); val monthly = UUID.randomUUID(); val learned = UUID.randomUUID()
         val concepts = Concepts(listOf(concept(daily), concept(weekly), concept(monthly), concept(learned)))
         val learning = Learning(listOf(state(daily, Stage.DAILY, true), state(weekly, Stage.WEEKLY), state(monthly, Stage.MONTHLY), state(learned, Stage.LEARNED, true)))
-        val difficulty = Difficulty(listOf(difficulty(daily, false), difficulty(weekly, true), difficulty(monthly, false), difficulty(learned, true)))
+        val difficulty = Difficulty(listOf(
+            difficulty(daily, VocabularyDifficulty.EASY),
+            difficulty(weekly, VocabularyDifficulty.VERY_HARD),
+            difficulty(monthly, VocabularyDifficulty.HARD),
+            difficulty(learned, VocabularyDifficulty.MEDIUM)
+        ))
         val result = CalculateProgressUseCase(concepts, learning, difficulty)(now)
         assertEquals(4, result.totalConcepts)
         assertEquals(1, result.dailyConcepts)
@@ -50,6 +55,9 @@ class ProgressUseCaseTest {
         assertEquals(1, result.monthlyConcepts)
         assertEquals(1, result.learnedConcepts)
         assertEquals(2, result.pathFailureConcepts)
-        assertEquals(2, result.veryHardConcepts)
+        assertEquals(1, result.easyConcepts)
+        assertEquals(1, result.mediumConcepts)
+        assertEquals(1, result.hardConcepts)
+        assertEquals(1, result.veryHardConcepts)
     }
 }
