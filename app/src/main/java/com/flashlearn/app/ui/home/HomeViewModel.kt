@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.ProgressSummary
 import com.flashlearn.domain.model.Stage
+import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.LearningStateRepository
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.statistics.BasicStatistics
@@ -39,7 +40,8 @@ class HomeViewModel @Inject constructor(
     private val ensureStarterData: EnsureStarterDataUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
-    private val learningStateRepository: LearningStateRepository
+    private val learningStateRepository: LearningStateRepository,
+    private val conceptRepository: ConceptRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -60,9 +62,10 @@ class HomeViewModel @Inject constructor(
                 val streak = calculateStreak.calculate(
                     historyRepository.getAll(), now, ZoneId.systemDefault()
                 )
-                val dailyTotal = learningStateRepository.getAllByStage(Stage.DAILY).size
-                val weeklyTotal = learningStateRepository.getAllByStage(Stage.WEEKLY).size
-                val monthlyTotal = learningStateRepository.getAllByStage(Stage.MONTHLY).size
+                val activeConceptIds = conceptRepository.getAllActive().map { it.id }.toSet()
+                val dailyTotal = learningStateRepository.getAllByStage(Stage.DAILY).count { it.conceptId in activeConceptIds }
+                val weeklyTotal = learningStateRepository.getAllByStage(Stage.WEEKLY).count { it.conceptId in activeConceptIds }
+                val monthlyTotal = learningStateRepository.getAllByStage(Stage.MONTHLY).count { it.conceptId in activeConceptIds }
                 HomeSnapshot(summary, basicStats, streak, dailyTotal, weeklyTotal, monthlyTotal)
             }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
