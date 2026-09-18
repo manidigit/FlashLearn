@@ -69,7 +69,7 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
 fun ScreenHeader(title: String, onBack: (() -> Unit)? = null, trailing: @Composable (() -> Unit)? = null) {
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(14f)), verticalAlignment = Alignment.CenterVertically) {
-        if (onBack != null) IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } else Spacer(Modifier.width(tokens.dp(48f)))
+        if (onBack != null) IconButton(onClick = onBack) { Icon(mdiIcon("arrow-left"), contentDescription = "بازگشت") } else Spacer(Modifier.width(tokens.dp(48f)))
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
         trailing?.invoke() ?: Spacer(Modifier.width(tokens.dp(48f)))
     }
@@ -81,7 +81,7 @@ fun PurpleHeroCard(title: String, value: String, subtitle: String) {
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(tokens.cardColor), elevation = CardDefaults.cardElevation(tokens.cardElevation)) {
         Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(tokens.gradientStart, tokens.gradientEnd)))) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(22f), vertical = tokens.dp(18f)), verticalAlignment = Alignment.CenterVertically) {
-                Text("🔥", style = MaterialTheme.typography.displaySmall)
+                Icon(mdiIcon("fire"), contentDescription = null, modifier = Modifier.size(32.dp))
                 Spacer(Modifier.width(tokens.contentGap))
                 Column(Modifier.weight(1f)) {
                     Text(title, color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleMedium)
