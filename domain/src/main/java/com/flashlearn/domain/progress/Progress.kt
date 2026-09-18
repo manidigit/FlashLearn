@@ -15,6 +15,9 @@ data class ProgressSnapshot(
     val monthlyConcepts: Int,
     val learnedConcepts: Int,
     val pathFailureConcepts: Int,
+    val easyConcepts: Int,
+    val mediumConcepts: Int,
+    val hardConcepts: Int,
     val veryHardConcepts: Int
 )
 
@@ -35,7 +38,10 @@ class CalculateProgressUseCase @Inject constructor(
             monthlyConcepts = concepts.count { learningById[it.id]?.stage == Stage.MONTHLY },
             learnedConcepts = concepts.count { learningById[it.id]?.stage == Stage.LEARNED },
             pathFailureConcepts = concepts.count { learningById[it.id]?.hasPathFailure == true },
-            veryHardConcepts = concepts.count { difficultyById[it.id]?.hasReachedVeryHard == true }
+            easyConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.EASY },
+            mediumConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.MEDIUM },
+            hardConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.HARD },
+            veryHardConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.VERY_HARD }
         )
     }
 }
