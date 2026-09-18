@@ -1,5 +1,7 @@
 package com.flashlearn.app.ui.about
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
