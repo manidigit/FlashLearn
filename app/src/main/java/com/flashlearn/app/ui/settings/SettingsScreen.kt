@@ -111,7 +111,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.compactGap))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(8f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(mdiIcon("minus"), "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(mdiIcon("plus"), "زیاد کردن") } } }
         Spacer(Modifier.height(tokens.sectionGap)); Section("داده‌ها"); SettingsRow(mdiIcon("database-outline"), "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onBackup)
-        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(mdiIcon("information-outline"), "درباره برنامه", "نسخه 5.88 • تاریخچه و به‌روزرسانی‌ها", onAbout)
+        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(mdiIcon("information-outline"), "درباره برنامه", "نسخه ${BuildConfig.VERSION_NAME} • تاریخچه و به‌روزرسانی‌ها", onAbout)
     }
 }
 
