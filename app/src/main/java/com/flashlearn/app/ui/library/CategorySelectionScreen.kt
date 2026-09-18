@@ -1,10 +1,10 @@
 package com.flashlearn.app.ui.library
 
+import com.flashlearn.app.ui.icons.mdiIcon
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
@@ -24,7 +24,7 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
     val allSelected = selected.isEmpty()
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp)) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) { Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) { Icon(mdiIcon("arrow-left"), "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) { Text("دسته‌بندی‌ها", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)); Text(if (allSelected) "همه دسته‌ها" else "${toFaDigits(selected.size)} دسته انتخاب شده", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) }
         }
         Spacer(Modifier.height(12.dp))
@@ -55,34 +55,35 @@ private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onCli
     }
 }
 
+@Composable
 private fun categoryIcon(title: String) = when (title.trim().lowercase()) {
-    "همه دسته‌ها" -> Icons.Outlined.Folder
-    "عمومی" -> Icons.Outlined.Book
-    "روزمره", "خانه و زندگی", "زندگی روزمره" -> Icons.Outlined.Home
-    "کار و کسب", "کسب‌وکار", "کار" -> Icons.Outlined.BusinessCenter
-    "سفر", "گردشگری", "حمل و نقل", "حمل‌ونقل" -> if (title.contains("سفر")) Icons.Outlined.Flight else Icons.Outlined.DirectionsCar
-    "آکادمیک", "تحصیل", "دانشگاه", "آموزش" -> Icons.Outlined.School
-    "فناوری", "تکنولوژی", "کامپیوتر", "اینترنت" -> Icons.Outlined.Memory
-    "سلامت", "پزشکی", "بدن" -> Icons.Outlined.LocalHospital
-    "غذا و آشپزی", "غذا", "آشپزی", "رستوران" -> Icons.Outlined.Restaurant
-    "خرید", "فروشگاه", "بازار" -> Icons.Outlined.ShoppingCart
-    "ورزش", "ورزش و تناسب اندام" -> Icons.Outlined.SportsSoccer
-    "هنر", "هنر و فرهنگ", "فرهنگ" -> Icons.Outlined.Palette
-    "فیلم", "سینما", "رسانه" -> Icons.Outlined.Movie
-    "طبیعت", "محیط زیست" -> Icons.Outlined.Nature
-    "زمان", "تاریخ" -> Icons.Outlined.AccessTime
-    "احساسات", "خانواده", "روابط" -> Icons.Outlined.FavoriteBorder
+    "همه دسته‌ها" -> mdiIcon("folder-outline")
+    "عمومی" -> mdiIcon("book")
+    "روزمره", "خانه و زندگی", "زندگی روزمره" -> mdiIcon("home")
+    "کار و کسب", "کسب‌وکار", "کار" -> mdiIcon("briefcase-outline")
+    "سفر", "گردشگری", "حمل و نقل", "حمل‌ونقل" -> if (title.contains("سفر")) mdiIcon("airplane") else mdiIcon("car-outline")
+    "آکادمیک", "تحصیل", "دانشگاه", "آموزش" -> mdiIcon("school-outline")
+    "فناوری", "تکنولوژی", "کامپیوتر", "اینترنت" -> mdiIcon("memory")
+    "سلامت", "پزشکی", "بدن" -> mdiIcon("hospital-box-outline")
+    "غذا و آشپزی", "غذا", "آشپزی", "رستوران" -> mdiIcon("silverware-fork-knife")
+    "خرید", "فروشگاه", "بازار" -> mdiIcon("cart-outline")
+    "ورزش", "ورزش و تناسب اندام" -> mdiIcon("soccer")
+    "هنر", "هنر و فرهنگ", "فرهنگ" -> mdiIcon("palette-outline")
+    "فیلم", "سینما", "رسانه" -> mdiIcon("movie-outline")
+    "طبیعت", "محیط زیست" -> mdiIcon("leaf")
+    "زمان", "تاریخ" -> mdiIcon("clock-outline")
+    "احساسات", "خانواده", "روابط" -> mdiIcon("heart-outline")
     else -> when {
-        title.contains("سفر") || title.contains("گردش") -> Icons.Outlined.Flight
-        title.contains("سلامت") || title.contains("پزشک") -> Icons.Outlined.LocalHospital
-        title.contains("غذا") || title.contains("آشپز") -> Icons.Outlined.Restaurant
-        title.contains("خرید") -> Icons.Outlined.ShoppingCart
-        title.contains("ورزش") -> Icons.Outlined.SportsSoccer
-        title.contains("هنر") || title.contains("فرهنگ") -> Icons.Outlined.Palette
-        title.contains("فناوری") || title.contains("تکنولوژی") -> Icons.Outlined.Memory
-        title.contains("کار") -> Icons.Outlined.BusinessCenter
-        title.contains("آموز") || title.contains("دانش") -> Icons.Outlined.School
-        else -> Icons.Outlined.Folder
+        title.contains("سفر") || title.contains("گردش") -> mdiIcon("airplane")
+        title.contains("سلامت") || title.contains("پزشک") -> mdiIcon("hospital-box-outline")
+        title.contains("غذا") || title.contains("آشپز") -> mdiIcon("silverware-fork-knife")
+        title.contains("خرید") -> mdiIcon("cart-outline")
+        title.contains("ورزش") -> mdiIcon("soccer")
+        title.contains("هنر") || title.contains("فرهنگ") -> mdiIcon("palette-outline")
+        title.contains("فناوری") || title.contains("تکنولوژی") -> mdiIcon("memory")
+        title.contains("کار") -> mdiIcon("briefcase-outline")
+        title.contains("آموز") || title.contains("دانش") -> mdiIcon("school-outline")
+        else -> mdiIcon("folder-outline")
     }
 }
 
