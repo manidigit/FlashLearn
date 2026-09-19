@@ -128,6 +128,45 @@ class QuizDifficultySelectionTest {
     }
 
     @Test
+    fun quizDifficultySelectsDifferentConfusabilityBandsWhenBankHasVariety() {
+        val category = UUID.randomUUID()
+        val target = concept(categoryId = category, entryType = EntryType.WORD)
+        val easy1 = concept()
+        val easy2 = concept()
+        val easy3 = concept()
+        val medium1 = concept(categoryId = category, entryType = EntryType.PHRASE)
+        val medium2 = concept(categoryId = category, entryType = EntryType.PHRASE)
+        val medium3 = concept(categoryId = category, entryType = EntryType.PHRASE)
+        val hard1 = concept(categoryId = category, entryType = EntryType.WORD)
+        val hard2 = concept(categoryId = category, entryType = EntryType.WORD)
+        val hard3 = concept(categoryId = category, entryType = EntryType.WORD)
+        val concepts = listOf(target, easy1, easy2, easy3, medium1, medium2, medium3, hard1, hard2, hard3)
+        val contents = listOf(
+            content(target.id, "es", "casa"), content(target.id, "fa", "خانه"),
+            content(easy1.id, "es", "perro"), content(easy1.id, "fa", "سگ"),
+            content(easy2.id, "es", "libro"), content(easy2.id, "fa", "کتاب"),
+            content(easy3.id, "es", "mesa"), content(easy3.id, "fa", "میز"),
+            content(medium1.id, "es", "casero"), content(medium1.id, "fa", "خانگی"),
+            content(medium2.id, "es", "casita"), content(medium2.id, "fa", "خانه کوچک"),
+            content(medium3.id, "es", "casas"), content(medium3.id, "fa", "خانه‌ای"),
+            content(hard1.id, "es", "casitas"), content(hard1.id, "fa", "خانه‌ها"),
+            content(hard2.id, "es", "casero"), content(hard2.id, "fa", "خانه‌دار"),
+            content(hard3.id, "es", "casas"), content(hard3.id, "fa", "خانه‌های")
+        )
+        val states = concepts.associate { it.id to state(it.id, VocabularyDifficulty.MEDIUM) }
+        val easy = generate(target, concepts, contents, states, QuizDifficulty.EASY)
+        val medium = generate(target, concepts, contents, states, QuizDifficulty.MEDIUM)
+        val hard = generate(target, concepts, contents, states, QuizDifficulty.HARD)
+        val easyWrong = easy.options.filterNot { it == easy.correctAnswerText }.toSet()
+        val mediumWrong = medium.options.filterNot { it == medium.correctAnswerText }.toSet()
+        val hardWrong = hard.options.filterNot { it == hard.correctAnswerText }.toSet()
+        assertTrue(easyWrong.isDisjoint(mediumWrong))
+        assertTrue(mediumWrong.isDisjoint(hardWrong))
+        assertTrue(easyWrong.all { it in setOf("سگ", "کتاب", "میز") })
+        assertTrue(hardWrong.all { it in setOf("خانه‌ها", "خانه‌دار", "خانه‌های") })
+    }
+
+    @Test
     fun quizDifficultyDoesNotChangeVocabularyDifficultyPoolRules() {
         val target = concept()
         val same1 = concept()

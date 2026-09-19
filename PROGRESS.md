@@ -1,5 +1,19 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.98 — Quiz Generation Hardening
+- Advanced application identity to 5.98 / versionCode 98.
+- GenerateQuizQuestion now maps QuizDifficulty to explicit distractor bands instead of only changing score weights.
+- EASY/MEDIUM/HARD now select least-confusable / middle-band / most-confusable valid distractors respectively when the candidate bank supports the requested level.
+- Vocabulary Difficulty remains a separate candidate-pool constraint.
+- Added final pre-display validation for four unique normalized options and exactly one correct option.
+- Added canonical-key duplicate protection and refresh of the quiz bank once per review session.
+- Added regression coverage for observable separation of quiz difficulty levels.
+
+### Verification gate
+- GitHub Actions is the authoritative build/test gate for v5.98.
+- Runtime version gate is aligned to 5.98 / 98.
+- Final release status is not marked green until the post-push build/unit/instrumentation run completes successfully.
+
 ## v5.97 — Quiz Difficulty Distractor Selection Overhaul
 - Advanced the application identity to 5.97 / versionCode 97.
 - Reworked `GenerateQuizQuestion` so `QuizDifficulty` (`EASY`, `MEDIUM`, `HARD`) is a real distractor-selection signal instead of a proxy for `VocabularyDifficulty`.

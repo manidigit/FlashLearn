@@ -12,6 +12,7 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -128,6 +129,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
         } ?: return QuizQuestionResult.FlashcardFallback
         val normalizedCorrect = normalizeQuizText(correct.text)
+        val normalizedCorrectCanonical = normalizeQuizText(correct.canonicalKey)
 
         // Vocabulary Difficulty controls the documented candidate pool. Quiz Difficulty
         // is independent and controls how close/plausible the wrong answers are.
@@ -185,22 +187,24 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                 }
         }
             .filter { normalizeQuizText(it.content.text) != normalizedCorrect }
+            .filter {
+                normalizedCorrectCanonical.isBlank() ||
+                    normalizeQuizText(it.content.canonicalKey) != normalizedCorrectCanonical
+            }
             .distinctBy { normalizeQuizText(it.content.text) }
 
         if (candidates.size < 3) return QuizQuestionResult.FlashcardFallback
 
-        fun quizScore(candidate: DistractorCandidate): Double {
+        fun confusabilityScore(candidate: DistractorCandidate): Double {
             val category = if (candidate.categoryMatch) 1.0 else 0.0
             val entryType = if (candidate.entryTypeMatch) 1.0 else 0.0
-            val lexical = candidate.lexicalSimilarity
-            return when (difficulty) {
-                QuizDifficulty.EASY ->
-                    (1.0 - lexical) * 0.65 + (1.0 - category) * 0.25 + (1.0 - entryType) * 0.10
-                QuizDifficulty.MEDIUM ->
-                    lexical * 0.40 + category * 0.40 + entryType * 0.20
-                QuizDifficulty.HARD ->
-                    lexical * 0.45 + category * 0.35 + entryType * 0.20
-            }
+            // Higher means "more likely to be confused with the correct answer".
+            // This is deliberately local/deterministic: no network or external model.
+            return (
+                candidate.lexicalSimilarity * 0.55 +
+                    category * 0.25 +
+                    entryType * 0.20
+                ).coerceIn(0.0, 1.0)
         }
 
         // Exact candidate-pool order from the specification:
@@ -214,18 +218,45 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             else -> candidates
         }
 
-        // Keep the three highest-quality distractors. Answer positions are shuffled
-        // below, but a low-quality distractor is never introduced merely by chance.
-        val wrongOptions = selectedPool
-            .sortedByDescending { quizScore(it) }
-            .take(3)
-            .map { it.content.text }
+        /*
+         * Quiz difficulty is now an actual selection band, not just a weight tweak:
+         *   EASY   -> least confusable valid distractors
+         *   MEDIUM -> candidates nearest the middle of the confusability range
+         *   HARD   -> most confusable valid distractors
+         *
+         * This makes the selected level observable when the bank contains enough
+         * valid candidates, while the hard validity rules still take precedence.
+         */
+        val rankedPool = when (difficulty) {
+            QuizDifficulty.EASY -> selectedPool.sortedWith(
+                compareBy<DistractorCandidate> { confusabilityScore(it) }
+                    .thenBy { normalizeQuizText(it.content.text) }
+            )
+            QuizDifficulty.MEDIUM -> selectedPool.sortedWith(
+                compareBy<DistractorCandidate> { abs(confusabilityScore(it) - 0.50) }
+                    .thenByDescending { confusabilityScore(it) }
+                    .thenBy { normalizeQuizText(it.content.text) }
+            )
+            QuizDifficulty.HARD -> selectedPool.sortedWith(
+                compareByDescending<DistractorCandidate> { confusabilityScore(it) }
+                    .thenBy { normalizeQuizText(it.content.text) }
+            )
+        }
+
+        val wrongOptions = rankedPool.take(3).map { it.content.text }
         if (wrongOptions.size < 3) return QuizQuestionResult.FlashcardFallback
+
+        val options = (listOf(correct.text) + wrongOptions).shuffled()
+        if (
+            options.size != 4 ||
+            options.map(::normalizeQuizText).distinct().size != 4 ||
+            options.count { normalizeQuizText(it) == normalizedCorrect } != 1
+        ) return QuizQuestionResult.FlashcardFallback
 
         return QuizQuestionResult.QuizQuestion(
             promptText = prompt.text,
             correctAnswerText = correct.text,
-            options = (listOf(correct.text) + wrongOptions).shuffled()
+            options = options
         )
     }
 }

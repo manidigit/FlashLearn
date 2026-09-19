@@ -1,3 +1,11 @@
+v5.98 — Quiz Generation Hardening
+- Advanced runtime identity to 5.98/98.
+- Quiz difficulty now selects explicit confusability bands: EASY least-confusable, MEDIUM middle-band, HARD most-confusable valid distractors.
+- Vocabulary Difficulty remains independent and keeps the documented same → adjacent → whole-bank candidate order.
+- Added final duplicate/ambiguity validation before UI display, canonical-key duplicate filtering, and one quiz-bank refresh per review session.
+- Added regression coverage for distinct EASY/MEDIUM/HARD distractor bands when the candidate bank contains enough variety.
+- CI/runtime version gates and project logs are aligned to 5.98/98.
+
 v5.52 Progress/Statistics + E2E completed: Progress aggregation, ReviewHistory statistics, calendar-day streaks, Progress UI integration, and the end-to-end Add Word → Review → Progress/Statistics → soft-delete acceptance path were audited and regression-covered. Runtime identity is 5.52/52; Room schema remains v5.
 
 v5.50 UI/Navigation Audit completed: navigation back handling, RTL manifest support, compact-screen scrolling, UI language consistency, and navigation regression tests.

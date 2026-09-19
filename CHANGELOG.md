@@ -1,5 +1,14 @@
 # FlashLearn Changelog
 
+## v5.98 — Quiz Generation Hardening
+- Advanced application identity to 5.98 / versionCode 98.
+- Reworked GenerateQuizQuestion difficulty selection into explicit confusability bands: EASY selects the least-confusable valid distractors, MEDIUM selects candidates nearest the middle band, and HARD selects the most-confusable valid distractors.
+- Kept Vocabulary Difficulty separate from Quiz Difficulty and preserved the documented candidate-pool order: same difficulty → adjacent difficulty → whole bank.
+- Added a second validation barrier before a quiz card reaches the UI: exactly four unique normalized options and exactly one normalized match for the correct answer; invalid questions fall back instead of rendering duplicate/ambiguous options.
+- Added canonical-key duplicate protection and a per-review-session quiz-bank refresh so newly added/edited vocabulary is available to distractor generation.
+- Added regression coverage proving the three quiz levels produce different distractor bands when the candidate bank contains enough variety.
+- Updated runtime version gate, CI version expectations, and project progress/changelog records.
+
 ## v5.97 — Quiz Difficulty Distractor Selection Overhaul
 - Advanced the application identity to 5.97 / versionCode 97.
 - Separated `QuizDifficulty` from `VocabularyDifficulty`: quiz difficulty now controls how close/plausible distractors are, while vocabulary difficulty only controls the documented candidate-pool priority.

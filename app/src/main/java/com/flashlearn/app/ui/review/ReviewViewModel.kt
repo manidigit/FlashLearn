@@ -208,6 +208,11 @@ class ReviewViewModel @Inject constructor(
                 val validCandidates = candidates.asSequence().filter { candidate -> val cc = byConcept[candidate.concept.id].orEmpty(); cc.any { it.languageCode == pair.source.code } && cc.any { it.languageCode == pair.target.code } }.distinctBy { it.concept.id }.take(maxCards).toList()
                 sessionContents = byConcept
                 sessionDifficulties = validCandidates.associate { it.concept.id to it.difficulty }
+                if (_state.value.selectedMode == ReviewMode.QUIZ) {
+                    // Refresh once per review session so newly added/edited vocabulary is
+                    // available to the distractor generator without refreshing per card.
+                    generateQuizQuestion.refreshBank()
+                }
                 queue = validCandidates.map { it.concept.id }.distinct(); index = 0
                 if (queue.isEmpty()) {
                     sessionId = null; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); _state.value = _state.value.copy(isLoading = false, isFinished = true, total = 0, remaining = 0)
