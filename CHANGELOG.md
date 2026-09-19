@@ -8,6 +8,7 @@
 - Added canonical-key duplicate protection and a per-review-session quiz-bank refresh so newly added/edited vocabulary is available to distractor generation.
 - Added regression coverage proving the three quiz levels produce different distractor bands when the candidate bank contains enough variety.
 - Updated runtime version gate, CI version expectations, and project progress/changelog records.
+- Hardened the instrumentation emulator startup with a bounded ADB wait so a missing/stalled emulator cannot leave the CI job hanging indefinitely.
 
 ## v5.97 — Quiz Difficulty Distractor Selection Overhaul
 - Advanced the application identity to 5.97 / versionCode 97.

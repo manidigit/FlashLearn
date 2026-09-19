@@ -13,6 +13,7 @@
 - GitHub Actions is the authoritative build/test gate for v5.98.
 - Runtime version gate is aligned to 5.98 / 98.
 - Final release status is not marked green until the post-push build/unit/instrumentation run completes successfully.
+- Instrumentation emulator startup now has an explicit bounded ADB wait and step timeout to avoid indefinite CI hangs.
 
 ## v5.97 — Quiz Difficulty Distractor Selection Overhaul
 - Advanced the application identity to 5.97 / versionCode 97.
