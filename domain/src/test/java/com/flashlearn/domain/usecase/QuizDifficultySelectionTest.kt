@@ -160,8 +160,8 @@ class QuizDifficultySelectionTest {
         val easyWrong = easy.options.filterNot { it == easy.correctAnswerText }.toSet()
         val mediumWrong = medium.options.filterNot { it == medium.correctAnswerText }.toSet()
         val hardWrong = hard.options.filterNot { it == hard.correctAnswerText }.toSet()
-        assertTrue(easyWrong.isDisjoint(mediumWrong))
-        assertTrue(mediumWrong.isDisjoint(hardWrong))
+        assertTrue(easyWrong.intersect(mediumWrong).isEmpty())
+        assertTrue(mediumWrong.intersect(hardWrong).isEmpty())
         assertTrue(easyWrong.all { it in setOf("سگ", "کتاب", "میز") })
         assertTrue(hardWrong.all { it in setOf("خانه‌ها", "خانه‌دار", "خانه‌های") })
     }
