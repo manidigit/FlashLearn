@@ -30,6 +30,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -284,6 +285,12 @@ class ReviewViewModel @Inject constructor(
                     if (generation != sessionGeneration || sessionId != session) return@onSuccess
                     val answered = _state.value.answered + 1; val correct = _state.value.correct + if (isCorrect) 1 else 0; val wrong = _state.value.wrong + if (isCorrect) 0 else 1
                     _state.value = _state.value.copy(isSubmitting = false, answerFeedback = ReviewAnswerFeedbackUiState(isCorrect, stageLabel(result.learningState.stage), difficultyLabel(result.difficultyState.current), if (!isCorrect && currentState.selectedMode == ReviewMode.QUIZ) currentState.quizCard?.correctAnswerText else null, answered, correct, wrong), answered = answered, correct = correct, wrong = wrong)
+                    if (currentState.selectedMode == ReviewMode.QUIZ) {
+                        viewModelScope.launch {
+                            delay(3_000)
+                            if (generation == sessionGeneration && sessionId == session) nextCard()
+                        }
+                    }
                 }
                 .onFailure { if (generation == sessionGeneration && sessionId == session) _state.value = _state.value.copy(isSubmitting = false, error = it.message ?: "خطا در ثبت پاسخ") }
         }
