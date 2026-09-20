@@ -27,6 +27,37 @@ class QuizUseCasesTest {
         assertTrue(r is QuizQuestionResult.QuizQuestion); r as QuizQuestionResult.QuizQuestion
         assertEquals(4, r.options.size); assertEquals(4, r.options.distinct().size); assertTrue(r.correctAnswerText in r.options); assertEquals("s0", r.promptText)
     }
+    @Test fun quizOptionsShowAllTargetTranslationsForEachConcept() = runBlocking {
+        val target = concept()
+        val d1 = concept()
+        val d2 = concept()
+        val d3 = concept()
+        val concepts = listOf(target, d1, d2, d3)
+        val all = listOf(
+            content(target.id, "es", "ganar"),
+            Content(UUID.randomUUID(), target.id, "fa", "به‌دست آوردن", "به‌دست آوردن", translationIndex = 0),
+            Content(UUID.randomUUID(), target.id, "fa", "برنده شدن", "برنده شدن", translationIndex = 1),
+            content(d1.id, "es", "uno"),
+            Content(UUID.randomUUID(), d1.id, "fa", "یک", "یک", translationIndex = 0),
+            Content(UUID.randomUUID(), d1.id, "fa", "اول", "اول", translationIndex = 1),
+            content(d2.id, "es", "dos"), content(d2.id, "fa", "دو"),
+            content(d3.id, "es", "tres"), content(d3.id, "fa", "سه")
+        )
+        val ds = concepts.associate { it.id to DifficultyState(UUID.randomUUID(), it.id, VocabularyDifficulty.MEDIUM, 0, 0, false) }
+
+        val result = GenerateQuizQuestionUseCase(CoR(all), CR(concepts), DR(ds))(
+            target,
+            QuizLanguagePair("es", "fa"),
+            ds.getValue(target.id)
+        ) as QuizQuestionResult.QuizQuestion
+
+        assertEquals("به‌دست آوردن / برنده شدن", result.correctAnswerText)
+        assertTrue(result.correctAnswerText in result.options)
+        assertTrue("یک / اول" in result.options)
+        assertFalse("به‌دست آوردن" in result.options)
+        assertFalse("برنده شدن" in result.options)
+    }
+
     @Test fun doesNotUseSameConceptAsDistractorAndFallsBackWithoutThreeDistractors() = runBlocking {
         val c1=concept(); val c2=concept(); val all=listOf(content(c1.id,"es","hola"),content(c1.id,"fa","سلام"),content(c1.id,"fa","سلام2"),content(c2.id,"es","adios"),content(c2.id,"fa","خداحافظ"))
         val ds=mapOf(c1.id to DifficultyState(UUID.randomUUID(),c1.id,VocabularyDifficulty.EASY,0,0,false), c2.id to DifficultyState(UUID.randomUUID(),c2.id,VocabularyDifficulty.EASY,0,0,false))
