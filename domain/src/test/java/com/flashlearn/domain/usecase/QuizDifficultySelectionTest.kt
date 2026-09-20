@@ -48,13 +48,15 @@ class QuizDifficultySelectionTest {
         concepts: List<Concept>,
         contents: List<Content>,
         states: Map<UUID, DifficultyState>,
-        quizDifficulty: QuizDifficulty
+        quizDifficulty: QuizDifficulty,
+        excludedDistractorTexts: Set<String> = emptySet()
     ): QuizQuestionResult.QuizQuestion = runBlocking {
         val result = GenerateQuizQuestionUseCase(CoR(contents), CR(concepts), DR(states))(
             target,
             QuizLanguagePair("es", "fa"),
             states[target.id],
-            quizDifficulty
+            quizDifficulty,
+            excludedDistractorTexts
         )
         assertTrue(result is QuizQuestionResult.QuizQuestion)
         result as QuizQuestionResult.QuizQuestion
@@ -147,6 +149,37 @@ class QuizDifficultySelectionTest {
         val wrong = result.options.filterNot { it == result.correctAnswerText }.toSet()
         assertFalse(wrong.containsAll(setOf("می‌توانی اسکایپ کنی؟", "امکان تماس با اسکایپ داری؟")))
         assertEquals(3, wrong.size)
+    }
+
+
+    @Test
+    fun quizDistractorsRotateAcrossSequentialQuestions() {
+        val target = concept()
+        val d1 = concept()
+        val d2 = concept()
+        val d3 = concept()
+        val d4 = concept()
+        val d5 = concept()
+        val d6 = concept()
+        val concepts = listOf(target, d1, d2, d3, d4, d5, d6)
+        val contents = listOf(
+            content(target.id, "es", "preguntar"), content(target.id, "fa", "پرسیدن"),
+            content(d1.id, "es", "perro"), content(d1.id, "fa", "سگ"),
+            content(d2.id, "es", "gato"), content(d2.id, "fa", "گربه"),
+            content(d3.id, "es", "libro"), content(d3.id, "fa", "کتاب"),
+            content(d4.id, "es", "mesa"), content(d4.id, "fa", "میز"),
+            content(d5.id, "es", "puerta"), content(d5.id, "fa", "در"),
+            content(d6.id, "es", "coche"), content(d6.id, "fa", "ماشین")
+        )
+        val states = concepts.associate { it.id to state(it.id, VocabularyDifficulty.EASY) }
+        val first = generate(target, concepts, contents, states, QuizDifficulty.EASY)
+        val firstWrong = first.options.filterNot { it == first.correctAnswerText }.toSet()
+        val second = generate(target, concepts, contents, states, QuizDifficulty.EASY, firstWrong)
+        val secondWrong = second.options.filterNot { it == second.correctAnswerText }.toSet()
+
+        assertEquals(3, firstWrong.size)
+        assertEquals(3, secondWrong.size)
+        assertTrue(firstWrong.intersect(secondWrong).isEmpty())
     }
 
     @Test
