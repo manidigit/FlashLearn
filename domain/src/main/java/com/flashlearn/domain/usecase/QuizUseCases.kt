@@ -117,7 +117,8 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         concept: Concept,
         activeLanguagePair: QuizLanguagePair,
         difficultyState: DifficultyState?,
-        difficulty: QuizDifficulty = QuizDifficulty.MEDIUM
+        difficulty: QuizDifficulty = QuizDifficulty.MEDIUM,
+        excludedDistractorTexts: Set<String> = emptySet()
     ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
 
@@ -178,6 +179,11 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             }
         }
 
+        val normalizedExcludedDistractors = excludedDistractorTexts
+            .map(::normalizeQuizText)
+            .filter { it.isNotBlank() }
+            .toSet()
+
         val candidates = eligibleConcepts.flatMap { other ->
             contentsByConcept[other.id].orEmpty()
                 .filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
@@ -198,7 +204,15 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             }
             .distinctBy { normalizeQuizText(it.content.text) }
 
-        if (candidates.size < 3) return QuizQuestionResult.FlashcardFallback
+        // Prefer distractors that have not already appeared earlier in the same
+        // review session. If fewer than three fresh distractors exist, fall back
+        // to the complete valid pool so small vocabulary banks still produce quizzes.
+        val freshCandidates = candidates.filter {
+            normalizeQuizText(it.content.text) !in normalizedExcludedDistractors
+        }
+        val selectionCandidates = if (freshCandidates.size >= 3) freshCandidates else candidates
+
+        if (selectionCandidates.size < 3) return QuizQuestionResult.FlashcardFallback
 
         fun confusabilityScore(candidate: DistractorCandidate): Double {
             val category = if (candidate.categoryMatch) 1.0 else 0.0
@@ -214,13 +228,13 @@ class GenerateQuizQuestionUseCase @Inject constructor(
 
         // Exact candidate-pool order from the specification:
         // same Vocabulary Difficulty -> immediate adjacent level(s) -> whole bank.
-        val sameDifficultyPool = candidates.filter { it.vocabularyDifficultyDistance == 0 }
-        val adjacentPool = candidates.filter { it.vocabularyDifficultyDistance == 1 }
+        val sameDifficultyPool = selectionCandidates.filter { it.vocabularyDifficultyDistance == 0 }
+        val adjacentPool = selectionCandidates.filter { it.vocabularyDifficultyDistance == 1 }
         val selectedPool = when {
             sameDifficultyPool.size >= 3 -> sameDifficultyPool
             (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.content.text) }.size >= 3 ->
                 (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.content.text) }
-            else -> candidates
+            else -> selectionCandidates
         }
 
         /*
