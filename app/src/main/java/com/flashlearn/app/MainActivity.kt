@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            Box(Modifier.weight(1f).fillMaxWidth()) { ReviewScreen(viewModel, personalDifficulty = personalDifficulty, quizDifficulty = quizDifficulty, onFinished = onFinished) }
+            Box(Modifier.weight(1f).fillMaxWidth()) { ReviewScreen(viewModel, personalDifficulty = personalDifficulty, quizDifficulty = quizDifficulty, onFinished = { viewModel.resetAfterFinished(); onFinished() }) }
         }
     }
 }

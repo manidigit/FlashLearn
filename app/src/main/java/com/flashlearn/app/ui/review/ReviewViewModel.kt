@@ -30,7 +30,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -285,14 +284,35 @@ class ReviewViewModel @Inject constructor(
                     if (generation != sessionGeneration || sessionId != session) return@onSuccess
                     val answered = _state.value.answered + 1; val correct = _state.value.correct + if (isCorrect) 1 else 0; val wrong = _state.value.wrong + if (isCorrect) 0 else 1
                     _state.value = _state.value.copy(isSubmitting = false, answerFeedback = ReviewAnswerFeedbackUiState(isCorrect, stageLabel(result.learningState.stage), difficultyLabel(result.difficultyState.current), if (!isCorrect && currentState.selectedMode == ReviewMode.QUIZ) currentState.quizCard?.correctAnswerText else null, answered, correct, wrong), answered = answered, correct = correct, wrong = wrong)
-                    delay(2_000)
-                    if (generation == sessionGeneration && sessionId == session && _state.value.answerFeedback != null) advanceToNext(generation)
                 }
                 .onFailure { if (generation == sessionGeneration && sessionId == session) _state.value = _state.value.copy(isSubmitting = false, error = it.message ?: "خطا در ثبت پاسخ") }
         }
     }
 
     fun nextCard() { if (_state.value.isSubmitting || _state.value.answerFeedback == null || isAdvancing) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
+    fun resetAfterFinished() {
+        sessionGeneration++
+        sessionId = null
+        queue = emptyList()
+        index = 0
+        sessionContents = emptyMap()
+        sessionDifficulties = emptyMap()
+        usedQuizDistractorTexts.clear()
+        isAdvancing = false
+        _state.value = _state.value.copy(
+            isSelectingMode = true,
+            isFinished = false,
+            isLoading = false,
+            isSubmitting = false,
+            card = null,
+            quizCard = null,
+            answerFeedback = null,
+            remaining = 0,
+            total = 0,
+            error = null
+        )
+    }
+
     fun exitReview(onCompleted: () -> Unit = {}) {
         val exitGeneration = ++sessionGeneration; val activeSessionId = sessionId
         if (activeSessionId == null) { queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); onCompleted(); return }
