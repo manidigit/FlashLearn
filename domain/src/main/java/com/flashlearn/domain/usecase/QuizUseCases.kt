@@ -61,10 +61,15 @@ private fun lexicalSimilarity(a: String, b: String): Double {
     return (tokenSimilarity * 0.45 + levenshteinSimilarity(left, right) * 0.35 + ngramSimilarity(left, right) * 0.20).coerceIn(0.0, 1.0)
 }
 
-private const val MAX_DISTRACTOR_PAIR_SIMILARITY = 0.28
-
-private fun distractorPairSimilarity(a: String, b: String): Double =
-    lexicalSimilarity(a, b)
+private fun hasSharedMeaningAnchor(a: String, b: String): Boolean {
+    // A shared substantial target-language token is a much safer duplicate signal
+    // than a raw similarity threshold. Raw similarity incorrectly rejects legitimate
+    // alternatives such as «خانه‌ها» and «خانه کوچک».
+    val sharedTokens = quizTokens(a)
+        .intersect(quizTokens(b))
+        .filter { it.length >= 4 }
+    return sharedTokens.isNotEmpty() && lexicalSimilarity(a, b) >= 0.20
+}
 
 sealed interface QuizQuestionResult {
     data class QuizQuestion(val promptText: String, val correctAnswerText: String, val options: List<String>) : QuizQuestionResult {
@@ -269,7 +274,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         val wrongOptions = buildList {
             for (candidate in rankedPool) {
                 val text = candidate.content.text
-                if (all { distractorPairSimilarity(it, text) < MAX_DISTRACTOR_PAIR_SIMILARITY }) {
+                if (all { !hasSharedMeaningAnchor(it, text) }) {
                     add(text)
                 }
                 if (size == 3) break
