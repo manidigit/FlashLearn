@@ -1,10 +1,10 @@
 # FlashLearn Changelog
 
-## v5.99 — Quiz Distractor Semantic-Duplicate Guard
+## v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced application identity to 5.99 / versionCode 99.
-- Prevented two wrong answers from appearing together when their target-language phrasings are near-duplicates, even when each is individually different from the correct answer.
-- Added a regression reproducing the reported Skype case: می‌توانی اسکایپ کنی؟ and امکان تماس با اسکایپ داری؟ cannot occupy the same quiz card.
-- Preserved the existing EASY/MEDIUM/HARD selection bands, Vocabulary Difficulty pool rules, final four-option uniqueness checks, and Flashcard fallback.
+- Prevented the same three distractors from repeating across sequential quiz cards when at least three fresh valid candidates exist.
+- Replaced the overly broad MEDIUM fixed-score selection with deterministic rank bands: EASY lowest three, MEDIUM middle three, HARD highest three.
+- Preserved Vocabulary Difficulty pool rules, final four-option uniqueness checks, and Flashcard fallback.
 
 
 ## v5.98 — Quiz Generation Hardening

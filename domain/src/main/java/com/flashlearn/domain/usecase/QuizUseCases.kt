@@ -12,7 +12,6 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -59,16 +58,6 @@ private fun lexicalSimilarity(a: String, b: String): Double {
     else if (leftTokens.isEmpty() || rightTokens.isEmpty()) 0.0
     else leftTokens.intersect(rightTokens).size.toDouble() / leftTokens.union(rightTokens).size
     return (tokenSimilarity * 0.45 + levenshteinSimilarity(left, right) * 0.35 + ngramSimilarity(left, right) * 0.20).coerceIn(0.0, 1.0)
-}
-
-private fun hasSharedMeaningAnchor(a: String, b: String): Boolean {
-    // A shared substantial target-language token is a much safer duplicate signal
-    // than a raw similarity threshold. Raw similarity incorrectly rejects legitimate
-    // alternatives such as «خانه‌ها» and «خانه کوچک».
-    val sharedTokens = quizTokens(a)
-        .intersect(quizTokens(b))
-        .filter { it.length >= 4 }
-    return sharedTokens.isNotEmpty() && lexicalSimilarity(a, b) >= 0.20
 }
 
 sealed interface QuizQuestionResult {
@@ -243,43 +232,29 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         }
 
         /*
-         * Quiz difficulty is now an actual selection band, not just a weight tweak:
-         *   EASY   -> least confusable valid distractors
-         *   MEDIUM -> candidates nearest the middle of the confusability range
-         *   HARD   -> most confusable valid distractors
+         * Quiz difficulty is an actual rank band:
+         *   EASY   -> the three least-confusable candidates
+         *   MEDIUM -> the three candidates in the middle of the ranked pool
+         *   HARD   -> the three most-confusable candidates
          *
-         * This makes the selected level observable when the bank contains enough
-         * valid candidates, while the hard validity rules still take precedence.
+         * Using rank bands (rather than a fixed score target) keeps MEDIUM from
+         * accidentally selecting an unrelated low-score distractor when the bank
+         * contains only a small number of candidates.
          */
+        val ascending = selectedPool.sortedWith(
+            compareBy<DistractorCandidate> { confusabilityScore(it) }
+                .thenBy { normalizeQuizText(it.content.text) }
+        )
         val rankedPool = when (difficulty) {
-            QuizDifficulty.EASY -> selectedPool.sortedWith(
-                compareBy<DistractorCandidate> { confusabilityScore(it) }
-                    .thenBy { normalizeQuizText(it.content.text) }
-            )
-            QuizDifficulty.MEDIUM -> selectedPool.sortedWith(
-                compareBy<DistractorCandidate> { abs(confusabilityScore(it) - 0.50) }
-                    .thenByDescending { confusabilityScore(it) }
-                    .thenBy { normalizeQuizText(it.content.text) }
-            )
-            QuizDifficulty.HARD -> selectedPool.sortedWith(
-                compareByDescending<DistractorCandidate> { confusabilityScore(it) }
-                    .thenBy { normalizeQuizText(it.content.text) }
-            )
+            QuizDifficulty.EASY -> ascending.take(3)
+            QuizDifficulty.MEDIUM -> {
+                val start = ((ascending.size - 3) / 2).coerceAtLeast(0)
+                ascending.drop(start).take(3)
+            }
+            QuizDifficulty.HARD -> ascending.asReversed().take(3)
         }
 
-        // Do not allow two wrong answers that are near-duplicates of each other.
-        // This is a separate constraint from similarity to the correct answer: two
-        // distractors can both be individually plausible yet still express the same
-        // alternative (for example, two different Persian phrasings of "Skype").
-        val wrongOptions = buildList {
-            for (candidate in rankedPool) {
-                val text = candidate.content.text
-                if (all { !hasSharedMeaningAnchor(it, text) }) {
-                    add(text)
-                }
-                if (size == 3) break
-            }
-        }
+        val wrongOptions = rankedPool.map { it.content.text }
         if (wrongOptions.size < 3) return QuizQuestionResult.FlashcardFallback
 
         val options = (listOf(correct.text) + wrongOptions).shuffled()

@@ -1,9 +1,10 @@
 # FlashLearn — PROGRESS TRACKER
 
-## v5.99 — Quiz Distractor Semantic-Duplicate Guard
+## v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced application identity to 5.99 / versionCode 99.
-- Added pairwise distractor filtering so two wrong answers that are near-duplicate phrasings of the same alternative cannot appear together.
-- Added regression coverage for the reported Skype phrasing collision.
+- Added session-level distractor rotation so fresh valid wrong answers are preferred across sequential quiz cards.
+- Changed Quiz Difficulty selection to deterministic EASY/MEDIUM/HARD rank bands.
+- Added regression coverage for sequential distractor rotation and difficulty-band separation.
 - CI/runtime version gates advanced to 5.99/99 with 5.98/98 as the previous-version upgrade gate.
 
 ### Verification gate
