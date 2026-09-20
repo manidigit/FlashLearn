@@ -160,6 +160,44 @@ class QuizDifficultySelectionTest {
     }
 
     @Test
+    fun quizDistractorsStayFreshAcrossThreeSequentialQuestions() {
+        val target = concept()
+        val distractors = (1..9).map { concept() }
+        val concepts = listOf(target) + distractors
+        val contents = buildList {
+            add(content(target.id, "es", "preguntar"))
+            add(content(target.id, "fa", "پرسیدن"))
+            val answers = listOf("سگ", "گربه", "کتاب", "میز", "در", "ماشین", "آب", "نان", "صندلی")
+            distractors.forEachIndexed { index, distractor ->
+                add(content(distractor.id, "es", "d$index"))
+                add(content(distractor.id, "fa", answers[index]))
+            }
+        }
+        val states = concepts.associate { it.id to state(it.id, VocabularyDifficulty.EASY) }
+
+        val first = generate(target, concepts, contents, states, QuizDifficulty.EASY)
+        val firstWrong = first.options.filterNot { it == first.correctAnswerText }.toSet()
+        val second = generate(target, concepts, contents, states, QuizDifficulty.EASY, firstWrong)
+        val secondWrong = second.options.filterNot { it == second.correctAnswerText }.toSet()
+        val third = generate(
+            target,
+            concepts,
+            contents,
+            states,
+            QuizDifficulty.EASY,
+            firstWrong + secondWrong
+        )
+        val thirdWrong = third.options.filterNot { it == third.correctAnswerText }.toSet()
+
+        assertEquals(3, firstWrong.size)
+        assertEquals(3, secondWrong.size)
+        assertEquals(3, thirdWrong.size)
+        assertTrue(firstWrong.intersect(secondWrong).isEmpty())
+        assertTrue(firstWrong.intersect(thirdWrong).isEmpty())
+        assertTrue(secondWrong.intersect(thirdWrong).isEmpty())
+    }
+
+    @Test
     fun quizDifficultySelectsDifferentConfusabilityBandsWhenBankHasVariety() {
         val category = UUID.randomUUID()
         val target = concept(categoryId = category, entryType = EntryType.WORD)
