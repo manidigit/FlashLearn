@@ -260,7 +260,7 @@ class ReviewViewModel @Inject constructor(
                 is QuizQuestionResult.QuizQuestion -> {
                     usedQuizDistractorTexts += result.options
                         .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
-                        .map { it.trim().lowercase() }
+                        .map { it.trim() }
                     _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText), remaining = queue.size - index, total = queue.size)
                 }
                 QuizQuestionResult.FlashcardFallback -> _state.value = _state.value.copy(isLoading = false, isFinished = false, card = null, quizCard = null, error = "برای این سؤال چهار گزینهٔ معتبر پیدا نشد؛ حالت آزمون حفظ شد.", remaining = queue.size - index, total = queue.size)
