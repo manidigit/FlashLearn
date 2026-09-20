@@ -97,6 +97,7 @@ class ReviewViewModel @Inject constructor(
     private var maximumReviewCards = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
     private var sessionContents: Map<UUID, List<Content>> = emptyMap()
     private var sessionDifficulties: Map<UUID, DifficultyState> = emptyMap()
+    private val usedQuizDistractorTexts = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
@@ -190,6 +191,7 @@ class ReviewViewModel @Inject constructor(
     fun startNewSession(reviewType: ReviewType = _state.value.selectedReviewType, difficulty: VocabularyDifficulty? = null, categoryId: UUID? = null) {
         val generation = ++sessionGeneration
         val currentState = _state.value
+        usedQuizDistractorTexts.clear()
         val normalizedReviewType = normalizeReviewType(reviewType)
         val difficulties = if (difficulty != null) setOf(difficulty) else currentState.selectedDifficulties
         val categories = if (categoryId != null) setOf(categoryId) else currentState.selectedCategoryIds
@@ -223,7 +225,7 @@ class ReviewViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 if (generation != sessionGeneration) return@launch
-                sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); _state.value = _state.value.copy(isLoading = false, isSelectingMode = true, card = null, quizCard = null, answerFeedback = null, remaining = 0, total = 0, error = e.message ?: "خطا در آماده‌سازی مرور")
+                sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); usedQuizDistractorTexts.clear(); _state.value = _state.value.copy(isLoading = false, isSelectingMode = true, card = null, quizCard = null, answerFeedback = null, remaining = 0, total = 0, error = e.message ?: "خطا در آماده‌سازی مرور")
             }
         }
     }
@@ -248,8 +250,19 @@ class ReviewViewModel @Inject constructor(
         val baseCard = ReviewCardUiState(source.text, source.notes, target.text)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
-            when (val result = generateQuizQuestion(concept, QuizLanguagePair(pair.source.code, pair.target.code), sessionDifficulties[conceptId], quizDifficulty)) {
-                is QuizQuestionResult.QuizQuestion -> _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText), remaining = queue.size - index, total = queue.size)
+            when (val result = generateQuizQuestion(
+                concept,
+                QuizLanguagePair(pair.source.code, pair.target.code),
+                sessionDifficulties[conceptId],
+                quizDifficulty,
+                usedQuizDistractorTexts
+            )) {
+                is QuizQuestionResult.QuizQuestion -> {
+                    usedQuizDistractorTexts += result.options
+                        .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
+                        .map { it.trim().lowercase() }
+                    _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText), remaining = queue.size - index, total = queue.size)
+                }
                 QuizQuestionResult.FlashcardFallback -> _state.value = _state.value.copy(isLoading = false, isFinished = false, card = null, quizCard = null, error = "برای این سؤال چهار گزینهٔ معتبر پیدا نشد؛ حالت آزمون حفظ شد.", remaining = queue.size - index, total = queue.size)
             }
         } else _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = null, remaining = queue.size - index, total = queue.size)
@@ -283,7 +296,7 @@ class ReviewViewModel @Inject constructor(
     fun exitReview(onCompleted: () -> Unit = {}) {
         val exitGeneration = ++sessionGeneration; val activeSessionId = sessionId
         if (activeSessionId == null) { queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); onCompleted(); return }
-        viewModelScope.launch { var ended = false; try { endReviewSession(activeSessionId); ended = true } catch (e: Exception) { if (exitGeneration == sessionGeneration) _state.value = _state.value.copy(error = e.message ?: "خطا در پایان مرور") }; if (exitGeneration != sessionGeneration || !ended) return@launch; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); _state.value = _state.value.copy(card = null, quizCard = null, isSubmitting = false, isFinished = true, remaining = 0); onCompleted() }
+        viewModelScope.launch { var ended = false; try { endReviewSession(activeSessionId); ended = true } catch (e: Exception) { if (exitGeneration == sessionGeneration) _state.value = _state.value.copy(error = e.message ?: "خطا در پایان مرور") }; if (exitGeneration != sessionGeneration || !ended) return@launch; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); usedQuizDistractorTexts.clear(); _state.value = _state.value.copy(card = null, quizCard = null, isSubmitting = false, isFinished = true, remaining = 0); onCompleted() }
     }
     private suspend fun advanceToNext(generation: Long) {
         if (generation != sessionGeneration) return
@@ -292,7 +305,7 @@ class ReviewViewModel @Inject constructor(
             val activeSessionId = sessionId
             try { activeSessionId?.let { endReviewSession(it) } } catch (e: Exception) { if (generation == sessionGeneration) _state.value = _state.value.copy(isLoading = false, isSubmitting = false, error = e.message ?: "خطا در پایان مرور"); return }
             if (generation != sessionGeneration) return
-            sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); _state.value = _state.value.copy(isLoading = false, card = null, isFinished = true, isSubmitting = false, answerFeedback = null, quizCard = null, remaining = 0)
+            sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); usedQuizDistractorTexts.clear(); _state.value = _state.value.copy(isLoading = false, card = null, isFinished = true, isSubmitting = false, answerFeedback = null, quizCard = null, remaining = 0)
         } else { if (generation != sessionGeneration) return; _state.value = _state.value.copy(isSubmitting = false, answerFeedback = null, error = null); loadCurrentCard(generation, activeLanguagePair) }
     }
 }
