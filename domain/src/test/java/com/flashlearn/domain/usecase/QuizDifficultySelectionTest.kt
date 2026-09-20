@@ -128,6 +128,28 @@ class QuizDifficultySelectionTest {
     }
 
     @Test
+    fun distractorsCannotBeNearDuplicatePhrasingsOfTheSameAlternative() {
+        val target = concept()
+        val skype1 = concept()
+        val skype2 = concept()
+        val work = concept()
+        val study = concept()
+        val concepts = listOf(target, skype1, skype2, work, study)
+        val contents = listOf(
+            content(target.id, "es", "tú preguntas"), content(target.id, "fa", "تو می‌پرسی"),
+            content(skype1.id, "es", "puedes usar Skype"), content(skype1.id, "fa", "می‌توانی اسکایپ کنی؟"),
+            content(skype2.id, "es", "tienes contacto por Skype"), content(skype2.id, "fa", "امکان تماس با اسکایپ داری؟"),
+            content(work.id, "es", "trabajar"), content(work.id, "fa", "مشغول به کاری بودن، شاغل بودن"),
+            content(study.id, "es", "estudiar"), content(study.id, "fa", "درس خواندن")
+        )
+        val states = concepts.associate { it.id to state(it.id, VocabularyDifficulty.EASY) }
+        val result = generate(target, concepts, contents, states, QuizDifficulty.EASY)
+        val wrong = result.options.filterNot { it == result.correctAnswerText }.toSet()
+        assertFalse(wrong.containsAll(setOf("می‌توانی اسکایپ کنی؟", "امکان تماس با اسکایپ داری؟")))
+        assertEquals(3, wrong.size)
+    }
+
+    @Test
     fun quizDifficultySelectsDifferentConfusabilityBandsWhenBankHasVariety() {
         val category = UUID.randomUUID()
         val target = concept(categoryId = category, entryType = EntryType.WORD)
