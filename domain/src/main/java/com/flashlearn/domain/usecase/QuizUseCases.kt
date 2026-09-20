@@ -85,7 +85,8 @@ data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: Stri
 private data class QuizBank(val contents: List<Content>, val concepts: List<Concept>, val difficultiesById: Map<UUID, DifficultyState>)
 
 private data class DistractorCandidate(
-    val content: Content,
+    val displayText: String,
+    val canonicalKeys: Set<String>,
     val vocabularyDifficultyDistance: Int,
     val categoryMatch: Boolean,
     val entryTypeMatch: Boolean,
@@ -128,8 +129,21 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         val correct = conceptContents.firstOrNull {
             it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
         } ?: return QuizQuestionResult.FlashcardFallback
-        val normalizedCorrect = normalizeQuizText(correct.text)
-        val normalizedCorrectCanonical = normalizeQuizText(correct.canonicalKey)
+        val targetTranslations = conceptContents
+            .filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
+            .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
+            .distinctBy { normalizeQuizText(it.text) }
+        if (targetTranslations.isEmpty()) return QuizQuestionResult.FlashcardFallback
+
+        fun displayTranslations(values: List<Content>): String =
+            values.joinToString(" / ") { it.text.trim() }
+
+        val correctDisplayText = displayTranslations(targetTranslations)
+        val normalizedCorrect = normalizeQuizText(correctDisplayText)
+        val normalizedCorrectCanonicalKeys = targetTranslations
+            .map { normalizeQuizText(it.canonicalKey) }
+            .filter { it.isNotBlank() }
+            .toSet()
 
         // Vocabulary Difficulty controls the documented candidate pool. Quiz Difficulty
         // is independent and controls how close/plausible the wrong answers are.
@@ -179,30 +193,33 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             .toSet()
 
         val candidates = eligibleConcepts.flatMap { other ->
-            contentsByConcept[other.id].orEmpty()
+            val values = contentsByConcept[other.id].orEmpty()
                 .filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
-                .map { content ->
+                .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
+                .distinctBy { normalizeQuizText(it.text) }
+            if (values.isEmpty()) emptyList() else listOf(values)
                     DistractorCandidate(
-                        content = content,
+                        displayText = displayTranslations(values),
+                        canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
                         vocabularyDifficultyDistance = difficultyDistance(other),
                         categoryMatch = concept.categoryId != null && concept.categoryId == other.categoryId,
                         entryTypeMatch = concept.entryType == other.entryType,
-                        lexicalSimilarity = lexicalSimilarity(correct.text, content.text)
+                        lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayTranslations(values))
                     )
                 }
         }
-            .filter { normalizeQuizText(it.content.text) != normalizedCorrect }
+            .filter { normalizeQuizText(it.displayText) != normalizedCorrect }
             .filter {
-                normalizedCorrectCanonical.isBlank() ||
-                    normalizeQuizText(it.content.canonicalKey) != normalizedCorrectCanonical
+                normalizedCorrectCanonicalKeys.isEmpty() ||
+                    it.canonicalKeys.none { key -> key in normalizedCorrectCanonicalKeys }
             }
-            .distinctBy { normalizeQuizText(it.content.text) }
+            .distinctBy { normalizeQuizText(it.displayText) }
 
         // Prefer distractors that have not already appeared earlier in the same
         // review session. If fewer than three fresh distractors exist, fall back
         // to the complete valid pool so small vocabulary banks still produce quizzes.
         val freshCandidates = candidates.filter {
-            normalizeQuizText(it.content.text) !in normalizedExcludedDistractors
+            normalizeQuizText(it.displayText) !in normalizedExcludedDistractors
         }
         val selectionCandidates = if (freshCandidates.size >= 3) freshCandidates else candidates
 
@@ -226,7 +243,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         val adjacentPool = selectionCandidates.filter { it.vocabularyDifficultyDistance == 1 }
         val selectedPool = when {
             sameDifficultyPool.size >= 3 -> sameDifficultyPool
-            (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.content.text) }.size >= 3 ->
+            (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.displayText) }.size >= 3 ->
                 (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.content.text) }
             else -> selectionCandidates
         }
@@ -262,7 +279,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             candidates.sortedWith(
                 if (descending) {
                     compareByDescending<DistractorCandidate> { confusabilityScore(it) }
-                        .thenBy { normalizeQuizText(it.content.text) }
+                        .thenBy { normalizeQuizText(it.displayText) }
                 } else {
                     compareBy<DistractorCandidate> { confusabilityScore(it) }
                         .thenBy { normalizeQuizText(it.content.text) }
@@ -301,10 +318,10 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             }
         }
 
-        val wrongOptions = rankedPool.map { it.content.text }
+        val wrongOptions = rankedPool.map { it.displayText }
         if (wrongOptions.size < 3) return QuizQuestionResult.FlashcardFallback
 
-        val options = (listOf(correct.text) + wrongOptions).shuffled()
+        val options = (listOf(correctDisplayText) + wrongOptions).shuffled()
         if (
             options.size != 4 ||
             options.map(::normalizeQuizText).distinct().size != 4 ||
@@ -313,7 +330,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
 
         return QuizQuestionResult.QuizQuestion(
             promptText = prompt.text,
-            correctAnswerText = correct.text,
+            correctAnswerText = correctDisplayText,
             options = options
         )
     }
