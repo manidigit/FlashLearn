@@ -1,5 +1,13 @@
 # FlashLearn Changelog
 
+## v6.00 — Quiz Translation Display and Answer Feedback Timing
+- Advanced application identity to 6.00 / versionCode 100.
+- Quiz answer options now display all target-language translations belonging to each Concept, in translation-index order, joined with ` / `.
+- Added regression coverage proving multi-translation correct and distractor options are shown as complete translation groups rather than only the first translation.
+- After submitting a Quiz answer, the selected wrong option remains red and the correct option remains green/visible for 3 seconds.
+- Quiz then advances automatically after the 3-second feedback interval; the manual `ادامه` button is removed.
+- No Room schema, learning algorithm, scheduling contract, or import behavior changed.
+
 ## v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced application identity to 5.99 / versionCode 99.
 - Prevented the same three distractors from repeating across sequential quiz cards when at least three fresh valid candidates exist.
