@@ -1,3 +1,11 @@
+v6.00 — Quiz Translation Display and Answer Feedback Timing
+- Advanced runtime identity to 6.00/100.
+- Quiz options now show all target-language translations for each Concept in translation-index order.
+- Quiz answer feedback remains visible for 3 seconds: wrong selection red, correct answer green, then automatic advance.
+- Removed the manual Quiz continuation action.
+- Added regression coverage for complete multi-translation option display.
+- CI/runtime version gates aligned to 6.00/100.
+
 v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced runtime identity to 5.99/99.
 - Added session-level distractor rotation so sequential quiz cards do not reuse the same three wrong answers when enough fresh candidates exist.
@@ -32,7 +40,7 @@ v5.41 — Restore validation hardening: required JSON text fields now reject mis
 - Added Android regression coverage proving a tampered/stale backup canonicalKey is corrected during restore.
 - No Room schema change; Learning Transition and Difficulty remain frozen.
 # FlashLearn — PROGRESS TRACKER
-## Current checkpoint: v5.51
+## Current checkpoint: v6.00
 ## v5.48 — Restore regression test contract hardening
 - Corrected four Android integration-test assertions exposed by CI: export timestamp is compared independently, content count reflects the two language contents created by the fixture, and unrelated parser metadata is preserved under non-destructive restore.
 - Runtime identity aligned to 5.48/48.
