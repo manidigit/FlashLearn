@@ -61,6 +61,11 @@ private fun lexicalSimilarity(a: String, b: String): Double {
     return (tokenSimilarity * 0.45 + levenshteinSimilarity(left, right) * 0.35 + ngramSimilarity(left, right) * 0.20).coerceIn(0.0, 1.0)
 }
 
+private const val MAX_DISTRACTOR_PAIR_SIMILARITY = 0.28
+
+private fun distractorPairSimilarity(a: String, b: String): Double =
+    lexicalSimilarity(a, b)
+
 sealed interface QuizQuestionResult {
     data class QuizQuestion(val promptText: String, val correctAnswerText: String, val options: List<String>) : QuizQuestionResult {
         init {
@@ -243,7 +248,19 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             )
         }
 
-        val wrongOptions = rankedPool.take(3).map { it.content.text }
+        // Do not allow two wrong answers that are near-duplicates of each other.
+        // This is a separate constraint from similarity to the correct answer: two
+        // distractors can both be individually plausible yet still express the same
+        // alternative (for example, two different Persian phrasings of "Skype").
+        val wrongOptions = buildList {
+            for (candidate in rankedPool) {
+                val text = candidate.content.text
+                if (all { distractorPairSimilarity(it, text) < MAX_DISTRACTOR_PAIR_SIMILARITY }) {
+                    add(text)
+                }
+                if (size == 3) break
+            }
+        }
         if (wrongOptions.size < 3) return QuizQuestionResult.FlashcardFallback
 
         val options = (listOf(correct.text) + wrongOptions).shuffled()
