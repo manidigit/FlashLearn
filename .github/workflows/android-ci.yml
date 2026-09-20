@@ -196,7 +196,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Start Android Emulator
-        timeout-minutes: 10
+        timeout-minutes: 12
         shell: bash
         run: |
           set -euo pipefail
@@ -204,8 +204,29 @@ jobs:
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
           echo "no" | avdmanager create avd --force --name flashlearn-ci --package "system-images;android-34;google_apis;x86_64" --device "pixel_2"
-          nohup emulator -avd flashlearn-ci -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
-          timeout 180s adb wait-for-device
+          adb start-server
+          nohup emulator -avd flashlearn-ci -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -accel auto > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
+          trap 'kill "$emulator_pid" 2>/dev/null || true; adb kill-server >/dev/null 2>&1 || true' EXIT
+          device_ready=false
+          for i in {1..120}; do
+            if adb devices | awk 'NR > 1 && $1 ~ /^emulator-[0-9]+$/ && $2 == "device" {found=1} END {exit(found ? 0 : 1)}'; then
+              device_ready=true
+              break
+            fi
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo "Android Emulator process exited before becoming ready."
+              cat "$RUNNER_TEMP/emulator.log" || true
+              exit 1
+            fi
+            sleep 2
+          done
+          if [[ "$device_ready" != true ]]; then
+            echo "Android Emulator did not register with ADB within 240 seconds."
+            adb devices -l || true
+            cat "$RUNNER_TEMP/emulator.log" || true
+            exit 1
+          fi
           for i in {1..90}; do
             boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
             if [[ "$boot_completed" == "1" ]]; then
