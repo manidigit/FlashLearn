@@ -192,21 +192,24 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             .filter { it.isNotBlank() }
             .toSet()
 
-        val candidates = eligibleConcepts.flatMap { other ->
+        val candidates = eligibleConcepts.mapNotNull { other ->
             val values = contentsByConcept[other.id].orEmpty()
                 .filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
                 .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
                 .distinctBy { normalizeQuizText(it.text) }
-            if (values.isEmpty()) emptyList() else listOf(values)
-                    DistractorCandidate(
-                        displayText = displayTranslations(values),
-                        canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
-                        vocabularyDifficultyDistance = difficultyDistance(other),
-                        categoryMatch = concept.categoryId != null && concept.categoryId == other.categoryId,
-                        entryTypeMatch = concept.entryType == other.entryType,
-                        lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayTranslations(values))
-                    )
-                }
+            if (values.isEmpty()) {
+                null
+            } else {
+                val displayText = displayTranslations(values)
+                DistractorCandidate(
+                    displayText = displayText,
+                    canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
+                    vocabularyDifficultyDistance = difficultyDistance(other),
+                    categoryMatch = concept.categoryId != null && concept.categoryId == other.categoryId,
+                    entryTypeMatch = concept.entryType == other.entryType,
+                    lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayText)
+                )
+            }
         }
             .filter { normalizeQuizText(it.displayText) != normalizedCorrect }
             .filter {
@@ -228,8 +231,6 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         fun confusabilityScore(candidate: DistractorCandidate): Double {
             val category = if (candidate.categoryMatch) 1.0 else 0.0
             val entryType = if (candidate.entryTypeMatch) 1.0 else 0.0
-            // Higher means "more likely to be confused with the correct answer".
-            // This is deliberately local/deterministic: no network or external model.
             return (
                 candidate.lexicalSimilarity * 0.55 +
                     category * 0.25 +
@@ -237,14 +238,12 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                 ).coerceIn(0.0, 1.0)
         }
 
-        // Exact candidate-pool order from the specification:
-        // same Vocabulary Difficulty -> immediate adjacent level(s) -> whole bank.
         val sameDifficultyPool = selectionCandidates.filter { it.vocabularyDifficultyDistance == 0 }
         val adjacentPool = selectionCandidates.filter { it.vocabularyDifficultyDistance == 1 }
         val selectedPool = when {
             sameDifficultyPool.size >= 3 -> sameDifficultyPool
             (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.displayText) }.size >= 3 ->
-                (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.content.text) }
+                (sameDifficultyPool + adjacentPool).distinctBy { normalizeQuizText(it.displayText) }
             else -> selectionCandidates
         }
 
@@ -282,7 +281,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                         .thenBy { normalizeQuizText(it.displayText) }
                 } else {
                     compareBy<DistractorCandidate> { confusabilityScore(it) }
-                        .thenBy { normalizeQuizText(it.content.text) }
+                        .thenBy { normalizeQuizText(it.displayText) }
                 }
             )
 
