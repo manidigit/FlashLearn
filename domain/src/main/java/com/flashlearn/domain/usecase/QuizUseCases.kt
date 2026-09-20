@@ -232,26 +232,73 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         }
 
         /*
-         * Quiz difficulty is an actual rank band:
-         *   EASY   -> the three least-confusable candidates
-         *   MEDIUM -> the three candidates in the middle of the ranked pool
-         *   HARD   -> the three most-confusable candidates
+         * Quiz Difficulty is a semantic selection policy layered on top of the
+         * Vocabulary Difficulty pool:
          *
-         * Using rank bands (rather than a fixed score target) keeps MEDIUM from
-         * accidentally selecting an unrelated low-score distractor when the bank
-         * contains only a small number of candidates.
+         * EASY:
+         *   Prefer candidates outside the target category and entry type, then
+         *   choose the least-confusable ones.
+         *
+         * MEDIUM:
+         *   Prefer candidates from the same category but a different entry type,
+         *   then choose the most plausible middle-band candidates.
+         *
+         * HARD:
+         *   Prefer candidates from the same category and the same entry type,
+         *   then choose the most-confusable ones.
+         *
+         * Each preferred tier falls back to a broader tier when the vocabulary
+         * bank is too small. This makes the level observable without allowing a
+         * numeric similarity threshold to discard otherwise valid distractors.
          */
-        val ascending = selectedPool.sortedWith(
-            compareBy<DistractorCandidate> { confusabilityScore(it) }
-                .thenBy { normalizeQuizText(it.content.text) }
-        )
-        val rankedPool = when (difficulty) {
-            QuizDifficulty.EASY -> ascending.take(3)
-            QuizDifficulty.MEDIUM -> {
-                val start = ((ascending.size - 3) / 2).coerceAtLeast(0)
-                ascending.drop(start).take(3)
+        val easyPreferred = selectedPool.filter { !it.categoryMatch && !it.entryTypeMatch }
+        val easyFallback = selectedPool.filter { !it.categoryMatch }
+        val mediumPreferred = selectedPool.filter { it.categoryMatch && !it.entryTypeMatch }
+        val mediumFallback = selectedPool.filter { it.categoryMatch }
+        val hardPreferred = selectedPool.filter { it.categoryMatch && it.entryTypeMatch }
+        val hardFallback = selectedPool.filter { it.categoryMatch }
+
+        fun ranked(candidates: List<DistractorCandidate>, descending: Boolean): List<DistractorCandidate> =
+            candidates.sortedWith(
+                if (descending) {
+                    compareByDescending<DistractorCandidate> { confusabilityScore(it) }
+                        .thenBy { normalizeQuizText(it.content.text) }
+                } else {
+                    compareBy<DistractorCandidate> { confusabilityScore(it) }
+                        .thenBy { normalizeQuizText(it.content.text) }
+                }
+            )
+
+        fun chooseTier(
+            preferred: List<DistractorCandidate>,
+            fallback: List<DistractorCandidate>,
+            descending: Boolean
+        ): List<DistractorCandidate> {
+            val source = when {
+                preferred.size >= 3 -> preferred
+                fallback.size >= 3 -> fallback
+                else -> selectedPool
             }
-            QuizDifficulty.HARD -> ascending.asReversed().take(3)
+            val ordered = ranked(source, descending)
+            return if (ordered.size <= 3) {
+                ordered
+            } else {
+                val start = ((ordered.size - 3) / 2).coerceAtLeast(0)
+                ordered.drop(start).take(3)
+            }
+        }
+
+        val rankedPool = when (difficulty) {
+            QuizDifficulty.EASY -> chooseTier(easyPreferred, easyFallback, descending = false)
+            QuizDifficulty.MEDIUM -> chooseTier(mediumPreferred, mediumFallback, descending = false)
+            QuizDifficulty.HARD -> {
+                val source = when {
+                    hardPreferred.size >= 3 -> hardPreferred
+                    hardFallback.size >= 3 -> hardFallback
+                    else -> selectedPool
+                }
+                ranked(source, descending = true).take(3)
+            }
         }
 
         val wrongOptions = rankedPool.map { it.content.text }
