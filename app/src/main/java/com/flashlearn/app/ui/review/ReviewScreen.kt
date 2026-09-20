@@ -218,7 +218,7 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
         Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(52.dp), shape = MaterialTheme.shapes.large) { Text("ثبت پاسخ", style = MaterialTheme.typography.titleMedium) }
     } else {
         Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = if (feedback?.isCorrect == true) QuizCorrectContainer else QuizWrongContainer) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(if (feedback?.isCorrect == true) "✓ پاسخ صحیح" else "✕ پاسخ غلط — پاسخ صحیح سبز شده است", color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center); Button(onClick = vm::nextCard, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text("ادامه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) } }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(if (feedback?.isCorrect == true) "✓ پاسخ صحیح" else "✕ پاسخ غلط — پاسخ صحیح سبز شده است", color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center);  }
         }
     }
 }
