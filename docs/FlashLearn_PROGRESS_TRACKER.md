@@ -1,3 +1,9 @@
+v5.99 — Quiz Distractor Semantic-Duplicate Guard
+- Advanced runtime identity to 5.99/99.
+- Added pairwise near-duplicate filtering between wrong answers, covering semantically equivalent/near-equivalent phrasings that are individually distinct from the correct answer.
+- Added regression coverage for the reported Skype phrasing collision.
+- CI/runtime version gates aligned to 5.99/99.
+
 v5.98 — Quiz Generation Hardening
 - Advanced runtime identity to 5.98/98.
 - Quiz difficulty now selects explicit confusability bands: EASY least-confusable, MEDIUM middle-band, HARD most-confusable valid distractors.

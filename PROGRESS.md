@@ -1,5 +1,16 @@
 # FlashLearn — PROGRESS TRACKER
 
+## v5.99 — Quiz Distractor Semantic-Duplicate Guard
+- Advanced application identity to 5.99 / versionCode 99.
+- Added pairwise distractor filtering so two wrong answers that are near-duplicate phrasings of the same alternative cannot appear together.
+- Added regression coverage for the reported Skype phrasing collision.
+- CI/runtime version gates advanced to 5.99/99 with 5.98/98 as the previous-version upgrade gate.
+
+### Verification gate
+- GitHub Actions remains the authoritative build/test gate.
+- v5.99 is not marked fully verified until Build/Unit and Instrumentation jobs both complete successfully.
+
+
 ## v5.98 — Quiz Generation Hardening
 - Advanced application identity to 5.98 / versionCode 98.
 - GenerateQuizQuestion now maps QuizDifficulty to explicit distractor bands instead of only changing score weights.
