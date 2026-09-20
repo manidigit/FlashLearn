@@ -1,7 +1,7 @@
 v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced runtime identity to 5.99/99.
 - Added session-level distractor rotation so sequential quiz cards do not reuse the same three wrong answers when enough fresh candidates exist.
-- Changed Quiz Difficulty to deterministic EASY/MEDIUM/HARD rank bands.
+- Changed Quiz Difficulty to deterministic EASY/MEDIUM/HARD category and entry-type tiers.
 - Added regression coverage for distractor rotation and difficulty-band separation.
 - CI/runtime version gates aligned to 5.99/99.
 
