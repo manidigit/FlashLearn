@@ -1,3 +1,11 @@
+## v6.04 checkpoint — Review setup UI
+- Target screen confirmed as app/src/main/java/com/flashlearn/app/ui/review/ReviewScreen.kt.
+- Review setup controls were compacted and visually refined.
+- Review mode icons now use distinct semantic theme colors.
+- Hard-coded RTL was removed; Review now inherits the app-wide RTL/LTR setting.
+- Direction-sensitive navigation icons follow the active layout direction.
+- Release identity: 6.04 / versionCode 104.
+
 ## v6.03 — Review UI modernization + CI alignment
 - Review UI modernization checkpoint recorded.
 - Release identity: 6.03 / 103.
