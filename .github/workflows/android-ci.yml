@@ -8,27 +8,25 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: flashlearn-android-ci
-  cancel-in-progress: true
-
-env:
-  FL_VERSION_NAME: "6.00"
-  FL_VERSION_CODE: "100"
-  FL_PREVIOUS_VERSION_NAME: "5.99"
-  FL_PREVIOUS_VERSION_CODE: "99"
-
 jobs:
-  build-and-unit-test:
+  build-and-test:
+    name: Build and unit test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Install Android SDK
         shell: bash
         run: |
@@ -36,303 +34,35 @@ jobs:
           export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
-          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-          command -v adb
-          command -v apksigner
-          command -v aapt
-      - name: Restore stable CI debug keystore cache
-        uses: actions/cache@v4
-        with:
-          path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v3
-      - name: Materialize stable CI debug keystore
+
+      - name: Prepare debug keystore
         shell: bash
-        env:
-          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
         run: |
           set -euo pipefail
           mkdir -p keystore
-          valid_key=false
-          validate_private_key() {
-            local source="$1"
-            local probe="$RUNNER_TEMP/flashlearn-keystore-probe.jks"
-            rm -f "$probe"
-            keytool -importkeystore -srckeystore "$source" -srcstoretype JKS -srcstorepass android -srcalias androiddebugkey -srckeypass androiddebugkey -destkeystore "$probe" -deststoretype JKS -deststorepass android -destalias androiddebugkey -destkeypass androiddebugkey -noprompt >/dev/null 2>&1
-            rm -f "$probe"
-          }
-          if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
-            echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
-            if validate_private_key keystore/debug.keystore; then
-              echo "Using repository-configured stable debug signing key."
-              valid_key=true
-            else
-              echo "Configured debug signing key is invalid; replacing it with a fresh CI key."
-              rm -f keystore/debug.keystore
-            fi
-          fi
-          if [[ "$valid_key" != true && -s keystore/debug.keystore ]] && validate_private_key keystore/debug.keystore; then
-            echo "Using cached stable CI debug signing key."
-            valid_key=true
-          fi
-          if [[ "$valid_key" != true ]]; then
-            rm -f keystore/debug.keystore
-            echo "Creating a new initial CI debug signing key to seed the cache."
-            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
-          fi
-          validate_private_key keystore/debug.keystore
-          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.2"
-      - name: Prepare Gradle retry wrapper
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > "$RUNNER_TEMP/gradle-retry.sh" <<'BASH'
-          #!/usr/bin/env bash
-          set -uo pipefail
-          attempts=0
-          max_attempts=5
-          delay=15
-          while true; do
-            attempts=$((attempts + 1))
-            echo "Gradle attempt ${attempts}/${max_attempts}: $*"
-            if gradle --no-daemon "$@"; then
-              exit 0
-            fi
-            if [[ "$attempts" -ge "${max_attempts}" ]]; then
-              echo "Gradle failed after ${max_attempts} attempts."
-              exit 1
-            fi
-            echo "Gradle failed; waiting ${delay}s before retrying dependency resolution."
-            sleep "$delay"
-            delay=$((delay * 2))
-          done
-          BASH
-          chmod 700 "$RUNNER_TEMP/gradle-retry.sh"
+          keytool -genkeypair -v             -keystore keystore/debug.keystore             -storetype JKS             -storepass android             -keypass androiddebugkey             -alias androiddebugkey             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Android Debug,O=Android,C=US"             -noprompt
+
       - name: Clean
-        run: "$RUNNER_TEMP/gradle-retry.sh" clean
+        run: ./gradlew --no-daemon clean
+
       - name: Build debug APK
-        run: "$RUNNER_TEMP/gradle-retry.sh" assembleDebug
-      - name: Verify debug APK signature
-        run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-      - name: Verify debug APK version
-        shell: bash
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon test
+
+      - name: Verify APK
         run: |
           set -euo pipefail
-          APK="app/build/outputs/apk/debug/app-debug.apk"
-          ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" | head -n 1)"
-          test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
-      - name: Unit tests
-        run: "$RUNNER_TEMP/gradle-retry.sh" test
-      - name: Stage debug APK
-        run: |
-          mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
-      - uses: actions/upload-artifact@v4
+          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          aapt dump badging app/build/outputs/apk/debug/app-debug.apk | grep "versionCode='100'"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: flashlearn-debug-apk
-          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_DEBUG.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-      - name: Stage exact source archive
-        run: |
-          mkdir -p dist
-          git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: flashlearn-source
-          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_SOURCE.zip
-          if-no-files-found: error
-
-  instrumentation-tests:
-    needs: build-and-unit-test
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-      - name: Install Android SDK
-        shell: bash
-        run: |
-          set -euo pipefail
-          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/bin/sdkmanager"
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "emulator" "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
-      - name: Restore stable CI debug keystore cache
-        uses: actions/cache@v4
-        with:
-          path: keystore/debug.keystore
-          key: flashlearn-debug-keystore-v3
-      - name: Materialize stable CI debug keystore
-        shell: bash
-        env:
-          FL_DEBUG_KEYSTORE_B64: ${{ secrets.FL_DEBUG_KEYSTORE_B64 }}
-        run: |
-          set -euo pipefail
-          mkdir -p keystore
-          valid_key=false
-          validate_private_key() {
-            local source="$1"
-            local probe="$RUNNER_TEMP/flashlearn-keystore-probe.jks"
-            rm -f "$probe"
-            keytool -importkeystore -srckeystore "$source" -srcstoretype JKS -srcstorepass android -srcalias androiddebugkey -srckeypass androiddebugkey -destkeystore "$probe" -deststoretype JKS -deststorepass android -destalias androiddebugkey -destkeypass androiddebugkey -noprompt >/dev/null 2>&1
-            rm -f "$probe"
-          }
-          if [[ -n "$FL_DEBUG_KEYSTORE_B64" ]]; then
-            echo "$FL_DEBUG_KEYSTORE_B64" | base64 --decode > keystore/debug.keystore
-            if validate_private_key keystore/debug.keystore; then
-              echo "Using repository-configured stable debug signing key."
-              valid_key=true
-            else
-              echo "Configured debug signing key is invalid; replacing it with a fresh CI key."
-              rm -f keystore/debug.keystore
-            fi
-          fi
-          if [[ "$valid_key" != true && -s keystore/debug.keystore ]] && validate_private_key keystore/debug.keystore; then
-            echo "Using cached stable CI debug signing key."
-            valid_key=true
-          fi
-          if [[ "$valid_key" != true ]]; then
-            rm -f keystore/debug.keystore
-            echo "Creating a new initial CI debug signing key to seed the cache."
-            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
-          fi
-          validate_private_key keystore/debug.keystore
-          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.2"
-      - name: Prepare Gradle retry wrapper
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > "$RUNNER_TEMP/gradle-retry.sh" <<'BASH'
-          #!/usr/bin/env bash
-          set -uo pipefail
-          attempts=0
-          max_attempts=5
-          delay=15
-          while true; do
-            attempts=$((attempts + 1))
-            echo "Gradle attempt ${attempts}/${max_attempts}: $*"
-            if gradle --no-daemon "$@"; then exit 0; fi
-            if [[ "$attempts" -ge "${max_attempts}" ]]; then
-              echo "Gradle failed after ${max_attempts} attempts."
-              exit 1
-            fi
-            echo "Gradle failed; waiting ${delay}s before retrying dependency resolution."
-            sleep "$delay"
-            delay=$((delay * 2))
-          done
-          BASH
-          chmod 700 "$RUNNER_TEMP/gradle-retry.sh"
-      - name: Enable KVM group permissions
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Start Android Emulator
-        timeout-minutes: 12
-        shell: bash
-        run: |
-          set -euo pipefail
-          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-          mkdir -p "$ANDROID_AVD_HOME"
-          echo "no" | avdmanager create avd --force --name flashlearn-ci --package "system-images;android-34;google_apis;x86_64" --device "pixel_2"
-          test -f "$ANDROID_AVD_HOME/flashlearn-ci.ini"
-          test -d "$ANDROID_AVD_HOME/flashlearn-ci.avd"
-          adb start-server
-          nohup emulator -avd flashlearn-ci -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -accel auto > "$RUNNER_TEMP/emulator.log" 2>&1 &
-          emulator_pid=$!
-          echo "$emulator_pid" > "$RUNNER_TEMP/flashlearn-emulator.pid"
-          device_ready=false
-          for i in {1..120}; do
-            if adb devices | awk 'NR > 1 && $1 ~ /^emulator-[0-9]+$/ && $2 == "device" {found=1} END {exit(found ? 0 : 1)}'; then
-              device_ready=true
-              break
-            fi
-            if ! kill -0 "$emulator_pid" 2>/dev/null; then
-              echo "Android Emulator process exited before becoming ready."
-              cat "$RUNNER_TEMP/emulator.log" || true
-              exit 1
-            fi
-            sleep 2
-          done
-          if [[ "$device_ready" != true ]]; then
-            echo "Android Emulator did not register with ADB within 240 seconds."
-            adb devices -l || true
-            cat "$RUNNER_TEMP/emulator.log" || true
-            exit 1
-          fi
-          for i in {1..90}; do
-            boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
-            if [[ "$boot_completed" == "1" ]]; then
-              break
-            fi
-            if [[ "$i" == "90" ]]; then
-              echo "Android Emulator failed to boot."
-              cat "$RUNNER_TEMP/emulator.log" || true
-              exit 1
-            fi
-            sleep 2
-          done
-          adb shell settings put global window_animation_scale 0
-          adb shell settings put global transition_animation_scale 0
-          adb shell settings put global animator_duration_scale 0
-          adb shell input keyevent 82 || true
-          adb devices
-      - name: Prepare instrumentation test script
-        shell: bash
-        run: |
-          cat > "$RUNNER_TEMP/flashlearn-instrumentation.sh" <<'BASH_SCRIPT'
-          set -euo pipefail
-          adb start-server
-          adb wait-for-device
-          adb devices
-          "$RUNNER_TEMP/gradle-retry.sh" connectedDebugAndroidTest
-          rm -f app/build/outputs/apk/debug/app-debug.apk
-          cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
-          trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
-          sed -i "s/versionCode = ${FL_VERSION_CODE}/versionCode = ${FL_PREVIOUS_VERSION_CODE}/; s/versionName = \"${FL_VERSION_NAME}\"/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/" app/build.gradle.kts
-          "$RUNNER_TEMP/gradle-retry.sh" :app:assembleDebug
-          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r' > "$RUNNER_TEMP/flashlearn-old-cert"
-          test -s "$RUNNER_TEMP/flashlearn-old-cert"
-          adb install app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_PREVIOUS_VERSION_CODE}"
-          sed -i "s/versionCode = ${FL_PREVIOUS_VERSION_CODE}/versionCode = ${FL_VERSION_CODE}/; s/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/versionName = \"${FL_VERSION_NAME}\"/" app/build.gradle.kts
-          "$RUNNER_TEMP/gradle-retry.sh" :app:assembleDebug
-          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          test "$(cat "$RUNNER_TEMP/flashlearn-old-cert")" = "$(apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')"
-          adb install -r app/build/outputs/apk/debug/app-debug.apk
-          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_VERSION_CODE}"
-          BASH_SCRIPT
-          chmod 700 "$RUNNER_TEMP/flashlearn-instrumentation.sh"
-      - name: Run instrumentation tests
-        run: "$RUNNER_TEMP/flashlearn-instrumentation.sh"
-      - name: Stop Android Emulator
-        if: always()
-        shell: bash
-        run: |
-          set +e
-          if [[ -s "$RUNNER_TEMP/flashlearn-emulator.pid" ]]; then
-            kill "$(cat "$RUNNER_TEMP/flashlearn-emulator.pid")" 2>/dev/null || true
-          fi
-          adb kill-server >/dev/null 2>&1 || true
