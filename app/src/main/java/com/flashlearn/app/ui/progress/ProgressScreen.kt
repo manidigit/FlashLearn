@@ -46,7 +46,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             TextButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.headlineMedium) }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("آمار و گزارش", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = onSurfaceVariant)
+                Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
             }
         }
 
