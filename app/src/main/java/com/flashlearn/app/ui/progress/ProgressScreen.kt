@@ -142,7 +142,7 @@ private fun LearningMotivationCard(state: ProgressUiState) {
                 trackColor = MaterialTheme.colorScheme.surface
             )
             Text("امتیاز بر اساس مرحله فعلی یادگیری هر واژه محاسبه می‌شود.", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-            Text("بدون مرور ۰٪ • مرورشده ۱۵٪ • روزانه ۳۵٪ • هفتگی ۶۰٪ • ماهانه ۸۰٪ • یادگرفته ۱۰۰٪", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text("بدون مرور ۰٪ • پس از اولین مرور، امتیاز بر اساس مرحله: روزانه ۳۵٪ • هفتگی ۶۰٪ • ماهانه ۸۰٪ • یادگرفته ۱۰۰٪", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
