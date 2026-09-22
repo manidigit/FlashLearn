@@ -45,12 +45,6 @@ import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.app.ui.library.CategorySelectionScreen
 
-private val LocalFlashLearnThemeTokens.current.success = Color(0xFF2E7D32)
-private val LocalFlashLearnThemeTokens.current.error = Color(0xFFC62828)
-private val LocalFlashLearnThemeTokens.current.primary = Color(0xFF7C4DFF)
-private val LocalFlashLearnThemeTokens.current.success.copy(alpha = .12f) = Color(0xFFE8F5E9)
-private val LocalFlashLearnThemeTokens.current.error.copy(alpha = .12f) = Color(0xFFFFEBEE)
-private val LocalFlashLearnThemeTokens.current.surfaceVariant = Color(0xFFF0E7FF)
 
 @Composable
 fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDifficulty? = null, quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM, onFinished: () -> Unit) {
