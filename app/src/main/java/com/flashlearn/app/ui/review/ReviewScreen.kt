@@ -181,11 +181,23 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
     val correct = quiz.correctAnswerText
     val card = state.card
     val context = androidx.compose.ui.platform.LocalContext.current
-    val tts = remember { TextToSpeech(context, null) }
+    var ttsReady by remember { mutableStateOf(false) }
+    val tts = remember(context) {
+        TextToSpeech(context) { status ->
+            val spanish = Locale("es", "ES")
+            ttsReady = status == TextToSpeech.SUCCESS &&
+                tts.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE
+            if (ttsReady) {
+                tts.language = spanish
+                tts.setSpeechRate(0.92f)
+            }
+        }
+    }
     DisposableEffect(tts) {
-        tts.language = Locale("es", "ES")
-        tts.setSpeechRate(0.92f)
-        onDispose { tts.stop(); tts.shutdown() }
+        onDispose {
+            tts.stop()
+            tts.shutdown()
+        }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = MaterialTheme.shapes.large, color = QuizWrongContainer.copy(alpha = .9f)) { Text("${state.wrong} ✕", color = QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) }
@@ -200,10 +212,13 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
             Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             OutlinedButton(
                 onClick = {
-                    tts.language = Locale("es", "ES")
-                    tts.speak(quiz.promptText, TextToSpeech.QUEUE_FLUSH, null, "flashlearn_quiz_prompt")
+                    val spanish = Locale("es", "ES")
+                    if (tts.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE) {
+                        tts.language = spanish
+                        tts.speak(quiz.promptText, TextToSpeech.QUEUE_FLUSH, null, "flashlearn_quiz_prompt")
+                    }
                 },
-                enabled = !answered
+                enabled = !answered && ttsReady
             ) { Text("🔊 پخش سؤال به اسپانیایی") }
             if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(10.dp)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
             if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(8.dp)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) }
