@@ -17,11 +17,12 @@ env:
   FL_VERSION_CODE: "100"
   FL_PREVIOUS_VERSION_NAME: "5.99"
   FL_PREVIOUS_VERSION_CODE: "99"
-  GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
 
 jobs:
   build-and-unit-test:
     runs-on: ubuntu-latest
+    env:
+      GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -89,7 +90,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
-      - name: Gradle retry wrapper
+      - name: Prepare Gradle retry wrapper
         shell: bash
         run: |
           set -euo pipefail
@@ -101,15 +102,15 @@ jobs:
           delay=15
           while true; do
             attempts=$((attempts + 1))
-            echo "Gradle attempt \${attempts}/\${max_attempts}: $*"
+            echo "Gradle attempt ${attempts}/${max_attempts}: $*"
             if gradle --no-daemon "$@"; then
               exit 0
             fi
-            if [[ "$attempts" -ge "$max_attempts" ]]; then
-              echo "Gradle failed after __MAX__ attempts."
+            if [[ "$attempts" -ge "${max_attempts}" ]]; then
+              echo "Gradle failed after ${max_attempts} attempts."
               exit 1
             fi
-            echo "Gradle failed; waiting \${delay}s before retrying Maven/Gradle dependency resolution."
+            echo "Gradle failed; waiting ${delay}s before retrying dependency resolution."
             sleep "$delay"
             delay=$((delay * 2))
           done
@@ -152,6 +153,8 @@ jobs:
   instrumentation-tests:
     needs: build-and-unit-test
     runs-on: ubuntu-latest
+    env:
+      GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -295,7 +298,7 @@ jobs:
           adb install app/build/outputs/apk/debug/app-debug.apk
           test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_PREVIOUS_VERSION_CODE}"
           sed -i "s/versionCode = ${FL_PREVIOUS_VERSION_CODE}/versionCode = ${FL_VERSION_CODE}/; s/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/versionName = \"${FL_VERSION_NAME}\"/" app/build.gradle.kts
-          gradle --no-daemon :app:assembleDebug
+          "$RUNNER_TEMP/gradle-retry.sh" :app:assembleDebug
           apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
           test "$(cat "$RUNNER_TEMP/flashlearn-old-cert")" = "$(apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r')"
           adb install -r app/build/outputs/apk/debug/app-debug.apk
