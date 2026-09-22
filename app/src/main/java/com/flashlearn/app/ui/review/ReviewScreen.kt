@@ -21,8 +21,13 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -177,6 +182,13 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
     val selected = quiz.selectedOption
     val correct = quiz.correctAnswerText
     val card = state.card
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val tts = remember { TextToSpeech(context, null) }
+    DisposableEffect(tts) {
+        tts.language = Locale("es", "ES")
+        tts.setSpeechRate(0.92f)
+        onDispose { tts.stop(); tts.shutdown() }
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = MaterialTheme.shapes.large, color = QuizWrongContainer.copy(alpha = .9f)) { Text("${state.wrong} ✕", color = QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) }
         Spacer(Modifier.width(10.dp))
@@ -188,6 +200,13 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            OutlinedButton(
+                onClick = {
+                    tts.language = Locale("es", "ES")
+                    tts.speak(quiz.promptText, TextToSpeech.QUEUE_FLUSH, null, "flashlearn_quiz_prompt")
+                },
+                enabled = !answered
+            ) { Text("🔊 پخش سؤال به اسپانیایی") }
             if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(10.dp)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
             if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(8.dp)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) }
         }
