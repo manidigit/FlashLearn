@@ -220,6 +220,30 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
+      - name: Prepare Gradle retry wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/gradle-retry.sh" <<'BASH'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          attempts=0
+          max_attempts=5
+          delay=15
+          while true; do
+            attempts=$((attempts + 1))
+            echo "Gradle attempt ${attempts}/${max_attempts}: $*"
+            if gradle --no-daemon "$@"; then exit 0; fi
+            if [[ "$attempts" -ge "${max_attempts}" ]]; then
+              echo "Gradle failed after ${max_attempts} attempts."
+              exit 1
+            fi
+            echo "Gradle failed; waiting ${delay}s before retrying dependency resolution."
+            sleep "$delay"
+            delay=$((delay * 2))
+          done
+          BASH
+          chmod 700 "$RUNNER_TEMP/gradle-retry.sh"
       - name: Enable KVM group permissions
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
