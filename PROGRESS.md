@@ -1,3 +1,9 @@
+## v6.03 — Review UI modernization + CI alignment
+- Review UI modernization checkpoint recorded.
+- Release identity: 6.03 / 103.
+- CI release gate synchronized with 6.03/103 and previous 6.02/102.
+- GitHub Actions remains the build/test verification gate.
+
 # FlashLearn — PROGRESS TRACKER
 
 ## Current checkpoint: v6.01
