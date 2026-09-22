@@ -24,6 +24,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+enum class ActivityRange(val label: String, val days: Int?) {
+    WEEK("هفتگی", 7),
+    MONTH("ماهانه", 30),
+    THREE_MONTHS("سه‌ماهه", 90),
+    ALL("همه", null)
+}
+
+data class ActivityReviewStat(val label: String, val total: Int, val correct: Int)
+
 data class DailyReviewStat(val dayLabel: String, val total: Int, val correct: Int) {
     val accuracyPercent: Int get() = if (total == 0) 0 else (correct * 100) / total
 }
@@ -40,6 +49,8 @@ data class ProgressUiState(
     val streak: StreakSnapshot? = null,
     val achievements: List<Pair<AchievementDefinition, AchievementState>> = emptyList(),
     val dailyReviews: List<DailyReviewStat> = emptyList(),
+    val activityRange: ActivityRange = ActivityRange.WEEK,
+    val activityReviews: List<ActivityReviewStat> = emptyList(),
     val todayReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
     val weekReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
     val monthReviews: ReviewPeriodStat = ReviewPeriodStat(0, 0),
@@ -63,6 +74,11 @@ class ProgressViewModel @Inject constructor(
     private var refreshGeneration = 0L
 
     init { refresh() }
+
+    fun setActivityRange(range: ActivityRange) {
+        _state.value = _state.value.copy(activityRange = range)
+        refresh()
+    }
 
     fun refresh(now: Instant = Instant.now(), zoneId: ZoneId = ZoneId.systemDefault()) {
         val generation = ++refreshGeneration
@@ -110,8 +126,9 @@ class ProgressViewModel @Inject constructor(
                     val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
                     DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                 }
+                val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)
                 ProgressPayload(
-                    progress, progressPercentage, summary, stats, streak, achievements, daily,
+                    progress, progressPercentage, summary, stats, streak, achievements, daily, initialActivity,
                     ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
                     ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
                     ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
@@ -127,6 +144,8 @@ class ProgressViewModel @Inject constructor(
                         streak = payload.streak,
                         achievements = payload.achievements,
                         dailyReviews = payload.dailyReviews,
+                        activityRange = _state.value.activityRange,
+                        activityReviews = payload.activityReviews,
                         todayReviews = payload.todayReviews,
                         weekReviews = payload.weekReviews,
                         monthReviews = payload.monthReviews,
@@ -148,7 +167,38 @@ private data class ProgressPayload(
     val streak: StreakSnapshot,
     val achievements: List<Pair<AchievementDefinition, AchievementState>>,
     val dailyReviews: List<DailyReviewStat>,
+    val activityReviews: List<ActivityReviewStat>,
     val todayReviews: ReviewPeriodStat,
     val weekReviews: ReviewPeriodStat,
     val monthReviews: ReviewPeriodStat
 )
+
+private fun buildActivityData(
+    history: List<com.flashlearn.domain.model.ReviewHistory>,
+    today: java.time.LocalDate,
+    zoneId: ZoneId,
+    range: ActivityRange
+): List<ActivityReviewStat> {
+    val start = range.days?.let { today.minusDays((it - 1).toLong()) }
+    val filtered = history.filter {
+        val date = it.reviewedAt.atZone(zoneId).toLocalDate()
+        start == null || (!date.isBefore(start) && !date.isAfter(today))
+    }
+    if (filtered.isEmpty()) return emptyList()
+    if (range == ActivityRange.ALL) {
+        val grouped = filtered.groupBy { it.reviewedAt.atZone(zoneId).toLocalDate().with(java.time.DayOfWeek.MONDAY) }
+        return grouped.toSortedMap().map { (date, entries) ->
+            ActivityReviewStat(date.monthValue.toString() + "/" + date.dayOfMonth, entries.size, entries.count { it.isCorrect })
+        }
+    }
+    val days = range.days ?: 7
+    return (days - 1 downTo 0).map { offset ->
+        val date = today.minusDays(offset.toLong())
+        val entries = filtered.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
+        val label = when (range) {
+            ActivityRange.WEEK -> listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")[date.dayOfWeek.value - 1]
+            else -> date.monthValue.toString() + "/" + date.dayOfMonth
+        }
+        ActivityReviewStat(label, entries.size, entries.count { it.isCorrect })
+    }
+}
