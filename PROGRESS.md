@@ -41,6 +41,13 @@
 
 # FlashLearn — PROGRESS TRACKER
 
+## v6.08 — Review Direction Binding
+- Completed a second-pass audit of the Review direction chain: settings state → persisted preference → MainActivity `LocalLayoutDirection` → Review UI.
+- Identified the remaining ambiguity: `TextAlign.Start` can resolve from the text's natural bidi direction, so it did not explicitly bind Persian Review text to the user's selected UI direction.
+- Review text alignment now resolves explicitly to physical right for RTL and physical left for LTR.
+- Fixed stale runtime version assertions (`6.05/105` → `6.07/107`).
+
+
 ## Current checkpoint: v6.01
 - Latest dashboard correction: review activity chart now has a visible review-count Y-axis and selectable weekly/monthly/three-month/all-history ranges.
 - Learning progress remains 0% until the first real review of a concept; stage-based scoring applies only after review history exists.
