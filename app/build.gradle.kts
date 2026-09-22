@@ -15,16 +15,16 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 104
-        versionName = "6.04"
+        versionCode = 105
+        versionName = "6.05"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
-        buildConfigField("String", "APP_LANGUAGE", "\"Kotlin\"")
-        buildConfigField("String", "APP_DATABASE", "\"Room\"")
-        buildConfigField("String", "APP_AI_ASSISTANT", "\"AI-assisted development\"")
-        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"${LocalDate.now()}\"")
+        buildConfigField("String", "APP_AUTHOR", ""FlashLearn"")
+        buildConfigField("String", "APP_LANGUAGE", ""Kotlin"")
+        buildConfigField("String", "APP_DATABASE", ""Room"")
+        buildConfigField("String", "APP_AI_ASSISTANT", ""AI-assisted development"")
+        buildConfigField("String", "APP_GITHUB_URL", ""https://github.com/manidigit/FlashLearn"")
+        buildConfigField("String", "APP_BUILD_DATE", ""${LocalDate.now()}"")
     }
 
     signingConfigs {
