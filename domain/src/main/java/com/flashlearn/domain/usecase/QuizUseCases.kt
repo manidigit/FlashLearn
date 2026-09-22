@@ -123,8 +123,11 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         }
         val contentsByConcept = snapshot.contents.groupBy { it.conceptId }
         val conceptContents = contentsByConcept[concept.id].orEmpty()
+        // Quiz prompts are always Spanish. The answer language is still controlled
+        // by the active target language, which gives the two documented modes:
+        // Spanish -> Spanish (Word Recognition) and Spanish -> Persian (Meaning Recognition).
         val prompt = conceptContents.firstOrNull {
-            it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank()
+            it.languageCode.equals("es", true) && it.text.isNotBlank()
         } ?: return QuizQuestionResult.FlashcardFallback
         val correct = conceptContents.firstOrNull {
             it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()
