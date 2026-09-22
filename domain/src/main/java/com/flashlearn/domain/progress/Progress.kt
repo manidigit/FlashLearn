@@ -47,12 +47,17 @@ class CalculateProgressUseCase @Inject constructor(
 }
 
 object ProgressScoring {
-    fun score(stage: Stage?, hasReviewHistory: Boolean): Int = when (stage) {
-        Stage.LEARNED -> 100
-        Stage.MONTHLY -> 80
-        Stage.WEEKLY -> 60
-        Stage.DAILY -> 35
-        null -> if (hasReviewHistory) 15 else 0
+    fun score(stage: Stage?, hasReviewHistory: Boolean): Int {
+        // A newly imported word may already have an initial DAILY learning state,
+        // but it must not receive learning progress before the first real review.
+        if (!hasReviewHistory) return 0
+        return when (stage) {
+            Stage.LEARNED -> 100
+            Stage.MONTHLY -> 80
+            Stage.WEEKLY -> 60
+            Stage.DAILY -> 35
+            null -> 15
+        }
     }
 }
 
