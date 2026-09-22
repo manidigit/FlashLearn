@@ -1,3 +1,12 @@
+## v6.07 — Complete Review logical-direction correction
+- Advanced application identity to version 6.07 / versionCode 107.
+- Audited the entire ReviewScreen.kt for remaining physical-end alignment assumptions after v6.06.
+- Replaced all remaining Review text TextAlign.End usages with logical TextAlign.Start.
+- Replaced remaining selected-state Alignment.TopEnd anchors with logical Alignment.TopStart.
+- This specifically fixes cases that still rendered Persian Review content or selected badges on the physical left under RTL despite the earlier partial correction.
+- No ReviewViewModel, learning algorithm, scheduling, database, filtering, or quiz semantics were changed.
+- Verification must be based on the new GitHub Actions run and an actual RTL/LTR UI check; source inspection alone is not treated as visual verification.
+
 ## v6.06 — Review RTL Alignment Fix
 - Advanced application identity to version 6.06 / versionCode 106.
 - Fixed the Review setup screen's semantic text/alignment direction so Persian content follows the app-wide RTL setting: logical Start now maps to the right in RTL and to the left in LTR.
