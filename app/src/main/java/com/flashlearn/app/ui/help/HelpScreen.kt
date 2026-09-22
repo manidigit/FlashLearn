@@ -40,7 +40,7 @@ fun HelpScreen(onBack: () -> Unit) {
         HelpSection(stringResource(R.string.help_add_word_title), stringResource(R.string.help_add_word_body))
         HelpSection(stringResource(R.string.help_review_title), stringResource(R.string.help_review_body))
         HelpSection(stringResource(R.string.help_library_title), stringResource(R.string.help_library_body))
-        HelpSection(stringResource(R.string.help_settings_title), stringResource(R.string.help_settings_body))
+        HelpSection(stringResource(R.string.help_settings_title_short), stringResource(R.string.help_settings_body))
         HelpSection(stringResource(R.string.help_tts_title), stringResource(R.string.help_tts_body))
 
         Text(
