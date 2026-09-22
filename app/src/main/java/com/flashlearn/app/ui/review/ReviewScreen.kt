@@ -183,15 +183,17 @@ private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty)
     val context = androidx.compose.ui.platform.LocalContext.current
     var ttsReady by remember { mutableStateOf(false) }
     val tts = remember(context) {
-        TextToSpeech(context) { status ->
+        lateinit var engine: TextToSpeech
+        engine = TextToSpeech(context) { status ->
             val spanish = Locale("es", "ES")
             ttsReady = status == TextToSpeech.SUCCESS &&
-                tts.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE
+                engine.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE
             if (ttsReady) {
-                tts.language = spanish
-                tts.setSpeechRate(0.92f)
+                engine.language = spanish
+                engine.setSpeechRate(0.92f)
             }
         }
+        engine
     }
     DisposableEffect(tts) {
         onDispose {
