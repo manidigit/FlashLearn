@@ -46,7 +46,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             TextButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.headlineMedium) }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("آمار و گزارش", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = onSurfaceVariant)
             }
         }
 
@@ -155,7 +155,8 @@ private fun WeeklyChart(
     onRangeSelected: (ActivityRange) -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
-    val surfaceColor = MaterialTheme.colorScheme.surface
+    val outlineColor = MaterialTheme.colorScheme.outline
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -211,7 +212,7 @@ private fun WeeklyChart(
                             for (step in 0..gridSteps) {
                                 val y = chartBottom - chartHeight * step / gridSteps
                                 drawLine(
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = if (step == 0) .35f else .12f),
+                                    color = outlineColor.copy(alpha = if (step == 0) .35f else .12f),
                                     start = Offset(0f, y),
                                     end = Offset(size.width, y),
                                     strokeWidth = 1f
