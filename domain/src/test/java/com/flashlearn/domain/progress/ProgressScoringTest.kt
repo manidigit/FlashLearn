@@ -9,7 +9,8 @@ class ProgressScoringTest {
     fun stageScoresMatchSpecification() {
         assertEquals(0, ProgressScoring.score(null, false))
         assertEquals(15, ProgressScoring.score(null, true))
-        assertEquals(35, ProgressScoring.score(Stage.DAILY, false))
+        assertEquals(0, ProgressScoring.score(Stage.DAILY, false))
+        assertEquals(35, ProgressScoring.score(Stage.DAILY, true))
         assertEquals(60, ProgressScoring.score(Stage.WEEKLY, false))
         assertEquals(80, ProgressScoring.score(Stage.MONTHLY, false))
         assertEquals(100, ProgressScoring.score(Stage.LEARNED, false))
