@@ -1,3 +1,10 @@
+## v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
+- Corrected learning-progress scoring so a newly added word remains at 0% until it has a real review history.
+- Added a visible Y-axis with review-count scale to the review-activity chart.
+- Added activity-range filters for weekly, monthly, three-month, and all-history views.
+- Monthly and three-month views use real review-history data rather than the seven-day slice.
+- Updated the About screen to describe the current statistics/progress dashboard behavior.
+
 ## v6.01 — Project Source / Version / CI Reconciliation
 - Advanced application identity to 6.01 / versionCode 101 as the post-v6.00 audit checkpoint.
 - Recorded the existing Spanish Quiz TTS playback path in the release ledger.
