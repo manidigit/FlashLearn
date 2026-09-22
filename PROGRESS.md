@@ -1,3 +1,12 @@
+## v6.06 checkpoint — Review RTL alignment correction
+- Current application identity: versionName 6.06 / versionCode 106.
+- Root cause confirmed: Review setup used physical-end alignment (TextAlign.End / Alignment.End) for Persian UI, which becomes the left side under RTL; this made the Review screen appear reversed while other screens followed the global direction.
+- Corrected Review setup text alignment to logical Start, which renders on the right in RTL and on the left in LTR.
+- Corrected Review category content alignment and selected-state badge anchoring to logical layout direction.
+- No review algorithms, scheduling rules, database schema, filtering semantics, or quiz behavior were intentionally changed.
+- CI release gate updated to 6.06/106 with 6.05/105 as the previous-version gate.
+- Verification is pending the authoritative GitHub Actions Build/Unit and Instrumentation + Upgrade Gate run.
+
 ## v6.05 checkpoint — Review Setup UI Match + Release/Process Ledger
 - Current application identity: versionName 6.05 / versionCode 105.
 - Recorded the supplied reference-image implementation as the current Review setup UI checkpoint.
