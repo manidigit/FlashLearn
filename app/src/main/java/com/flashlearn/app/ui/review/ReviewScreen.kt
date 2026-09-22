@@ -178,7 +178,6 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
     val tokens = LocalFlashLearnThemeTokens.current
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val leadingTextAlign = if (isRtl) TextAlign.Right else TextAlign.Left
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val selectedCount = state.selectedCategoryIds.size
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selectedCount > 0) 2.dp else 1.dp, if (selectedCount > 0) LocalFlashLearnThemeTokens.current.primary.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding - 4.dp, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
