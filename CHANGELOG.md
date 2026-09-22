@@ -1,3 +1,8 @@
+## v6.03 — Review UI modernization + CI release alignment
+- Modernized Review screen iconography, compact controls, and layout-direction handling.
+- Application release identity advanced to version 6.03 / code 103.
+- GitHub Actions release gate aligned with 6.03/103 and previous 6.02/102.
+
 ## v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
 - Corrected learning-progress scoring so a newly added word remains at 0% until it has a real review history.
 - Added a visible Y-axis with review-count scale to the review-activity chart.
