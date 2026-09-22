@@ -53,6 +53,11 @@
 
 # FlashLearn Changelog
 
+## v6.08 — Review Direction Binding
+- Bound Review text alignment to the app-selected RTL/LTR direction instead of relying on the text content's natural bidi direction.
+- Updated the runtime version preflight gate to the current release.
+
+
 ## v6.00 — Quiz Translation Display and Answer Feedback Timing
 - Advanced application identity to 6.00 / versionCode 100.
 - Quiz answer options now display all target-language translations belonging to each Concept, in translation-index order, joined with ` / `.
