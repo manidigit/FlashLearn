@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.06"
-  FL_VERSION_CODE: "106"
-  FL_PREVIOUS_VERSION_NAME: "6.05"
-  FL_PREVIOUS_VERSION_CODE: "105"
+  FL_VERSION_NAME: "6.07"
+  FL_VERSION_CODE: "107"
+  FL_PREVIOUS_VERSION_NAME: "6.06"
+  FL_PREVIOUS_VERSION_CODE: "106"
 
 jobs:
   build-and-unit-test:
@@ -68,15 +68,15 @@ jobs:
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           apksigner verify --verbose "$APK"
-          aapt dump badging "$APK" | grep "versionCode='106'"
+          aapt dump badging "$APK" | grep "versionCode='107'"
       - name: Stage debug APK
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v6.06-debug-apk
-          path: dist/FlashLearn_v6.06_DEBUG.apk
+          name: flashlearn-v6.07-debug-apk
+          path: dist/FlashLearn_v6.07_DEBUG.apk
           if-no-files-found: error
       - name: Stage exact source archive
         run: |
@@ -84,8 +84,8 @@ jobs:
           git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v6.06-source
-          path: dist/FlashLearn_v6.06_SOURCE.zip
+          name: flashlearn-v6.07-source
+          path: dist/FlashLearn_v6.07_SOURCE.zip
           if-no-files-found: error
 
   instrumentation-tests:
