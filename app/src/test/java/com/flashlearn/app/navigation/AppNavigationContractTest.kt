@@ -25,6 +25,7 @@ class AppNavigationContractTest {
         assertTrue(AppDestination.Home.route == AppRoutes.HOME)
         assertTrue(AppDestination.Review.route == AppRoutes.REVIEW)
         assertTrue(AppDestination.Progress.route == AppRoutes.PROGRESS)
-        assertTrue(AppDestination.Settings.route == AppRoutes.SETTINGS)\n        assertTrue(AppDestination.Help.route == AppRoutes.HELP)
+        assertTrue(AppDestination.Settings.route == AppRoutes.SETTINGS)
+        assertTrue(AppDestination.Help.route == AppRoutes.HELP)
     }
 }
