@@ -51,10 +51,10 @@ jobs:
         run: gradle --no-daemon clean
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug
 
       - name: Unit tests
-        run: ./gradlew --no-daemon test
+        run: gradle --no-daemon test
 
       - name: Verify APK
         run: |
