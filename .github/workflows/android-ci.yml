@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.07"
-  FL_VERSION_CODE: "107"
-  FL_PREVIOUS_VERSION_NAME: "6.06"
-  FL_PREVIOUS_VERSION_CODE: "106"
+  FL_VERSION_NAME: "6.08"
+  FL_VERSION_CODE: "108"
+  FL_PREVIOUS_VERSION_NAME: "6.07"
+  FL_PREVIOUS_VERSION_CODE: "107"
 
 jobs:
   build-and-unit-test:
@@ -75,7 +75,7 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: flashlearn-v6.07-debug-apk
+          name: flashlearn-v6.08-debug-apk
           path: dist/FlashLearn_v6.07_DEBUG.apk
           if-no-files-found: error
       - name: Stage exact source archive
