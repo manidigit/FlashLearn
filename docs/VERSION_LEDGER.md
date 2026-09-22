@@ -4,7 +4,10 @@
 |---|---:|---|---|
 | 5.99 | 99 | Quiz distractor rotation / difficulty bands | Historical |
 | 6.00 | 100 | Quiz translation display + 3-second feedback | Product checkpoint |
-| **6.03** | **103** | Review UI modernization + CI release alignment | Pending GitHub CI |\n| 6.02 | 102 | Theme/Material 3 token audit | Historical |\n| 6.01 | 101 | Education/Help + localization/accessibility/presentation audit + progress/statistics dashboard hardening | Historical |
+| **6.04** | **104** | Review setup UI redesign + global RTL/LTR correction | Pending GitHub CI |
+| 6.03 | 103 | Review UI modernization + CI release alignment | Historical |
+| 6.02 | 102 | Theme/Material 3 token audit | Historical |
+| 6.01 | 101 | Education/Help + localization/accessibility/presentation audit + progress/statistics dashboard hardening | Historical |
 
 ## Historical stage identifiers
 v4.33–v4.39 are specification-stage identifiers preserved for traceability. They are not current Android application versions.
