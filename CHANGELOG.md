@@ -1,3 +1,11 @@
+## v6.06 — Review RTL Alignment Fix
+- Advanced application identity to version 6.06 / versionCode 106.
+- Fixed the Review setup screen's semantic text/alignment direction so Persian content follows the app-wide RTL setting: logical Start now maps to the right in RTL and to the left in LTR.
+- Corrected the Review category content alignment and selected-state badge placement to use logical layout direction rather than physical left/right assumptions.
+- Preserved Review selection behavior, filtering, scheduling, quiz/flashcard behavior, and theme-token usage.
+- Updated GitHub Actions current-version verification to 6.06/106 with 6.05/105 as the previous-version upgrade gate.
+- Verification status: pending the new GitHub Actions Build/Unit and Instrumentation + Upgrade Gate run.
+
 ## v6.05 — Review Setup UI Match + Release/Process Ledger Update
 - Advanced application identity to version 6.05 / versionCode 105.
 - Recorded the supplied reference-image implementation as the current Review setup UI checkpoint: RTL section order, compact selection cards, difficulty/test controls, word-count choices, filtered-word summary, and the primary `شروع مرور` action.
