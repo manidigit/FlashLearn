@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EmojiEvents
@@ -59,7 +61,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
                 item { SummaryTiles(state) }
                 item { LearningMotivationCard(state) }
                 item { RetentionCard(state) }
-                item { WeeklyChart(state.dailyReviews) }
+                item { WeeklyChart(state.activityReviews, state.activityRange, viewModel::setActivityRange) }
                 item { LearningStagesCard(state) }
                 item { DifficultyCard(state) }
                 item { ReviewAccuracyCard(state) }
@@ -147,41 +149,111 @@ private fun LearningMotivationCard(state: ProgressUiState) {
     }
 }
 @Composable
-private fun WeeklyChart(daily: List<DailyReviewStat>) {
-    val tokens = LocalFlashLearnThemeTokens.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
+private fun WeeklyChart(
+    activity: List<ActivityReviewStat>,
+    selectedRange: ActivityRange,
+    onRangeSelected: (ActivityRange) -> Unit
+) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp)) {
-            Text("فعالیت مرور در هفت روز اخیر", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
-            Spacer(Modifier.height(10.dp))
-            if (daily.isEmpty()) {
-                Text("هنوز داده‌ای برای نمایش وجود ندارد.", modifier = Modifier.align(Alignment.End), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("فعالیت مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ActivityRange.entries.forEach { range ->
+                        FilterChip(
+                            selected = range == selectedRange,
+                            onClick = { onRangeSelected(range) },
+                            label = { Text(range.label) }
+                        )
+                    }
+                }
+            }
+            if (activity.isEmpty() || activity.all { it.total == 0 }) {
+                Text(
+                    "هنوز داده‌ای برای نمایش وجود ندارد.",
+                    modifier = Modifier.align(Alignment.End),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             } else {
-                Canvas(Modifier.fillMaxWidth().height(150.dp)) {
-                    val maxValue = max(1, daily.maxOf { it.total })
-                    val left = 12f
-                    val right = size.width - 12f
-                    val top = 12f
-                    val bottom = size.height - 26f
-                    val step = if (daily.size == 1) 0f else (right - left) / (daily.size - 1)
-                    val path = Path()
-                    daily.forEachIndexed { index, item ->
-                        val x = left + step * index
-                        val y = bottom - (item.total.toFloat() / maxValue) * (bottom - top)
-                        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                val maxValue = activity.maxOf { it.total }.coerceAtLeast(1)
+                val axisMax = when {
+                    maxValue <= 5 -> 5
+                    maxValue <= 10 -> 10
+                    else -> ((maxValue + 9) / 10) * 10
+                }
+                val gridSteps = 5
+                val labelStep = if (activity.size <= 7) 1 else if (activity.size <= 14) 2 else 5
+                Row(Modifier.fillMaxWidth().height(210.dp), verticalAlignment = Alignment.Top) {
+                    Column(
+                        modifier = Modifier.width(32.dp).fillMaxHeight().padding(top = 4.dp, bottom = 30.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        for (step in gridSteps downTo 0) {
+                            Text(
+                                fa((axisMax * step) / gridSteps),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    drawPath(path, primaryColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
-                    daily.forEachIndexed { index, item ->
-                        val x = left + step * index
-                        val y = bottom - (item.total.toFloat() / maxValue) * (bottom - top)
-                        drawCircle(surfaceColor, 7f, Offset(x, y))
-                        drawCircle(primaryColor, 5f, Offset(x, y))
+                    Spacer(Modifier.width(6.dp))
+                    Column(Modifier.weight(1f).fillMaxHeight()) {
+                        Canvas(Modifier.fillMaxWidth().weight(1f)) {
+                            val chartTop = 8f
+                            val chartBottom = size.height - 4f
+                            val chartHeight = chartBottom - chartTop
+                            for (step in 0..gridSteps) {
+                                val y = chartBottom - chartHeight * step / gridSteps
+                                drawLine(
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = if (step == 0) .35f else .12f),
+                                    start = Offset(0f, y),
+                                    end = Offset(size.width, y),
+                                    strokeWidth = 1f
+                                )
+                            }
+                            val gap = 8f
+                            val slot = size.width / activity.size
+                            val barWidth = (slot - gap).coerceAtLeast(3f)
+                            activity.forEachIndexed { index, item ->
+                                val barHeight = chartHeight * item.total.toFloat() / axisMax
+                                val left = index * slot + (slot - barWidth) / 2f
+                                val top = chartBottom - barHeight
+                                drawRoundRect(
+                                    color = primaryColor,
+                                    topLeft = Offset(left, top),
+                                    size = androidx.compose.ui.geometry.Size(barWidth, barHeight.coerceAtLeast(2f)),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f)
+                                )
+                            }
+                        }
+                        Row(
+                            Modifier.fillMaxWidth().height(28.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            activity.forEachIndexed { index, item ->
+                                val show = index % labelStep == 0 || index == activity.lastIndex
+                                Text(
+                                    if (show) item.label else "",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                        }
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    daily.forEach { Text(it.dayLabel.take(3), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
+                Text(
+                    "تعداد مرور",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.End)
+                )
             }
         }
     }
