@@ -21,8 +21,6 @@ env:
 jobs:
   build-and-unit-test:
     runs-on: ubuntu-latest
-    env:
-      GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -153,8 +151,6 @@ jobs:
   instrumentation-tests:
     needs: build-and-unit-test
     runs-on: ubuntu-latest
-    env:
-      GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
