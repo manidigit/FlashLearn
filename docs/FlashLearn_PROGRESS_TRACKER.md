@@ -1,3 +1,8 @@
+v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
+- Learning progress now stays at 0% before a concept has any real ReviewHistory entry.
+- Review activity chart now exposes a review-count Y-axis and selectable weekly/monthly/three-month/all-history ranges backed by actual ReviewHistory data.
+- About screen text was updated to reflect the current dashboard behavior.
+
 v6.01 — Project Source / Version / CI Reconciliation
 - Runtime identity advanced to 6.01/101.
 - Historical v4.33–v4.39 labels remain stage history and do not redefine the current application version.
