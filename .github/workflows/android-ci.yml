@@ -88,10 +88,36 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2"
+      - name: Gradle retry wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/gradle-retry.sh" <<'BASH'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          attempts=0
+          max_attempts=5
+          delay=15
+          while true; do
+            attempts=$((attempts + 1))
+            echo "Gradle attempt \${attempts}/\${max_attempts}: $*"
+            if gradle --no-daemon "$@"; then
+              exit 0
+            fi
+            if [[ "$attempts" -ge "$max_attempts" ]]; then
+              echo "Gradle failed after __MAX__ attempts."
+              exit 1
+            fi
+            echo "Gradle failed; waiting \${delay}s before retrying Maven/Gradle dependency resolution."
+            sleep "$delay"
+            delay=$((delay * 2))
+          done
+          BASH
+          chmod 700 "$RUNNER_TEMP/gradle-retry.sh"
       - name: Clean
-        run: gradle --no-daemon clean
+        run: "$RUNNER_TEMP/gradle-retry.sh" clean
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        run: "$RUNNER_TEMP/gradle-retry.sh" assembleDebug
       - name: Verify debug APK signature
         run: apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - name: Verify debug APK version
@@ -102,7 +128,7 @@ jobs:
           ACTUAL_VERSION_CODE="$(aapt dump badging "$APK" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" | head -n 1)"
           test "$ACTUAL_VERSION_CODE" = "${FL_VERSION_CODE}"
       - name: Unit tests
-        run: gradle --no-daemon test
+        run: "$RUNNER_TEMP/gradle-retry.sh" test
       - name: Stage debug APK
         run: |
           mkdir -p dist
@@ -256,12 +282,12 @@ jobs:
           adb start-server
           adb wait-for-device
           adb devices
-          gradle --no-daemon connectedDebugAndroidTest
+          "$RUNNER_TEMP/gradle-retry.sh" connectedDebugAndroidTest
           rm -f app/build/outputs/apk/debug/app-debug.apk
           cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}"
           trap 'cp "$RUNNER_TEMP/build.gradle.kts.v${FL_VERSION_CODE}" app/build.gradle.kts' EXIT
           sed -i "s/versionCode = ${FL_VERSION_CODE}/versionCode = ${FL_PREVIOUS_VERSION_CODE}/; s/versionName = \"${FL_VERSION_NAME}\"/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/" app/build.gradle.kts
-          gradle --no-daemon :app:assembleDebug
+          "$RUNNER_TEMP/gradle-retry.sh" :app:assembleDebug
           apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
           apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep 'Signer #1 certificate SHA-256 digest:' | tr -d '\r' > "$RUNNER_TEMP/flashlearn-old-cert"
           test -s "$RUNNER_TEMP/flashlearn-old-cert"
