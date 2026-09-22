@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlashLearn</string>
+    <string name="action_back">بازگشت</string>
+    <string name="settings_help_title">راهنمای برنامه</string>
+    <string name="settings_help_summary">آموزش مسیرهای اصلی و نحوه استفاده از FlashLearn</string>
+    <string name="help_title">راهنمای FlashLearn</string>
+    <string name="help_get_started_title">شروع کار</string>
+    <string name="help_get_started_body">از خانه هدف مرور را انتخاب کنید. برای مدیریت واژه‌ها وارد کتابخانه شوید و برای تنظیمات ظاهری و یادگیری از بخش تنظیمات استفاده کنید.</string>
+    <string name="help_add_word_title">افزودن واژه</string>
+    <string name="help_add_word_body">می‌توانید واژه‌ها را به‌صورت تکی، گروهی یا از فایل پشتیبان وارد کنید. عملیات افزودن و ورود اطلاعات صرفاً داده‌های واژگان را مدیریت می‌کند.</string>
+    <string name="help_review_title">مرور</string>
+    <string name="help_review_body">مرور شامل فلش‌کارت و آزمون چهارگزینه‌ای است. در آزمون صوتی، سؤال همیشه به زبان اسپانیایی پخش می‌شود. در حالت تشخیص واژه پاسخ‌ها اسپانیایی و در حالت تشخیص معنی پاسخ‌ها فارسی هستند.</string>
+    <string name="help_library_title">کتابخانه</string>
+    <string name="help_library_body">در کتابخانه می‌توانید واژه‌ها را جستجو، فیلتر و مدیریت کنید و جزئیات هر مفهوم را ببینید.</string>
+    <string name="help_settings_title_short">تنظیمات</string>
+    <string name="help_settings_body">تنظیمات برای ظاهر، زبان و گزینه‌های مرور استفاده می‌شود. تغییرات نمایشی و آموزشی نباید سابقه یادگیری یا زمان‌بندی مرور را تغییر دهد.</string>
+    <string name="help_tts_title">پخش صوتی سؤال</string>
+    <string name="help_tts_body">پخش مجدد صوت فقط سؤال فعلی را تکرار می‌کند و سؤال جدید یا تغییر در پاسخ صحیح ایجاد نمی‌کند. در دسترس بودن صدای اسپانیایی به موتور گفتار دستگاه وابسته است.</string>
+    <string name="help_boundary">این راهنما یک لایه آموزشی و نمایشی است و مالک داده‌های یادگیری، سختی، سابقه مرور یا زمان‌بندی نیست.</string>
+</resources>

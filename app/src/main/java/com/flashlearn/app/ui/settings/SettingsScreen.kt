@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.*
 import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -48,6 +50,7 @@ fun SettingsScreen(
     onMaximumReviewCardsChange: (Int) -> Unit = {},
     onBackup: () -> Unit = {},
     onAbout: () -> Unit = {},
+    onHelp: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
@@ -111,7 +114,8 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.compactGap))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(8f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold - 1) }, enabled = difficultyThreshold > 1) { Icon(Icons.Outlined.Remove, "کم کردن") }; Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(difficultyThreshold.toString(), style = MaterialTheme.typography.headlineMedium); Text("پاسخ پیاپی", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; IconButton(onClick = { onDifficultyThresholdChange(difficultyThreshold + 1) }, enabled = difficultyThreshold < 20) { Icon(Icons.Outlined.Add, "زیاد کردن") } } }
         Spacer(Modifier.height(tokens.sectionGap)); Section("داده‌ها"); SettingsRow(Icons.Outlined.Storage, "پشتیبان‌گیری و بازیابی", "ساخت، ذخیره و بازیابی فایل پشتیبان", onBackup)
-        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(Icons.Outlined.Info, "درباره برنامه", "نسخه 5.88 • تاریخچه و به‌روزرسانی‌ها", onAbout)
+        Spacer(Modifier.height(tokens.sectionGap)); Section("راهنما"); SettingsRow(Icons.Outlined.HelpOutline, stringResource(R.string.settings_help_title), stringResource(R.string.settings_help_summary), onHelp)
+        Spacer(Modifier.height(tokens.compactGap)); Section("درباره"); SettingsRow(Icons.Outlined.Info, "درباره برنامه", "تاریخچه و به‌روزرسانی‌ها", onAbout)
     }
 }
 

@@ -32,6 +32,7 @@ import com.flashlearn.app.ui.backup.BackupViewModel
 import com.flashlearn.app.ui.components.FlashLearnShell
 import com.flashlearn.app.ui.home.HomeScreen
 import com.flashlearn.app.ui.home.HomeViewModel
+import com.flashlearn.app.ui.help.HelpScreen
 import com.flashlearn.app.ui.library.CategorySelectionScreen
 import com.flashlearn.app.ui.library.LibraryDetailScreen
 import com.flashlearn.app.ui.library.LibraryDetailViewModel
@@ -91,6 +92,7 @@ class MainActivity : ComponentActivity() {
             }) { TopLevelContent(uiState.selectedRoute) }
         } else {
             when (uiState.selectedRoute) {
+                AppRoutes.HELP -> HelpScreen { appViewModel.navigate(AppRoutes.SETTINGS) }
                 AppRoutes.NEEDS_REVIEW -> NeedsReviewScreen(needsReviewViewModel) { appViewModel.navigate(AppRoutes.HOME) }
                 AppRoutes.ABOUT -> AboutScreen { appViewModel.navigate(AppRoutes.SETTINGS) }
                 AppRoutes.LIBRARY_DETAIL -> uiState.selectedConceptId?.let { id -> LibraryDetailScreen(libraryDetailViewModel, id, languagePair = uiState.languagePair, onBack = { libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }, onDeleted = { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }) }
@@ -129,7 +131,7 @@ class MainActivity : ComponentActivity() {
             AppRoutes.REVIEW -> ReviewSessionContent(viewModel = reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onFinished = { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) })
             AppRoutes.LIBRARY -> LibraryScreenV2(libraryViewModel, uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onHelp = { appViewModel.navigate(AppRoutes.HELP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 
