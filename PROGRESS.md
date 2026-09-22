@@ -1,6 +1,8 @@
 # FlashLearn — PROGRESS TRACKER
 
 ## Current checkpoint: v6.01
+- Latest dashboard correction: review activity chart now has a visible review-count Y-axis and selectable weekly/monthly/three-month/all-history ranges.
+- Learning progress remains 0% until the first real review of a concept; stage-based scoring applies only after review history exists.
 - Runtime identity: versionName 6.01 / versionCode 101.
 - This is a reconciliation/verification checkpoint, not a claim that every historical specification item is present in current source.
 - Historical v4.33–v4.39 labels remain historical stage identifiers, not current app versions.
