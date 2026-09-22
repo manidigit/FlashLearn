@@ -174,7 +174,13 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
 }
 
 @Composable private fun DifficultyTile(label: String, selected: Boolean, difficulty: VocabularyDifficulty, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, vm: ReviewViewModel) {
-    val tint = when (difficulty) { VocabularyDifficulty.EASY -> Color(0xFF39B982); VocabularyDifficulty.MEDIUM -> Color(0xFFFFC84A); VocabularyDifficulty.HARD -> Color(0xFFFF7A3D); VocabularyDifficulty.VERY_HARD -> Color(0xFFE95C73) }
+    val themeTokens = LocalFlashLearnThemeTokens.current
+    val tint = when (difficulty) {
+        VocabularyDifficulty.EASY -> themeTokens.success
+        VocabularyDifficulty.MEDIUM -> themeTokens.warning
+        VocabularyDifficulty.HARD -> themeTokens.error
+        VocabularyDifficulty.VERY_HARD -> themeTokens.error.copy(alpha = .82f)
+    }
     Surface(modifier.height(128.dp).clickable { vm.toggleDifficulty(difficulty) }, shape = MaterialTheme.shapes.extraLarge, color = if (selected) tint.copy(alpha = .07f) else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) tint.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .7f))) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = tint, modifier = Modifier.align(Alignment.TopEnd).padding(7.dp).size(18.dp)); Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(32.dp)); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } }
 }
 
