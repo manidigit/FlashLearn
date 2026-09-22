@@ -46,7 +46,7 @@ jobs:
           keytool -genkeypair -v             -keystore keystore/debug.keystore             -storetype JKS             -storepass android             -keypass androiddebugkey             -alias androiddebugkey             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Android Debug,O=Android,C=US"             -noprompt
 
       - name: Clean
-        run: ./gradlew --no-daemon clean
+        run: gradle --no-daemon clean
 
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
