@@ -15,8 +15,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 105
-        versionName = "6.05"
+        versionCode = 106
+        versionName = "6.06"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "APP_AUTHOR", "\"FlashLearn\"")
