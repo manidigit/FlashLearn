@@ -1,3 +1,12 @@
+## v6.07 checkpoint — Full Review direction audit
+- Current application identity: versionName 6.07 / versionCode 107.
+- v6.06 was insufficient because ReviewScreen.kt still contained multiple TextAlign.End and Alignment.TopEnd usages.
+- Under RTL those logical-end values resolve to the physical left, so the previous fix did not cover the entire Review UI.
+- Re-audited the complete ReviewScreen.kt and replaced remaining physical-end assumptions with logical Start alignment.
+- Updated selected-state badges from TopEnd to TopStart so their position also follows RTL/LTR semantics.
+- No review engine, scheduling, database, filter, or quiz behavior was changed.
+- Visual verification remains explicitly pending: source correctness is not treated as proof that the rendered device UI matches the requirement.
+
 ## v6.06 checkpoint — Review RTL alignment correction
 - Current application identity: versionName 6.06 / versionCode 106.
 - Root cause confirmed: Review setup used physical-end alignment (TextAlign.End / Alignment.End) for Persian UI, which becomes the left side under RTL; this made the Review screen appear reversed while other screens followed the global direction.
