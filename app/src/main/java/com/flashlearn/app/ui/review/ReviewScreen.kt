@@ -22,12 +22,10 @@ import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
