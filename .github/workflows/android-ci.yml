@@ -17,6 +17,7 @@ env:
   FL_VERSION_CODE: "100"
   FL_PREVIOUS_VERSION_NAME: "5.99"
   FL_PREVIOUS_VERSION_CODE: "99"
+  GRADLE_USER_HOME: "${{ runner.temp }}/flashlearn-gradle-home"
 
 jobs:
   build-and-unit-test:
