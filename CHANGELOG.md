@@ -1,3 +1,10 @@
+## v6.04 — Review Setup UI redesign and RTL/LTR correction
+- Reworked the Review setup screen itself: compact card proportions, refined primary action, and distinct semantic icon colors.
+- Removed the Review screen's hard-coded RTL provider so the global app layout direction now controls the screen.
+- Direction-sensitive back/navigation icons now follow RTL/LTR automatically.
+- Application release identity advanced to version 6.04 / code 104.
+- GitHub Actions release gate aligned with 6.04/104 and previous 6.03/103.
+
 ## v6.03 — Review UI modernization + CI release alignment
 - Modernized Review screen iconography, compact controls, and layout-direction handling.
 - Application release identity advanced to version 6.03 / code 103.
