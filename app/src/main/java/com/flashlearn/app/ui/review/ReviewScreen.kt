@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -44,7 +45,26 @@ import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.app.ui.library.CategorySelectionScreen
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
+
+private val QuizSelected: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.primary
+
+private val QuizSelectedContainer: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.primary.copy(alpha = .10f)
+
+private val QuizCorrect: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.success
+
+private val QuizCorrectContainer: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.success.copy(alpha = .10f)
+
+private val QuizWrong: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.error
+
+private val QuizWrongContainer: Color
+    @Composable get() = LocalFlashLearnThemeTokens.current.error.copy(alpha = .10f)
 
 @Composable
 fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDifficulty? = null, quizDifficulty: QuizDifficulty = QuizDifficulty.MEDIUM, onFinished: () -> Unit) {
