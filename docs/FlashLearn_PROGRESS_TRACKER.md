@@ -1,4 +1,12 @@
-v6.00 — Quiz Translation Display and Answer Feedback Timing
+v6.01 — Project Source / Version / CI Reconciliation
+- Runtime identity advanced to 6.01/101.
+- Historical v4.33–v4.39 labels remain stage history and do not redefine the current application version.
+- Existing v6.00 Quiz translation and 3-second feedback behavior remains the current product checkpoint.
+- Existing Spanish Quiz-question TTS playback is now explicitly logged.
+- Build/Unit and Instrumentation are both required for a green release-verification checkpoint.
+- The uploaded v4.39-named certification archive is tracked as a historical artifact with corrected semantic labeling.
+
+## v6.00 — Quiz Translation Display and Answer Feedback Timing
 - Advanced runtime identity to 6.00/100.
 - Quiz options now show all target-language translations for each Concept in translation-index order.
 - Quiz answer feedback remains visible for 3 seconds: wrong selection red, correct answer green, then automatic advance.

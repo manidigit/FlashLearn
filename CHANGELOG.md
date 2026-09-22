@@ -1,3 +1,12 @@
+## v6.01 — Project Source / Version / CI Reconciliation
+- Advanced application identity to 6.01 / versionCode 101 as the post-v6.00 audit checkpoint.
+- Recorded the existing Spanish Quiz TTS playback path in the release ledger.
+- Corrected the ledger so v4.33–v4.39 are historical specification-stage identifiers, not the current application version.
+- Recorded the v6.00 source snapshot and the separately packaged v4.33→Final certification archive as distinct artifacts; filenames do not define runtime version.
+- Restored the CI release gate to the current application version.
+- Restored an Android instrumentation-test job so Build/Unit success is not mistaken for full Android verification.
+- No Room schema, learning algorithm, scheduling contract, parser/import contract, or Quiz answer semantics are intentionally changed by this bookkeeping checkpoint.
+
 # FlashLearn Changelog
 
 ## v6.00 — Quiz Translation Display and Answer Feedback Timing

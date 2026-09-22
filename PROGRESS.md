@@ -1,5 +1,18 @@
 # FlashLearn — PROGRESS TRACKER
 
+## Current checkpoint: v6.01
+- Runtime identity: versionName 6.01 / versionCode 101.
+- This is a reconciliation/verification checkpoint, not a claim that every historical specification item is present in current source.
+- Historical v4.33–v4.39 labels remain historical stage identifiers, not current app versions.
+- Current source contains the v6.00 Quiz translation-display and 3-second feedback behavior.
+- Current Review source also contains Spanish TTS playback for Quiz questions; this is now explicitly logged.
+- GitHub Actions is authoritative for build/test status.
+- Full verification requires Build/Unit, instrumentation, APK verification, and the previous-version upgrade gate.
+- The uploaded archive named with v4.39 is tracked as a historical/documentation package; its filename is not used to infer application version.
+
+### Reconciliation boundary
+The v6.00 source backup and the separately uploaded v4.33→Final source/certification package were audited as separate artifacts. Where source trees differ, the project record must identify the difference rather than silently overwrite one snapshot with another.
+
 ## v5.99 — Quiz Distractor Rotation and Difficulty Bands
 - Advanced application identity to 5.99 / versionCode 99.
 - Added session-level distractor rotation so fresh valid wrong answers are preferred across sequential quiz cards.
