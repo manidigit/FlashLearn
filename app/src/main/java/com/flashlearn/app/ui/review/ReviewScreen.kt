@@ -97,6 +97,7 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
 @Composable
 private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?, onBack: () -> Unit = {}, onOpenCategories: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.sectionGap)) {
         Box(Modifier.fillMaxWidth().height(tokens.controlHeight)) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
@@ -104,7 +105,7 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
                     Icons.Outlined.ArrowBack,
                     contentDescription = "بازگشت",
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.graphicsLayer { scaleX = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f }
+                    modifier = Modifier.graphicsLayer { scaleX = if (isRtl) -1f else 1f }
                 )
             }
             Text("مرور کلمات", modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
@@ -173,6 +174,7 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
 
 @Composable private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val selectedCount = state.selectedCategoryIds.size
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selectedCount > 0) 2.dp else 1.dp, if (selectedCount > 0) LocalFlashLearnThemeTokens.current.primary.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding - 4.dp, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
