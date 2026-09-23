@@ -24,7 +24,7 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
     val allSelected = selected.isEmpty()
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp)) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) { Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) { Text("دسته‌بندی‌ها", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)); Text(if (allSelected) "همه دسته‌ها" else "${toFaDigits(selected.size)} دسته انتخاب شده", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) }
         }
         Spacer(Modifier.height(12.dp))
