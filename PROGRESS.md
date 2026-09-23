@@ -1,3 +1,12 @@
+## v6.15 — Review RTL/LTR regression correction + process reconciliation
+- Runtime identity advanced to **6.15 / versionCode 115**; previous-version upgrade gate is **6.14 / 114**.
+- Root cause traced to the Review redesign reintroducing physical-direction assumptions that had previously been corrected; the global app-wide RTL/LTR mapping was not replaced.
+- Restored logical Review alignment and AutoMirrored navigation behavior, including the shared Review header, without introducing a screen-local LayoutDirection override.
+- No Review engine, scheduling, database schema, parser/import contract, backup/restore contract, or Quiz answer semantics were intentionally changed.
+- Synchronized app/build.gradle.kts, RuntimeGatePreflightTest, .github/workflows/android-ci.yml, README.md, CHANGELOG.md, docs/VERSION_LEDGER.md, and docs/FlashLearn_PROGRESS_TRACKER.md.
+- Added docs/RTL_LTR_REVIEW_REGRESSION_AUDIT_v6.15.md as the focused root-cause/regression record.
+- Verification is **pending** until the v6.15 GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate completes successfully; documentation is not treated as proof of a green build.
+
 
 ## v6.14 — Documentation / Process Reconciliation
 - Runtime identity is **6.14 / versionCode 114** and is aligned in the application build, runtime gate, and CI workflow.
