@@ -28,11 +28,14 @@ import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 @Composable
 fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Column(Modifier.fillMaxSize().background(tokens.background)) {
+    val reviewRoute = selectedRoute == AppRoutes.REVIEW
+    val shellBackground = if (reviewRoute) tokens.reviewBackground else tokens.background
+    val navigationBackground = if (reviewRoute) tokens.reviewNav else tokens.cardColor
+    Column(Modifier.fillMaxSize().background(shellBackground)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
         NavigationBar(
-            modifier = Modifier.fillMaxWidth().height(tokens.navHeight),
-            containerColor = tokens.cardColor,
+            modifier = Modifier.fillMaxWidth().height(if (reviewRoute) tokens.reviewNavHeight else tokens.navHeight),
+            containerColor = navigationBackground,
             tonalElevation = tokens.cardElevation
         ) {
             NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
@@ -48,13 +51,16 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
 private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVector, filledIcon: ImageVector, selectedRoute: String, onNavigate: (String) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val selected = selectedRoute == route
+    val reviewRoute = selectedRoute == AppRoutes.REVIEW
+    val selectedColor = if (reviewRoute) tokens.reviewAccent else tokens.primary
+    val unselectedColor = if (reviewRoute) tokens.reviewMutedText else tokens.onSurfaceVariant
     NavigationBarItem(
         selected = selected,
         onClick = { onNavigate(route) },
         icon = {
             Box(
                 Modifier
-                    .then(if (selected) Modifier.background(tokens.primary.copy(alpha = .12f), MaterialTheme.shapes.medium) else Modifier)
+                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = .12f), MaterialTheme.shapes.medium) else Modifier)
                     .padding(horizontal = tokens.dp(13f), vertical = tokens.dp(6f))
             ) {
                 Icon(
@@ -66,11 +72,11 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
         },
         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = tokens.primary,
-            selectedTextColor = tokens.primary,
+            selectedIconColor = selectedColor,
+            selectedTextColor = selectedColor,
             indicatorColor = Color.Transparent,
-            unselectedIconColor = tokens.onSurfaceVariant,
-            unselectedTextColor = tokens.onSurfaceVariant
+            unselectedIconColor = unselectedColor,
+            unselectedTextColor = unselectedColor
         )
     )
 }
