@@ -1,3 +1,12 @@
+## v6.09 — Global RTL/LTR direction-chain correction
+- Runtime identity advanced to 6.09/109.
+- Confirmed MainActivity as the single global LocalLayoutDirection provider and centralized AppLayoutDirection → Compose LayoutDirection mapping.
+- Removed the fixed RTL CompositionLocalProvider from HomeScreen so no screen-local direction override remains in the audited top-level UI flow.
+- Review leading text/progress alignment now uses logical TextAlign.Start.
+- CI version assertions and artifact paths are aligned to 6.09/109 with 6.08/108 as the previous-version upgrade gate.
+- Added regression coverage for both RTL and LTR direction mapping.
+- Full verification requires the new GitHub Actions Build/Unit and Instrumentation + Upgrade Gate runs.
+
 v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
 - Learning progress now stays at 0% before a concept has any real ReviewHistory entry.
 - Review activity chart now exposes a review-count Y-axis and selectable weekly/monthly/three-month/all-history ranges backed by actual ReviewHistory data.
