@@ -11,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ChevronLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -74,8 +76,8 @@ fun SettingsScreen(
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.dp(12f))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
             Text("تنظیمات", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-            TextButton(onClick = onBack) { Text("←") }
         }
         Spacer(Modifier.height(tokens.compactGap))
         Section("ظاهر برنامه")
@@ -125,4 +127,4 @@ fun SettingsScreen(
 @Composable private fun LanguageLabel(language: LearningLanguage) { val tokens = LocalFlashLearnThemeTokens.current; Row(verticalAlignment = Alignment.CenterVertically) { Text(language.flag); Spacer(Modifier.width(tokens.compactGap)); Text(language.labelFa) } }
 @Composable private fun AppearanceChoice(label: String, mode: AppearanceMode, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: AppearanceMode, onSelect: (AppearanceMode) -> Unit, modifier: Modifier) { val tokens = LocalFlashLearnThemeTokens.current; OutlinedCard(onClick = { onSelect(mode) }, modifier = modifier, colors = CardDefaults.outlinedCardColors(containerColor = if (selected == mode) tokens.primary.copy(alpha = .08f) else tokens.surface), border = BorderStroke(tokens.dp(1f), if (selected == mode) tokens.primary else tokens.outlineColor)) { Column(Modifier.fillMaxWidth().padding(vertical = tokens.dp(10f)), horizontalAlignment = Alignment.CenterHorizontally) { Icon(icon, null, tint = tokens.primary); Spacer(Modifier.height(tokens.compactGap)); Text(label, style = MaterialTheme.typography.labelSmall) } } }
 @Composable private fun AccentChoice(label: String, color: AccentColor, selected: AccentColor, onSelect: (AccentColor) -> Unit, tint: Color) { val tokens = LocalFlashLearnThemeTokens.current; OutlinedCard(onClick = { onSelect(color) }, modifier = Modifier.width(tokens.dp(68f)), border = BorderStroke(tokens.dp(2f), if (selected == color) tint else tokens.outlineColor)) { Column(Modifier.fillMaxWidth().padding(vertical = tokens.dp(7f)), horizontalAlignment = Alignment.CenterHorizontally) { Surface(shape = MaterialTheme.shapes.small, color = tint, modifier = Modifier.size(tokens.dp(22f))) {}; Spacer(Modifier.height(tokens.compactGap)); Text(label, style = MaterialTheme.typography.labelSmall) } } }
-@Composable private fun SettingsRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: String, onClick: (() -> Unit)?, modifier: Modifier = Modifier) { val tokens = LocalFlashLearnThemeTokens.current; Card(modifier = modifier.padding(top = tokens.dp(5f)), shape = MaterialTheme.shapes.medium) { Row(Modifier.fillMaxWidth().clickable(enabled = onClick != null, onClick = { onClick?.invoke() }).padding(horizontal = tokens.dp(12f), vertical = tokens.dp(10f)), verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = tokens.primary); Spacer(Modifier.width(tokens.compactGap)); Column(Modifier.weight(1f)) { Text(title, style = MaterialTheme.typography.titleSmall); Text(value, color = tokens.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) }; if (onClick != null) Text("‹", color = tokens.onSurfaceVariant) } } }
+@Composable private fun SettingsRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: String, onClick: (() -> Unit)?, modifier: Modifier = Modifier) { val tokens = LocalFlashLearnThemeTokens.current; Card(modifier = modifier.padding(top = tokens.dp(5f)), shape = MaterialTheme.shapes.medium) { Row(Modifier.fillMaxWidth().clickable(enabled = onClick != null, onClick = { onClick?.invoke() }).padding(horizontal = tokens.dp(12f), vertical = tokens.dp(10f)), verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = tokens.primary); Spacer(Modifier.width(tokens.compactGap)); Column(Modifier.weight(1f)) { Text(title, style = MaterialTheme.typography.titleSmall); Text(value, color = tokens.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) }; if (onClick != null) Icon(Icons.AutoMirrored.Outlined.ChevronLeft, contentDescription = null, tint = tokens.onSurfaceVariant) } } }
