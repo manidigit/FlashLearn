@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Refresh
@@ -41,7 +41,7 @@ fun AddWordMethodScreen(
     ) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
             }
             Text(
                 "افزودن واژه جدید",
