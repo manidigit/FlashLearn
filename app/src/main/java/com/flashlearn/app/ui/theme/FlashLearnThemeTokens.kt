@@ -15,6 +15,9 @@ data class FlashLearnThemeTokens(
     val elevatedCardColor: Color,
     val primary: Color,
     val secondary: Color,
+    val tertiary: Color,
+    val onBackground: Color,
+    val onPrimary: Color,
     val onSurface: Color,
     val onSurfaceVariant: Color,
     val outlineColor: Color,
@@ -33,17 +36,44 @@ data class FlashLearnThemeTokens(
     val cornerLarge: Dp
 ) {
     fun dp(value: Float): Dp = value.dp
+
+    // Semantic layout tokens. Screens should consume these instead of repeating
+    // raw dp values that represent the design system.
     val screenPadding get() = dp(20f)
+    val screenVerticalPadding get() = dp(12f)
+    val contentPadding get() = dp(16f)
+    val cardPadding get() = dp(16f)
+    val compactPadding get() = dp(8f)
+    val tinyGap get() = dp(4f)
+    val microGap get() = dp(6f)
     val contentGap get() = dp(12f)
     val compactGap get() = dp(8f)
     val sectionGap get() = dp(16f)
     val itemGap get() = dp(10f)
+    val headerHeight get() = dp(58f)
+    val headerPadding get() = dp(10f)
+    val controlHeight get() = dp(52f)
+    val buttonHeight get() = dp(52f)
+    val fieldHeight get() = dp(52f)
+    val cardMinHeight get() = dp(84f)
+    val statCardHeight get() = dp(132f)
+    val largeChoiceHeight get() = dp(96f)
+    val mediumChoiceHeight get() = dp(72f)
+    val chartHeight get() = dp(210f)
+    val progressTrackHeight get() = dp(9f)
+    val borderThin get() = dp(1f)
+    val borderStrong get() = dp(2f)
+    val borderEmphasis get() = dp(3f)
+    val iconTileSize get() = dp(48f)
+    val choiceIconSize get() = dp(30f)
     val iconSmall get() = dp(20f)
     val iconMedium get() = dp(24f)
     val iconLarge get() = dp(28f)
-    val controlHeight get() = dp(52f)
     val cardElevation get() = dp(4f * elevationScale)
     val navHeight get() = dp(76f)
+    val smallCorner get() = cornerSmall
+    val mediumCorner get() = cornerMedium
+    val largeCorner get() = cornerLarge
 }
 
 enum class IconStyle { OUTLINED, FILLED }
@@ -57,6 +87,9 @@ val LocalFlashLearnThemeTokens = staticCompositionLocalOf {
         elevatedCardColor = Color.White,
         primary = Color(0xFF7C3AED),
         secondary = Color(0xFF536DFE),
+        tertiary = Color(0xFF536DFE),
+        onBackground = Color(0xFF17141C),
+        onPrimary = Color.White,
         onSurface = Color(0xFF17141C),
         onSurfaceVariant = Color(0xFF68636F),
         outlineColor = Color(0xFFE1DDE7),

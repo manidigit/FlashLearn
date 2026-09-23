@@ -5,7 +5,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.backup.BackupType
 import com.flashlearn.domain.repository.ExportFormat
@@ -64,15 +64,11 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
     ) {
         item {
-            Box(Modifier.fillMaxWidth().height(tokens.navHeight)) {
-                IconButton(onClick = onBack, enabled = !state.busy, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت")
-                }
-                Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("پشتیبان‌گیری و بازیابی", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("حفظ واژه‌ها، پیشرفت و تنظیمات", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant)
-                }
-            }
+            FlashLearnScreenHeader(
+                title = "پشتیبان‌گیری و بازیابی",
+                subtitle = "حفظ واژه‌ها، پیشرفت و تنظیمات",
+                onBack = onBack
+            )
         }
         item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = "بازیابی", subtitle = "اطلاعات قبلی را از یک فایل پشتیبان JSON وارد کن.") }
         item {

@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.MenuBook
@@ -15,6 +14,8 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.*
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,24 +41,19 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                Text("آمار و گزارش", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
-            }
-        }
+        FlashLearnScreenHeader(
+            title = "آمار و گزارش",
+            subtitle = "تصویر واقعی از پیشرفت و نقاط قوت.",
+            onBack = onBack
+        )
 
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                contentPadding = PaddingValues(horizontal = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
+                verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
             ) {
                 item { SummaryTiles(state) }
                 item { LearningMotivationCard(state) }
@@ -78,7 +74,7 @@ private fun SummaryTiles(state: ProgressUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val stats = state.statistics
     val summary = state.summary
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), modifier = Modifier.fillMaxWidth()) {
         SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
         SummaryTile("یادگرفته", fa(summary?.learnedConceptCount ?: 0), Icons.Outlined.School, tokens.success, Modifier.weight(1f))
         SummaryTile("دقت کل", "${fa(stats?.accuracyPercent ?: 0)}٪", Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
@@ -89,9 +85,9 @@ private fun SummaryTiles(state: ProgressUiState) {
 private fun SummaryTile(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, modifier: Modifier) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(modifier, shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = color.copy(alpha = .10f))) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(26.dp))
-            Spacer(Modifier.height(5.dp))
+        Column(Modifier.fillMaxWidth().padding(vertical = tokens.contentGap), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(tokens.iconLarge))
+            Spacer(Modifier.height(tokens.tinyGap))
             Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -104,20 +100,20 @@ private fun RetentionCard(state: ProgressUiState) {
     val stats = state.statistics
     val accuracy = (stats?.accuracyPercent ?: 0).coerceIn(0, 100)
     Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = .08f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.End) {
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.Start) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.ShowChart, null, tint = MaterialTheme.colorScheme.secondary)
-                Spacer(Modifier.width(7.dp))
+                Spacer(Modifier.width(tokens.tinyGap))
                 Text("حفظ ماندگار", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             Text("${fa(accuracy)}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
             LinearProgressIndicator(
                 progress = { accuracy / 100f },
-                modifier = Modifier.fillMaxWidth().height(9.dp).clip(MaterialTheme.shapes.extraSmall),
+                modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
                 color = MaterialTheme.colorScheme.secondary,
                 trackColor = MaterialTheme.colorScheme.surface
             )
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(tokens.dp(7f)))
             Text("${fa(stats?.totalCorrect ?: 0)} پاسخ درست از ${fa(stats?.totalReviews ?: 0)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -132,15 +128,15 @@ private fun LearningMotivationCard(state: ProgressUiState) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.End
+            Modifier.fillMaxWidth().padding(tokens.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(tokens.compactGap),
+            horizontalAlignment = Alignment.Start
         ) {
             Text("پیشرفت یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("${percentage.toInt()}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
             LinearProgressIndicator(
                 progress = { (percentage / 100f).toFloat() },
-                modifier = Modifier.fillMaxWidth().height(9.dp).clip(MaterialTheme.shapes.extraSmall),
+                modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surface
             )
@@ -155,16 +151,17 @@ private fun WeeklyChart(
     selectedRange: ActivityRange,
     onRangeSelected: (ActivityRange) -> Unit
 ) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val primaryColor = MaterialTheme.colorScheme.primary
     val outlineColor = MaterialTheme.colorScheme.outline
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("فعالیت مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Row(
                     Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(tokens.microGap)
                 ) {
                     ActivityRange.entries.forEach { range ->
                         FilterChip(
@@ -178,7 +175,7 @@ private fun WeeklyChart(
             if (activity.isEmpty() || activity.all { it.total == 0 }) {
                 Text(
                     "هنوز داده‌ای برای نمایش وجود ندارد.",
-                    modifier = Modifier.align(Alignment.End),
+                    modifier = Modifier.align(Alignment.Start),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
@@ -190,11 +187,11 @@ private fun WeeklyChart(
                 }
                 val gridSteps = 5
                 val labelStep = if (activity.size <= 7) 1 else if (activity.size <= 14) 2 else 5
-                Row(Modifier.fillMaxWidth().height(210.dp), verticalAlignment = Alignment.Top) {
+                Row(Modifier.fillMaxWidth().height(tokens.dp(210f)), verticalAlignment = Alignment.Top) {
                     Column(
-                        modifier = Modifier.width(32.dp).fillMaxHeight().padding(top = 4.dp, bottom = 30.dp),
+                        modifier = Modifier.width(tokens.dp(32f)).fillMaxHeight().padding(top = tokens.tinyGap, bottom = tokens.dp(30f)),
                         verticalArrangement = Arrangement.SpaceBetween,
-                        horizontalAlignment = Alignment.End
+                        horizontalAlignment = Alignment.Start
                     ) {
                         for (step in gridSteps downTo 0) {
                             Text(
@@ -204,7 +201,7 @@ private fun WeeklyChart(
                             )
                         }
                     }
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(tokens.microGap)
                     Column(Modifier.weight(1f).fillMaxHeight()) {
                         Canvas(Modifier.fillMaxWidth().weight(1f)) {
                             val chartTop = 8f
@@ -235,7 +232,7 @@ private fun WeeklyChart(
                             }
                         }
                         Row(
-                            Modifier.fillMaxWidth().height(28.dp),
+                            Modifier.fillMaxWidth().height(tokens.dp(28f)),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             activity.forEachIndexed { index, item ->
@@ -254,7 +251,7 @@ private fun WeeklyChart(
                     "تعداد مرور",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(Alignment.Start)
                 )
             }
         }
@@ -266,8 +263,8 @@ private fun LearningStagesCard(state: ProgressUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val p = state.progress ?: return
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("مراحل یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
+            Text("مراحل یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             StageRow("روزانه", p.dailyConcepts, MaterialTheme.colorScheme.secondary)
             StageRow("هفتگی", p.weeklyConcepts, MaterialTheme.colorScheme.secondary)
             StageRow("ماهانه", p.monthlyConcepts, MaterialTheme.colorScheme.primary)
@@ -280,10 +277,10 @@ private fun LearningStagesCard(state: ProgressUiState) {
 private fun StageRow(label: String, value: Int, color: Color) {
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(fa(value), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(58.dp))
-        LinearProgressIndicator(progress = { (value / 100f).coerceIn(.03f, 1f) }, modifier = Modifier.weight(1f).height(7.dp).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
-        Spacer(Modifier.width(10.dp))
-        Text(label, modifier = Modifier.width(70.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        Text(fa(value), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(tokens.dp(58f)))
+        LinearProgressIndicator(progress = { (value / 100f).coerceIn(.03f, 1f) }, modifier = Modifier.weight(1f).height(tokens.dp(7f)).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
+        Spacer(Modifier.width(tokens.compactGap))
+        Text(label, modifier = Modifier.width(tokens.dp(70f)), textAlign = androidx.compose.ui.text.style.TextAlign.Start)
     }
 }
 
@@ -298,15 +295,15 @@ private fun DifficultyCard(state: ProgressUiState) {
         "خیلی سخت" to p.veryHardConcepts
     )
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            Text("پروفایل سختی", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.dp(11f))) {
+            Text("پروفایل سختی", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             rows.forEachIndexed { index, row ->
                 val color = listOf(tokens.success, tokens.warning, MaterialTheme.colorScheme.secondary, tokens.error)[index]
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(fa(row.second), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(58.dp))
-                    LinearProgressIndicator(progress = { (row.second / max(1f, rows.maxOf { it.second }.toFloat())).coerceIn(.02f, 1f) }, modifier = Modifier.weight(1f).height(7.dp).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
-                    Spacer(Modifier.width(10.dp))
-                    Text(row.first, modifier = Modifier.width(78.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                    Text(fa(row.second), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(tokens.dp(58f)))
+                    LinearProgressIndicator(progress = { (row.second / max(1f, rows.maxOf { it.second }.toFloat())).coerceIn(.02f, 1f) }, modifier = Modifier.weight(1f).height(tokens.dp(7f)).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
+                    Spacer(Modifier.width(tokens.compactGap))
+                    Text(row.first, modifier = Modifier.width(tokens.dp(78f)), textAlign = androidx.compose.ui.text.style.TextAlign.Start)
                 }
             }
         }
@@ -318,8 +315,8 @@ private fun ReviewAccuracyCard(state: ProgressUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val stats = state.statistics ?: return
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Text("دقت مرور", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.End))
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
+            Text("دقت مرور", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             AccuracyRow("امروز", state.todayReviews.total, state.todayReviews.correct, tokens.success)
             AccuracyRow("این هفته", state.weekReviews.total, state.weekReviews.correct, MaterialTheme.colorScheme.secondary)
             AccuracyRow("این ماه", state.monthReviews.total, state.monthReviews.correct, MaterialTheme.colorScheme.primary)
@@ -332,11 +329,11 @@ private fun ReviewAccuracyCard(state: ProgressUiState) {
 private fun AccuracyRow(label: String, total: Int, correct: Int, color: Color) {
     val tokens = LocalFlashLearnThemeTokens.current
     val percent = if (total == 0) 0 else (correct * 100) / total
-    Row(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(color.copy(alpha = .07f)).padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(color.copy(alpha = .07f)).padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
         Text("${fa(percent)}٪", color = color, fontWeight = FontWeight.Bold)
         Spacer(Modifier.weight(1f))
         Text("${fa(correct)}/${fa(total)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(tokens.contentGap))
         Text(label, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -347,11 +344,11 @@ private fun AchievementsCard(state: ProgressUiState) {
     if (state.achievements.isEmpty()) return
     val unlocked = state.achievements.count { it.second.unlocked }
     Card(shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.EmojiEvents, null, tint = tokens.warning)
-                Spacer(Modifier.width(7.dp))
-                Text("دستاوردها", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                Spacer(Modifier.width(tokens.tinyGap))
+                Text("دستاوردها", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Start)
                 Text(fa(unlocked), color = tokens.warning, fontWeight = FontWeight.Bold)
             }
             state.achievements.forEach { (definition, achievement) ->
@@ -364,9 +361,9 @@ private fun AchievementsCard(state: ProgressUiState) {
 @Composable
 private fun RefreshCard(viewModel: ProgressViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
-    OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth().height(50.dp), shape = MaterialTheme.shapes.small) {
+    OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.small) {
         Icon(Icons.Outlined.Refresh, null)
-        Spacer(Modifier.width(7.dp))
+        Spacer(Modifier.width(tokens.tinyGap))
         Text("به‌روزرسانی آمار")
     }
 }

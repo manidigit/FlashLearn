@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -13,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.components.FlashLearnPrimaryButton
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.LearningLanguage
 import com.flashlearn.domain.model.EntryType
@@ -29,13 +30,10 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair.source.code, languagePair.target.code) }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
-            Text("افزودن واژه", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-        }
-        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        FlashLearnScreenHeader(title = "افزودن واژه", onBack = onBack)
+        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 Box(Modifier.weight(1f)) { LanguageField(state.sourceLanguage, "زبان مبدأ", { targetMenuExpanded = false; sourceMenuExpanded = true }, Modifier.fillMaxWidth()); LanguageMenu(sourceMenuExpanded, { sourceMenuExpanded = false }, state.targetLanguage) { lang -> viewModel.setLanguagePair(lang.code, state.targetLanguage); sourceMenuExpanded = false } }
                 Box(Modifier.weight(1f)) { LanguageField(state.targetLanguage, "زبان مقصد", { sourceMenuExpanded = false; targetMenuExpanded = true }, Modifier.fillMaxWidth()); LanguageMenu(targetMenuExpanded, { targetMenuExpanded = false }, state.sourceLanguage) { lang -> viewModel.setLanguagePair(state.sourceLanguage, lang.code); targetMenuExpanded = false } }
             }
@@ -90,19 +88,27 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
         }
-        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه") }
+        FlashLearnPrimaryButton(
+            onClick = viewModel::save,
+            enabled = state.canSave,
+            modifier = Modifier.fillMaxWidth().padding(tokens.contentPadding)
+        ) {
+            Icon(Icons.Outlined.Save, null)
+            Spacer(Modifier.width(tokens.compactGap))
+            Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه")
+        }
     }
 }
 
 @Composable private fun LanguageField(code: String, label: String, onClick: () -> Unit, modifier: Modifier) {
     val tokens = LocalFlashLearnThemeTokens.current
     val language = LearningLanguage.entries.firstOrNull { it.code == code } ?: LearningLanguage.PERSIAN
-    OutlinedCard(onClick = onClick, modifier = modifier) { Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(7.dp)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } }
+    OutlinedCard(onClick = onClick, modifier = modifier) { Row(Modifier.fillMaxWidth().padding(tokens.compactGap), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(tokens.tinyGap)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } }
 }
 
 @Composable private fun LanguageMenu(expanded: Boolean, dismiss: () -> Unit, excludedCode: String, onSelect: (LearningLanguage) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    DropdownMenu(expanded = expanded, onDismissRequest = dismiss) { LearningLanguage.entries.filter { it.code != excludedCode }.forEach { lang -> DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text(lang.flag); Spacer(Modifier.width(8.dp)); Text(lang.labelFa) } }, onClick = { onSelect(lang) }) } }
+    DropdownMenu(expanded = expanded, onDismissRequest = dismiss) { LearningLanguage.entries.filter { it.code != excludedCode }.forEach { lang -> DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text(lang.flag); Spacer(Modifier.width(tokens.compactGap)); Text(lang.labelFa) } }, onClick = { onSelect(lang) }) } }
 }
 
 private fun EntryType.labelFa(): String = when (this) { EntryType.WORD -> "واژه"; EntryType.PHRASE -> "عبارت"; EntryType.SENTENCE -> "جمله"; EntryType.IDIOM -> "اصطلاح"; EntryType.COLLOCATION -> "هم‌آیند"; EntryType.STRUCTURE -> "ساختار" }

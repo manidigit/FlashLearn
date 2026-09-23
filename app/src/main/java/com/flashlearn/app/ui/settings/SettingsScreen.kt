@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +22,8 @@ import androidx.compose.ui.res.stringResource
 import com.flashlearn.app.R
 import com.flashlearn.app.ui.*
 import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.components.FlashLearnBackButton
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.VocabularyDifficulty
@@ -76,7 +77,7 @@ fun SettingsScreen(
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.dp(12f))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
+            FlashLearnBackButton(onBack)
             Text("تنظیمات", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
         }
         Spacer(Modifier.height(tokens.compactGap))

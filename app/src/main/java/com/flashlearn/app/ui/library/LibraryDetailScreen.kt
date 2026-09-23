@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.Star
@@ -16,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.LearningLanguage
 import com.flashlearn.domain.model.Category
@@ -94,7 +95,8 @@ class LibraryDetailViewModel @Inject constructor(
 }
 
 @Composable
-fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {}) {
+fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {
+    val tokens = LocalFlashLearnThemeTokens.current}) {
     LaunchedEffect(conceptId, languagePair) { viewModel.load(conceptId, languagePair.source.code, languagePair.target.code) }
     val item by viewModel.item.collectAsState()
     val categories by viewModel.categories.collectAsState()
@@ -128,13 +130,10 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
     }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
-            Text("جزئیات لغت", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-        }
-        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        FlashLearnScreenHeader(title = "جزئیات لغت", onBack = onBack)
+        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 ReadOnlyLanguageField(languagePair.source.code, "زبان مبدأ", Modifier.weight(1f))
                 ReadOnlyLanguageField(languagePair.target.code, "زبان مقصد", Modifier.weight(1f))
             }
@@ -167,11 +166,11 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
                 DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) { EntryType.entries.forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { entryType = type; typeMenuExpanded = false }) } }
             }
             OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(48.dp)) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
                 OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(48.dp)) { Text("انصراف") }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
                 OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(6.dp)); Text("حذف") }
             }

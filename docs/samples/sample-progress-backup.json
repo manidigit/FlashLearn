@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "exportedAt": "2026-09-23T09:30:00Z",
+  "backupType": "PROGRESS",
+  "learningStates": [
+    {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "conceptId": "11111111-1111-1111-1111-111111111111",
+      "stage": "DAILY",
+      "nextReviewAt": "2026-09-23T09:30:00Z",
+      "monthlyWrongCount": 0,
+      "hasPathFailure": false,
+      "totalCorrect": 0,
+      "totalWrong": 0,
+      "lastReviewedAt": null
+    }
+  ],
+  "difficultyStates": [
+    {
+      "id": "55555555-5555-5555-5555-555555555555",
+      "conceptId": "11111111-1111-1111-1111-111111111111",
+      "current": "EASY",
+      "consecutiveCorrect": 0,
+      "consecutiveWrong": 0,
+      "hasReachedVeryHard": false
+    }
+  ],
+  "reviewSessions": [],
+  "reviewHistory": []
+}

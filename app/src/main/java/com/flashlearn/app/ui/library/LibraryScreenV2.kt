@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.VocabularyDifficulty
 import java.util.UUID
@@ -39,12 +39,7 @@ fun LibraryScreenV2(
     Column(
         Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(8f))
     ) {
-        Box(Modifier.fillMaxWidth().height(tokens.dp(58f))) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface)
-            }
-            Text("واژگان", Modifier.align(Alignment.Center), color = tokens.onSurface, style = MaterialTheme.typography.headlineMedium)
-        }
+        FlashLearnScreenHeader(title = "واژگان", onBack = onBack)
 
         OutlinedTextField(
             value = state.query,

@@ -1,3 +1,14 @@
+# FlashLearn Changelog
+
+## v6.13 — Root Theme + Design System centralization
+- Advanced application identity to version 6.13 / versionCode 113.
+- Centralized semantic theme tokens for colors, dimensions, shapes, elevation, and icon style.
+- Added shared ScreenHeader/back-button/primary-button/card components and migrated target screens.
+- Hardened RTL/LTR navigation semantics and removed directional workarounds.
+- Added Theme × RTL/LTR instrumentation coverage and a CI static regression audit.
+- Added schema-backed theme/vocabulary/progress/full backup samples.
+
+
 ## v6.12 — Complete RTL/LTR + Theme root-cause hardening
 - Advanced application identity to version 6.12 / versionCode 112.
 - Re-traced the persisted AppLayoutDirection state through AppViewModel → AppUiState → MainActivity → LocalLayoutDirection; the current mapping remains RTL→Compose RTL and LTR→Compose LTR.

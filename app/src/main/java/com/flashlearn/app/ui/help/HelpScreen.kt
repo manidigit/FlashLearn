@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,26 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.R
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
 fun HelpScreen(onBack: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalFlashLearnThemeTokens.current.screenPadding, vertical = LocalFlashLearnThemeTokens.current.screenVerticalPadding),
+        verticalArrangement = Arrangement.spacedBy(LocalFlashLearnThemeTokens.current.contentGap)
     ) {
-        Box(Modifier.fillMaxWidth().height(56.dp)) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.action_back))
-            }
-            Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.School, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.help_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            }
-        }
+        FlashLearnScreenHeader(title = stringResource(R.string.help_title), onBack = onBack)
 
         HelpSection(stringResource(R.string.help_get_started_title), stringResource(R.string.help_get_started_body))
         HelpSection(stringResource(R.string.help_add_word_title), stringResource(R.string.help_add_word_body))

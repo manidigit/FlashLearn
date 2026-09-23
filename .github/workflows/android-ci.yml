@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.12"
-  FL_VERSION_CODE: "112"
-  FL_PREVIOUS_VERSION_NAME: "6.11"
-  FL_PREVIOUS_VERSION_CODE: "111"
+  FL_VERSION_NAME: "6.13"
+  FL_VERSION_CODE: "113"
+  FL_PREVIOUS_VERSION_NAME: "6.12"
+  FL_PREVIOUS_VERSION_CODE: "112"
 
 jobs:
   build-and-unit-test:
@@ -57,6 +57,8 @@ jobs:
             keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
+      - name: Theme + Design System static audit
+        run: python3 tools/theme_design_system_audit.py
       - name: Clean
         run: gradle --no-daemon clean
       - name: Build debug APK

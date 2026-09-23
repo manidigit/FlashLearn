@@ -1,3 +1,10 @@
+
+## v6.13 — Root Theme + Design System centralization
+- Implemented centralized semantic theme tokens and shared UI components.
+- Migrated Add Word, Bulk Import, Backup, Library, Statistics/Progress, and Review target surfaces to shared headers/tokens.
+- Added static regression audit and Theme × RTL/LTR instrumentation coverage.
+- Added schema-backed sample JSON fixtures.
+- Build/CI verification remains pending in this ZIP because no Gradle wrapper is present locally; GitHub Actions is the authoritative gate.
 v6.00 Quiz Translation Display and Answer Feedback Timing completed: quiz options now show all target-language translations per Concept, ordered by translationIndex and joined with " / ". Quiz feedback keeps the selected wrong option red and the correct option green/visible for exactly 3 seconds, then advances automatically. Manual quiz continuation was removed. Regression coverage was added for multi-translation correct and distractor options. Runtime identity is 6.00/100; Room schema remains v5.
 
 v5.52 Progress/Statistics + E2E completed: Progress aggregation, ReviewHistory statistics, calendar-day streaks, Progress UI integration, and the end-to-end Add Word → Review → Progress/Statistics → soft-delete acceptance path were audited and regression-covered. Runtime identity is 5.52/52; Room schema remains v5.

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Group
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.library.LibraryUiState
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
@@ -38,28 +38,21 @@ fun AddWordMethodScreen(
         Modifier
             .fillMaxSize()
             .background(tokens.background)
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = tokens.screenPadding, vertical = tokens.screenVerticalPadding)
     ) {
-        Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
-            }
-            Text(
-                "افزودن واژه جدید",
-                modifier = Modifier.align(Alignment.Center),
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-        Spacer(Modifier.height(12.dp))
+        FlashLearnScreenHeader(
+            title = "افزودن واژه جدید",
+            onBack = onBack
+        )
+        Spacer(Modifier.height(tokens.compactGap))
         MethodCard("لغات تکی", "افزودن یک واژه جدید", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .07f), Icons.Outlined.Description, onSingleWord)
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(tokens.itemGap + tokens.compactGap))
         MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = .07f), Icons.Outlined.Group, onBulkWords)
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(tokens.itemGap + tokens.compactGap))
         MethodCard("ریستور بکاپ", "بازیابی واژه‌ها و اطلاعات از فایل پشتیبان", tokens.success, tokens.success.copy(alpha = .07f), Icons.Outlined.Restore, onRestoreBackup)
-        Spacer(Modifier.height(18.dp))
-        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
-            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.height(tokens.sectionGap))
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(tokens.dp(1f), MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
+            Row(Modifier.fillMaxWidth().padding(tokens.contentGap), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
                 StatAction(Icons.Outlined.Search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
                 StatAction(Icons.Outlined.Refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -74,26 +67,28 @@ fun AddWordMethodScreen(
 
 @Composable
 private fun MethodCard(title: String, subtitle: String, color: Color, background: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().height(132.dp).clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = background), border = BorderStroke(1.dp, color.copy(alpha = .24f))) {
-        Row(Modifier.fillMaxSize().padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = title, tint = color, modifier = Modifier.size(42.dp))
-            Spacer(Modifier.width(18.dp))
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.End)
-                Spacer(Modifier.height(6.dp))
-                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
+    val tokens = LocalFlashLearnThemeTokens.current
+    Card(Modifier.fillMaxWidth().height(tokens.dp(132f)).clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = background), border = BorderStroke(tokens.dp(1f), color.copy(alpha = .24f))) {
+        Row(Modifier.fillMaxSize().padding(horizontal = tokens.dp(22f)), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = title, tint = color, modifier = Modifier.size(tokens.dp(42f)))
+            Spacer(Modifier.width(tokens.contentGap))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
+                Spacer(Modifier.height(tokens.microGap))
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
             }
-            Spacer(Modifier.width(12.dp))
-            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(tokens.contentGap))
+            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, contentDescription = null, tint = color, modifier = Modifier.size(tokens.iconLarge))
         }
     }
 }
 
 @Composable
 private fun StatAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit, modifier: Modifier) {
-    FilledTonalButton(onClick = onClick, modifier = modifier.height(72.dp), shape = MaterialTheme.shapes.medium) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    FilledTonalButton(onClick = onClick, modifier = modifier.height(tokens.largeChoiceHeight), shape = MaterialTheme.shapes.medium) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, contentDescription = label, modifier = Modifier.size(25.dp))
+            Icon(icon, contentDescription = label, modifier = Modifier.size(tokens.iconLarge))
             Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
         }
     }

@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,22 +23,23 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
     val tokens = LocalFlashLearnThemeTokens.current
     var selected by remember(selectedIds) { mutableStateOf(selectedIds) }
     val allSelected = selected.isEmpty()
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp)) {
-        Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = MaterialTheme.colorScheme.onSurface) }
-            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) { Text("دسته‌بندی‌ها", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)); Text(if (allSelected) "همه دسته‌ها" else "${toFaDigits(selected.size)} دسته انتخاب شده", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) }
-        }
-        Spacer(Modifier.height(12.dp))
+    Column(Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.screenVerticalPadding)) {
+        FlashLearnScreenHeader(
+            title = "دسته‌بندی‌ها",
+            subtitle = if (allSelected) "همه دسته‌ها" else "${toFaDigits(selected.size)} دسته انتخاب شده",
+            onBack = onBack
+        )
+        Spacer(Modifier.height(tokens.compactGap))
         CategoryRow("همه دسته‌ها", "${toFaDigits(allCount)} لغت", allSelected) { selected = emptySet() }
-        Spacer(Modifier.height(16.dp))
-        Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.End)
-        Spacer(Modifier.height(8.dp))
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
+        Spacer(Modifier.height(tokens.sectionGap))
+        Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
+        Spacer(Modifier.height(tokens.compactGap))
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.itemGap), contentPadding = PaddingValues(bottom = 12.dp)) {
             items(categories, key = { it.id }) { category -> CategoryRow(category.name, "${toFaDigits(counts[category.id] ?: 0)} لغت", category.id in selected) { selected = if (category.id in selected) selected - category.id else selected + category.id } }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(54.dp), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = MaterialTheme.colorScheme.primary) }
-            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(54.dp), shape = MaterialTheme.shapes.large) { Text("اعمال ✓") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
+            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = MaterialTheme.colorScheme.primary) }
+            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("اعمال ✓") }
         }
     }
 }
@@ -47,10 +48,10 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
 private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val icon = categoryIcon(title)
-    Card(onClick = onClick, Modifier.fillMaxWidth().height(84.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = androidx.compose.foundation.BorderStroke(1.dp, if (checked) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outlineVariant)) {
-        Row(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+    Card(onClick = onClick, Modifier.fillMaxWidth().height(tokens.cardMinHeight), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = androidx.compose.foundation.BorderStroke(tokens.dp(1f), if (checked) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.fillMaxSize().padding(horizontal = tokens.contentGap), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = checked, onCheckedChange = { onClick() }, colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)); Spacer(Modifier.weight(1f))
-            Column(Modifier.weight(3f), horizontalAlignment = Alignment.End) { Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+            Column(Modifier.weight(3f), horizontalAlignment = Alignment.Start) { Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(27.dp)) } }
         }
     }

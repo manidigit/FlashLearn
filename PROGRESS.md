@@ -1,3 +1,10 @@
+
+## v6.13 — Root Theme + Design System centralization
+- Implemented centralized semantic theme tokens and shared UI components.
+- Migrated Add Word, Bulk Import, Backup, Library, Statistics/Progress, and Review target surfaces to shared headers/tokens.
+- Added static regression audit and Theme × RTL/LTR instrumentation coverage.
+- Added schema-backed sample JSON fixtures.
+- Build/CI verification remains pending in this ZIP because no Gradle wrapper is present locally; GitHub Actions is the authoritative gate.
 ## v6.12 checkpoint — RTL/LTR + Theme root-cause hardening
 - Current application identity: versionName 6.12 / versionCode 112.
 - Re-audited the full direction chain: persisted layout preference → AppLayoutDirection → AppViewModel/AppUiState → MainActivity → LocalLayoutDirection → navigation/screens/components.
