@@ -1,3 +1,10 @@
+## v6.11 — CI release-artifact and verification hardening
+- Advanced application identity to version 6.11 / versionCode 111.
+- Fixed the current GitHub Actions failure: Build + Unit Test was green through APK verification, but artifact upload referenced stale v6.09 filenames and stopped the job before the instrumentation gate.
+- Aligned CI current/previous version variables with 6.11/111 and 6.10/110.
+- Made CI artifact names and paths derive from the current release variables so a future version bump cannot silently leave stale artifact paths behind.
+- Kept the verified v6.09 global RTL/LTR root-chain correction and v6.10 navigation-direction hardening unchanged.
+
 ## v6.10 — RTL/LTR navigation consistency across secondary screens
 - Advanced application identity to version 6.10 / versionCode 110.
 - Audited Add Word, Bulk Import, Backup Restore, Vocabulary, and Statistics/Progress screens for direction-sensitive navigation.
