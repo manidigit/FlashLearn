@@ -1,3 +1,13 @@
+## v6.12 checkpoint — RTL/LTR + Theme root-cause hardening
+- Current application identity: versionName 6.12 / versionCode 112.
+- Re-audited the full direction chain: persisted layout preference → AppLayoutDirection → AppViewModel/AppUiState → MainActivity → LocalLayoutDirection → navigation/screens/components.
+- Global mapping remains explicit and correct: RTL → Compose RTL; LTR → Compose LTR.
+- Re-audited Home regression: no screen-local hard-coded LayoutDirection override remains in the current Home source.
+- Hardened shared and target-screen navigation placement/glyphs with logical leading placement and AutoMirrored back/chevron icons.
+- Hardened semantic text alignment in Bulk Import, Backup Restore, Library, and related target UI so LTR does not inherit Persian trailing alignment and RTL does not place leading content on the physical left.
+- Added instrumentation coverage for the RTL/LTR × Light/Dark root matrix with mixed Persian/English/digit text.
+- Build/Unit/Instrumentation/CI verification is pending for v6.12; this checkpoint is not marked complete until GitHub Actions is green.
+
 ## v6.11 checkpoint — CI artifact path failure resolved
 - Current application identity: versionName 6.11 / versionCode 111.
 - Verified against GitHub Actions run 1136: Gradle build, unit tests, and APK verification all passed; the failure was specifically the artifact-upload step because it still referenced stale v6.09 filenames while the staging step produced v6.10 filenames.
