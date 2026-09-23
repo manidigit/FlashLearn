@@ -40,7 +40,7 @@ fun LibraryScreenV2(
     ) {
         Box(Modifier.fillMaxWidth().height(tokens.dp(58f))) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface)
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface)
             }
             Text("واژگان", Modifier.align(Alignment.Center), color = tokens.onSurface, style = MaterialTheme.typography.headlineMedium)
         }
@@ -86,7 +86,7 @@ fun LibraryScreenV2(
             border = BorderStroke(tokens.dp(1f), tokens.outlineColor)
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(12f)), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ArrowBack, "انتخاب دسته", tint = tokens.onSurface)
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "انتخاب دسته", tint = tokens.onSurface)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
                     Text("دسته‌بندی‌ها", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
