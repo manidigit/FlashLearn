@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -27,7 +27,7 @@ fun HelpScreen(onBack: () -> Unit) {
                 onClick = onBack,
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.School, contentDescription = null)
