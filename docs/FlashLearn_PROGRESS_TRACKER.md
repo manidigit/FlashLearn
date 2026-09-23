@@ -1,3 +1,11 @@
+# v6.16 Review Compose compatibility checkpoint
+- Runtime identity: 6.16 / 116.
+- Previous gate: 6.15 / 115.
+- CI root cause: unavailable AutoMirrored ChevronLeft API under pinned Compose BOM.
+- Corrective implementation: AutoMirrored KeyboardArrowLeft in Review category navigation.
+- RTL/LTR behavior remains logical and mirrored.
+- Verification pending authoritative CI green status.
+
 ## v6.15 — Review RTL/LTR regression correction
 - Current application identity: versionName **6.15** / versionCode **115**.
 - Previous-version upgrade gate: **6.14 / 114**.
