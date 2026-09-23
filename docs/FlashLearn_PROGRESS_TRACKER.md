@@ -1,4 +1,12 @@
 
+## v6.14 — Review setup visual reference implementation
+- Runtime identity advanced to 6.14/114.
+- Supplied Review reference image is now the visual source of truth for the Review setup presentation.
+- Rebuilt the Review setup surface with shared theme tokens and no screen-local parallel palette.
+- Preserved review engine and selection semantics.
+- CI/runtime release gates are aligned to 6.14/114 with 6.13/113 as the previous-version upgrade gate.
+- Verification pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
 - Migrated Add Word, Bulk Import, Backup, Library, Statistics/Progress, and Review target surfaces to shared headers/tokens.
