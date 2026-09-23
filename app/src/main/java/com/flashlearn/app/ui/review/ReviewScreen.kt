@@ -201,19 +201,19 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
 }
 
 @Composable private fun DifficultyTile(label: String, selected: Boolean, difficulty: VocabularyDifficulty, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, vm: ReviewViewModel) {
-    val themeTokens = LocalFlashLearnThemeTokens.current
+    val tokens = LocalFlashLearnThemeTokens.current
     val tint = when (difficulty) {
-        VocabularyDifficulty.EASY -> themeTokens.success
-        VocabularyDifficulty.MEDIUM -> themeTokens.warning
-        VocabularyDifficulty.HARD -> themeTokens.error
-        VocabularyDifficulty.VERY_HARD -> themeTokens.error.copy(alpha = .82f)
+        VocabularyDifficulty.EASY -> tokens.success
+        VocabularyDifficulty.MEDIUM -> tokens.warning
+        VocabularyDifficulty.HARD -> tokens.error
+        VocabularyDifficulty.VERY_HARD -> tokens.error.copy(alpha = .82f)
     }
     Surface(modifier.height(tokens.dp(112f)).clickable { vm.toggleDifficulty(difficulty) }, shape = MaterialTheme.shapes.extraLarge, color = if (selected) tint.copy(alpha = .07f) else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) tokens.borderStrong else tokens.borderThin, if (selected) tint.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = .7f))) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = tint, modifier = Modifier.align(Alignment.TopStart).padding(tokens.dp(7f)).size(18.dp)); Column(Modifier.fillMaxSize().padding(tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(32.dp)); Spacer(Modifier.height(tokens.tinyGap)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } }
 }
 
 private fun difficultyIcon(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> Icons.Outlined.Star; VocabularyDifficulty.MEDIUM -> Icons.Outlined.AutoAwesome; VocabularyDifficulty.HARD -> Icons.Outlined.LocalFireDepartment; VocabularyDifficulty.VERY_HARD -> Icons.Outlined.RocketLaunch }
 
-@Composable private fun QuizLevelTile(label: String, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) { Surface(modifier.height(tokens.dp(96f)).clickable(onClick = onClick), shape = MaterialTheme.shapes.large, color = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) tokens.borderStrong else tokens.borderThin, if (selected) LocalFlashLearnThemeTokens.current.primary.copy(alpha = .7f) else MaterialTheme.colorScheme.outlineVariant)) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = QuizSelected, modifier = Modifier.align(Alignment.TopStart).padding(tokens.dp(7f)).size(18.dp)); Column(Modifier.fillMaxSize().padding(tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tokens.dp(30f))); Spacer(Modifier.height(tokens.tinyGap)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } } }
+@Composable private fun QuizLevelTile(label: String, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) { val tokens = LocalFlashLearnThemeTokens.current; Surface(modifier.height(tokens.dp(96f)).clickable(onClick = onClick), shape = MaterialTheme.shapes.large, color = if (selected) QuizSelectedContainer else MaterialTheme.colorScheme.surface, border = BorderStroke(if (selected) tokens.borderStrong else tokens.borderThin, if (selected) LocalFlashLearnThemeTokens.current.primary.copy(alpha = .7f) else MaterialTheme.colorScheme.outlineVariant)) { Box(Modifier.fillMaxSize()) { if (selected) Icon(Icons.Outlined.DoneAll, null, tint = QuizSelected, modifier = Modifier.align(Alignment.TopStart).padding(tokens.dp(7f)).size(18.dp)); Column(Modifier.fillMaxSize().padding(tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = if (selected) QuizSelected else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tokens.dp(30f))); Spacer(Modifier.height(tokens.tinyGap)); Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) } } } }
 
 @Composable private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
