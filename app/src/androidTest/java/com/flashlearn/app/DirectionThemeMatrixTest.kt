@@ -9,7 +9,6 @@ import androidx.compose.ui.semantics.SemanticsMatcher
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.testTag
 import androidx.compose.ui.unit.LayoutDirection
@@ -18,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppearanceMode
 import com.flashlearn.app.ui.theme.FlashLearnTheme
-import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import androidx.test.ext.junit.runners.AndroidJUnit4
