@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.test.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.Color
 import com.flashlearn.app.ui.AppLayoutDirection
