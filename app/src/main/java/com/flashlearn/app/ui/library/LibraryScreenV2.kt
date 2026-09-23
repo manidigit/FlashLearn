@@ -82,7 +82,7 @@ fun LibraryScreenV2(
             border = BorderStroke(tokens.dp(1f), tokens.outlineColor)
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(12f)), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "انتخاب دسته", tint = tokens.onSurface)
+                Icon(Icons.Outlined.ChevronLeft, "انتخاب دسته", tint = tokens.onSurface)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.Start) {
                     Text("دسته‌بندی‌ها", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
