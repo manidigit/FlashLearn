@@ -36,8 +36,7 @@ fun HomeScreen(
     val weekly = summary?.weeklyDueConceptCount ?: 0
     val monthly = summary?.monthlyDueConceptCount ?: 0
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Column(
+    Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
@@ -92,7 +91,6 @@ fun HomeScreen(
                 Icon(Icons.Outlined.Add, null)
                 Spacer(Modifier.width(8.dp))
                 Text("افزودن واژه")
-            }
         }
     }
 }
