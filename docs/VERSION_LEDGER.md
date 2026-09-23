@@ -1,6 +1,6 @@
 # FlashLearn Version Ledger
 
-| Application version | Version code | Meaning | Verification |\n| **6.09** | **109** | Global RTL/LTR direction-chain correction + CI release alignment | Pending GitHub CI |
+| Application version | Version code | Meaning | Verification |\n| **6.09** | **109** | Global RTL/LTR direction-chain correction + CI release alignment | **Verified — GitHub Actions run 1117 green** |
 |---|---:|---|---|
 | 5.99 | 99 | Quiz distractor rotation / difficulty bands | Historical |
 | 6.00 | 100 | Quiz translation display + 3-second feedback | Product checkpoint |
@@ -18,7 +18,7 @@ v4.33–v4.39 are specification-stage identifiers preserved for traceability. Th
 - The current 6.01 implementation records the applicable work from that specification: Education/Help, localization resources, Spanish-audio quiz contract documentation, and presentation/theme audit alignment.
 - Backup branch was created before implementation: `backup/pre-word-content-implementation-2026-09-22`.
 - Final source changes are grouped under the 6.01 checkpoint rather than creating a separate application version for each document stage.
-- GitHub Actions is the runtime verification gate; documentation alone is never a PASS.
+- GitHub Actions is the runtime verification gate; documentation alone is never a PASS. The v6.09 checkpoint is verified by run 1117: Build + Unit Test and Instrumentation + Upgrade Gate both succeeded.
 
 ## Authoritative numbering sources
 1. app/build.gradle.kts
