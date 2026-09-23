@@ -29,8 +29,8 @@ class ThemeTokenContractTest {
             assertEquals(52f, controlHeight, 0.001f)
             assertEquals(20f, mediumCorner, 0.001f)
             assertTrue(mediumCorner > 0f)
-            assertEquals(118f, reviewHeaderHeight, 0.001f)
-            assertEquals(82f, reviewChoiceHeight, 0.001f)
+            assertEquals(92f, reviewHeaderHeight, 0.001f)
+            assertEquals(58f, reviewChoiceHeight, 0.001f)
         }
     }
 }

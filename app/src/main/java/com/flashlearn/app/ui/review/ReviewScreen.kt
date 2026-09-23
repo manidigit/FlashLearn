@@ -80,9 +80,9 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
     val leadingTextAlign = TextAlign.Start
     Surface(modifier = Modifier.fillMaxSize(), color = tokens.reviewBackground) {
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.compactGap),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.tinyGap),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(tokens.sectionGap)
+        verticalArrangement = Arrangement.spacedBy(tokens.reviewSectionGap)
     ) {
             state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = leadingTextAlign) }
             when {
@@ -137,7 +137,6 @@ private fun ReviewSetup(
                 DifficultyTile("سخت", VocabularyDifficulty.HARD in state.selectedDifficulties, VocabularyDifficulty.HARD, difficultyIcon(VocabularyDifficulty.HARD), Modifier.weight(1f), vm)
                 DifficultyTile("خیلی سخت", VocabularyDifficulty.VERY_HARD in state.selectedDifficulties, VocabularyDifficulty.VERY_HARD, difficultyIcon(VocabularyDifficulty.VERY_HARD), Modifier.weight(1f), vm)
             }
-            ReviewFullChoice("همه سطوح", state.selectedDifficulties.isEmpty()) { vm.toggleDifficulty(null) }
         }
         if (state.selectedMode == ReviewMode.QUIZ) {
             ReviewSectionTitle(6, "سطح دشواری آزمون تستی")
@@ -202,7 +201,7 @@ private fun ReviewHeader(onBack: () -> Unit) {
 @Composable
 private fun ReviewSectionTitle(number: Int, title: String) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Text("$number. $title", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = tokens.reviewText, textAlign = TextAlign.End)
+    Text("$number. $title", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = tokens.reviewText, textAlign = TextAlign.End)
 }
 
 @Composable
