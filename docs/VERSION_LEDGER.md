@@ -18,7 +18,7 @@ v4.33–v4.39 are specification-stage identifiers preserved for traceability. Th
 
 ## Current 6.12 process record
 - v6.12 is the current application checkpoint; v6.00 remains historical product baseline.
-- - The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
+- The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
 - The current 6.01 implementation records the applicable work from that specification: Education/Help, localization resources, Spanish-audio quiz contract documentation, and presentation/theme audit alignment.
 - v6.12 source changes are the current RTL/LTR + Theme root-cause hardening checkpoint.
 - Final source changes are grouped under the current semantic checkpoint rather than creating a separate application version for each document stage.
