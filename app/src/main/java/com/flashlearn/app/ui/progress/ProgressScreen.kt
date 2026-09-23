@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.MenuBook
@@ -43,7 +44,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.headlineMedium) }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text("آمار و گزارش", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("تصویر واقعی از پیشرفت و نقاط قوت.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
