@@ -76,7 +76,7 @@ fun FlashLearnScreenHeader(
                     horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)
                 ) {
                     Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
-                    FlashLearnIcon(AutoAwesome, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewOrnamentIcon))
+                    FlashLearnIcon(Icons.Outlined.AutoAwesome, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewOrnamentIcon))
                     Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
                 }
             }
@@ -89,7 +89,7 @@ fun FlashLearnScreenHeader(
                 shadowElevation = tokens.reviewBackElevation
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    FlashLearnIcon(ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
+                    FlashLearnIcon(Icons.Outlined.ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
                 }
             }
         }
