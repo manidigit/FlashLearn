@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
@@ -61,14 +62,14 @@ fun FlashLearnScreenHeader(
         ) {
             Column(
                 Modifier.weight(1f),
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.End
             ) {
                 Text(
                     title,
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                     color = tokens.reviewText,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -88,7 +89,7 @@ fun FlashLearnScreenHeader(
                 shadowElevation = tokens.reviewBackElevation
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    FlashLearnIcon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
+                    FlashLearnIcon(Icons.Outlined.ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
                 }
             }
         }
