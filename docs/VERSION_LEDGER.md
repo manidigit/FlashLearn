@@ -16,12 +16,12 @@
 ## Historical stage identifiers
 v4.33–v4.39 are specification-stage identifiers preserved for traceability. They are not current Android application versions.
 
-## Current 6.10 process record
-- v6.10 is the current application checkpoint; v6.00 remains historical product baseline.
-- The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
+## Current 6.12 process record
+- v6.12 is the current application checkpoint; v6.00 remains historical product baseline.
+- - The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
 - The current 6.01 implementation records the applicable work from that specification: Education/Help, localization resources, Spanish-audio quiz contract documentation, and presentation/theme audit alignment.
-- Backup branch was created before implementation: `backup/pre-word-content-implementation-2026-09-22`.
-- Final source changes are grouped under the 6.01 checkpoint rather than creating a separate application version for each document stage.
+- v6.12 source changes are the current RTL/LTR + Theme root-cause hardening checkpoint.
+- Final source changes are grouped under the current semantic checkpoint rather than creating a separate application version for each document stage.
 - GitHub Actions is the runtime verification gate; documentation alone is never a PASS. The v6.09 checkpoint is verified by run 1117: Build + Unit Test and Instrumentation + Upgrade Gate both succeeded.
 
 ## Authoritative numbering sources
