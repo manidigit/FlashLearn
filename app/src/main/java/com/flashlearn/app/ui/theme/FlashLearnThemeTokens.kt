@@ -33,7 +33,17 @@ data class FlashLearnThemeTokens(
     val typographyScale: Float,
     val cornerSmall: Dp,
     val cornerMedium: Dp,
-    val cornerLarge: Dp
+    val cornerLarge: Dp,
+    val reviewBackground: Color,
+    val reviewSurface: Color,
+    val reviewSurfaceSelected: Color,
+    val reviewAccent: Color,
+    val reviewText: Color,
+    val reviewMutedText: Color,
+    val reviewBorder: Color,
+    val reviewNav: Color,
+    val reviewButton: Color,
+    val reviewButtonContent: Color
 ) {
     fun dp(value: Float): Dp = value.dp
 
@@ -74,6 +84,38 @@ data class FlashLearnThemeTokens(
     val smallCorner get() = cornerSmall
     val mediumCorner get() = cornerMedium
     val largeCorner get() = cornerLarge
+
+    val reviewHeaderHeight get() = dp(118f)
+    val reviewHeaderGap get() = dp(12f)
+    val reviewBackButtonSize get() = dp(62f)
+    val reviewBackIcon get() = dp(34f)
+    val reviewBackElevation get() = dp(3f)
+    val reviewOrnamentLine get() = dp(46f)
+    val reviewOrnamentHeight get() = dp(2f)
+    val reviewOrnamentIcon get() = dp(14f)
+    val reviewTinyGap get() = dp(3f)
+    val reviewSectionGap get() = dp(12f)
+    val reviewItemGap get() = dp(10f)
+    val reviewChoiceHeight get() = dp(82f)
+    val reviewCategoryHeight get() = dp(78f)
+    val reviewDifficultyHeight get() = dp(82f)
+    val reviewQuizHeight get() = dp(82f)
+    val reviewFullChoiceHeight get() = dp(54f)
+    val reviewCountHeight get() = dp(52f)
+    val reviewCardPadding get() = dp(18f)
+    val reviewCompactPadding get() = dp(10f)
+    val reviewContentPadding get() = dp(18f)
+    val reviewIconLarge get() = dp(34f)
+    val reviewIconMedium get() = dp(24f)
+    val reviewCategoryIconTile get() = dp(48f)
+    val reviewSelectedBadgeInset get() = dp(7f)
+    val reviewSelectedBadgePadding get() = dp(3f)
+    val reviewSelectedBadgeIcon get() = dp(16f)
+    val reviewCardElevation get() = dp(2f)
+    val reviewButtonHeight get() = dp(58f)
+    val reviewPlayCircle get() = dp(34f)
+    val reviewPlayIcon get() = dp(22f)
+    val reviewNavHeight get() = dp(82f)
 }
 
 enum class IconStyle { OUTLINED, FILLED }
@@ -105,6 +147,16 @@ val LocalFlashLearnThemeTokens = staticCompositionLocalOf {
         typographyScale = 1f,
         cornerSmall = 14.dp,
         cornerMedium = 18.dp,
-        cornerLarge = 24.dp
+        cornerLarge = 24.dp,
+        reviewBackground = Color(0xFFFFFBF2),
+        reviewSurface = Color(0xFFFFFDF8),
+        reviewSurfaceSelected = Color(0xFFFFF3D7),
+        reviewAccent = Color(0xFF9B6A1D),
+        reviewText = Color(0xFF3B2515),
+        reviewMutedText = Color(0xFF7A6B5A),
+        reviewBorder = Color(0xFFE4D7C1),
+        reviewNav = Color(0xFFFFF8EA),
+        reviewButton = Color(0xFFA56D12),
+        reviewButtonContent = Color.White
     )
 }
