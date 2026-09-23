@@ -1,5 +1,15 @@
 # FlashLearn Changelog
 
+## v6.14 — Review Setup Reference-Match UI
+- Advanced application identity to version 6.14 / versionCode 114.
+- Rebuilt the Review setup presentation from the supplied reference image: cream background, brown/gold visual language, large RTL title/header, numbered sections, compact choice cards, selected-state badges, category row, difficulty grids, word-count pills, filtered-count summary, and primary start-review action.
+- Added a dedicated Review visual token set to the shared FlashLearn theme-token layer instead of introducing screen-local color constants or arbitrary dimensions.
+- Updated the Review shell navigation colors to use the same visual language while keeping the shared navigation component.
+- Preserved ReviewViewModel selection behavior, review scheduling, filtering semantics, quiz/flashcard behavior, persistence, and database contracts.
+- Updated runtime version assertions, CI current/previous version gates, version ledger, progress records, and release documentation to 6.14/114.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass before this checkpoint is considered complete.
+
+
 ## v6.13 — Root Theme + Design System centralization
 - Advanced application identity to version 6.13 / versionCode 113.
 - Centralized semantic theme tokens for colors, dimensions, shapes, elevation, and icon style.
