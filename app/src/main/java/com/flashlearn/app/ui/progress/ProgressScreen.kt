@@ -15,7 +15,6 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
-import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -201,7 +200,7 @@ private fun WeeklyChart(
                             )
                         }
                     }
-                    Spacer(Modifier.width(tokens.microGap)
+                    Spacer(Modifier.width(tokens.microGap))
                     Column(Modifier.weight(1f).fillMaxHeight()) {
                         Canvas(Modifier.fillMaxWidth().weight(1f)) {
                             val chartTop = 8f
