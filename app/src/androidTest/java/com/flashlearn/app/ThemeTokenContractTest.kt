@@ -16,6 +16,8 @@ class ThemeTokenContractTest {
     fun semanticTokensDriveMaterialShapesAndCoreDimensions() {
         var controlHeight = 0f
         var mediumCorner = 0f
+        var reviewHeaderHeight = 0f
+        var reviewChoiceHeight = 0f
         composeRule.setContent {
             FlashLearnTheme {
                 val tokens = LocalFlashLearnThemeTokens.current
@@ -27,6 +29,8 @@ class ThemeTokenContractTest {
             assertEquals(52f, controlHeight, 0.001f)
             assertEquals(20f, mediumCorner, 0.001f)
             assertTrue(mediumCorner > 0f)
+            assertEquals(118f, reviewHeaderHeight, 0.001f)
+            assertEquals(82f, reviewChoiceHeight, 0.001f)
         }
     }
 }
