@@ -132,3 +132,6 @@ The existing `AppLayoutDirectionTest` continues to assert:
 Source-level root causes identified and fixes applied.
 
 **Not yet marked Complete:** authoritative v6.12 Build + Unit Test, Instrumentation/UI Test, Lint/static analysis, and GitHub Actions green status still need to be observed for the new commits. Source inspection is not being treated as CI or device verification.
+
+
+<!-- CI verification branch: validates the current v6.12 tree without changing application behavior. -->
