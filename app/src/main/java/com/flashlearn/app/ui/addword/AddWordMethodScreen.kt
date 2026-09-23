@@ -40,7 +40,7 @@ fun AddWordMethodScreen(
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
             }
             Text(
@@ -83,7 +83,7 @@ private fun MethodCard(title: String, subtitle: String, color: Color, background
                 Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
             }
             Spacer(Modifier.width(12.dp))
-            Text("‹", color = color, style = MaterialTheme.typography.displaySmall)
+            Icon(Icons.AutoMirrored.Outlined.ChevronLeft, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
         }
     }
 }
