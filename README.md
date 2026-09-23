@@ -41,8 +41,8 @@ FlashLearn/
 
 ## Current release
 
-**Version:** 6.03  
-**Version code:** 103
+**Version:** 6.14  
+**Version code:** 114
 
 The repository uses GitHub Actions as the release/build verification gate. The CI workflow builds the debug APK, runs unit tests, runs instrumentation tests, verifies the APK, and checks the previous-version upgrade path.
 
