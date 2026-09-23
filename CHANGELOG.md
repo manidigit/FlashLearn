@@ -6,7 +6,7 @@
 - Re-audited Review direction-sensitive text alignment and kept logical layout direction as the source of truth.
 - Fixed CI artifact paths so the v6.09 build no longer uploads v6.07-named files.
 - Added regression coverage for both RTL → Compose RTL and LTR → Compose LTR mapping.
-- Verification remains pending until the new GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run completes successfully.
+- Verification: GitHub Actions run 1117 completed successfully; Build + Unit Test and Instrumentation + Upgrade Gate are green.
 
 ## v6.07 — Complete Review logical-direction correction
 - Advanced application identity to version 6.07 / versionCode 107.
