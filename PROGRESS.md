@@ -1,3 +1,11 @@
+## v6.11 checkpoint — CI artifact path failure resolved
+- Current application identity: versionName 6.11 / versionCode 111.
+- Verified against GitHub Actions run 1136: Gradle build, unit tests, and APK verification all passed; the failure was specifically the artifact-upload step because it still referenced stale v6.09 filenames while the staging step produced v6.10 filenames.
+- CI current/previous gates are now 6.11/111 and 6.10/110.
+- CI artifact names and paths now derive from the release variables instead of hard-coded version strings.
+- The v6.09 RTL/LTR root-chain correction remains the current source-level root-cause fix; v6.10 navigation-arrow hardening remains intact.
+- Full release verification is pending the post-fix GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+
 ## v6.10 checkpoint — Secondary-screen RTL/LTR navigation audit
 - Current application identity: versionName 6.10 / versionCode 110.
 - Audited Add Word, Bulk Import, Backup Restore, Vocabulary, and Statistics/Progress.
