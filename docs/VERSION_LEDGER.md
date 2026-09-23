@@ -1,3 +1,12 @@
+## v6.16 — Review Compose icon compatibility hotfix
+- Application version: 6.16
+- Version code: 116
+- Previous version gate: 6.15 / 115
+- Root cause: unsupported `Icons.AutoMirrored.Outlined.ChevronLeft` under pinned Compose BOM 2024.02.00.
+- Fix: compatible `Icons.AutoMirrored.Outlined.KeyboardArrowLeft`, retaining automatic RTL/LTR mirroring.
+- Verification gate: GitHub Actions Build + Unit Test + Instrumentation/Upgrade Gate must pass.
+- No learning algorithm, scheduling, database schema, parser/import, backup/restore, or ReviewViewModel semantics changed.
+
 # FlashLearn Version Ledger
 
 | Application version | Version code | Meaning | Verification |
