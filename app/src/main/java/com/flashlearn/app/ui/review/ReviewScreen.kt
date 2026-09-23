@@ -44,6 +44,8 @@ import com.flashlearn.domain.model.QuizDifficulty
 import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.model.VocabularyDifficulty
 import com.flashlearn.app.ui.library.CategorySelectionScreen
+import com.flashlearn.app.ui.components.FlashLearnScreenHeader
+import com.flashlearn.app.ui.components.FlashLearnScreenHeaderVariant
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 
@@ -190,23 +192,11 @@ private fun ReviewSetup(
 
 @Composable
 private fun ReviewHeader(onBack: () -> Unit) {
-    val tokens = LocalFlashLearnThemeTokens.current
-    Row(Modifier.fillMaxWidth().height(tokens.reviewHeaderHeight), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-            Text("مرور کلمات", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = tokens.reviewText, textAlign = TextAlign.End)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)) {
-                Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
-                Icon(Icons.Outlined.AutoAwesome, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewOrnamentIcon))
-                Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
-            }
-        }
-        Spacer(Modifier.width(tokens.reviewHeaderGap))
-        Surface(modifier = Modifier.size(tokens.reviewBackButtonSize).clickable(onClick = onBack), shape = CircleShape, color = tokens.reviewSurface, tonalElevation = tokens.reviewBackElevation, shadowElevation = tokens.reviewBackElevation) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Outlined.ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
-            }
-        }
-    }
+    FlashLearnScreenHeader(
+        title = "مرور کلمات",
+        onBack = onBack,
+        variant = FlashLearnScreenHeaderVariant.REVIEW
+    )
 }
 
 @Composable
