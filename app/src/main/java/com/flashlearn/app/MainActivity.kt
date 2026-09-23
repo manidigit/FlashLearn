@@ -16,10 +16,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.AppLayoutDirection
+import com.flashlearn.app.ui.toComposeLayoutDirection
 import com.flashlearn.app.ui.AppViewModel
 import com.flashlearn.app.ui.about.AboutScreen
 import com.flashlearn.app.ui.addword.AddWordMethodScreen
@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val appState by appViewModel.state
             FlashLearnTheme(appearance = appState.appearance, themeId = appState.themeId, accentColor = appState.accentColor) {
-                CompositionLocalProvider(LocalLayoutDirection provides if (appState.layoutDirection == AppLayoutDirection.RTL) LayoutDirection.Rtl else LayoutDirection.Ltr) {
+                CompositionLocalProvider(LocalLayoutDirection provides appState.layoutDirection.toComposeLayoutDirection()) {
                     Surface(Modifier.fillMaxSize()) {
                         BackHandler { if (appViewModel.state.value.selectedRoute == AppRoutes.HOME) finish() else appViewModel.goBack() }
                         AppRootScreen()
