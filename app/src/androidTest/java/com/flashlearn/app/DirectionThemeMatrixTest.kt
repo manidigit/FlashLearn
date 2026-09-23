@@ -6,10 +6,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.graphics.Color
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppearanceMode
 import com.flashlearn.app.ui.toComposeLayoutDirection
@@ -30,23 +30,27 @@ class DirectionThemeMatrixTest {
             Triple(AppLayoutDirection.LTR, AppearanceMode.LIGHT, LayoutDirection.Ltr),
             Triple(AppLayoutDirection.LTR, AppearanceMode.DARK, LayoutDirection.Ltr)
         )
+        var currentCase by mutableStateOf(cases.first())
+        var observedDirection: LayoutDirection? = null
+        var observedBackground: Color? = null
 
-        cases.forEach { (appDirection, appearance, expectedDirection) ->
-            var observedDirection by mutableStateOf<LayoutDirection?>(null)
-            var observedBackground by mutableStateOf<Color?>(null)
-
-            composeRule.setContent {
-                FlashLearnTheme(appearance = appearance) {
-                    CompositionLocalProvider(
-                        LocalLayoutDirection provides appDirection.toComposeLayoutDirection()
-                    ) {
-                        observedDirection = LocalLayoutDirection.current
-                        observedBackground = MaterialTheme.colorScheme.background
-                        Text("کتاب Book ۱۰")
-                    }
+        composeRule.setContent {
+            FlashLearnTheme(appearance = currentCase.second) {
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides currentCase.first.toComposeLayoutDirection()
+                ) {
+                    observedDirection = LocalLayoutDirection.current
+                    observedBackground = MaterialTheme.colorScheme.background
+                    Text("کتاب Book ۱۰")
                 }
             }
+        }
 
+        cases.forEach { (appDirection, appearance, expectedDirection) ->
+            composeRule.runOnIdle {
+                currentCase = Triple(appDirection, appearance, expectedDirection)
+            }
+            composeRule.waitForIdle()
             composeRule.runOnIdle {
                 assertEquals(expectedDirection, observedDirection)
                 assertEquals(

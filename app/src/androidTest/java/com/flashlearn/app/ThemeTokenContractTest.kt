@@ -23,6 +23,8 @@ class ThemeTokenContractTest {
                 val tokens = LocalFlashLearnThemeTokens.current
                 controlHeight = tokens.controlHeight.value
                 mediumCorner = tokens.cornerMedium.value
+                reviewHeaderHeight = tokens.reviewHeaderHeight.value
+                reviewChoiceHeight = tokens.reviewChoiceHeight.value
             }
         }
         composeRule.runOnIdle {
