@@ -1,3 +1,12 @@
+## v6.12 — RTL/LTR + Theme root-cause hardening
+- Runtime identity advanced to 6.12/112.
+- Re-traced the persisted direction state through AppViewModel/AppUiState/MainActivity and verified the explicit AppLayoutDirection → Compose mapping.
+- Re-audited Home for screen-local direction overrides and removed no new global-direction override because none remains in the current source.
+- Hardened target-screen navigation placement and directional icons with logical leading placement and AutoMirrored icons.
+- Hardened semantic leading text alignment in Bulk Import, Backup Restore, Library, and shared navigation components.
+- Added instrumentation coverage for RTL/LTR × Light/Dark at the Compose root, including mixed BiDi text.
+- Verification pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+
 ## v6.09 — Global RTL/LTR direction-chain correction
 - Runtime identity advanced to 6.09/109.
 - Confirmed MainActivity as the single global LocalLayoutDirection provider and centralized AppLayoutDirection → Compose LayoutDirection mapping.
