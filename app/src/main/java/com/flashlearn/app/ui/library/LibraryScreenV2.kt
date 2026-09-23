@@ -40,7 +40,7 @@ fun LibraryScreenV2(
         Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(8f))
     ) {
         Box(Modifier.fillMaxWidth().height(tokens.dp(58f))) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterEnd)) {
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.onSurface)
             }
             Text("واژگان", Modifier.align(Alignment.Center), color = tokens.onSurface, style = MaterialTheme.typography.headlineMedium)
@@ -51,7 +51,7 @@ fun LibraryScreenV2(
             onValueChange = viewModel::onQueryChange,
             modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
             placeholder = {
-                Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign = TextAlign.End, color = tokens.onSurfaceVariant)
+                Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.onSurfaceVariant)
             },
             trailingIcon = { Icon(Icons.Outlined.Search, "جستجو", tint = tokens.primary) },
             singleLine = true,
@@ -89,7 +89,7 @@ fun LibraryScreenV2(
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(12f)), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, "انتخاب دسته", tint = tokens.onSurface)
                 Spacer(Modifier.weight(1f))
-                Column(horizontalAlignment = Alignment.End) {
+                Column(horizontalAlignment = Alignment.Start) {
                     Text("دسته‌بندی‌ها", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
                     Text(
                         if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${toFaDigits(state.selectedCategoryIds.size)} دسته انتخاب شده",
@@ -146,7 +146,7 @@ fun LibraryScreenV2(
 
         duplicateMessage?.let {
             Spacer(Modifier.height(tokens.dp(6f)))
-            Text(it, Modifier.fillMaxWidth(), textAlign = TextAlign.End, color = tokens.primary, style = MaterialTheme.typography.bodySmall)
+            Text(it, Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.primary, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(Modifier.height(tokens.compactGap))
@@ -199,7 +199,7 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
             Spacer(Modifier.width(tokens.compactGap))
             DifficultyPillV2(item.difficulty)
             Spacer(Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.Start) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(item.source?.text ?: "—", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(tokens.compactGap))
