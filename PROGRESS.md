@@ -1,4 +1,11 @@
 
+## v6.14 — Documentation / Process Reconciliation
+- Runtime identity is **6.14 / versionCode 114** and is aligned in the application build, runtime gate, and CI workflow.
+- The v6.14 Review checkpoint is recorded in `CHANGELOG.md`, `docs/FlashLearn_PROGRESS_TRACKER.md`, and `docs/VERSION_LEDGER.md`.
+- Review compactness changes, shared theme-token usage, removal of the UI-only «همه سطوح» option, and Compose theme/direction regression coverage are recorded as one semantic checkpoint.
+- Verification gate status: the working-session CI result was reported green. The GitHub connector currently exposes no workflow-run record for the latest commit, so this process note does not invent a run number.
+- No learning algorithm, scheduling rule, Room schema, parser/import contract, backup/restore contract, or Quiz answer semantics were intentionally changed by this checkpoint.
+
 ## v6.14 — Review setup visual reference implementation
 - Current application identity: versionName 6.14 / versionCode 114.
 - Rebuilt only the Review setup presentation to match the supplied reference image: RTL title/header, numbered sections, cream/gold palette, compact cards, selected badges, category filter row, difficulty grids, quiz difficulty row, word-count pills, summary card, and primary review action.
