@@ -9,13 +9,10 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -91,7 +88,7 @@ fun HomeScreen(
             ReviewCard("هفتگی", weekly, state.weeklyTotal) { onStartReview(ReviewType.WEEKLY) }
             ReviewCard("ماهانه", monthly, state.monthlyTotal) { onStartReview(ReviewType.MONTHLY) }
 
-            OutlinedButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Outlined.Add, null)
                 Spacer(Modifier.width(8.dp))
                 Text("افزودن واژه")
