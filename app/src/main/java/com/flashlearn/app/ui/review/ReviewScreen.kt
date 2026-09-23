@@ -1,6 +1,7 @@
 package com.flashlearn.app.ui.review
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -200,7 +201,7 @@ private fun ReviewHeader(onBack: () -> Unit) {
             }
         }
         Spacer(Modifier.width(tokens.reviewHeaderGap))
-        Surface(onClick = onBack, modifier = Modifier.size(tokens.reviewBackButtonSize), shape = CircleShape, color = tokens.reviewSurface, tonalElevation = tokens.reviewBackElevation, shadowElevation = tokens.reviewBackElevation) {
+        Surface(modifier = Modifier.size(tokens.reviewBackButtonSize).clickable(onClick = onBack), shape = CircleShape, color = tokens.reviewSurface, tonalElevation = tokens.reviewBackElevation, shadowElevation = tokens.reviewBackElevation) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(Icons.Outlined.ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
             }
