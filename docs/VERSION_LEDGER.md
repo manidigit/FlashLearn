@@ -1,6 +1,6 @@
 # FlashLearn Version Ledger
 
-| Application version | Version code | Meaning | Verification |\n| **6.09** | **109** | Global RTL/LTR direction-chain correction + CI release alignment | **Verified — GitHub Actions run 1117 green** |
+| Application version | Version code | Meaning | Verification |\n| **6.10** | **110** | Secondary-screen RTL/LTR navigation consistency | Pending GitHub CI |\n| **6.09** | **109** | Global RTL/LTR direction-chain correction + CI release alignment | Verified — GitHub Actions run 1117 green |
 |---|---:|---|---|
 | 5.99 | 99 | Quiz distractor rotation / difficulty bands | Historical |
 | 6.00 | 100 | Quiz translation display + 3-second feedback | Product checkpoint |
@@ -12,8 +12,8 @@
 ## Historical stage identifiers
 v4.33–v4.39 are specification-stage identifiers preserved for traceability. They are not current Android application versions.
 
-## Current 6.09 process record
-- v6.09 is the current application checkpoint; v6.00 remains historical product baseline.
+## Current 6.10 process record
+- v6.10 is the current application checkpoint; v6.00 remains historical product baseline.
 - The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
 - The current 6.01 implementation records the applicable work from that specification: Education/Help, localization resources, Spanish-audio quiz contract documentation, and presentation/theme audit alignment.
 - Backup branch was created before implementation: `backup/pre-word-content-implementation-2026-09-22`.
