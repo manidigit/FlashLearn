@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.DoneAll
@@ -34,9 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,7 +73,6 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
         return
     }
     val tokens = LocalFlashLearnThemeTokens.current
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val leadingTextAlign = TextAlign.Start
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.compactGap),
@@ -99,16 +95,10 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
 @Composable
 private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDifficulty: VocabularyDifficulty?, onBack: () -> Unit = {}, onOpenCategories: () -> Unit, leadingTextAlign: TextAlign) {
     val tokens = LocalFlashLearnThemeTokens.current
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.sectionGap)) {
         Box(Modifier.fillMaxWidth().height(tokens.controlHeight)) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(
-                    Icons.Outlined.ArrowBack,
-                    contentDescription = "بازگشت",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.graphicsLayer { scaleX = if (isRtl) -1f else 1f }
-                )
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت", tint = MaterialTheme.colorScheme.onSurface)
             }
             Text("مرور کلمات", modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
@@ -176,17 +166,11 @@ private fun ReviewSetup(state: ReviewUiState, vm: ReviewViewModel, personalDiffi
 
 @Composable private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val leadingTextAlign = TextAlign.Start
     val selectedCount = state.selectedCategoryIds.size
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) QuizSelectedContainer else MaterialTheme.colorScheme.surface), border = BorderStroke(if (selectedCount > 0) 2.dp else 1.dp, if (selectedCount > 0) LocalFlashLearnThemeTokens.current.primary.copy(alpha = .55f) else MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding - 4.dp, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Outlined.ArrowBack,
-                null,
-                tint = QuizSelected,
-                modifier = Modifier.size(22.dp).graphicsLayer { scaleX = if (isRtl) -1f else 1f }
-            ); Spacer(Modifier.weight(1f)); Column(horizontalAlignment = Alignment.Start) { Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, textAlign = leadingTextAlign) }; Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.large, color = QuizSelectedContainer) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = QuizSelected, modifier = Modifier.size(28.dp)) } }
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, null, tint = QuizSelected, modifier = Modifier.size(22.dp)); Spacer(Modifier.weight(1f)); Column(horizontalAlignment = Alignment.Start) { Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, textAlign = leadingTextAlign) }; Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.large, color = QuizSelectedContainer) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = QuizSelected, modifier = Modifier.size(28.dp)) } }
         }
     }
 }
