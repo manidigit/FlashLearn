@@ -1,5 +1,15 @@
 # FlashLearn Changelog
 
+## v6.16 — Review Compose icon compatibility hotfix
+- Advanced application identity to version 6.16 / versionCode 116.
+- Replaced the unavailable `Icons.AutoMirrored.Outlined.ChevronLeft` reference in Review with the Compose BOM-compatible `Icons.AutoMirrored.Outlined.KeyboardArrowLeft`.
+- Preserved logical RTL/LTR mirroring for Review category navigation.
+- Audited the affected Review/header paths for the same unsupported/non-mirrored directional icon pattern.
+- Preserved ReviewViewModel behavior, filtering/scheduling semantics, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Verification remains pending until the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate passes for v6.16.
+
+
+
 ## v6.15 — Review RTL/LTR regression correction + release/process reconciliation
 - Advanced application identity to version 6.15 / versionCode 115.
 - Re-audited the Review redesign against the previously verified RTL/LTR root-cause approach instead of introducing a new direction system.
