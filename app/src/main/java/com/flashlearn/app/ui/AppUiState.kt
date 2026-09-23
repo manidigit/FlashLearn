@@ -7,6 +7,11 @@ import com.flashlearn.domain.settings.SettingsKeys
 
 enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 enum class AppLayoutDirection { RTL, LTR }
+
+fun AppLayoutDirection.toComposeLayoutDirection(): androidx.compose.ui.unit.LayoutDirection = when (this) {
+    AppLayoutDirection.RTL -> androidx.compose.ui.unit.LayoutDirection.Rtl
+    AppLayoutDirection.LTR -> androidx.compose.ui.unit.LayoutDirection.Ltr
+}
 enum class AccentColor { PURPLE, BLUE, GREEN, ORANGE, PINK }
 enum class LearningLanguage(val code:String,val labelFa:String,val flag:String){PERSIAN("fa","فارسی","🇮🇷"),SPANISH("es","اسپانیایی","🇪🇸"),ENGLISH("en","انگلیسی","🇬🇧")}
 data class LanguagePair(val source:LearningLanguage=LearningLanguage.SPANISH,val target:LearningLanguage=LearningLanguage.PERSIAN){init{require(source!=target)};fun reversed()=LanguagePair(target,source)}
