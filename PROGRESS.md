@@ -1,4 +1,13 @@
 
+## v6.14 — Review setup visual reference implementation
+- Current application identity: versionName 6.14 / versionCode 114.
+- Rebuilt only the Review setup presentation to match the supplied reference image: RTL title/header, numbered sections, cream/gold palette, compact cards, selected badges, category filter row, difficulty grids, quiz difficulty row, word-count pills, summary card, and primary review action.
+- Review-specific visual values are centralized in FlashLearnThemeTokens; ReviewScreen does not introduce a parallel hard-coded color/dimension system.
+- Shared FlashLearnShell navigation adopts the Review palette only while the Review route is active.
+- ReviewViewModel, selection logic, scheduling, quiz/flashcard behavior, persistence, database schema, and navigation contracts are preserved.
+- Release/process identity synchronized across app/build.gradle.kts, RuntimeGatePreflightTest, android-ci.yml, VERSION_LEDGER.md, CHANGELOG.md, and this tracker.
+- Verification remains pending until the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run is green.
+
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
 - Migrated Add Word, Bulk Import, Backup, Library, Statistics/Progress, and Review target surfaces to shared headers/tokens.
