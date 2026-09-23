@@ -5,7 +5,7 @@
 - Review leading text/progress alignment now uses logical TextAlign.Start.
 - CI version assertions and artifact paths are aligned to 6.09/109 with 6.08/108 as the previous-version upgrade gate.
 - Added regression coverage for both RTL and LTR direction mapping.
-- Full verification requires the new GitHub Actions Build/Unit and Instrumentation + Upgrade Gate runs.
+- Verification complete: GitHub Actions run 1117 is green for Build + Unit Test and Instrumentation + Upgrade Gate.
 
 v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
 - Learning progress now stays at 0% before a concept has any real ReviewHistory entry.
