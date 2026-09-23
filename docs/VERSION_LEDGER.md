@@ -2,7 +2,7 @@
 
 | Application version | Version code | Meaning | Verification |
 |---|---:|---|---|
-| **6.13** | **113** | Root Theme + Design System centralization, shared components, four-state RTL/LTR hardening | Pending GitHub CI |
+| **6.14** | **114** | Review setup visual redesign to match the supplied reference, tokenized palette/dimensions, preserved review behavior | Pending GitHub CI |
 | 6.12 | 112 | Complete RTL/LTR + Theme root-cause hardening | Prior checkpoint |
 | 6.11 | 111 | CI release-artifact and verification hardening | Verified by prior checkpoint |
 | 6.10 | 110 | Secondary-screen RTL/LTR navigation consistency | Prior checkpoint |
@@ -17,11 +17,13 @@
 ## Historical stage identifiers
 v4.33–v4.39 are specification-stage identifiers preserved for traceability. They are not current Android application versions.
 
-## Current 6.13 process record
+## Current 6.14 process record
+- v6.14 is the Review setup visual-design checkpoint based on the supplied reference image; v6.13 remains the prior root theme/design-system checkpoint.
 - v6.13 is the current application checkpoint; v6.00 remains historical product baseline.
 - The v4.33→later Word content is treated as the specification/process source; its incorrect embedded version labels are not used for current application numbering.
 - The current 6.01 implementation records the applicable work from that specification: Education/Help, localization resources, Spanish-audio quiz contract documentation, and presentation/theme audit alignment.
-- v6.13 source changes are the current Root Theme + Design System centralization checkpoint; v6.12 remains the prior RTL/LTR root-cause checkpoint.
+- v6.14 source changes are limited to Review setup presentation, shared theme-token additions, Review navigation-shell styling, and release/process bookkeeping; review engine, scheduling, persistence, database schema, import/restore contracts, and quiz semantics are preserved.
+- v6.13 remains the prior Root Theme + Design System centralization checkpoint.
 - Final source changes are grouped under the current semantic checkpoint rather than creating a separate application version for each document stage.
 - GitHub Actions is the runtime verification gate; documentation alone is never a PASS. The v6.09 checkpoint is verified by run 1117: Build + Unit Test and Instrumentation + Upgrade Gate both succeeded.
 
