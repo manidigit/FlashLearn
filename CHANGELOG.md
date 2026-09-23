@@ -1,3 +1,12 @@
+## v6.12 — Complete RTL/LTR + Theme root-cause hardening
+- Advanced application identity to version 6.12 / versionCode 112.
+- Re-traced the persisted AppLayoutDirection state through AppViewModel → AppUiState → MainActivity → LocalLayoutDirection; the current mapping remains RTL→Compose RTL and LTR→Compose LTR.
+- Removed remaining screen-level navigation placement and glyph assumptions that were tied to physical edges, including Add Word, Bulk Import, Backup Restore, Library, Statistics/Progress, Review, Category Selection, Help, Settings, and shared ScreenHeader navigation.
+- Replaced manual Review arrow mirroring with Compose AutoMirrored navigation icons and removed screen-local direction inspection used only to flip glyphs.
+- Converted target-screen Persian/semantic text blocks that were using trailing/physical alignment as a substitute for leading alignment to logical Start where the content is intended to follow the app direction.
+- Added an instrumentation matrix covering RTL/LTR × Light/Dark at the Compose root, including a mixed Persian/English/digit probe.
+- Preserved Review engine, scheduling, database, import/restore, and navigation state semantics.
+
 ## v6.11 — CI release-artifact and verification hardening
 - Advanced application identity to version 6.11 / versionCode 111.
 - Fixed the current GitHub Actions failure: Build + Unit Test was green through APK verification, but artifact upload referenced stale v6.09 filenames and stopped the job before the instrumentation gate.
