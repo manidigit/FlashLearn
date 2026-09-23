@@ -1,3 +1,11 @@
+## v6.10 — RTL/LTR navigation consistency across secondary screens
+- Advanced application identity to version 6.10 / versionCode 110.
+- Audited Add Word, Bulk Import, Backup Restore, Vocabulary, and Statistics/Progress screens for direction-sensitive navigation.
+- Replaced physical ArrowBack icons with AutoMirrored.Outlined.ArrowBack in navigation controls so back/category-navigation arrows follow the active RTL/LTR direction.
+- Preserved End/Alignment.End/Arrangement.End usages where they are logical trailing alignment and therefore correctly adapt to the global direction.
+- Previous-version upgrade gate advanced to 6.09 / 109.
+- Verification pending the new GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+
 ## v6.09 — Global RTL/LTR direction-chain correction
 - Advanced application identity to version 6.09 / versionCode 109.
 - Confirmed the app-wide direction chain: Settings → AppViewModel → persisted AppUiState.layoutDirection → MainActivity LocalLayoutDirection.
