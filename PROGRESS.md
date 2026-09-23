@@ -1,3 +1,11 @@
+## v6.10 checkpoint — Secondary-screen RTL/LTR navigation audit
+- Current application identity: versionName 6.10 / versionCode 110.
+- Audited Add Word, Bulk Import, Backup Restore, Vocabulary, and Statistics/Progress.
+- Fixed physical back arrows by switching affected navigation icons to AutoMirrored.Outlined.ArrowBack.
+- Confirmed existing TextAlign.End, Alignment.End, and Arrangement.End usages are logical trailing alignment rather than fixed RTL overrides; they follow the global LocalLayoutDirection.
+- Previous-version gate is 6.09 / 109.
+- Full verification pending until the new Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.09 checkpoint — Global RTL/LTR root-chain correction
 - Current application identity: versionName 6.09 / versionCode 109.
 - Root cause found in the current GitHub source: HomeScreen.kt contained a fixed CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl), creating a screen-local direction override instead of obeying the app setting.
