@@ -124,7 +124,17 @@ fun FlashLearnTheme(
         typographyScale = spec.typographyScale,
         cornerSmall = spec.cornerSmall.dp,
         cornerMedium = spec.cornerMedium.dp,
-        cornerLarge = spec.cornerLarge.dp
+        cornerLarge = spec.cornerLarge.dp,
+        reviewBackground = if (dark) Color(0xFF1C1710) else Color(0xFFFFFBF2),
+        reviewSurface = if (dark) Color(0xFF251F17) else Color(0xFFFFFDF8),
+        reviewSurfaceSelected = if (dark) Color(0xFF3A2A12) else Color(0xFFFFF3D7),
+        reviewAccent = if (dark) Color(0xFFE0A84B) else Color(0xFF9B6A1D),
+        reviewText = if (dark) Color(0xFFFFF1D7) else Color(0xFF3B2515),
+        reviewMutedText = if (dark) Color(0xFFC8B89F) else Color(0xFF7A6B5A),
+        reviewBorder = if (dark) Color(0xFF5A4A31) else Color(0xFFE4D7C1),
+        reviewNav = if (dark) Color(0xFF211B14) else Color(0xFFFFF8EA),
+        reviewButton = if (dark) Color(0xFFC58B2A) else Color(0xFFA56D12),
+        reviewButtonContent = if (dark) Color(0xFF2A1D0E) else Color.White
     )
 
     val baseDensity = LocalDensity.current
