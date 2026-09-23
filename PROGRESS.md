@@ -1,3 +1,12 @@
+## v6.09 checkpoint — Global RTL/LTR root-chain correction
+- Current application identity: versionName 6.09 / versionCode 109.
+- Root cause found in the current GitHub source: HomeScreen.kt contained a fixed CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl), creating a screen-local direction override instead of obeying the app setting.
+- MainActivity already owned the global provider; the correction now makes the enum-to-Compose mapping a single shared function and removes the Home override.
+- Review direction-sensitive text alignment now uses logical TextAlign.Start; duplicated physical left/right mapping is no longer used for the Review root/card progress text.
+- CI artifact names/paths are aligned with the current release identity.
+- Added regression coverage for both AppLayoutDirection.RTL → LayoutDirection.Rtl and AppLayoutDirection.LTR → LayoutDirection.Ltr.
+- Full verification remains pending until the new GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.07 checkpoint — Full Review direction audit
 - Current application identity: versionName 6.07 / versionCode 107.
 - v6.06 was insufficient because ReviewScreen.kt still contained multiple TextAlign.End and Alignment.TopEnd usages.
