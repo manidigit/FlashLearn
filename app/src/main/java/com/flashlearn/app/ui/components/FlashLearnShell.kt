@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MenuBook
@@ -78,7 +79,7 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
 fun ScreenHeader(title: String, onBack: (() -> Unit)? = null, trailing: @Composable (() -> Unit)? = null) {
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(14f)), verticalAlignment = Alignment.CenterVertically) {
-        if (onBack != null) IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } else Spacer(Modifier.width(tokens.dp(48f)))
+        if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "بازگشت") } else Spacer(Modifier.width(tokens.dp(48f)))
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
         trailing?.invoke() ?: Spacer(Modifier.width(tokens.dp(48f)))
     }
