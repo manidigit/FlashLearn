@@ -65,7 +65,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     ) {
         item {
             Box(Modifier.fillMaxWidth().height(tokens.navHeight)) {
-                IconButton(onClick = onBack, enabled = !state.busy, modifier = Modifier.align(Alignment.CenterEnd)) {
+                IconButton(onClick = onBack, enabled = !state.busy, modifier = Modifier.align(Alignment.CenterStart)) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت")
                 }
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -77,13 +77,13 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = "بازیابی", subtitle = "اطلاعات قبلی را از یک فایل پشتیبان JSON وارد کن.") }
         item {
             Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.primary.copy(alpha = .08f))) {
-                Column(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.End) {
+                Column(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.Start) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Surface(Modifier.size(tokens.iconLarge.plus(tokens.compactGap)), shape = MaterialTheme.shapes.medium, color = tokens.primary.copy(alpha = .14f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.FileOpen, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge)) } }
                         Spacer(Modifier.width(tokens.contentGap))
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                            Text("بازیابی از فایل پشتیبان", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
-                            Text("یک فایل JSON قبلی را انتخاب کن. نوع پشتیبان از خود فایل تشخیص داده می‌شود.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.End)
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                            Text("بازیابی از فایل پشتیبان", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+                            Text("یک فایل JSON قبلی را انتخاب کن. نوع پشتیبان از خود فایل تشخیص داده می‌شود.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start)
                         }
                     }
                     Button(onClick = { open.launch(arrayOf("application/json", "text/plain", "*/*")) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.large, colors = ButtonDefaults.buttonColors(containerColor = tokens.primary)) {
@@ -115,7 +115,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedType.name} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
         state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-        state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.End) } }
+        state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
     }
 }
 
@@ -123,13 +123,13 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconMedium)); Spacer(Modifier.width(tokens.compactGap))
-        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End); Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.End) }
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start); Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start) }
     }
 }
 
 @Composable private fun ResultCard(title: String, detail: String, action: @Composable () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
-        Row(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalAlignment = Alignment.CenterVertically) { action(); Spacer(Modifier.width(tokens.compactGap)); Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) { Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.End); Text(detail, color = tokens.onSurfaceVariant, textAlign = TextAlign.End) } }
+        Row(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalAlignment = Alignment.CenterVertically) { action(); Spacer(Modifier.width(tokens.compactGap)); Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) { Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start); Text(detail, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start) } }
     }
 }
