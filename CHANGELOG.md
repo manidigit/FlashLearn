@@ -1,3 +1,13 @@
+## v6.09 — Global RTL/LTR direction-chain correction
+- Advanced application identity to version 6.09 / versionCode 109.
+- Confirmed the app-wide direction chain: Settings → AppViewModel → persisted AppUiState.layoutDirection → MainActivity LocalLayoutDirection.
+- Centralized the AppLayoutDirection → Compose LayoutDirection mapping so RTL/LTR cannot be remapped differently at the root.
+- Removed the fixed RTL CompositionLocalProvider from HomeScreen; Home now follows the same global direction as Review, Library, Progress, and Settings.
+- Re-audited Review direction-sensitive text alignment and kept logical layout direction as the source of truth.
+- Fixed CI artifact paths so the v6.09 build no longer uploads v6.07-named files.
+- Added regression coverage for both RTL → Compose RTL and LTR → Compose LTR mapping.
+- Verification remains pending until the new GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run completes successfully.
+
 ## v6.07 — Complete Review logical-direction correction
 - Advanced application identity to version 6.07 / versionCode 107.
 - Audited the entire ReviewScreen.kt for remaining physical-end alignment assumptions after v6.06.
