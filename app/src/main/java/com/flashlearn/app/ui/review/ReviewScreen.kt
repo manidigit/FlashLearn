@@ -10,7 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.automirrored.outlined.ChevronLeft
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.FormatListNumbered
@@ -233,7 +233,7 @@ private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
             Surface(Modifier.size(tokens.reviewCategoryIconTile), shape = MaterialTheme.shapes.medium, color = tokens.reviewSurfaceSelected) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconLarge)) }
             }
-            Icon(Icons.AutoMirrored.Outlined.ChevronLeft, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
+            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
         }
     }
 }
