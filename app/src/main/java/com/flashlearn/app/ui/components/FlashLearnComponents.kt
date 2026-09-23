@@ -61,7 +61,7 @@ fun FlashLearnScreenHeader(
         ) {
             Column(
                 Modifier.weight(1f),
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.Start
             ) {
                 Text(
                     title,
