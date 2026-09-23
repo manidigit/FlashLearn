@@ -1,7 +1,10 @@
 package com.flashlearn.app.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
@@ -39,14 +42,57 @@ fun FlashLearnBackButton(
     }
 }
 
+enum class FlashLearnScreenHeaderVariant { STANDARD, REVIEW }
+
 @Composable
 fun FlashLearnScreenHeader(
     title: String,
     onBack: (() -> Unit)? = null,
     subtitle: String? = null,
-    trailing: (@Composable () -> Unit)? = null
+    trailing: (@Composable () -> Unit)? = null,
+    variant: FlashLearnScreenHeaderVariant = FlashLearnScreenHeaderVariant.STANDARD
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
+    if (variant == FlashLearnScreenHeaderVariant.REVIEW) {
+        Row(
+            Modifier.fillMaxWidth().height(tokens.reviewHeaderHeight),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                    color = tokens.reviewText,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)
+                ) {
+                    Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
+                    FlashLearnIcon(AutoAwesome, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewOrnamentIcon))
+                    Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
+                }
+            }
+            Spacer(Modifier.width(tokens.reviewHeaderGap))
+            Surface(
+                modifier = Modifier.size(tokens.reviewBackButtonSize).clickable(enabled = onBack != null) { onBack?.invoke() },
+                shape = CircleShape,
+                color = tokens.reviewSurface,
+                tonalElevation = tokens.reviewBackElevation,
+                shadowElevation = tokens.reviewBackElevation
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    FlashLearnIcon(ChevronLeft, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
+                }
+            }
+        }
+        return
+    }
     Row(
         Modifier.fillMaxWidth().height(tokens.headerHeight).padding(horizontal = tokens.screenPadding),
         verticalAlignment = Alignment.CenterVertically
