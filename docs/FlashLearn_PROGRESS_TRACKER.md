@@ -1,3 +1,13 @@
+## v6.15 — Review RTL/LTR regression correction
+- Current application identity: versionName **6.15** / versionCode **115**.
+- Previous-version upgrade gate: **6.14 / 114**.
+- Re-audited the Review redesign against the established global RTL/LTR root chain and the earlier Review direction fixes.
+- Root cause: the Review redesign reintroduced physical-direction assumptions in Review/shared-header presentation; the global direction provider itself was not the regression.
+- Restored logical alignment and AutoMirrored directional navigation behavior without adding a local LayoutDirection override or graphics-layer mirroring workaround.
+- Preserved ReviewViewModel selection, filtering, scheduling, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Release/process records synchronized across app version, runtime gate, CI, README, changelog, ledger, and progress records.
+- Verification gate: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate for v6.15.
+
 
 ## v6.14 — Review setup visual reference implementation
 - Runtime identity advanced to 6.14/114.
