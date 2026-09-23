@@ -1,10 +1,14 @@
 # FlashLearn Version Ledger
 
-| Application version | Version code | Meaning | Verification |\n| **6.10** | **110** | Secondary-screen RTL/LTR navigation consistency | Pending GitHub CI |\n| **6.09** | **109** | Global RTL/LTR direction-chain correction + CI release alignment | Verified — GitHub Actions run 1117 green |
+| Application version | Version code | Meaning | Verification |
 |---|---:|---|---|
+| **6.12** | **112** | Complete RTL/LTR + Theme root-cause hardening | Pending GitHub CI |
+| 6.11 | 111 | CI release-artifact and verification hardening | Verified by prior checkpoint |
+| 6.10 | 110 | Secondary-screen RTL/LTR navigation consistency | Prior checkpoint |
+| 6.09 | 109 | Global RTL/LTR direction-chain correction + CI release alignment | Verified — GitHub Actions run 1117 green |
 | 5.99 | 99 | Quiz distractor rotation / difficulty bands | Historical |
 | 6.00 | 100 | Quiz translation display + 3-second feedback | Product checkpoint |
-| **6.04** | **104** | Review setup UI redesign + global RTL/LTR correction | Pending GitHub CI |
+| 6.04 | 104 | Review setup UI redesign + global RTL/LTR correction | Prior checkpoint |
 | 6.03 | 103 | Review UI modernization + CI release alignment | Historical |
 | 6.02 | 102 | Theme/Material 3 token audit | Historical |
 | 6.01 | 101 | Education/Help + localization/accessibility/presentation audit + progress/statistics dashboard hardening | Historical |
