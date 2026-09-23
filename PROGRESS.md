@@ -5,7 +5,7 @@
 - Review direction-sensitive text alignment now uses logical TextAlign.Start; duplicated physical left/right mapping is no longer used for the Review root/card progress text.
 - CI artifact names/paths are aligned with the current release identity.
 - Added regression coverage for both AppLayoutDirection.RTL → LayoutDirection.Rtl and AppLayoutDirection.LTR → LayoutDirection.Ltr.
-- Full verification remains pending until the new GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+- Verification complete: GitHub Actions run 1117 is green for Build + Unit Test and Instrumentation + Upgrade Gate.
 
 ## v6.07 checkpoint — Full Review direction audit
 - Current application identity: versionName 6.07 / versionCode 107.
