@@ -65,7 +65,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         item {
             Box(Modifier.fillMaxWidth().height(tokens.navHeight)) {
                 IconButton(onClick = onBack, enabled = !state.busy, modifier = Modifier.align(Alignment.CenterEnd)) {
-                    Icon(Icons.Outlined.ArrowBack, "بازگشت")
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت")
                 }
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("پشتیبان‌گیری و بازیابی", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
