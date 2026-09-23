@@ -1,3 +1,11 @@
+# v6.16 Process Reconciliation — Review Compose icon compatibility
+- Root cause confirmed from CI: `ReviewScreen.kt` referenced `Icons.AutoMirrored.Outlined.ChevronLeft`, unavailable with Compose BOM 2024.02.00/material-icons-extended.
+- Corrective change uses compatible AutoMirrored `KeyboardArrowLeft`, preserving logical RTL/LTR behavior.
+- Affected Review/header paths were audited for the unsupported ChevronLeft pattern.
+- Application version advanced to 6.16 / versionCode 116; previous upgrade gate is 6.15 / 115.
+- No Review engine, scheduler, filtering, persistence, database, quiz semantics, or CI architecture was changed.
+- Verification is not complete until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.15 — Review RTL/LTR regression correction + process reconciliation
 - Runtime identity advanced to **6.15 / versionCode 115**; previous-version upgrade gate is **6.14 / 114**.
 - Root cause traced to the Review redesign reintroducing physical-direction assumptions that had previously been corrected; the global app-wide RTL/LTR mapping was not replaced.
