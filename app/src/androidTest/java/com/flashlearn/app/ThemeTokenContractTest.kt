@@ -1,6 +1,6 @@
 package com.flashlearn.app
 
-import androidx.compose.ui.test.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.flashlearn.app.ui.theme.FlashLearnTheme
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import org.junit.Assert.assertEquals
