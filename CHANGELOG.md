@@ -1,5 +1,14 @@
 # FlashLearn Changelog
 
+## v6.15 — Review RTL/LTR regression correction + release/process reconciliation
+- Advanced application identity to version 6.15 / versionCode 115.
+- Re-audited the Review redesign against the previously verified RTL/LTR root-cause approach instead of introducing a new direction system.
+- Restored logical Review section/text alignment, logical selected-state placement, and AutoMirrored directional navigation icons where the redesign had reintroduced physical-direction assumptions.
+- Restored the shared Review header to the same logical alignment and AutoMirrored back-icon behavior used by the prior RTL/LTR root fix; no local LayoutDirection or graphics-layer mirroring workaround was introduced.
+- Preserved ReviewViewModel behavior, filtering/scheduling semantics, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Added a dedicated v6.15 RTL/LTR regression audit record and synchronized README, progress tracker, version ledger, runtime gate, CI current/previous version gates, and changelog.
+- Verification status: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate for v6.15.
+
 ## v6.14 — Review Setup Reference-Match UI
 - Advanced application identity to version 6.14 / versionCode 114.
 - Rebuilt the Review setup presentation from the supplied reference image: cream background, brown/gold visual language, large RTL title/header, numbered sections, compact choice cards, selected-state badges, category row, difficulty grids, word-count pills, filtered-count summary, and primary start-review action.
