@@ -10,7 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.FormatListNumbered
@@ -153,7 +153,7 @@ private fun ReviewSetup(
             }
         }
         personalDifficulty?.let {
-            Text("سطح شخصی فعلی: " + difficultyLabel(it), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.End)
+            Text("سطح شخصی فعلی: " + difficultyLabel(it), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
         }
         val filterSummary = buildList {
             add(if (state.selectedDifficulties.isEmpty()) "همه سطوح" else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) })
@@ -201,7 +201,7 @@ private fun ReviewHeader(onBack: () -> Unit) {
 @Composable
 private fun ReviewSectionTitle(number: Int, title: String) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Text("$number. $title", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = tokens.reviewText, textAlign = TextAlign.End)
+    Text("$number. $title", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = tokens.reviewText, textAlign = TextAlign.Start)
 }
 
 @Composable
@@ -226,14 +226,14 @@ private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
     val selectedCount = state.selectedCategoryIds.size
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth().height(tokens.reviewCategoryHeight), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) tokens.reviewSurfaceSelected else tokens.reviewSurface), border = BorderStroke(if (selectedCount > 0) tokens.borderStrong else tokens.borderThin, if (selectedCount > 0) tokens.reviewAccent else tokens.reviewBorder), elevation = CardDefaults.cardElevation(defaultElevation = tokens.reviewCardElevation)) {
         Row(Modifier.fillMaxSize().padding(horizontal = tokens.reviewCardPadding), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.End)
-                Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, maxLines = 2, textAlign = TextAlign.End)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Start)
+                Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, maxLines = 2, textAlign = TextAlign.Start)
             }
             Surface(Modifier.size(tokens.reviewCategoryIconTile), shape = MaterialTheme.shapes.medium, color = tokens.reviewSurfaceSelected) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconLarge)) }
             }
-            Icon(Icons.Outlined.ChevronLeft, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
+            Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
         }
     }
 }
