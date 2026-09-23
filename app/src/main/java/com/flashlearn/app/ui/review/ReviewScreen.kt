@@ -77,7 +77,7 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
     }
     val tokens = LocalFlashLearnThemeTokens.current
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val leadingTextAlign = if (isRtl) TextAlign.Right else TextAlign.Left
+    val leadingTextAlign = TextAlign.Start
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding, vertical = tokens.compactGap),
         horizontalAlignment = Alignment.CenterHorizontally,
