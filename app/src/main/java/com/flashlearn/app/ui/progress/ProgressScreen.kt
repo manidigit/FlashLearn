@@ -51,7 +51,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
+                contentPadding = PaddingValues(start = tokens.screenPadding, top = 0.dp, end = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
                 verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
             ) {
                 item { SummaryTiles(state) }
