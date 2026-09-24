@@ -1,3 +1,12 @@
+## v6.21 — Modern Minimal + CI correction in progress
+- Runtime identity: 6.21 / 121; previous gate: 6.20 / 120.
+- Modern Minimal is now available in the built-in catalog and is the active default theme presentation.
+- Build + Unit Test on GitHub Actions run 35996886108 is green.
+- Instrumentation initially failed on two stale expectations: old Modern Purple background values and a hard-coded 20dp medium-corner assertion.
+- Both test contracts have now been corrected to read the active Modern Minimal specification (background and 14dp medium corner).
+- Verification is not marked complete until the next GitHub Actions run passes both jobs.
+- No learning/business logic, Review Engine, scheduling, persistence, database schema, import/restore contract, or quiz semantics were changed by this correction.
+
 ## v6.17 — Adaptive Stats/Review UI hardening
 - Advanced application identity to version 6.17 / versionCode 117; previous-version gate is 6.16 / 116.
 - Review Quiz options now use a minimum height instead of a fixed height and allow the option label to take the available width, so long text can wrap without clipping.
