@@ -48,8 +48,33 @@ fun FlashLearnTheme(
         else -> accentLight
     }
     val onPrimaryColor = if (spec.id == "grok") Color(0xFF0F1419) else Color.White
-    val colors = if (dark) darkColorScheme(primary=primary,onPrimary=onPrimaryColor,secondary=Color(spec.darkSecondary),tertiary=Color(spec.darkSecondary),onBackground=Color(spec.darkOnSurface),background=Color(spec.darkBackground),surface=Color(spec.darkSurface),surfaceVariant=Color(spec.darkSurfaceVariant),onSurface=Color(spec.darkOnSurface),onSurfaceVariant=Color(spec.darkOnSurfaceVariant),outline=Color(spec.darkOutline),error=Color(0xFFFF8A9A))
-    else lightColorScheme(primary=primary,onPrimary=onPrimaryColor,secondary=Color(spec.lightSecondary),tertiary=Color(spec.lightSecondary),onBackground=Color(spec.lightOnSurface),background=Color(spec.lightBackground),surface=Color(spec.lightSurface),surfaceVariant=Color(spec.lightSurfaceVariant),onSurface=Color(spec.lightOnSurface),onSurfaceVariant=Color(spec.lightOnSurfaceVariant),outline=Color(spec.lightOutline),error=Color(0xFFD92D48))
+    val colors = if (dark) darkColorScheme(
+        primary = primary,
+        onPrimary = onPrimaryColor,
+        secondary = Color(spec.darkSecondary),
+        tertiary = Color(spec.darkSecondary),
+        onBackground = Color(spec.darkOnSurface),
+        background = Color(spec.darkBackground),
+        surface = Color(spec.darkSurface),
+        surfaceVariant = Color(spec.darkSurfaceVariant),
+        onSurface = Color(spec.darkOnSurface),
+        onSurfaceVariant = Color(spec.darkOnSurfaceVariant),
+        outline = Color(spec.darkOutline),
+        error = Color(0xFFFF8A9A)
+    ) else lightColorScheme(
+        primary = primary,
+        onPrimary = if (spec.id == "grok") Color(0xFF0F1419) else Color.White,
+        secondary = Color(spec.lightSecondary),
+        tertiary = Color(spec.lightSecondary),
+        onBackground = Color(spec.lightOnSurface),
+        background = Color(spec.lightBackground),
+        surface = Color(spec.lightSurface),
+        surfaceVariant = Color(spec.lightSurfaceVariant),
+        onSurface = Color(spec.lightOnSurface),
+        onSurfaceVariant = Color(spec.lightOnSurfaceVariant),
+        outline = Color(spec.lightOutline),
+        error = Color(0xFFD92D48)
+    )
     val base=Typography(); val scale=spec.typographyScale
     fun androidx.compose.ui.text.TextStyle.scaled(weight:FontWeight?=null)=copy(fontSize=fontSize*scale,fontWeight=weight?:fontWeight)
     val typography=Typography(displayLarge=base.displayLarge.scaled(FontWeight.Bold),displayMedium=base.displayMedium.scaled(FontWeight.Bold),displaySmall=base.displaySmall.scaled(FontWeight.Bold),headlineLarge=base.headlineLarge.scaled(FontWeight.Bold),headlineMedium=base.headlineMedium.scaled(FontWeight.Bold),headlineSmall=base.headlineSmall.scaled(FontWeight.SemiBold),titleLarge=base.titleLarge.scaled(FontWeight.Bold),titleMedium=base.titleMedium.scaled(FontWeight.SemiBold),titleSmall=base.titleSmall.scaled(FontWeight.Medium),bodyLarge=base.bodyLarge.scaled(),bodyMedium=base.bodyMedium.scaled(),bodySmall=base.bodySmall.scaled(),labelLarge=base.labelLarge.scaled(FontWeight.SemiBold),labelMedium=base.labelMedium.scaled(),labelSmall=base.labelSmall.scaled())
@@ -57,7 +82,10 @@ fun FlashLearnTheme(
         background=if(dark)Color(spec.darkBackground) else Color(spec.lightBackground),surface=if(dark)Color(spec.darkSurface) else Color(spec.lightSurface),surfaceVariant=if(dark)Color(spec.darkSurfaceVariant) else Color(spec.lightSurfaceVariant),
         cardColor=if(dark)Color(spec.darkCard) else Color(spec.lightCard),elevatedCardColor=if(dark)Color(spec.darkCard).compositeOver(Color.White) else Color(spec.lightCard),
         primary=primary,secondary=if(dark)Color(spec.darkSecondary) else Color(spec.lightSecondary),tertiary=if(dark)Color(spec.darkSecondary) else Color(spec.lightSecondary),
-        onBackground=if(dark)Color(spec.darkOnSurface) else Color(spec.lightOnSurface),onPrimary=onPrimaryColor,onSurface=if(dark)Color(spec.darkOnSurface) else Color(spec.lightOnSurface),onSurfaceVariant=if(dark)Color(spec.darkOnSurfaceVariant) else Color(spec.lightOnSurfaceVariant),
+        onBackground=if(dark)Color(spec.darkOnSurface) else Color(spec.lightOnSurface),
+        onPrimary=onPrimaryColor,
+        onSurface=if(dark)Color(spec.darkOnSurface) else Color(spec.lightOnSurface),
+        onSurfaceVariant=if(dark)Color(spec.darkOnSurfaceVariant) else Color(spec.lightOnSurfaceVariant),
         outlineColor=if(dark)Color(spec.darkOutline) else Color(spec.lightOutline),dividerColor=(if(dark)Color(spec.darkOutline) else Color(spec.lightOutline)).copy(alpha=.65f),
         success=if(dark)Color(0xFF52D49A) else Color(0xFF138A5B),warning=if(dark)Color(0xFFFBBF24) else Color(0xFFF59E0B),error=colors.error,
         gradientStart=if(dark)Color(spec.darkPrimary) else Color(spec.gradientStart),gradientEnd=if(dark)Color(spec.darkSecondary) else Color(spec.gradientEnd),
