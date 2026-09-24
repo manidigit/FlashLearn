@@ -54,9 +54,9 @@ data class FlashLearnThemeSpec(
         val FRESH_GREEN = MODERN_PURPLE.copy(id="fresh_green", name="سبز تازه", lightPrimary=0xFF138A5B, darkPrimary=0xFF52D49A, lightSecondary=0xFF0D9488, darkSecondary=0xFF2DD4BF, lightBackground=0xFFF3FBF7, darkBackground=0xFF07130F, lightSurfaceVariant=0xFFE5F5EC, darkSurfaceVariant=0xFF172D25, gradientStart=0xFF138A5B, gradientEnd=0xFF0D9488)
         val SUNSET_ORANGE = MODERN_PURPLE.copy(id="sunset_orange", name="غروب گرم", lightPrimary=0xFFE4572E, darkPrimary=0xFFFF9A62, lightSecondary=0xFFF59E0B, darkSecondary=0xFFFBBF24, lightBackground=0xFFFFF8F4, darkBackground=0xFF160D08, lightSurfaceVariant=0xFFFFECE2, darkSurfaceVariant=0xFF332119, gradientStart=0xFFE4572E, gradientEnd=0xFFF59E0B)
         val MIDNIGHT = MODERN_PURPLE.copy(id="midnight", name="نیمه‌شب", lightPrimary=0xFF475569, darkPrimary=0xFFCBD5E1, lightSecondary=0xFF64748B, darkSecondary=0xFF94A3B8, lightBackground=0xFFF7F8FA, darkBackground=0xFF05070B, lightSurfaceVariant=0xFFE9EDF2, darkSurfaceVariant=0xFF151B24, gradientStart=0xFF334155, gradientEnd=0xFF0F172A)
-        val LUXURY = FlashLearnThemeSpec(
-            id = "luxury",
-            name = "لاکچری طلایی",
+        val GROK = FlashLearnThemeSpec(
+            id = "grok",
+            name = "گروک",
             // Light mode (warm cream + deep gold)
             lightPrimary = 0xFFC9A227,
             darkPrimary = 0xFFD4AF37,
@@ -88,7 +88,7 @@ data class FlashLearnThemeSpec(
         )
         val ROSE_GOLD = MODERN_PURPLE.copy(id="rose_gold", name="رزگلد", lightPrimary=0xFFB45A6A, darkPrimary=0xFFFFA7B4, lightSecondary=0xFFC47B83, darkSecondary=0xFFFFC4CC, lightBackground=0xFFFFF7F8, darkBackground=0xFF14090C, lightSurfaceVariant=0xFFF8E8EB, darkSurfaceVariant=0xFF2C171C, gradientStart=0xFFB45A6A, gradientEnd=0xFFD8A07C, cornerSmall=16f, cornerMedium=22f, cornerLarge=30f, iconStyle="outlined", typographyScale=1.02f)
         val FOREST = MODERN_PURPLE.copy(id="forest", name="جنگل عمیق", lightPrimary=0xFF276749, darkPrimary=0xFF7AD6A5, lightSecondary=0xFF4F772D, darkSecondary=0xFFA8D58A, lightBackground=0xFFF4F8F2, darkBackground=0xFF07100A, lightSurfaceVariant=0xFFE6EFE3, darkSurfaceVariant=0xFF17251A, gradientStart=0xFF276749, gradientEnd=0xFF4F772D, iconStyle="filled")
-        val BUILT_IN = listOf(MODERN_PURPLE, MODERN_MINIMAL, OCEAN_BLUE, FRESH_GREEN, SUNSET_ORANGE, MIDNIGHT, LUXURY, ROSE_GOLD, FOREST)
+        val BUILT_IN = listOf(MODERN_PURPLE, MODERN_MINIMAL, OCEAN_BLUE, FRESH_GREEN, SUNSET_ORANGE, MIDNIGHT, GROK, ROSE_GOLD, FOREST)
 
         fun fromJson(raw:String):FlashLearnThemeSpec {
             val j=JSONObject(raw); require(j.optInt("formatVersion")==FORMAT_VERSION)

@@ -1,3 +1,9 @@
+## v6.23 — Grok theme + Home dashboard structure
+- Application identity: 6.23 / versionCode 123; previous-version upgrade gate: 6.22 / 122.
+- Renamed luxury theme to **گروک** (`id=grok`).
+- Home dashboard restructured to match the Grok mockup (streak hero, progress, 2×2 stats, review cards with icon tiles, filled CTA) — all driven by theme tokens/components, no hard-coded palette.
+- No learning logic, algorithms, database, or content changes.
+
 ## v6.22 — Theme-driven visual system (luxury-ready)
 - Application identity: 6.22 / versionCode 122; previous-version upgrade gate: 6.21 / 121.
 - Strengthened FlashLearn theme tokens with visual personality (card border strength, accent surface alpha, hierarchy boost, preferFilledButtons).

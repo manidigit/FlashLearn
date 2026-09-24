@@ -41,7 +41,7 @@ fun FlashLearnTheme(
     }
     val dark = when (appearance) { AppearanceMode.SYSTEM -> isSystemInDarkTheme(); AppearanceMode.LIGHT -> false; AppearanceMode.DARK -> true }
     val primary = if (dark) accentDark else accentLight
-    val onPrimaryColor = if (spec.id == "luxury") Color(0xFF0F1419) else Color.White
+    val onPrimaryColor = if (spec.id == "grok") Color(0xFF0F1419) else Color.White
     val colors = if (dark) darkColorScheme(
         primary = primary,
         onPrimary = onPrimaryColor,
@@ -57,7 +57,7 @@ fun FlashLearnTheme(
         error = Color(0xFFFF8A9A)
     ) else lightColorScheme(
         primary = primary,
-        onPrimary = if (spec.id == "luxury") Color(0xFF0F1419) else Color.White,
+        onPrimary = if (spec.id == "grok") Color(0xFF0F1419) else Color.White,
         secondary = Color(spec.lightSecondary),
         tertiary = Color(spec.lightSecondary),
         onBackground = Color(spec.lightOnSurface),
@@ -88,11 +88,11 @@ fun FlashLearnTheme(
         reviewBackground=colors.background,reviewSurface=colors.surface,reviewSurfaceSelected=primary.copy(alpha=.10f).compositeOver(colors.surface),reviewAccent=colors.primary,reviewText=colors.onSurface,reviewMutedText=colors.onSurfaceVariant,reviewBorder=colors.outline,reviewNav=colors.surfaceVariant,reviewButton=colors.primary,reviewButtonContent=colors.onPrimary,
         info=if(dark)Color(spec.darkSecondary) else Color(spec.lightSecondary),critical=colors.error,
         // Visual personality – Luxury gets stronger presence
-        cardBorderAlpha = if (spec.id == "luxury") 0.55f else 0.40f,
-        cardBorderStrongAlpha = if (spec.id == "luxury") 0.85f else 0.65f,
-        accentSurfaceAlpha = if (spec.id == "luxury") 0.16f else 0.10f,
-        hierarchyBoost = if (spec.id == "luxury") 1.08f else 1f,
-        preferFilledButtons = spec.id == "luxury" || spec.iconStyle.equals("filled", true)
+        cardBorderAlpha = if (spec.id == "grok") 0.55f else 0.40f,
+        cardBorderStrongAlpha = if (spec.id == "grok") 0.85f else 0.65f,
+        accentSurfaceAlpha = if (spec.id == "grok") 0.16f else 0.10f,
+        hierarchyBoost = if (spec.id == "grok") 1.08f else 1f,
+        preferFilledButtons = spec.id == "grok" || spec.iconStyle.equals("filled", true)
     )
     val baseDensity=LocalDensity.current
     val themedDensity=Density(density=baseDensity.density*spec.densityScale,fontScale=baseDensity.fontScale)
