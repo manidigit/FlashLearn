@@ -1,3 +1,13 @@
+## v6.21 — Modern Minimal runtime + CI/instrumentation reconciliation
+- Application identity: 6.21 / versionCode 121; previous-version upgrade gate: 6.20 / 120.
+- Added Modern Minimal (مدرن مینیمال) as a built-in theme and made it the active default presentation path.
+- Hardened theme-driven Library presentation and removed an inaccessible compositeOver call that blocked compilation.
+- GitHub Actions Build + Unit Test passed on run 35996886108.
+- The first post-fix instrumentation attempt exposed two stale test contracts: the direction matrix still expected the former Modern Purple background, and the theme-token contract still expected a 20dp medium corner while Modern Minimal defines 14dp.
+- Those tests are now aligned to the active Modern Minimal specification; this is a test-contract correction only and does not change learning/business logic.
+- Verification remains pending until a new GitHub Actions run confirms both Build + Unit Test and Instrumentation + Upgrade Gate green.
+- Preserved learning algorithms, Review Engine, scheduling, persistence, Room/database schema, import/restore contracts, and quiz semantics.
+
 ## v6.17 — Adaptive Stats/Review UI hardening
 - Advanced application identity to version 6.17 / versionCode 117; previous-version gate is 6.16 / 116.
 - Review Quiz options now use a minimum height instead of a fixed height and allow the option label to take the available width, so long text can wrap without clipping.
