@@ -3,6 +3,8 @@ package com.flashlearn.app.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -150,14 +152,73 @@ fun FlashLearnSecondaryButton(
 @Composable
 fun FlashLearnCard(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(
+        onClick = onClick ?: {},
+        enabled = onClick != null,
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = tokens.cardColor),
         elevation = CardDefaults.cardElevation(defaultElevation = tokens.cardElevation),
         content = content
     )
+}
+
+
+@Composable
+fun FlashLearnIconTile(
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Surface(
+        modifier = modifier.size(tokens.iconTileSize),
+        shape = RoundedCornerShape(tokens.smallCorner),
+        color = tokens.primary.copy(alpha = tokens.accentSurfaceAlpha)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            FlashLearnIcon(icon, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconMedium))
+        }
+    }
+}
+
+@Composable
+fun FlashLearnStatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Surface(
+        modifier = modifier.height(tokens.statCardHeight),
+        shape = RoundedCornerShape(tokens.mediumCorner),
+        color = tokens.surfaceVariant
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(tokens.contentPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = tokens.primary)
+            Spacer(Modifier.height(tokens.tinyGap))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun FlashLearnSectionTitle(
+    text: String,
+    trailing: (@Composable () -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = tokens.onSurface)
+        Spacer(Modifier.weight(1f))
+        trailing?.invoke()
+    }
 }
