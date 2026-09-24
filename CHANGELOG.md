@@ -1,3 +1,10 @@
+## v6.24 — Grok theme default + visibility fix
+- Application identity: 6.24 / versionCode 124; previous-version upgrade gate: 6.23 / 123.
+- Theme **گروک** (`id=grok`) is first in the built-in theme list and is the default theme.
+- One-time migration switches users still on modern_minimal / old luxury id to grok so the theme is actually active after install.
+- Grok always keeps its gold primary (accent color no longer overrides Grok palette).
+- No learning logic or database changes.
+
 ## v6.21 — Modern Minimal runtime + CI/instrumentation reconciliation
 - Application identity: 6.21 / versionCode 121; previous-version upgrade gate: 6.20 / 120.
 - Added Modern Minimal (مدرن مینیمال) as a built-in theme and made it the active default presentation path.
