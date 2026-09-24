@@ -41,10 +41,10 @@ FlashLearn/
 
 ## Current release
 
-**Version:** 6.15  
-**Version code:** 115
+**Version:** 6.23  
+**Version code:** 123
 
-The repository uses GitHub Actions as the release/build verification gate. Version 6.15 records the Review RTL/LTR regression correction and its process/verification checkpoint. The CI workflow builds the debug APK, runs unit tests, runs instrumentation tests, verifies the APK, and checks the previous-version upgrade path.
+The runtime release identity is defined by `app/build.gradle.kts` and mirrored by the CI workflow. Repository documentation is reconciled to the same current checkpoint. GitHub Actions remains the authoritative build/test verification gate. The CI workflow builds the debug APK, runs unit tests, runs instrumentation tests, verifies the APK, and checks the previous-version upgrade path.
 
 ## Building
 
