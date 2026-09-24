@@ -1,3 +1,9 @@
+## v6.23 — Current release reconciliation
+- Application identity: **6.23 / 123**; previous-version gate: **6.22 / 122**.
+- Current release scope: Grok theme + Home dashboard structure.
+- Latest GitHub Actions run **36053217848** is currently in progress; verification remains pending.
+- Older entries are historical checkpoints only.
+
 ## v6.21 — Modern Minimal + CI/instrumentation reconciliation
 - Application identity: 6.21 / 121; previous-version gate: 6.20 / 120.
 - Scope: Modern Minimal runtime presentation, theme-token hardening, and CI/instrumentation reconciliation.
