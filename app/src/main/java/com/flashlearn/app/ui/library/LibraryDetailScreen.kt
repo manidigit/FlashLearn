@@ -95,8 +95,9 @@ class LibraryDetailViewModel @Inject constructor(
 }
 
 @Composable
-fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {
-    val tokens = LocalFlashLearnThemeTokens.current}) {
+fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onDeleted: () -> Unit = {}) {
+    val tokens = LocalFlashLearnThemeTokens.current
+
     LaunchedEffect(conceptId, languagePair) { viewModel.load(conceptId, languagePair.source.code, languagePair.target.code) }
     val item by viewModel.item.collectAsState()
     val categories by viewModel.categories.collectAsState()

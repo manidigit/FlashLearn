@@ -25,6 +25,7 @@ class AppViewModel @Inject constructor(@ApplicationContext context: Context, pri
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_ACCENT = "accent"
         private const val KEY_THEME = "theme"
+        private const val KEY_THEME_MIGRATION_621 = "theme_migration_621"
         private const val KEY_LAYOUT = "layout"
         private const val KEY_SOURCE = "language_source"
         private const val KEY_TARGET = "language_target"
@@ -36,7 +37,10 @@ class AppViewModel @Inject constructor(@ApplicationContext context: Context, pri
     private val _state = mutableStateOf(loadPersistedState())
     val state: State<AppUiState> get() = _state
     init { viewModelScope.launch { val threshold = settingsRepository.getInt(SettingsKeys.THRESHOLD_DIFFICULTY, SettingsKeys.DEFAULT_THRESHOLD_DIFFICULTY).coerceIn(1,20); val maxCards = settingsRepository.getInt(SettingsKeys.MAXIMUM_REVIEW_CARDS, SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS).coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT); val q = runCatching { QuizDifficulty.valueOf(settingsRepository.getString(KEY_QUIZ_DIFFICULTY, QuizDifficulty.MEDIUM.name)) }.getOrDefault(QuizDifficulty.MEDIUM); _state.value = _state.value.copy(difficultyThreshold=threshold, maximumReviewCards=maxCards, quizDifficulty=q) } }
-    private fun loadPersistedState(): AppUiState { val languages=LearningLanguage.entries; val d=AppUiState(); val s=prefs.getInt(KEY_SOURCE,d.languagePair.source.ordinal).coerceIn(languages.indices); var t=prefs.getInt(KEY_TARGET,d.languagePair.target.ordinal).coerceIn(languages.indices); if(s==t)t=(t+1)%languages.size; return d.copy(appearance=AppearanceMode.entries.getOrElse(prefs.getInt(KEY_APPEARANCE,0)){AppearanceMode.SYSTEM},accentColor=AccentColor.entries.getOrElse(prefs.getInt(KEY_ACCENT,0)){AccentColor.PURPLE},themeId=prefs.getString(KEY_THEME,"modern_purple")?:"modern_purple",layoutDirection=AppLayoutDirection.entries.getOrElse(prefs.getInt(KEY_LAYOUT,0)){AppLayoutDirection.RTL},languagePair=LanguagePair(languages[s],languages[t]),personalWordDifficulty=VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY,-1))) }
+    private fun loadPersistedState(): AppUiState { val languages=LearningLanguage.entries; val d=AppUiState(); val s=prefs.getInt(KEY_SOURCE,d.languagePair.source.ordinal).coerceIn(languages.indices); var t=prefs.getInt(KEY_TARGET,d.languagePair.target.ordinal).coerceIn(languages.indices); if(s==t)t=(t+1)%languages.size; val storedTheme = prefs.getString(KEY_THEME, null)
+        val migratedTheme = if (!prefs.getBoolean(KEY_THEME_MIGRATION_621, false) && storedTheme == "modern_purple") "modern_minimal" else (storedTheme ?: "modern_minimal")
+        if (!prefs.getBoolean(KEY_THEME_MIGRATION_621, false)) prefs.edit().putString(KEY_THEME, migratedTheme).putBoolean(KEY_THEME_MIGRATION_621, true).apply()
+        return d.copy(appearance=AppearanceMode.entries.getOrElse(prefs.getInt(KEY_APPEARANCE,0)){AppearanceMode.SYSTEM},accentColor=AccentColor.entries.getOrElse(prefs.getInt(KEY_ACCENT,0)){AccentColor.PURPLE},themeId=migratedTheme,layoutDirection=AppLayoutDirection.entries.getOrElse(prefs.getInt(KEY_LAYOUT,0)){AppLayoutDirection.RTL},languagePair=LanguagePair(languages[s],languages[t]),personalWordDifficulty=VocabularyDifficulty.entries.getOrNull(prefs.getInt(KEY_PERSONAL_DIFFICULTY,-1))) }
     fun setAppearance(v:AppearanceMode){_state.value=_state.value.copy(appearance=v);prefs.edit().putInt(KEY_APPEARANCE,v.ordinal).apply()}
     fun setAccentColor(v:AccentColor){_state.value=_state.value.copy(accentColor=v);prefs.edit().putInt(KEY_ACCENT,v.ordinal).apply()}
     fun setTheme(id:String){_state.value=_state.value.copy(themeId=id);prefs.edit().putString(KEY_THEME,id).apply()}

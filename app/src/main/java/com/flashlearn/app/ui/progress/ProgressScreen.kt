@@ -15,7 +15,6 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.*
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
-import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -52,7 +51,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
             state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
+                contentPadding = PaddingValues(start = tokens.screenPadding, top = 0.dp, end = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
                 verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
             ) {
                 item { SummaryTiles(state) }
@@ -101,12 +100,28 @@ private fun RetentionCard(state: ProgressUiState) {
     val accuracy = (stats?.accuracyPercent ?: 0).coerceIn(0, 100)
     Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = .08f))) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.Start) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(Icons.Outlined.ShowChart, null, tint = MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(tokens.tinyGap))
-                Text("حفظ ماندگار", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    "حفظ ماندگار",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(tokens.compactGap))
+                Text(
+                    "${fa(accuracy)}٪",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
             }
-            Text("${fa(accuracy)}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
             LinearProgressIndicator(
                 progress = { accuracy / 100f },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
@@ -132,8 +147,26 @@ private fun LearningMotivationCard(state: ProgressUiState) {
             verticalArrangement = Arrangement.spacedBy(tokens.compactGap),
             horizontalAlignment = Alignment.Start
         ) {
-            Text("پیشرفت یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("${percentage.toInt()}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "پیشرفت یادگیری",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(tokens.compactGap))
+                Text(
+                    "${percentage.toInt()}٪",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+            }
             LinearProgressIndicator(
                 progress = { (percentage / 100f).toFloat() },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
@@ -201,7 +234,7 @@ private fun WeeklyChart(
                             )
                         }
                     }
-                    Spacer(Modifier.width(tokens.microGap)
+                    Spacer(Modifier.width(tokens.microGap))
                     Column(Modifier.weight(1f).fillMaxHeight()) {
                         Canvas(Modifier.fillMaxWidth().weight(1f)) {
                             val chartTop = 8f
@@ -265,20 +298,21 @@ private fun LearningStagesCard(state: ProgressUiState) {
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
             Text("مراحل یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
-            StageRow("روزانه", p.dailyConcepts, MaterialTheme.colorScheme.secondary)
-            StageRow("هفتگی", p.weeklyConcepts, MaterialTheme.colorScheme.secondary)
-            StageRow("ماهانه", p.monthlyConcepts, MaterialTheme.colorScheme.primary)
-            StageRow("یادگرفته", p.learnedConcepts, tokens.success)
+            val maxStageValue = listOf(p.dailyConcepts, p.weeklyConcepts, p.monthlyConcepts, p.learnedConcepts).maxOrNull()?.coerceAtLeast(1) ?: 1
+            StageRow("روزانه", p.dailyConcepts, maxStageValue, MaterialTheme.colorScheme.secondary)
+            StageRow("هفتگی", p.weeklyConcepts, maxStageValue, MaterialTheme.colorScheme.secondary)
+            StageRow("ماهانه", p.monthlyConcepts, maxStageValue, MaterialTheme.colorScheme.primary)
+            StageRow("یادگرفته", p.learnedConcepts, maxStageValue, tokens.success)
         }
     }
 }
 
 @Composable
-private fun StageRow(label: String, value: Int, color: Color) {
+private fun StageRow(label: String, value: Int, maxValue: Int, color: Color) {
     val tokens = LocalFlashLearnThemeTokens.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(fa(value), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(tokens.dp(58f)))
-        LinearProgressIndicator(progress = { (value / 100f).coerceIn(.03f, 1f) }, modifier = Modifier.weight(1f).height(tokens.dp(7f)).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
+        LinearProgressIndicator(progress = { (value.toFloat() / maxValue.toFloat()).coerceIn(.03f, 1f) }, modifier = Modifier.weight(1f).height(tokens.dp(7f)).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
         Spacer(Modifier.width(tokens.compactGap))
         Text(label, modifier = Modifier.width(tokens.dp(70f)), textAlign = androidx.compose.ui.text.style.TextAlign.Start)
     }

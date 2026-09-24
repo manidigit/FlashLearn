@@ -1,3 +1,49 @@
+## v6.21 — Modern Minimal + CI/instrumentation reconciliation
+- Application identity: 6.21 / 121; previous-version gate: 6.20 / 120.
+- Scope: Modern Minimal runtime presentation, theme-token hardening, and CI/instrumentation reconciliation.
+- Modern Minimal is a built-in theme and the active default theme presentation.
+- The inaccessible Library compositeOver usage was removed after the CI compile failure.
+- GitHub Actions run 35996886108: Build + Unit Test passed; Instrumentation + Upgrade Gate failed only on two stale test expectations.
+- Corrected DirectionThemeMatrixTest to derive light/dark background expectations from FlashLearnThemeSpec.MODERN_MINIMAL.
+- Corrected ThemeTokenContractTest to validate the active theme's configured 14dp medium corner instead of a stale 20dp literal.
+- Verification remains pending until the next authoritative GitHub Actions run is green.
+- Business logic, learning algorithms, Review Engine, scheduling, persistence, Room schema, import/restore contracts, and quiz semantics remain unchanged.
+
+# FlashLearn — PROGRESS TRACKER
+## Current checkpoint: v6.17
+- Application identity: 6.17 / 117; previous-version gate: 6.16 / 116.
+- Scope: Stats/Report and Review/Test adaptive UI hardening.
+- Review quiz options use adaptive minimum height and weighted text space for long labels.
+- Stats/Report progress and retention use compact title/value rows; Learning Stages scale bars to the largest actual stage count.
+- Business logic, Review Engine, quiz generation/evaluation, scheduling, persistence, and database schema are frozen for this checkpoint.
+- Verification remains blocked until authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
+# v6.16 Review Compose compatibility checkpoint
+- Runtime identity: 6.16 / 116.
+- Previous gate: 6.15 / 115.
+- CI root cause: unavailable AutoMirrored ChevronLeft API under pinned Compose BOM.
+- Corrective implementation: AutoMirrored KeyboardArrowLeft in Review category navigation.
+- RTL/LTR behavior remains logical and mirrored.
+- Verification pending authoritative CI green status.
+
+## v6.15 — Review RTL/LTR regression correction
+- Current application identity: versionName **6.15** / versionCode **115**.
+- Previous-version upgrade gate: **6.14 / 114**.
+- Re-audited the Review redesign against the established global RTL/LTR root chain and the earlier Review direction fixes.
+- Root cause: the Review redesign reintroduced physical-direction assumptions in Review/shared-header presentation; the global direction provider itself was not the regression.
+- Restored logical alignment and AutoMirrored directional navigation behavior without adding a local LayoutDirection override or graphics-layer mirroring workaround.
+- Preserved ReviewViewModel selection, filtering, scheduling, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Release/process records synchronized across app version, runtime gate, CI, README, changelog, ledger, and progress records.
+- Verification gate: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate for v6.15.
+
+
+## v6.14 — Review setup visual reference implementation
+- Runtime identity advanced to 6.14/114.
+- Supplied Review reference image is now the visual source of truth for the Review setup presentation.
+- Rebuilt the Review setup surface with shared theme tokens and no screen-local parallel palette.
+- Preserved review engine and selection semantics.
+- CI/runtime release gates are aligned to 6.14/114 with 6.13/113 as the previous-version upgrade gate.
+- Verification pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
 
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.

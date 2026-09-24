@@ -1,4 +1,51 @@
+## v6.21 — Modern Minimal runtime + CI/instrumentation reconciliation
+- Application identity: 6.21 / versionCode 121; previous-version upgrade gate: 6.20 / 120.
+- Added Modern Minimal (مدرن مینیمال) as a built-in theme and made it the active default presentation path.
+- Hardened theme-driven Library presentation and removed an inaccessible compositeOver call that blocked compilation.
+- GitHub Actions Build + Unit Test passed on run 35996886108.
+- The first post-fix instrumentation attempt exposed two stale test contracts: the direction matrix still expected the former Modern Purple background, and the theme-token contract still expected a 20dp medium corner while Modern Minimal defines 14dp.
+- Those tests are now aligned to the active Modern Minimal specification; this is a test-contract correction only and does not change learning/business logic.
+- Verification remains pending until a new GitHub Actions run confirms both Build + Unit Test and Instrumentation + Upgrade Gate green.
+- Preserved learning algorithms, Review Engine, scheduling, persistence, Room/database schema, import/restore contracts, and quiz semantics.
+
+## v6.17 — Adaptive Stats/Review UI hardening
+- Advanced application identity to version 6.17 / versionCode 117; previous-version gate is 6.16 / 116.
+- Review Quiz options now use a minimum height instead of a fixed height and allow the option label to take the available width, so long text can wrap without clipping.
+- Stats/Report progress and retention percentages are presented in compact title/value rows without changing their source calculations.
+- Learning-stage bars are scaled against the largest actual stage value instead of an artificial 0–100 scale; stored values and statistics are unchanged.
+- Preserved ReviewViewModel, Review Engine, quiz generation/evaluation, scheduling, persistence, database schema, and statistics calculations.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass.
+
 # FlashLearn Changelog
+
+## v6.16 — Review Compose icon compatibility hotfix
+- Advanced application identity to version 6.16 / versionCode 116.
+- Replaced the unavailable `Icons.AutoMirrored.Outlined.ChevronLeft` reference in Review with the Compose BOM-compatible `Icons.AutoMirrored.Outlined.KeyboardArrowLeft`.
+- Preserved logical RTL/LTR mirroring for Review category navigation.
+- Audited the affected Review/header paths for the same unsupported/non-mirrored directional icon pattern.
+- Preserved ReviewViewModel behavior, filtering/scheduling semantics, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Verification remains pending until the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate passes for v6.16.
+
+
+
+## v6.15 — Review RTL/LTR regression correction + release/process reconciliation
+- Advanced application identity to version 6.15 / versionCode 115.
+- Re-audited the Review redesign against the previously verified RTL/LTR root-cause approach instead of introducing a new direction system.
+- Restored logical Review section/text alignment, logical selected-state placement, and AutoMirrored directional navigation icons where the redesign had reintroduced physical-direction assumptions.
+- Restored the shared Review header to the same logical alignment and AutoMirrored back-icon behavior used by the prior RTL/LTR root fix; no local LayoutDirection or graphics-layer mirroring workaround was introduced.
+- Preserved ReviewViewModel behavior, filtering/scheduling semantics, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
+- Added a dedicated v6.15 RTL/LTR regression audit record and synchronized README, progress tracker, version ledger, runtime gate, CI current/previous version gates, and changelog.
+- Verification status: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate for v6.15.
+
+## v6.14 — Review Setup Reference-Match UI
+- Advanced application identity to version 6.14 / versionCode 114.
+- Rebuilt the Review setup presentation from the supplied reference image: cream background, brown/gold visual language, large RTL title/header, numbered sections, compact choice cards, selected-state badges, category row, difficulty grids, word-count pills, filtered-count summary, and primary start-review action.
+- Added a dedicated Review visual token set to the shared FlashLearn theme-token layer instead of introducing screen-local color constants or arbitrary dimensions.
+- Updated the Review shell navigation colors to use the same visual language while keeping the shared navigation component.
+- Preserved ReviewViewModel selection behavior, review scheduling, filtering semantics, quiz/flashcard behavior, persistence, and database contracts.
+- Updated runtime version assertions, CI current/previous version gates, version ledger, progress records, and release documentation to 6.14/114.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass before this checkpoint is considered complete.
+
 
 ## v6.13 — Root Theme + Design System centralization
 - Advanced application identity to version 6.13 / versionCode 113.

@@ -1,3 +1,53 @@
+## v6.21 — Modern Minimal + CI correction in progress
+- Runtime identity: 6.21 / 121; previous gate: 6.20 / 120.
+- Modern Minimal is now available in the built-in catalog and is the active default theme presentation.
+- Build + Unit Test on GitHub Actions run 35996886108 is green.
+- Instrumentation initially failed on two stale expectations: old Modern Purple background values and a hard-coded 20dp medium-corner assertion.
+- Both test contracts have now been corrected to read the active Modern Minimal specification (background and 14dp medium corner).
+- Verification is not marked complete until the next GitHub Actions run passes both jobs.
+- No learning/business logic, Review Engine, scheduling, persistence, database schema, import/restore contract, or quiz semantics were changed by this correction.
+
+## v6.17 — Adaptive Stats/Review UI hardening
+- Advanced application identity to version 6.17 / versionCode 117; previous-version gate is 6.16 / 116.
+- Review Quiz options now use a minimum height instead of a fixed height and allow the option label to take the available width, so long text can wrap without clipping.
+- Stats/Report progress and retention percentages are presented in compact title/value rows without changing their source calculations.
+- Learning-stage bars are scaled against the largest actual stage value instead of an artificial 0–100 scale; stored values and statistics are unchanged.
+- Preserved ReviewViewModel, Review Engine, quiz generation/evaluation, scheduling, persistence, database schema, and statistics calculations.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass.
+
+# v6.16 Process Reconciliation — Review Compose icon compatibility
+- Root cause confirmed from CI: `ReviewScreen.kt` referenced `Icons.AutoMirrored.Outlined.ChevronLeft`, unavailable with Compose BOM 2024.02.00/material-icons-extended.
+- Corrective change uses compatible AutoMirrored `KeyboardArrowLeft`, preserving logical RTL/LTR behavior.
+- Affected Review/header paths were audited for the unsupported ChevronLeft pattern.
+- Application version advanced to 6.16 / versionCode 116; previous upgrade gate is 6.15 / 115.
+- No Review engine, scheduler, filtering, persistence, database, quiz semantics, or CI architecture was changed.
+- Verification is not complete until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
+## v6.15 — Review RTL/LTR regression correction + process reconciliation
+- Runtime identity advanced to **6.15 / versionCode 115**; previous-version upgrade gate is **6.14 / 114**.
+- Root cause traced to the Review redesign reintroducing physical-direction assumptions that had previously been corrected; the global app-wide RTL/LTR mapping was not replaced.
+- Restored logical Review alignment and AutoMirrored navigation behavior, including the shared Review header, without introducing a screen-local LayoutDirection override.
+- No Review engine, scheduling, database schema, parser/import contract, backup/restore contract, or Quiz answer semantics were intentionally changed.
+- Synchronized app/build.gradle.kts, RuntimeGatePreflightTest, .github/workflows/android-ci.yml, README.md, CHANGELOG.md, docs/VERSION_LEDGER.md, and docs/FlashLearn_PROGRESS_TRACKER.md.
+- Added docs/RTL_LTR_REVIEW_REGRESSION_AUDIT_v6.15.md as the focused root-cause/regression record.
+- Verification is **pending** until the v6.15 GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate completes successfully; documentation is not treated as proof of a green build.
+
+
+## v6.14 — Documentation / Process Reconciliation
+- Runtime identity is **6.14 / versionCode 114** and is aligned in the application build, runtime gate, and CI workflow.
+- The v6.14 Review checkpoint is recorded in `CHANGELOG.md`, `docs/FlashLearn_PROGRESS_TRACKER.md`, and `docs/VERSION_LEDGER.md`.
+- Review compactness changes, shared theme-token usage, removal of the UI-only «همه سطوح» option, and Compose theme/direction regression coverage are recorded as one semantic checkpoint.
+- Verification gate status: the working-session CI result was reported green. The GitHub connector currently exposes no workflow-run record for the latest commit, so this process note does not invent a run number.
+- No learning algorithm, scheduling rule, Room schema, parser/import contract, backup/restore contract, or Quiz answer semantics were intentionally changed by this checkpoint.
+
+## v6.14 — Review setup visual reference implementation
+- Current application identity: versionName 6.14 / versionCode 114.
+- Rebuilt only the Review setup presentation to match the supplied reference image: RTL title/header, numbered sections, cream/gold palette, compact cards, selected badges, category filter row, difficulty grids, quiz difficulty row, word-count pills, summary card, and primary review action.
+- Review-specific visual values are centralized in FlashLearnThemeTokens; ReviewScreen does not introduce a parallel hard-coded color/dimension system.
+- Shared FlashLearnShell navigation adopts the Review palette only while the Review route is active.
+- ReviewViewModel, selection logic, scheduling, quiz/flashcard behavior, persistence, database schema, and navigation contracts are preserved.
+- Release/process identity synchronized across app/build.gradle.kts, RuntimeGatePreflightTest, android-ci.yml, VERSION_LEDGER.md, CHANGELOG.md, and this tracker.
+- Verification remains pending until the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run is green.
 
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
