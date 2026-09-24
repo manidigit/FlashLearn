@@ -1,0 +1,194 @@
+name: FlashLearn Android CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flashlearn-android-ci
+  cancel-in-progress: true
+
+env:
+  FL_VERSION_NAME: "6.21"
+  FL_VERSION_CODE: "121"
+  FL_PREVIOUS_VERSION_NAME: "6.20"
+  FL_PREVIOUS_VERSION_CODE: "120"
+
+jobs:
+  build-and-unit-test:
+    name: Build + Unit Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.2"
+      - name: Install Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH"
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
+      - name: Restore stable CI debug keystore cache
+        uses: actions/cache@v4
+        with:
+          path: keystore/debug.keystore
+          key: flashlearn-debug-keystore-v4
+      - name: Materialize stable CI debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          if [[ ! -s keystore/debug.keystore ]]; then
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          fi
+          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
+      - name: Theme + Design System static audit
+        run: python3 tools/theme_design_system_audit.py
+      - name: Clean
+        run: gradle --no-daemon clean
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+      - name: Unit tests
+        run: gradle --no-daemon test
+      - name: Verify APK
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          apksigner verify --verbose "$APK"
+          aapt dump badging "$APK" | grep "versionCode='${FL_VERSION_CODE}'"
+      - name: Stage debug APK
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/FlashLearn_v${FL_VERSION_NAME}_DEBUG.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flashlearn-v${{ env.FL_VERSION_NAME }}-debug-apk
+          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_DEBUG.apk
+          if-no-files-found: error
+      - name: Stage exact source archive
+        run: |
+          mkdir -p dist
+          git archive --format=zip --output="dist/FlashLearn_v${FL_VERSION_NAME}_SOURCE.zip" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flashlearn-v${{ env.FL_VERSION_NAME }}-source
+          path: dist/FlashLearn_v${{ env.FL_VERSION_NAME }}_SOURCE.zip
+          if-no-files-found: error
+
+  instrumentation-tests:
+    name: Instrumentation + Upgrade Gate
+    needs: build-and-unit-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.2"
+      - name: Install Android SDK + Emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          sdkmanager "platform-tools" "emulator" "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
+      - name: Restore stable CI debug keystore cache
+        uses: actions/cache@v4
+        with:
+          path: keystore/debug.keystore
+          key: flashlearn-debug-keystore-v4
+      - name: Materialize stable CI debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          if [[ ! -s keystore/debug.keystore ]]; then
+            keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          fi
+          keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Start Android Emulator
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "no" | avdmanager create avd --force --name flashlearn-ci --package "system-images;android-34;google_apis;x86_64" --device "pixel_2"
+          adb start-server
+          nohup emulator -avd flashlearn-ci -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -accel auto > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
+          echo "$emulator_pid" > "$RUNNER_TEMP/flashlearn-emulator.pid"
+          ready=false
+          for i in {1..120}; do
+            if adb devices | awk 'NR > 1 && $1 ~ /^emulator-[0-9]+$/ && $2 == "device" {found=1} END {exit(found ? 0 : 1)}'; then ready=true; break; fi
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then cat "$RUNNER_TEMP/emulator.log" || true; exit 1; fi
+            sleep 2
+          done
+          test "$ready" = true
+          for i in {1..90}; do
+            boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+            if [[ "$boot_completed" == "1" ]]; then break; fi
+            if [[ "$i" == "90" ]]; then cat "$RUNNER_TEMP/emulator.log" || true; exit 1; fi
+            sleep 2
+          done
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb devices
+      - name: Run instrumentation tests
+        run: gradle --no-daemon connectedDebugAndroidTest
+      - name: Verify previous-version upgrade path
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build.gradle.kts "$RUNNER_TEMP/build.gradle.kts.current"
+          trap 'cp "$RUNNER_TEMP/build.gradle.kts.current" app/build.gradle.kts' EXIT
+          adb uninstall com.flashlearn.app >/dev/null 2>&1 || true
+          sed -i "s/versionCode = ${FL_VERSION_CODE}/versionCode = ${FL_PREVIOUS_VERSION_CODE}/; s/versionName = \"${FL_VERSION_NAME}\"/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/" app/build.gradle.kts
+          gradle --no-daemon :app:assembleDebug
+          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          adb install app/build/outputs/apk/debug/app-debug.apk
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_PREVIOUS_VERSION_CODE}"
+          sed -i "s/versionCode = ${FL_PREVIOUS_VERSION_CODE}/versionCode = ${FL_VERSION_CODE}/; s/versionName = \"${FL_PREVIOUS_VERSION_NAME}\"/versionName = \"${FL_VERSION_NAME}\"/" app/build.gradle.kts
+          gradle --no-daemon :app:assembleDebug
+          apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          test "$(adb shell dumpsys package com.flashlearn.app | grep -m1 versionCode | tr -d '\r' | grep -o 'versionCode=[0-9]*' | cut -d= -f2)" = "${FL_VERSION_CODE}"
+      - name: Stop Android Emulator
+        if: always()
+        run: |
+          set +e
+          if [[ -s "$RUNNER_TEMP/flashlearn-emulator.pid" ]]; then kill "$(cat "$RUNNER_TEMP/flashlearn-emulator.pid")" 2>/dev/null || true; fi
+          adb kill-server >/dev/null 2>&1 || true

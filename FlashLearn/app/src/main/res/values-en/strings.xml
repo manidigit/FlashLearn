@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlashLearn</string>
+    <string name="action_back">Back</string>
+    <string name="settings_help_title">Help</string>
+    <string name="settings_help_summary">Learn the main flows and how to use FlashLearn</string>
+    <string name="help_title">FlashLearn Help</string>
+    <string name="help_get_started_title">Getting started</string>
+    <string name="help_get_started_body">Choose a review goal from Home. Use Library to manage vocabulary and Settings for appearance and learning options.</string>
+    <string name="help_add_word_title">Adding words</string>
+    <string name="help_add_word_body">Words can be added individually, in bulk, or restored from a backup file. These actions manage vocabulary data and do not own learning-state logic.</string>
+    <string name="help_review_title">Review</string>
+    <string name="help_review_body">Review supports flashcards and multiple-choice quizzes. For audio quizzes, the question is always spoken in Spanish. Word Recognition uses Spanish answers; Meaning Recognition uses Persian answers.</string>
+    <string name="help_library_title">Library</string>
+    <string name="help_library_body">Use Library to search, filter, and manage vocabulary and inspect concept details.</string>
+    <string name="help_settings_title_short">Settings</string>
+    <string name="help_settings_body">Settings controls appearance, language, and review options. Presentation settings must not change learning history or scheduling.</string>
+    <string name="help_tts_title">Question audio</string>
+    <string name="help_tts_body">Replay repeats only the current question and does not create a new question or change the correct answer. Spanish voice availability depends on the device speech engine.</string>
+    <string name="help_boundary">Help is a presentation and educational layer; it does not own learning state, difficulty, review history, or scheduling.</string>
+</resources>
