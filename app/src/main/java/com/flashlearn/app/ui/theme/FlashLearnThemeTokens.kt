@@ -47,9 +47,10 @@ data class FlashLearnThemeTokens(
     // Semantic status roles. Screens must use these instead of owning palettes.
     val info: Color,
     val critical: Color,
-    val cardBorderAlpha: Float = 0.40f,
-    val cardBorderStrongAlpha: Float = 0.65f,
-    val accentSurfaceAlpha: Float = 0.10f,
+    // Visual personality (driven by the active theme)
+    val cardBorderAlpha: Float = 0.45f,
+    val cardBorderStrongAlpha: Float = 0.7f,
+    val accentSurfaceAlpha: Float = 0.12f,
     val hierarchyBoost: Float = 1f,
     val preferFilledButtons: Boolean = false
 ) {
@@ -57,38 +58,39 @@ data class FlashLearnThemeTokens(
 
     // Semantic layout tokens. Screens should consume these instead of repeating
     // raw dp values that represent the design system.
-    val screenPadding get() = dp(20f)
-    val screenVerticalPadding get() = dp(12f)
-    val contentPadding get() = dp(16f)
-    val cardPadding get() = dp(16f)
-    val compactPadding get() = dp(8f)
-    val tinyGap get() = dp(4f)
-    val microGap get() = dp(6f)
-    val contentGap get() = dp(12f)
-    val compactGap get() = dp(8f)
-    val sectionGap get() = dp(16f)
-    val itemGap get() = dp(8f)
-    val headerHeight get() = dp(58f)
-    val headerPadding get() = dp(10f)
-    val controlHeight get() = dp(52f)
-    val buttonHeight get() = dp(52f)
-    val fieldHeight get() = dp(52f)
-    val cardMinHeight get() = dp(84f)
-    val statCardHeight get() = dp(132f)
-    val largeChoiceHeight get() = dp(96f)
-    val mediumChoiceHeight get() = dp(72f)
-    val chartHeight get() = dp(210f)
+    val screenPadding get() = dp(20f * densityScale)
+    val screenVerticalPadding get() = dp(12f * densityScale)
+    val contentPadding get() = dp(16f * densityScale)
+    val cardPadding get() = dp(16f * densityScale)
+    val compactPadding get() = dp(8f * densityScale)
+    val tinyGap get() = dp(4f * densityScale)
+    val microGap get() = dp(6f * densityScale)
+    val contentGap get() = dp(12f * densityScale)
+    val compactGap get() = dp(8f * densityScale)
+    val sectionGap get() = dp(16f * densityScale)
+    val itemGap get() = dp(8f * densityScale)
+    val headerHeight get() = dp(58f * densityScale)
+    val headerPadding get() = dp(10f * densityScale)
+    val controlHeight get() = dp(52f * densityScale)
+    val buttonHeight get() = dp(52f * densityScale)
+    val fieldHeight get() = dp(52f * densityScale)
+    val cardMinHeight get() = dp(84f * densityScale)
+    val statCardHeight get() = dp(132f * densityScale)
+    val largeChoiceHeight get() = dp(96f * densityScale)
+    val mediumChoiceHeight get() = dp(72f * densityScale)
+    val chartHeight get() = dp(210f * densityScale)
     val progressTrackHeight get() = dp(9f)
     val borderThin get() = dp(1f)
     val borderStrong get() = dp(2f)
     val borderEmphasis get() = dp(3f)
-    val iconTileSize get() = dp(48f)
-    val choiceIconSize get() = dp(30f)
+    val iconTileSize get() = dp(48f * densityScale)
+    val choiceIconSize get() = dp(30f * densityScale)
     val iconSmall get() = dp(20f)
     val iconMedium get() = dp(24f)
     val iconLarge get() = dp(28f)
     val cardElevation get() = dp(4f * elevationScale)
-    val navHeight get() = dp(76f)
+    val cardElevationStrong get() = dp(8f * elevationScale)
+    val navHeight get() = dp(76f * densityScale)
     val libraryHeaderHeight get() = dp(58f)
     val librarySearchHeight get() = dp(58f)
     val libraryStatHeight get() = statCardHeight
@@ -180,6 +182,11 @@ val LocalFlashLearnThemeTokens = staticCompositionLocalOf {
         reviewButton = Color(0xFF2563EB),
         reviewButtonContent = Color.White,
         info = Color(0xFF536DFE),
-        critical = Color(0xFFDC2626)
+        critical = Color(0xFFDC2626),
+        cardBorderAlpha = 0.45f,
+        cardBorderStrongAlpha = 0.7f,
+        accentSurfaceAlpha = 0.12f,
+        hierarchyBoost = 1f,
+        preferFilledButtons = false
     )
 }

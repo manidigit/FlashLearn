@@ -175,7 +175,7 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
                 OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
                 OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(6.dp)); Text("حذف") }
             }
-            message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            message?.let { Text(it, color = tokens.primary) }
         }
     }
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("حذف لغت؟") }, text = { Text("این لغت از کتابخانه فعال حذف می‌شود؛ سابقه مرور آن حفظ می‌شود.") }, confirmButton = { TextButton(onClick = { confirmDelete = false; viewModel.delete(onDeleted) }, enabled = !isBusy) { Text("حذف") } }, dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("انصراف") } })

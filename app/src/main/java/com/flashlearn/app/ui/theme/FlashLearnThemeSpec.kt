@@ -88,7 +88,7 @@ data class FlashLearnThemeSpec(
         )
         val ROSE_GOLD = MODERN_PURPLE.copy(id="rose_gold", name="رزگلد", lightPrimary=0xFFB45A6A, darkPrimary=0xFFFFA7B4, lightSecondary=0xFFC47B83, darkSecondary=0xFFFFC4CC, lightBackground=0xFFFFF7F8, darkBackground=0xFF14090C, lightSurfaceVariant=0xFFF8E8EB, darkSurfaceVariant=0xFF2C171C, gradientStart=0xFFB45A6A, gradientEnd=0xFFD8A07C, cornerSmall=16f, cornerMedium=22f, cornerLarge=30f, iconStyle="outlined", typographyScale=1.02f)
         val FOREST = MODERN_PURPLE.copy(id="forest", name="جنگل عمیق", lightPrimary=0xFF276749, darkPrimary=0xFF7AD6A5, lightSecondary=0xFF4F772D, darkSecondary=0xFFA8D58A, lightBackground=0xFFF4F8F2, darkBackground=0xFF07100A, lightSurfaceVariant=0xFFE6EFE3, darkSurfaceVariant=0xFF17251A, gradientStart=0xFF276749, gradientEnd=0xFF4F772D, iconStyle="filled")
-        val BUILT_IN = listOf(GROK, MODERN_MINIMAL, MODERN_PURPLE, OCEAN_BLUE, FRESH_GREEN, SUNSET_ORANGE, MIDNIGHT, ROSE_GOLD, FOREST)
+        val BUILT_IN = listOf(MODERN_PURPLE, MODERN_MINIMAL, OCEAN_BLUE, FRESH_GREEN, SUNSET_ORANGE, MIDNIGHT, GROK, ROSE_GOLD, FOREST)
 
         fun fromJson(raw:String):FlashLearnThemeSpec {
             val j=JSONObject(raw); require(j.optInt("formatVersion")==FORMAT_VERSION)

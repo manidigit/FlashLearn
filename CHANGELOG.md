@@ -1,10 +1,3 @@
-## v6.24 — Grok theme default + visibility fix
-- Application identity: 6.24 / versionCode 124; previous-version upgrade gate: 6.23 / 123.
-- Theme **گروک** (`id=grok`) is first in the built-in theme list and is the default theme.
-- One-time migration switches users still on modern_minimal / old luxury id to grok so the theme is actually active after install.
-- Grok always keeps its gold primary (accent color no longer overrides Grok palette).
-- No learning logic or database changes.
-
 ## v6.23 — Grok theme + Home dashboard structure
 - Application identity: 6.23 / versionCode 123; previous-version upgrade gate: 6.22 / 122.
 - Renamed luxury theme to **گروک** (`id=grok`).

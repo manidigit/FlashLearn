@@ -35,7 +35,7 @@ fun HelpScreen(onBack: () -> Unit) {
         Text(
             stringResource(R.string.help_boundary),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = tokens.onSurfaceVariant,
             textAlign = TextAlign.End,
             modifier = Modifier.fillMaxWidth()
         )

@@ -85,8 +85,8 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
                 DropdownMenu(typeMenuExpanded, { typeMenuExpanded = false }) { EntryType.entries.forEach { type -> DropdownMenuItem(text = { Text(type.labelFa()) }, onClick = { viewModel.onEntryTypeChange(type); typeMenuExpanded = false }) } }
             }
             OutlinedTextField(state.notes, viewModel::onNotesChange, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = MaterialTheme.colorScheme.primary) }
+            state.error?.let { Text(it, color = tokens.error) }
+            state.lastSavedText?.let { Text("«$it» ذخیره شد.", color = tokens.primary) }
         }
         FlashLearnPrimaryButton(
             onClick = viewModel::save,

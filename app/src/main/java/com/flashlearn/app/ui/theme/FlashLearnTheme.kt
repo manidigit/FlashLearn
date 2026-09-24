@@ -17,7 +17,7 @@ import com.flashlearn.app.ui.AppearanceMode
 @Composable
 fun FlashLearnTheme(
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
-    themeId: String = "grok",
+    themeId: String = "modern_minimal",
     accentColor: AccentColor = AccentColor.PURPLE,
     content: @Composable () -> Unit
 ) {
@@ -40,13 +40,7 @@ fun FlashLearnTheme(
         AccentColor.PINK -> Color(0xFFF472B6)
     }
     val dark = when (appearance) { AppearanceMode.SYSTEM -> isSystemInDarkTheme(); AppearanceMode.LIGHT -> false; AppearanceMode.DARK -> true }
-    // Grok owns its gold palette; other themes still respect accent override
-    val primary = when {
-        spec.id == "grok" && dark -> Color(spec.darkPrimary)
-        spec.id == "grok" -> Color(spec.lightPrimary)
-        dark -> accentDark
-        else -> accentLight
-    }
+    val primary = if (dark) accentDark else accentLight
     val onPrimaryColor = if (spec.id == "grok") Color(0xFF0F1419) else Color.White
     val colors = if (dark) darkColorScheme(
         primary = primary,

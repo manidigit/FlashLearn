@@ -32,13 +32,13 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
         Spacer(Modifier.height(tokens.compactGap))
         CategoryRow("همه دسته‌ها", "${toFaDigits(allCount)} لغت", allSelected) { selected = emptySet() }
         Spacer(Modifier.height(tokens.sectionGap))
-        Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
+        Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = tokens.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
         Spacer(Modifier.height(tokens.compactGap))
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.itemGap), contentPadding = PaddingValues(bottom = 12.dp)) {
             items(categories, key = { it.id }) { category -> CategoryRow(category.name, "${toFaDigits(counts[category.id] ?: 0)} لغت", category.id in selected) { selected = if (category.id in selected) selected - category.id else selected + category.id } }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = MaterialTheme.colorScheme.primary) }
+            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = tokens.primary) }
             Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("اعمال ✓") }
         }
     }
@@ -48,11 +48,30 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
 private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val icon = categoryIcon(title)
-    Card(onClick = onClick, Modifier.fillMaxWidth().height(tokens.cardMinHeight), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = androidx.compose.foundation.BorderStroke(tokens.dp(1f), if (checked) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outlineVariant)) {
+    Card(
+        onClick = onClick,
+        Modifier.fillMaxWidth().height(tokens.cardMinHeight),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = if (checked) tokens.primary.copy(alpha = tokens.accentSurfaceAlpha) else tokens.surface),
+        border = androidx.compose.foundation.BorderStroke(
+            if (checked) tokens.borderStrong else tokens.borderThin,
+            if (checked) tokens.primary else tokens.outlineColor.copy(alpha = tokens.cardBorderAlpha)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (checked) tokens.cardElevation else tokens.dp(0f))
+    ) {
         Row(Modifier.fillMaxSize().padding(horizontal = tokens.contentGap), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = checked, onCheckedChange = { onClick() }, colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)); Spacer(Modifier.weight(1f))
-            Column(Modifier.weight(3f), horizontalAlignment = Alignment.Start) { Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
-            Spacer(Modifier.width(14.dp)); Surface(Modifier.size(48.dp), shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(27.dp)) } }
+            Checkbox(checked = checked, onCheckedChange = { onClick() }, colors = CheckboxDefaults.colors(checkedColor = tokens.primary))
+            Spacer(Modifier.weight(1f))
+            Column(Modifier.weight(3f), horizontalAlignment = Alignment.Start) {
+                Text(title, color = tokens.onSurface, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                Text(subtitle, color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.width(tokens.contentGap))
+            Surface(Modifier.size(tokens.iconTileSize), shape = MaterialTheme.shapes.small, color = tokens.primary.copy(alpha = tokens.accentSurfaceAlpha)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge))
+                }
+            }
         }
     }
 }
