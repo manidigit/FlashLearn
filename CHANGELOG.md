@@ -5,6 +5,21 @@
 - Grok always keeps its gold primary (accent color no longer overrides Grok palette).
 - No learning logic or database changes.
 
+## v6.23 — Grok theme + Home dashboard structure
+- Application identity: 6.23 / versionCode 123; previous-version upgrade gate: 6.22 / 122.
+- Renamed luxury theme to **گروک** (`id=grok`).
+- Home dashboard restructured to match the Grok mockup (streak hero, progress, 2×2 stats, review cards with icon tiles, filled CTA) — all driven by theme tokens/components, no hard-coded palette.
+- No learning logic, algorithms, database, or content changes.
+
+## v6.22 — Theme-driven visual system (luxury-ready)
+- Application identity: 6.22 / versionCode 122; previous-version upgrade gate: 6.21 / 121.
+- Strengthened FlashLearn theme tokens with visual personality (card border strength, accent surface alpha, hierarchy boost, preferFilledButtons).
+- Luxury theme (لاکچری طلایی) rebuilt with deep charcoal + matte gold palette; elevation, corners, and typography tuned for premium dark mode.
+- Shared components (Card, Primary/Secondary buttons, StatTile, IconTile, SectionTitle, bottom Shell nav) are fully theme-driven.
+- Home, Review, Progress, Library, Category selection, Add Word, and Help screens consume theme tokens only — zero MaterialTheme.colorScheme hard-coding outside ui/theme.
+- No learning logic, Review Engine, scheduling, persistence, Room schema, or content changes.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass.
+
 ## v6.21 — Modern Minimal runtime + CI/instrumentation reconciliation
 - Application identity: 6.21 / versionCode 121; previous-version upgrade gate: 6.20 / 120.
 - Added Modern Minimal (مدرن مینیمال) as a built-in theme and made it the active default presentation path.
