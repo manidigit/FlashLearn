@@ -46,7 +46,12 @@ data class FlashLearnThemeTokens(
     val reviewButtonContent: Color,
     // Semantic status roles. Screens must use these instead of owning palettes.
     val info: Color,
-    val critical: Color
+    val critical: Color,
+    val cardBorderAlpha: Float = 0.40f,
+    val cardBorderStrongAlpha: Float = 0.65f,
+    val accentSurfaceAlpha: Float = 0.10f,
+    val hierarchyBoost: Float = 1f,
+    val preferFilledButtons: Boolean = false
 ) {
     fun dp(value: Float): Dp = value.dp
 
