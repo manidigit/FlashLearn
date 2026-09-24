@@ -1,3 +1,5 @@
+> **Current repository release identity: 6.23 / versionCode 123.** This is a release/process identifier only; the product contracts and algorithms in this specification remain authoritative independently of version history. Previous upgrade gate: 6.22 / 122. Verification status must be taken from the latest GitHub Actions run, not from this specification.
+
 # FlashLearn --- مشخصات یکپارچه و مستقل محصول، معماری، داده و الگوریتم‌ها
 
 > **هدف این سند:** این فایل به‌تنهایی باید برای فهم محصول، رفتار مورد
