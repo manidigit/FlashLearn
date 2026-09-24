@@ -1,3 +1,13 @@
+# FlashLearn — PROGRESS TRACKER
+
+## Current checkpoint: v6.23
+- Application identity: **6.23 / 123**.
+- Previous-version gate: **6.22 / 122**.
+- Current scope: Grok theme + Home dashboard structure.
+- Verification: **Pending** — latest GitHub Actions run 36053217848 is in progress.
+- Runtime version is authoritative in `app/build.gradle.kts`; CI mirrors it and this document records process status.
+- Remaining entries are historical checkpoints only.
+
 
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
