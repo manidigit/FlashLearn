@@ -129,7 +129,7 @@ fun FlashLearnTheme(
         // theme/accent changes propagate consistently through the whole screen.
         reviewBackground = colors.background,
         reviewSurface = colors.surface,
-        reviewSurfaceSelected = primary.copy(alpha = .10f).compositeOver(colors.surface),
+        reviewSurfaceSelected = primary.copy(alpha = .10f),
         reviewAccent = colors.primary,
         reviewText = colors.onSurface,
         reviewMutedText = colors.onSurfaceVariant,
