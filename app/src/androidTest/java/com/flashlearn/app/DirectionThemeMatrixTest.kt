@@ -14,6 +14,7 @@ import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppearanceMode
 import com.flashlearn.app.ui.toComposeLayoutDirection
 import com.flashlearn.app.ui.theme.FlashLearnTheme
+import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -53,10 +54,12 @@ class DirectionThemeMatrixTest {
             composeRule.waitForIdle()
             composeRule.runOnIdle {
                 assertEquals(expectedDirection, observedDirection)
-                assertEquals(
-                    if (appearance == AppearanceMode.LIGHT) Color(0xFFF8F7FC) else Color(0xFF0B0D12),
-                    observedBackground
-                )
+                val expectedBackground = if (appearance == AppearanceMode.LIGHT) {
+                    FlashLearnThemeSpec.MODERN_MINIMAL.lightBackground
+                } else {
+                    FlashLearnThemeSpec.MODERN_MINIMAL.darkBackground
+                }
+                assertEquals(Color(expectedBackground), observedBackground)
             }
         }
     }
