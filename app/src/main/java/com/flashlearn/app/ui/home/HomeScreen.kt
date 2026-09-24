@@ -63,74 +63,203 @@ fun HomeScreen(
             .padding(horizontal = tokens.screenPadding, vertical = tokens.screenVerticalPadding),
         verticalArrangement = Arrangement.spacedBy(tokens.sectionGap)
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("سلام!", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = tokens.onBackground)
+        // ── Top bar: greeting + flags ───────────────────────────
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "سلام!",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = tokens.onBackground
+            )
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 Text(languagePair.source.flag, style = MaterialTheme.typography.headlineSmall)
                 Text(languagePair.target.flag, style = MaterialTheme.typography.headlineSmall)
             }
         }
-        Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = tokens.primary.copy(alpha = tokens.accentSurfaceAlpha), border = BorderStroke(tokens.borderThin, tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)), tonalElevation = tokens.cardElevation) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = tokens.cardPadding, vertical = tokens.contentPadding), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                Surface(shape = CircleShape, color = tokens.primary.copy(alpha = 0.22f), modifier = Modifier.size(tokens.iconTileSize)) {
-                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.LocalFireDepartment, contentDescription = null, tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge)) }
+
+        // ── Streak hero (mockup: gold fire pill / card) ─────────
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = tokens.primary.copy(alpha = tokens.accentSurfaceAlpha),
+            border = BorderStroke(tokens.borderThin, tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)),
+            tonalElevation = tokens.cardElevation
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = tokens.cardPadding, vertical = tokens.contentPadding),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = tokens.primary.copy(alpha = 0.22f),
+                    modifier = Modifier.size(tokens.iconTileSize)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Outlined.LocalFireDepartment,
+                            contentDescription = null,
+                            tint = tokens.primary,
+                            modifier = Modifier.size(tokens.iconLarge)
+                        )
+                    }
                 }
                 Spacer(Modifier.width(tokens.contentGap))
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("$streakDays روز پیوسته", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = tokens.primary)
-                    Text("استریک یادگیری", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
+                    Text(
+                        "$streakDays روز پیوسته",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = tokens.primary
+                    )
+                    Text(
+                        "استریک یادگیری",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = tokens.onSurfaceVariant
+                    )
                 }
             }
         }
+
+        // ── Progress ───────────────────────────────────────────
         Column(verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("پیشرفت یادگیری", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = tokens.onSurface)
+                Text(
+                    "پیشرفت یادگیری",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = tokens.onSurface
+                )
                 Spacer(Modifier.weight(1f))
-                Text("$progress٪", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.primary)
+                Text(
+                    "$progress٪",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = tokens.primary
+                )
             }
-            LinearProgressIndicator(progress = { (progress / 100f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(tokens.progressTrackHeight + 2.dp).clip(RoundedCornerShape(tokens.cornerSmall)), color = tokens.primary, trackColor = tokens.surfaceVariant)
+            LinearProgressIndicator(
+                progress = { (progress / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(tokens.progressTrackHeight + 2.dp)
+                    .clip(RoundedCornerShape(tokens.cornerSmall)),
+                color = tokens.primary,
+                trackColor = tokens.surfaceVariant
+            )
         }
+
+        // ── Stats 2×2 (mockup: big gold numbers) ───────────────
         FlashLearnCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-                Text("خلاصه آمار", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = tokens.onSurface)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(tokens.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
+            ) {
+                Text(
+                    "خلاصه آمار",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = tokens.onSurface
+                )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                     FlashLearnStatTile("کل واژه‌ها", total.toString(), Modifier.weight(1f))
                     FlashLearnStatTile("تمرین‌شده", (stats?.practicedWords ?: 0).toString(), Modifier.weight(1f))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                     FlashLearnStatTile("تمرین‌نشده", (stats?.unpracticedWords ?: total).toString(), Modifier.weight(1f))
-                    FlashLearnStatTile("یادگرفته", (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(), Modifier.weight(1f))
+                    FlashLearnStatTile(
+                        "یادگرفته",
+                        (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),
+                        Modifier.weight(1f)
+                    )
                 }
             }
         }
-        FlashLearnSectionTitle(text = "مرورهای آماده", trailing = { Text("$due کلمه", style = MaterialTheme.typography.labelLarge, color = tokens.onSurfaceVariant) })
-        ReviewReadyCard("روزانه", "مرور امروز", daily, state.dailyTotal) { onStartReview(ReviewType.DAILY) }
-        ReviewReadyCard("هفتگی", "تقویت ماندگاری", weekly, state.weeklyTotal) { onStartReview(ReviewType.WEEKLY) }
-        ReviewReadyCard("ماهانه", "حافظه بلندمدت", monthly, state.monthlyTotal) { onStartReview(ReviewType.MONTHLY) }
+
+        // ── Ready reviews ──────────────────────────────────────
+        FlashLearnSectionTitle(
+            text = "مرورهای آماده",
+            trailing = {
+                Text(
+                    "$due کلمه",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = tokens.onSurfaceVariant
+                )
+            }
+        )
+
+        ReviewReadyCard("روزانه", "مرور امروز", daily, state.dailyTotal) {
+            onStartReview(ReviewType.DAILY)
+        }
+        ReviewReadyCard("هفتگی", "تقویت ماندگاری", weekly, state.weeklyTotal) {
+            onStartReview(ReviewType.WEEKLY)
+        }
+        ReviewReadyCard("ماهانه", "حافظه بلندمدت", monthly, state.monthlyTotal) {
+            onStartReview(ReviewType.MONTHLY)
+        }
+
+        // ── CTA ────────────────────────────────────────────────
         FlashLearnPrimaryButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
             Text("افزودن واژه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
+
         Spacer(Modifier.height(tokens.sectionGap))
     }
 }
 
 @Composable
-private fun ReviewReadyCard(title: String, subtitle: String, readyCount: Int, totalCount: Int, onClick: () -> Unit) {
+private fun ReviewReadyCard(
+    title: String,
+    subtitle: String,
+    readyCount: Int,
+    totalCount: Int,
+    onClick: () -> Unit
+) {
     val tokens = LocalFlashLearnThemeTokens.current
     FlashLearnCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = tokens.cardPadding, vertical = tokens.contentPadding), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = tokens.cardPadding, vertical = tokens.contentPadding),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             FlashLearnIconTile(icon = Icons.Outlined.CalendarMonth)
             Spacer(Modifier.width(tokens.contentGap))
             Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = tokens.onSurface
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = tokens.onSurfaceVariant
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(readyCount.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = tokens.primary)
-                Text("از $totalCount", style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant)
+                Text(
+                    readyCount.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = tokens.primary
+                )
+                Text(
+                    "از $totalCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = tokens.onSurfaceVariant
+                )
             }
         }
     }
