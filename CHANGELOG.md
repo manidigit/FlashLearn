@@ -1,3 +1,11 @@
+## v6.17 — Adaptive Stats/Review UI hardening
+- Advanced application identity to version 6.17 / versionCode 117; previous-version gate is 6.16 / 116.
+- Review Quiz options now use a minimum height instead of a fixed height and allow the option label to take the available width, so long text can wrap without clipping.
+- Stats/Report progress and retention percentages are presented in compact title/value rows without changing their source calculations.
+- Learning-stage bars are scaled against the largest actual stage value instead of an artificial 0–100 scale; stored values and statistics are unchanged.
+- Preserved ReviewViewModel, Review Engine, quiz generation/evaluation, scheduling, persistence, database schema, and statistics calculations.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass.
+
 # FlashLearn Changelog
 
 ## v6.16 — Review Compose icon compatibility hotfix

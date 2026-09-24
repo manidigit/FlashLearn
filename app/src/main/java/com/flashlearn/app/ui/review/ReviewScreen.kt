@@ -367,11 +367,11 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
             val content = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.onSurface }
             val border = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.outline }
             val emphasized = (answered && (isCorrect || isWrongSelection)) || isSelected
-            OutlinedButton(onClick = { vm.selectQuizOption(option) }, enabled = !answered && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(tokens.dp(72f)), shape = MaterialTheme.shapes.large, border = BorderStroke(if (emphasized) tokens.dp(3f) else tokens.borderThin, border), colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content), contentPadding = PaddingValues(horizontal = tokens.contentGap + tokens.compactGap, vertical = tokens.compactGap)) {
+            OutlinedButton(onClick = { vm.selectQuizOption(option) }, enabled = !answered && !state.isSubmitting, modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(72f)), shape = MaterialTheme.shapes.large, border = BorderStroke(if (emphasized) tokens.dp(3f) else tokens.borderThin, border), colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content), contentPadding = PaddingValues(horizontal = tokens.contentGap + tokens.compactGap, vertical = tokens.compactGap)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     when { answered && isCorrect -> Text("✓", color = QuizCorrect, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isWrongSelection -> Text("✕", color = QuizWrong, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isSelected -> Text("●", color = QuizSelected, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold) }
                     if ((answered && isCorrect) || isWrongSelection || isSelected) Spacer(Modifier.width(tokens.compactGap))
-                    Text(option, style = MaterialTheme.typography.titleMedium, fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium, textAlign = TextAlign.Center)
+                    Text(option, style = MaterialTheme.typography.titleMedium, fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                 }
             }
         }

@@ -1,3 +1,12 @@
+# FlashLearn — PROGRESS TRACKER
+## Current checkpoint: v6.17
+- Application identity: 6.17 / 117; previous-version gate: 6.16 / 116.
+- Scope: Stats/Report and Review/Test adaptive UI hardening.
+- Review quiz options use adaptive minimum height and weighted text space for long labels.
+- Stats/Report progress and retention use compact title/value rows; Learning Stages scale bars to the largest actual stage count.
+- Business logic, Review Engine, quiz generation/evaluation, scheduling, persistence, and database schema are frozen for this checkpoint.
+- Verification remains blocked until authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 # v6.16 Review Compose compatibility checkpoint
 - Runtime identity: 6.16 / 116.
 - Previous gate: 6.15 / 115.

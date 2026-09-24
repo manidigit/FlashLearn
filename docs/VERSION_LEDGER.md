@@ -1,3 +1,13 @@
+## v6.17 — Adaptive Stats/Review UI hardening
+- Application version: 6.17
+- Version code: 117
+- Previous version gate: 6.16 / 116
+- Review Quiz option sizing is adaptive with a 72dp minimum; long labels may wrap without clipping.
+- Progress/Retention presentation is compacted without changing calculation sources.
+- Learning-stage visual bars are normalized to the largest actual stage count.
+- No Review Engine, scheduler, quiz generation/evaluation, persistence, database schema, or statistics calculation change.
+- Verification gate: GitHub Actions Build + Unit Test + Instrumentation/Upgrade Gate must pass.
+
 ## v6.16 — Review Compose icon compatibility hotfix
 - Application version: 6.16
 - Version code: 116
