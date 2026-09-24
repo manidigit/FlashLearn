@@ -1,9 +1,11 @@
-## Theme-driven visual system (luxury-ready)
-- Strengthened FlashLearn theme tokens with visual personality (card border strength, accent surface, hierarchy, filled buttons).
-- Luxury theme rebuilt with deep charcoal + matte gold palette; elevation, corners, and typography tuned for premium dark mode.
-- Shared components (Card, Primary/Secondary buttons, StatTile, IconTile, SectionTitle, Shell nav) fully theme-driven.
-- Home, Review, Progress, Library, Category selection, Add Word, and Help screens consume tokens only — zero MaterialTheme.colorScheme hard-coding outside ui/theme.
-- No learning logic, algorithms, database, or content changes.
+## v6.22 — Theme-driven visual system (luxury-ready)
+- Application identity: 6.22 / versionCode 122; previous-version upgrade gate: 6.21 / 121.
+- Strengthened FlashLearn theme tokens with visual personality (card border strength, accent surface alpha, hierarchy boost, preferFilledButtons).
+- Luxury theme (لاکچری طلایی) rebuilt with deep charcoal + matte gold palette; elevation, corners, and typography tuned for premium dark mode.
+- Shared components (Card, Primary/Secondary buttons, StatTile, IconTile, SectionTitle, bottom Shell nav) are fully theme-driven.
+- Home, Review, Progress, Library, Category selection, Add Word, and Help screens consume theme tokens only — zero MaterialTheme.colorScheme hard-coding outside ui/theme.
+- No learning logic, Review Engine, scheduling, persistence, Room schema, or content changes.
+- Verification gate: GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate must pass.
 
 ## v6.21 — Modern Minimal runtime + CI/instrumentation reconciliation
 - Application identity: 6.21 / versionCode 121; previous-version upgrade gate: 6.20 / 120.
