@@ -1,3 +1,14 @@
+## v6.21 — Modern Minimal + CI/instrumentation reconciliation
+- Application identity: 6.21 / 121; previous-version gate: 6.20 / 120.
+- Scope: Modern Minimal runtime presentation, theme-token hardening, and CI/instrumentation reconciliation.
+- Modern Minimal is a built-in theme and the active default theme presentation.
+- The inaccessible Library compositeOver usage was removed after the CI compile failure.
+- GitHub Actions run 35996886108: Build + Unit Test passed; Instrumentation + Upgrade Gate failed only on two stale test expectations.
+- Corrected DirectionThemeMatrixTest to derive light/dark background expectations from FlashLearnThemeSpec.MODERN_MINIMAL.
+- Corrected ThemeTokenContractTest to validate the active theme's configured 14dp medium corner instead of a stale 20dp literal.
+- Verification remains pending until the next authoritative GitHub Actions run is green.
+- Business logic, learning algorithms, Review Engine, scheduling, persistence, Room schema, import/restore contracts, and quiz semantics remain unchanged.
+
 # FlashLearn — PROGRESS TRACKER
 ## Current checkpoint: v6.17
 - Application identity: 6.17 / 117; previous-version gate: 6.16 / 116.
