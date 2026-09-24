@@ -1,3 +1,11 @@
+## v6.23 — Current release reconciliation
+- Application version: **6.23**
+- Version code: **123**
+- Previous version gate: **6.22 / 122**
+- Release scope: Grok theme + Home dashboard structure.
+- Latest GitHub Actions run: **36053217848**, currently **in progress**.
+- Verification: **Pending** until the authoritative CI run completes.
+
 ## v6.21 — Modern Minimal + CI/instrumentation reconciliation
 - Application version: 6.21
 - Version code: 121
