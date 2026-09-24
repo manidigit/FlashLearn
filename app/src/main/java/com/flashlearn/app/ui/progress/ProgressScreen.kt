@@ -100,12 +100,28 @@ private fun RetentionCard(state: ProgressUiState) {
     val accuracy = (stats?.accuracyPercent ?: 0).coerceIn(0, 100)
     Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = .08f))) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.Start) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(Icons.Outlined.ShowChart, null, tint = MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(tokens.tinyGap))
-                Text("حفظ ماندگار", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text(
+                    "حفظ ماندگار",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(tokens.compactGap))
+                Text(
+                    "${fa(accuracy)}٪",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
             }
-            Text("${fa(accuracy)}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             LinearProgressIndicator(
                 progress = { accuracy / 100f },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
@@ -131,8 +147,26 @@ private fun LearningMotivationCard(state: ProgressUiState) {
             verticalArrangement = Arrangement.spacedBy(tokens.compactGap),
             horizontalAlignment = Alignment.Start
         ) {
-            Text("پیشرفت یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("${percentage.toInt()}٪", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "پیشرفت یادگیری",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(tokens.compactGap))
+                Text(
+                    "${percentage.toInt()}٪",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+            }
             LinearProgressIndicator(
                 progress = { (percentage / 100f).toFloat() },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
