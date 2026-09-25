@@ -20,7 +20,7 @@ class ThemeTokenContractTest {
         var reviewHeaderHeight = 0f
         var reviewChoiceHeight = 0f
         composeRule.setContent {
-            FlashLearnTheme {
+            FlashLearnTheme(themeId = FlashLearnThemeSpec.MODERN_MINIMAL.id) {
                 val tokens = LocalFlashLearnThemeTokens.current
                 controlHeight = tokens.controlHeight.value
                 mediumCorner = tokens.cornerMedium.value
