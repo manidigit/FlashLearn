@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -38,6 +40,7 @@ data class FlashLearnIconSet(
     val home: ImageVector,
     val review: ImageVector,
     val library: ImageVector,
+    val progress: ImageVector,
 ) {
     companion object {
         fun forStyle(style: IconStyle): FlashLearnIconSet {
@@ -52,6 +55,7 @@ data class FlashLearnIconSet(
                 home = if (filled) Icons.Filled.Home else Icons.Outlined.Home,
                 review = if (filled) Icons.Filled.History else Icons.Outlined.History,
                 library = if (filled) Icons.Filled.MenuBook else Icons.Outlined.MenuBook,
+                progress = if (filled) Icons.Filled.BarChart else Icons.Outlined.BarChart,
             )
         }
     }
