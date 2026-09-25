@@ -6,10 +6,3 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.51.1" apply false
 }
 
-// Temporary CI diagnostic: bypass KAPT stub generation so the Kotlin compiler
-// can expose the underlying source error hidden by "Could not load module".
-subprojects {
-    tasks.matching { it.name.contains("kaptGenerateStubs") }.configureEach {
-        enabled = false
-    }
-}
