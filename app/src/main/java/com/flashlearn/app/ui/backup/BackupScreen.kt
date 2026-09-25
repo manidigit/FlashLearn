@@ -109,7 +109,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
             }
         }
         state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedType.name} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
-        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
+        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(tokens.icons.add, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
     }
