@@ -396,7 +396,7 @@ private fun AchievementsCard(state: ProgressUiState) {
 private fun RefreshCard(viewModel: ProgressViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
     OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.small) {
-        Icon(Icons.Outlined.Refresh, null)
+        Icon(tokens.icons.refresh, null)
         Spacer(Modifier.width(tokens.tinyGap))
         Text("به‌روزرسانی آمار")
     }
