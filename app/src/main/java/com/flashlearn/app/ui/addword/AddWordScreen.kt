@@ -93,7 +93,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
             enabled = state.canSave,
             modifier = Modifier.fillMaxWidth().padding(tokens.contentPadding)
         ) {
-            Icon(Icons.Outlined.Save, null)
+            Icon(tokens.icons.add, null)
             Spacer(Modifier.width(tokens.compactGap))
             Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه")
         }
