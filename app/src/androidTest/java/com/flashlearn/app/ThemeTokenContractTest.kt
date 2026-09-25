@@ -1,6 +1,7 @@
 package com.flashlearn.app
 
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.flashlearn.app.MainActivity
 import com.flashlearn.app.ui.theme.FlashLearnTheme
 import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -11,7 +12,7 @@ import org.junit.Test
 
 class ThemeTokenContractTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun semanticTokensDriveMaterialShapesAndCoreDimensions() {
