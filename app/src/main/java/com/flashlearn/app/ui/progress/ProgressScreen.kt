@@ -38,7 +38,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().background(tokens.background)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
         FlashLearnScreenHeader(
             title = "آمار و گزارش",
@@ -48,7 +48,7 @@ fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit) {
 
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = tokens.error) }
+            state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("خطا: ${state.error}", color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = tokens.screenPadding, top = 0.dp, end = tokens.screenPadding, bottom = tokens.sectionGap + tokens.compactGap),
@@ -74,7 +74,7 @@ private fun SummaryTiles(state: ProgressUiState) {
     val stats = state.statistics
     val summary = state.summary
     Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), modifier = Modifier.fillMaxWidth()) {
-        SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, tokens.secondary, Modifier.weight(1f))
+        SummaryTile("کل واژه‌ها", fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
         SummaryTile("یادگرفته", fa(summary?.learnedConceptCount ?: 0), Icons.Outlined.School, tokens.success, Modifier.weight(1f))
         SummaryTile("دقت کل", "${fa(stats?.accuracyPercent ?: 0)}٪", Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
     }
@@ -88,7 +88,7 @@ private fun SummaryTile(title: String, value: String, icon: androidx.compose.ui.
             Icon(icon, null, tint = color, modifier = Modifier.size(tokens.iconLarge))
             Spacer(Modifier.height(tokens.tinyGap))
             Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(title, style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -98,13 +98,13 @@ private fun RetentionCard(state: ProgressUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val stats = state.statistics
     val accuracy = (stats?.accuracyPercent ?: 0).coerceIn(0, 100)
-    Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.secondary.copy(alpha = .08f))) {
+    Card(shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = .08f))) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.Start) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Outlined.ShowChart, null, tint = tokens.secondary)
+                Icon(Icons.Outlined.ShowChart, null, tint = MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(tokens.tinyGap))
                 Text(
                     "حفظ ماندگار",
@@ -116,7 +116,7 @@ private fun RetentionCard(state: ProgressUiState) {
                 Spacer(Modifier.width(tokens.compactGap))
                 Text(
                     "${fa(accuracy)}٪",
-                    color = tokens.primary,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
@@ -125,11 +125,11 @@ private fun RetentionCard(state: ProgressUiState) {
             LinearProgressIndicator(
                 progress = { accuracy / 100f },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
-                color = tokens.secondary,
-                trackColor = tokens.surface
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surface
             )
             Spacer(Modifier.height(tokens.dp(7f)))
-            Text("${fa(stats?.totalCorrect ?: 0)} پاسخ درست از ${fa(stats?.totalReviews ?: 0)}", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text("${fa(stats?.totalCorrect ?: 0)} پاسخ درست از ${fa(stats?.totalReviews ?: 0)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -140,7 +140,7 @@ private fun LearningMotivationCard(state: ProgressUiState) {
     val percentage = state.progressPercentage.coerceIn(0.0, 100.0)
     Card(
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = tokens.primary.copy(alpha = .08f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
     ) {
         Column(
             Modifier.fillMaxWidth().padding(tokens.cardPadding),
@@ -161,7 +161,7 @@ private fun LearningMotivationCard(state: ProgressUiState) {
                 Spacer(Modifier.width(tokens.compactGap))
                 Text(
                     "${percentage.toInt()}٪",
-                    color = tokens.primary,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
@@ -170,8 +170,8 @@ private fun LearningMotivationCard(state: ProgressUiState) {
             LinearProgressIndicator(
                 progress = { (percentage / 100f).toFloat() },
                 modifier = Modifier.fillMaxWidth().height(tokens.dp(9f)).clip(MaterialTheme.shapes.extraSmall),
-                color = tokens.primary,
-                trackColor = tokens.surface
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surface
             )
             Text("امتیاز بر اساس مرحله فعلی یادگیری هر واژه محاسبه می‌شود.", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             Text("بدون مرور ۰٪ • پس از اولین مرور، امتیاز بر اساس مرحله: روزانه ۳۵٪ • هفتگی ۶۰٪ • ماهانه ۸۰٪ • یادگرفته ۱۰۰٪", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
@@ -185,9 +185,9 @@ private fun WeeklyChart(
     onRangeSelected: (ActivityRange) -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
-    val primaryColor = tokens.primary
-    val outlineColor = tokens.outlineColor
-    val onSurfaceVariant = tokens.onSurfaceVariant
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val outlineColor = MaterialTheme.colorScheme.outline
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     Card(shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -209,7 +209,7 @@ private fun WeeklyChart(
                 Text(
                     "هنوز داده‌ای برای نمایش وجود ندارد.",
                     modifier = Modifier.align(Alignment.Start),
-                    color = tokens.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 val maxValue = activity.maxOf { it.total }.coerceAtLeast(1)
@@ -230,7 +230,7 @@ private fun WeeklyChart(
                             Text(
                                 fa((axisMax * step) / gridSteps),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = tokens.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -273,7 +273,7 @@ private fun WeeklyChart(
                                 Text(
                                     if (show) item.label else "",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = tokens.onSurfaceVariant,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
                                 )
                             }
@@ -283,7 +283,7 @@ private fun WeeklyChart(
                 Text(
                     "تعداد مرور",
                     style = MaterialTheme.typography.labelSmall,
-                    color = tokens.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.Start)
                 )
             }
@@ -299,9 +299,9 @@ private fun LearningStagesCard(state: ProgressUiState) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
             Text("مراحل یادگیری", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             val maxStageValue = listOf(p.dailyConcepts, p.weeklyConcepts, p.monthlyConcepts, p.learnedConcepts).maxOrNull()?.coerceAtLeast(1) ?: 1
-            StageRow("روزانه", p.dailyConcepts, maxStageValue, tokens.secondary)
-            StageRow("هفتگی", p.weeklyConcepts, maxStageValue, tokens.secondary)
-            StageRow("ماهانه", p.monthlyConcepts, maxStageValue, tokens.primary)
+            StageRow("روزانه", p.dailyConcepts, maxStageValue, MaterialTheme.colorScheme.secondary)
+            StageRow("هفتگی", p.weeklyConcepts, maxStageValue, MaterialTheme.colorScheme.secondary)
+            StageRow("ماهانه", p.monthlyConcepts, maxStageValue, MaterialTheme.colorScheme.primary)
             StageRow("یادگرفته", p.learnedConcepts, maxStageValue, tokens.success)
         }
     }
@@ -332,7 +332,7 @@ private fun DifficultyCard(state: ProgressUiState) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.dp(11f))) {
             Text("پروفایل سختی", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             rows.forEachIndexed { index, row ->
-                val color = listOf(tokens.success, tokens.warning, tokens.secondary, tokens.error)[index]
+                val color = listOf(tokens.success, tokens.warning, MaterialTheme.colorScheme.secondary, tokens.error)[index]
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(fa(row.second), color = color, fontWeight = FontWeight.Bold, modifier = Modifier.width(tokens.dp(58f)))
                     LinearProgressIndicator(progress = { (row.second / max(1f, rows.maxOf { it.second }.toFloat())).coerceIn(.02f, 1f) }, modifier = Modifier.weight(1f).height(tokens.dp(7f)).clip(MaterialTheme.shapes.extraSmall), color = color, trackColor = color.copy(alpha = .10f))
@@ -352,8 +352,8 @@ private fun ReviewAccuracyCard(state: ProgressUiState) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             Text("دقت مرور", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             AccuracyRow("امروز", state.todayReviews.total, state.todayReviews.correct, tokens.success)
-            AccuracyRow("این هفته", state.weekReviews.total, state.weekReviews.correct, tokens.secondary)
-            AccuracyRow("این ماه", state.monthReviews.total, state.monthReviews.correct, tokens.primary)
+            AccuracyRow("این هفته", state.weekReviews.total, state.weekReviews.correct, MaterialTheme.colorScheme.secondary)
+            AccuracyRow("این ماه", state.monthReviews.total, state.monthReviews.correct, MaterialTheme.colorScheme.primary)
             AccuracyRow("مجموع کل", stats.totalReviews, stats.totalCorrect, tokens.warning)
         }
     }
@@ -366,7 +366,7 @@ private fun AccuracyRow(label: String, total: Int, correct: Int, color: Color) {
     Row(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(color.copy(alpha = .07f)).padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
         Text("${fa(percent)}٪", color = color, fontWeight = FontWeight.Bold)
         Spacer(Modifier.weight(1f))
-        Text("${fa(correct)}/${fa(total)}", color = tokens.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+        Text("${fa(correct)}/${fa(total)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.width(tokens.contentGap))
         Text(label, fontWeight = FontWeight.SemiBold)
     }
@@ -386,7 +386,7 @@ private fun AchievementsCard(state: ProgressUiState) {
                 Text(fa(unlocked), color = tokens.warning, fontWeight = FontWeight.Bold)
             }
             state.achievements.forEach { (definition, achievement) ->
-                Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}", color = if (achievement.unlocked) tokens.onSurface else tokens.onSurfaceVariant)
+                Text(if (achievement.unlocked) "✓ ${definition.title}" else "○ ${definition.title}", color = if (achievement.unlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

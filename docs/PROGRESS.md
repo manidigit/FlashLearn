@@ -1,49 +1,3 @@
-## v6.21 — Modern Minimal + CI/instrumentation reconciliation
-- Application identity: 6.21 / 121; previous-version gate: 6.20 / 120.
-- Scope: Modern Minimal runtime presentation, theme-token hardening, and CI/instrumentation reconciliation.
-- Modern Minimal is a built-in theme and the active default theme presentation.
-- The inaccessible Library compositeOver usage was removed after the CI compile failure.
-- GitHub Actions run 35996886108: Build + Unit Test passed; Instrumentation + Upgrade Gate failed only on two stale test expectations.
-- Corrected DirectionThemeMatrixTest to derive light/dark background expectations from FlashLearnThemeSpec.MODERN_MINIMAL.
-- Corrected ThemeTokenContractTest to validate the active theme's configured 14dp medium corner instead of a stale 20dp literal.
-- Verification remains pending until the next authoritative GitHub Actions run is green.
-- Business logic, learning algorithms, Review Engine, scheduling, persistence, Room schema, import/restore contracts, and quiz semantics remain unchanged.
-
-# FlashLearn — PROGRESS TRACKER
-## Current checkpoint: v6.17
-- Application identity: 6.17 / 117; previous-version gate: 6.16 / 116.
-- Scope: Stats/Report and Review/Test adaptive UI hardening.
-- Review quiz options use adaptive minimum height and weighted text space for long labels.
-- Stats/Report progress and retention use compact title/value rows; Learning Stages scale bars to the largest actual stage count.
-- Business logic, Review Engine, quiz generation/evaluation, scheduling, persistence, and database schema are frozen for this checkpoint.
-- Verification remains blocked until authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
-
-# v6.16 Review Compose compatibility checkpoint
-- Runtime identity: 6.16 / 116.
-- Previous gate: 6.15 / 115.
-- CI root cause: unavailable AutoMirrored ChevronLeft API under pinned Compose BOM.
-- Corrective implementation: AutoMirrored KeyboardArrowLeft in Review category navigation.
-- RTL/LTR behavior remains logical and mirrored.
-- Verification pending authoritative CI green status.
-
-## v6.15 — Review RTL/LTR regression correction
-- Current application identity: versionName **6.15** / versionCode **115**.
-- Previous-version upgrade gate: **6.14 / 114**.
-- Re-audited the Review redesign against the established global RTL/LTR root chain and the earlier Review direction fixes.
-- Root cause: the Review redesign reintroduced physical-direction assumptions in Review/shared-header presentation; the global direction provider itself was not the regression.
-- Restored logical alignment and AutoMirrored directional navigation behavior without adding a local LayoutDirection override or graphics-layer mirroring workaround.
-- Preserved ReviewViewModel selection, filtering, scheduling, quiz/flashcard behavior, persistence, database schema, and navigation contracts.
-- Release/process records synchronized across app version, runtime gate, CI, README, changelog, ledger, and progress records.
-- Verification gate: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate for v6.15.
-
-
-## v6.14 — Review setup visual reference implementation
-- Runtime identity advanced to 6.14/114.
-- Supplied Review reference image is now the visual source of truth for the Review setup presentation.
-- Rebuilt the Review setup surface with shared theme tokens and no screen-local parallel palette.
-- Preserved review engine and selection semantics.
-- CI/runtime release gates are aligned to 6.14/114 with 6.13/113 as the previous-version upgrade gate.
-- Verification pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
 
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
@@ -51,59 +5,7 @@
 - Added static regression audit and Theme × RTL/LTR instrumentation coverage.
 - Added schema-backed sample JSON fixtures.
 - Build/CI verification remains pending in this ZIP because no Gradle wrapper is present locally; GitHub Actions is the authoritative gate.
-## v6.12 — RTL/LTR + Theme root-cause hardening
-- Runtime identity advanced to 6.12/112.
-- Re-traced the persisted direction state through AppViewModel/AppUiState/MainActivity and verified the explicit AppLayoutDirection → Compose mapping.
-- Re-audited Home for screen-local direction overrides and removed no new global-direction override because none remains in the current source.
-- Hardened target-screen navigation placement and directional icons with logical leading placement and AutoMirrored icons.
-- Hardened semantic leading text alignment in Bulk Import, Backup Restore, Library, and shared navigation components.
-- Added instrumentation coverage for RTL/LTR × Light/Dark at the Compose root, including mixed BiDi text.
-- Verification pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
-
-## v6.09 — Global RTL/LTR direction-chain correction
-- Runtime identity advanced to 6.09/109.
-- Confirmed MainActivity as the single global LocalLayoutDirection provider and centralized AppLayoutDirection → Compose LayoutDirection mapping.
-- Removed the fixed RTL CompositionLocalProvider from HomeScreen so no screen-local direction override remains in the audited top-level UI flow.
-- Review leading text/progress alignment now uses logical TextAlign.Start.
-- CI version assertions and artifact paths are aligned to 6.09/109 with 6.08/108 as the previous-version upgrade gate.
-- Added regression coverage for both RTL and LTR direction mapping.
-- Verification complete: GitHub Actions run 1117 is green for Build + Unit Test and Instrumentation + Upgrade Gate.
-
-v6.01 — Progress Dashboard Activity Chart + Learning Progress Correction
-- Learning progress now stays at 0% before a concept has any real ReviewHistory entry.
-- Review activity chart now exposes a review-count Y-axis and selectable weekly/monthly/three-month/all-history ranges backed by actual ReviewHistory data.
-- About screen text was updated to reflect the current dashboard behavior.
-
-v6.01 — Project Source / Version / CI Reconciliation
-- Runtime identity advanced to 6.01/101.
-- Historical v4.33–v4.39 labels remain stage history and do not redefine the current application version.
-- Existing v6.00 Quiz translation and 3-second feedback behavior remains the current product checkpoint.
-- Existing Spanish Quiz-question TTS playback is now explicitly logged.
-- Build/Unit and Instrumentation are both required for a green release-verification checkpoint.
-- The uploaded v4.39-named certification archive is tracked as a historical artifact with corrected semantic labeling.
-
-## v6.00 — Quiz Translation Display and Answer Feedback Timing
-- Advanced runtime identity to 6.00/100.
-- Quiz options now show all target-language translations for each Concept in translation-index order.
-- Quiz answer feedback remains visible for 3 seconds: wrong selection red, correct answer green, then automatic advance.
-- Removed the manual Quiz continuation action.
-- Added regression coverage for complete multi-translation option display.
-- CI/runtime version gates aligned to 6.00/100.
-
-v5.99 — Quiz Distractor Rotation and Difficulty Bands
-- Advanced runtime identity to 5.99/99.
-- Added session-level distractor rotation so sequential quiz cards do not reuse the same three wrong answers when enough fresh candidates exist.
-- Changed Quiz Difficulty to deterministic EASY/MEDIUM/HARD category and entry-type tiers.
-- Added regression coverage for distractor rotation and difficulty-band separation.
-- CI/runtime version gates aligned to 5.99/99.
-
-v5.98 — Quiz Generation Hardening
-- Advanced runtime identity to 5.98/98.
-- Quiz difficulty now selects explicit confusability bands: EASY least-confusable, MEDIUM middle-band, HARD most-confusable valid distractors.
-- Vocabulary Difficulty remains independent and keeps the documented same → adjacent → whole-bank candidate order.
-- Added final duplicate/ambiguity validation before UI display, canonical-key duplicate filtering, and one quiz-bank refresh per review session.
-- Added regression coverage for distinct EASY/MEDIUM/HARD distractor bands when the candidate bank contains enough variety.
-- CI/runtime version gates and project logs are aligned to 5.98/98.
+v6.00 Quiz Translation Display and Answer Feedback Timing completed: quiz options now show all target-language translations per Concept, ordered by translationIndex and joined with " / ". Quiz feedback keeps the selected wrong option red and the correct option green/visible for exactly 3 seconds, then advances automatically. Manual quiz continuation was removed. Regression coverage was added for multi-translation correct and distractor options. Runtime identity is 6.00/100; Room schema remains v5.
 
 v5.52 Progress/Statistics + E2E completed: Progress aggregation, ReviewHistory statistics, calendar-day streaks, Progress UI integration, and the end-to-end Add Word → Review → Progress/Statistics → soft-delete acceptance path were audited and regression-covered. Runtime identity is 5.52/52; Room schema remains v5.
 
@@ -124,7 +26,7 @@ v5.41 — Restore validation hardening: required JSON text fields now reject mis
 - Added Android regression coverage proving a tampered/stale backup canonicalKey is corrected during restore.
 - No Room schema change; Learning Transition and Difficulty remain frozen.
 # FlashLearn — PROGRESS TRACKER
-## Current checkpoint: v6.00
+## Current checkpoint: v5.51
 ## v5.48 — Restore regression test contract hardening
 - Corrected four Android integration-test assertions exposed by CI: export timestamp is compared independently, content count reflects the two language contents created by the fixture, and unrelated parser metadata is preserved under non-destructive restore.
 - Runtime identity aligned to 5.48/48.

@@ -84,7 +84,7 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(tokens.reviewSectionGap)
     ) {
-            state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text("خطا: $it", color = tokens.error, modifier = Modifier.fillMaxWidth(), textAlign = leadingTextAlign) }
+            state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = leadingTextAlign) }
             when {
                 state.isSelectingMode -> ReviewSetup(state, viewModel, personalDifficulty, onFinished, onOpenCategories = { showCategoryPicker = true })
                 state.isLoading -> CircularProgressIndicator()
@@ -207,7 +207,7 @@ private fun ReviewSectionTitle(number: Int, title: String) {
 @Composable
 private fun ReviewChoiceCard(label: String, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, modifier: Modifier) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(onClick = onClick, modifier = modifier.height(tokens.reviewChoiceHeight), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selected) tokens.reviewSurfaceSelected else tokens.reviewSurface), border = BorderStroke(if (selected) tokens.borderStrong else tokens.borderThin, if (selected) tokens.reviewAccent else tokens.reviewBorder.copy(alpha = tokens.cardBorderAlpha)), elevation = CardDefaults.cardElevation(defaultElevation = if (selected) tokens.cardElevation else tokens.reviewCardElevation)) {
+    Card(onClick = onClick, modifier = modifier.height(tokens.reviewChoiceHeight), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selected) tokens.reviewSurfaceSelected else tokens.reviewSurface), border = BorderStroke(if (selected) tokens.borderStrong else tokens.borderThin, if (selected) tokens.reviewAccent else tokens.reviewBorder), elevation = CardDefaults.cardElevation(defaultElevation = tokens.reviewCardElevation)) {
         Box(Modifier.fillMaxSize().padding(horizontal = tokens.reviewCardPadding)) {
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold, color = tokens.reviewText)
@@ -297,7 +297,7 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     val tokens = LocalFlashLearnThemeTokens.current
     val card = state.card ?: return
     val leadingTextAlign = TextAlign.Start
-    val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat(); Text("${state.remaining} کارت باقی‌مانده از ${state.total}", style = MaterialTheme.typography.labelMedium, textAlign = leadingTextAlign, modifier = Modifier.fillMaxWidth()); LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth()); Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text(card.sourceText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center); if (card.isFlipped) { Spacer(Modifier.height(tokens.sectionGap)); Text(card.targetText, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center) }; if (card.hintRevealed && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = tokens.primary, textAlign = TextAlign.Center) }; if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } } }; if (!card.isFlipped) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت") }; OutlinedButton(onClick = vm::revealHint, enabled = !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("راهنما") } }; Button(onClick = vm::flipCard, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight)) { Text("نمایش پاسخ") } } else { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { OutlinedButton(onClick = { vm.submitAnswer(false) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("غلط") }; Button(onClick = { vm.submitAnswer(true) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("صحیح") } } } }
+    val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat(); Text("${state.remaining} کارت باقی‌مانده از ${state.total}", style = MaterialTheme.typography.labelMedium, textAlign = leadingTextAlign, modifier = Modifier.fillMaxWidth()); LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth()); Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text(card.sourceText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center); if (card.isFlipped) { Spacer(Modifier.height(tokens.sectionGap)); Text(card.targetText, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center) }; if (card.hintRevealed && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }; if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } } }; if (!card.isFlipped) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت") }; OutlinedButton(onClick = vm::revealHint, enabled = !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("راهنما") } }; Button(onClick = vm::flipCard, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight)) { Text("نمایش پاسخ") } } else { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { OutlinedButton(onClick = { vm.submitAnswer(false) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("غلط") }; Button(onClick = { vm.submitAnswer(true) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("صحیح") } } } }
 
 @Composable private fun QuizCard(state: ReviewUiState, vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
@@ -332,12 +332,12 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = MaterialTheme.shapes.large, color = QuizWrongContainer.copy(alpha = .9f)) { Text("${state.wrong} ✕", color = QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = tokens.contentGap, vertical = tokens.tinyGap)) }
         Spacer(Modifier.width(tokens.compactGap))
-        Surface(shape = MaterialTheme.shapes.large, color = tokens.surfaceVariant.copy(alpha = .65f)) { Text("${state.answered} / ${state.total}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = tokens.contentGap, vertical = tokens.tinyGap)) }
+        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .65f)) { Text("${state.answered} / ${state.total}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = tokens.contentGap, vertical = tokens.tinyGap)) }
         Spacer(Modifier.width(tokens.compactGap))
         Surface(shape = MaterialTheme.shapes.large, color = QuizCorrectContainer.copy(alpha = .9f)) { Text("${state.correct} ✓", color = QuizCorrect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = tokens.contentGap, vertical = tokens.tinyGap)) }
     }
     LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.surfaceVariant)) {
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(26f)), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             OutlinedButton(
@@ -350,7 +350,7 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
                 },
                 enabled = !answered && ttsReady
             ) { Text("🔊 پخش سؤال به اسپانیایی") }
-            if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = tokens.primary, textAlign = TextAlign.Center) }
+            if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
             if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) }
         }
     }
@@ -363,9 +363,9 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
             val isCorrect = option == correct
             val isWrongSelection = answered && option == selected && !isCorrect
             val isSelected = !answered && option == selected
-            val container = when { answered && isCorrect -> QuizCorrectContainer; isWrongSelection -> QuizWrongContainer; isSelected -> QuizSelectedContainer; else -> tokens.surface }
-            val content = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> tokens.onSurface }
-            val border = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> tokens.outlineColor }
+            val container = when { answered && isCorrect -> QuizCorrectContainer; isWrongSelection -> QuizWrongContainer; isSelected -> QuizSelectedContainer; else -> MaterialTheme.colorScheme.surface }
+            val content = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.onSurface }
+            val border = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.outline }
             val emphasized = (answered && (isCorrect || isWrongSelection)) || isSelected
             OutlinedButton(onClick = { vm.selectQuizOption(option) }, enabled = !answered && !state.isSubmitting, modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(72f)), shape = MaterialTheme.shapes.large, border = BorderStroke(if (emphasized) tokens.dp(3f) else tokens.borderThin, border), colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content), contentPadding = PaddingValues(horizontal = tokens.contentGap + tokens.compactGap, vertical = tokens.compactGap)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
@@ -387,60 +387,13 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
 
 @Composable private fun QuizUnavailableCard() {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = tokens.reviewSurface),
-        border = BorderStroke(tokens.borderThin, tokens.reviewBorder.copy(alpha = tokens.cardBorderAlpha)),
-        elevation = CardDefaults.cardElevation(defaultElevation = tokens.reviewCardElevation)
-    ) {
-        Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge, color = tokens.reviewText)
-            Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = tokens.reviewMutedText)
-        }
-    }
-}
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge); Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
 @Composable private fun FeedbackCard(state: ReviewUiState) {
     val tokens = LocalFlashLearnThemeTokens.current
     val f = state.answerFeedback ?: return
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = tokens.reviewSurface),
-        border = BorderStroke(tokens.borderThin, tokens.reviewBorder.copy(alpha = tokens.cardBorderAlpha)),
-        elevation = CardDefaults.cardElevation(defaultElevation = tokens.cardElevation)
-    ) {
-        Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) {
-            Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong)
-            Text("مرحله: ${f.stageLabel}", color = tokens.reviewText)
-            Text("سختی: ${f.difficultyLabel}", color = tokens.reviewMutedText)
-            if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}", color = tokens.reviewText)
-            Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط", color = tokens.reviewMutedText)
-        }
-    }
-}
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط") } } }
 @Composable private fun FinishCard(state: ReviewUiState, onFinished: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = tokens.reviewSurface),
-        border = BorderStroke(tokens.borderThin, tokens.reviewBorder.copy(alpha = tokens.cardBorderAlpha)),
-        elevation = CardDefaults.cardElevation(defaultElevation = tokens.cardElevation)
-    ) {
-        Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall, color = tokens.reviewText)
-            Text("${state.answered} کارت پاسخ داده شد", color = tokens.reviewMutedText)
-            Text("صحیح: ${state.correct} • غلط: ${state.wrong}", color = tokens.reviewText)
-            Text("دقت این جلسه: ${if (state.answered == 0) 0 else state.correct * 100 / state.answered}٪", color = tokens.reviewMutedText)
-            Button(
-                onClick = onFinished,
-                modifier = Modifier.fillMaxWidth().height(tokens.buttonHeight),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = tokens.reviewButton, contentColor = tokens.reviewButtonContent)
-            ) { Text("بازگشت به خانه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
-        }
-    }
-}
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall); Text("${state.answered} کارت پاسخ داده شد"); Text("صحیح: ${state.correct} • غلط: ${state.wrong}"); Text("دقت این جلسه: ${if (state.answered == 0) 0 else state.correct * 100 / state.answered}٪"); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("بازگشت به خانه") } } } }
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
 private fun reviewTypeLabel(type: ReviewType) = when (type) { ReviewType.DAILY -> "روزانه"; ReviewType.WEEKLY -> "هفتگی"; ReviewType.MONTHLY -> "ماهانه"; ReviewType.LEARNED -> "یادگرفته"; ReviewType.RANDOM -> "تصادفی" }

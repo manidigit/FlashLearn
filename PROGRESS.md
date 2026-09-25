@@ -1,11 +1,3 @@
-## v6.23 — Current release reconciliation
-- Runtime identity: **6.23 / versionCode 123**.
-- Previous-version upgrade gate: **6.22 / 122**.
-- Current release scope: Grok theme + Home dashboard structure.
-- `app/build.gradle.kts`, `.github/workflows/android-ci.yml`, `README.md`, `CHANGELOG.md`, `docs/VERSION_LEDGER.md`, `docs/FlashLearn_PROGRESS_TRACKER.md`, and `docs/PROGRESS.md` are synchronized to this release identity.
-- Latest GitHub Actions run **36053217848** is currently **in progress**; documentation is not proof of a green build.
-- Entries below are historical checkpoints and do not define the current runtime version.
-
 ## v6.21 — Modern Minimal + CI correction in progress
 - Runtime identity: 6.21 / 121; previous gate: 6.20 / 120.
 - Modern Minimal is now available in the built-in catalog and is the active default theme presentation.

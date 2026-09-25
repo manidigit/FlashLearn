@@ -3,8 +3,11 @@ package com.flashlearn.app.ui.help
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -16,14 +19,9 @@ import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
 fun HelpScreen(onBack: () -> Unit) {
-    val tokens = LocalFlashLearnThemeTokens.current
-
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = tokens.screenPadding, vertical = tokens.screenVerticalPadding),
-        verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalFlashLearnThemeTokens.current.screenPadding, vertical = LocalFlashLearnThemeTokens.current.screenVerticalPadding),
+        verticalArrangement = Arrangement.spacedBy(LocalFlashLearnThemeTokens.current.contentGap)
     ) {
         FlashLearnScreenHeader(title = stringResource(R.string.help_title), onBack = onBack)
 
@@ -37,7 +35,7 @@ fun HelpScreen(onBack: () -> Unit) {
         Text(
             stringResource(R.string.help_boundary),
             style = MaterialTheme.typography.bodySmall,
-            color = tokens.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
             modifier = Modifier.fillMaxWidth()
         )
@@ -47,10 +45,7 @@ fun HelpScreen(onBack: () -> Unit) {
 @Composable
 private fun HelpSection(title: String, body: String) {
     Card(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(body, style = MaterialTheme.typography.bodyMedium)
         }

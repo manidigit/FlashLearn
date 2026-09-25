@@ -9,6 +9,9 @@ import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardDefaults.outlinedCardColors
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -132,7 +135,20 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
 
     Column(Modifier.fillMaxSize()) {
         FlashLearnScreenHeader(title = "جزئیات لغت", onBack = onBack)
-        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            color = MaterialTheme.colorScheme.background,
+            shape = RectangleShape
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = tokens.screenPadding),
+                verticalArrangement = Arrangement.spacedBy(tokens.itemGap)
+            ) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 ReadOnlyLanguageField(languagePair.source.code, "زبان مبدأ", Modifier.weight(1f))
@@ -168,22 +184,45 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(48.dp)) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(8.dp)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
-                OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(48.dp)) { Text("انصراف") }
+                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
+                OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text("انصراف") }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(6.dp)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
-                OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(6.dp)); Text("حذف") }
+                OutlinedButton(onClick = viewModel::toggleFavorite, enabled = !isBusy, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Star, null); Spacer(Modifier.width(tokens.microGap)); Text(if (item?.concept?.favorite == true) "موردعلاقه" else "افزودن به موردعلاقه") }
+                OutlinedButton(onClick = { confirmDelete = true }, enabled = !isBusy, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.DeleteOutline, null); Spacer(Modifier.width(tokens.microGap)); Text("حذف") }
             }
-            message?.let { Text(it, color = tokens.primary) }
+            message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            }
         }
     }
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("حذف لغت؟") }, text = { Text("این لغت از کتابخانه فعال حذف می‌شود؛ سابقه مرور آن حفظ می‌شود.") }, confirmButton = { TextButton(onClick = { confirmDelete = false; viewModel.delete(onDeleted) }, enabled = !isBusy) { Text("حذف") } }, dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("انصراف") } })
 }
 
 @Composable private fun ReadOnlyLanguageField(code: String, label: String, modifier: Modifier) {
+    val tokens = LocalFlashLearnThemeTokens.current
     val language = LearningLanguage.entries.firstOrNull { it.code == code } ?: LearningLanguage.PERSIAN
-    OutlinedCard(modifier = modifier) { Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(7.dp)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } }
+    OutlinedCard(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(tokens.compactPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(language.flag, style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.width(tokens.microGap))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(label, style = MaterialTheme.typography.labelSmall)
+                Text(language.labelFa)
+            }
+        }
+    }
 }
 
 private fun EntryType.labelFa(): String = when (this) { EntryType.WORD -> "واژه"; EntryType.PHRASE -> "عبارت"; EntryType.SENTENCE -> "جمله"; EntryType.IDIOM -> "اصطلاح"; EntryType.COLLOCATION -> "هم‌آیند"; EntryType.STRUCTURE -> "ساختار" }

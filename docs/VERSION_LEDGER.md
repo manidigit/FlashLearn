@@ -1,11 +1,3 @@
-## v6.23 — Current release reconciliation
-- Application version: **6.23**
-- Version code: **123**
-- Previous version gate: **6.22 / 122**
-- Release scope: Grok theme + Home dashboard structure.
-- Latest GitHub Actions run: **36053217848**, currently **in progress**.
-- Verification: **Pending** until the authoritative CI run completes.
-
 ## v6.21 — Modern Minimal + CI/instrumentation reconciliation
 - Application version: 6.21
 - Version code: 121
@@ -30,16 +22,15 @@
 | 6.10 | 110 | Secondary-screen RTL/LTR navigation | Prior checkpoint |
 | 6.09 | 109 | Global RTL/LTR direction-chain correction | Verified — run 1117 |
 
-## Authoritative numbering and process sources
-1. `app/build.gradle.kts` — runtime versionName/versionCode.
-2. `.github/workflows/android-ci.yml` — CI current and previous-version gates.
-3. `docs/VERSION_LEDGER.md` — release ledger.
-4. `CHANGELOG.md` — chronological release history.
-5. `PROGRESS.md`, `docs/FlashLearn_PROGRESS_TRACKER.md`, and `docs/PROGRESS.md` — current process/verification status.
-6. `README.md` — public repository summary.
-7. `Standalone_Integrated_Specification_AUDITED.md` — product, architecture, data, and algorithm contracts; it does not override runtime version numbering.
+## Authoritative numbering sources
+1. app/build.gradle.kts
+2. RuntimeGatePreflightTest
+3. .github/workflows/android-ci.yml
+4. this ledger
+5. CHANGELOG.md / PROGRESS.md
+6. docs/FlashLearn_PROGRESS_TRACKER.md
 
-Current release identity is **6.23 / 123**, with **6.22 / 122** as the previous-version upgrade gate. Historical entries must remain historical and must not be interpreted as the current runtime version.
+All six must agree before a release checkpoint is considered correctly numbered.
 
 ## v6.17 — Adaptive Stats/Review UI hardening
 - Application version: 6.17

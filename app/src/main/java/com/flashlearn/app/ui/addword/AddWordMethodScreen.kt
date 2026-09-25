@@ -45,19 +45,19 @@ fun AddWordMethodScreen(
             onBack = onBack
         )
         Spacer(Modifier.height(tokens.compactGap))
-        MethodCard("لغات تکی", "افزودن یک واژه جدید", tokens.primary, tokens.primary.copy(alpha = .07f), Icons.Outlined.Description, onSingleWord)
+        MethodCard("لغات تکی", "افزودن یک واژه جدید", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .07f), Icons.Outlined.Description, onSingleWord)
         Spacer(Modifier.height(tokens.itemGap + tokens.compactGap))
-        MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", tokens.secondary, tokens.secondary.copy(alpha = .07f), Icons.Outlined.Group, onBulkWords)
+        MethodCard("لغات گروهی", "وارد کردن چند واژه همزمان", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = .07f), Icons.Outlined.Group, onBulkWords)
         Spacer(Modifier.height(tokens.itemGap + tokens.compactGap))
         MethodCard("ریستور بکاپ", "بازیابی واژه‌ها و اطلاعات از فایل پشتیبان", tokens.success, tokens.success.copy(alpha = .07f), Icons.Outlined.Restore, onRestoreBackup)
         Spacer(Modifier.height(tokens.sectionGap))
-        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = BorderStroke(tokens.dp(1f), tokens.outlineColor.copy(alpha = .45f))) {
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(tokens.dp(1f), MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
             Row(Modifier.fillMaxWidth().padding(tokens.contentGap), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
                 StatAction(Icons.Outlined.Search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
                 StatAction(Icons.Outlined.Refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("تعداد کل واژگان", style = MaterialTheme.typography.labelLarge, color = tokens.onSurfaceVariant)
-                    Text(libraryState.totalCount.toString(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = tokens.onSurface)
+                    Text("تعداد کل واژگان", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(libraryState.totalCount.toString(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -73,9 +73,9 @@ private fun MethodCard(title: String, subtitle: String, color: Color, background
             Icon(icon, contentDescription = title, tint = color, modifier = Modifier.size(tokens.dp(42f)))
             Spacer(Modifier.width(tokens.contentGap))
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                Text(title, color = tokens.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
+                Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
                 Spacer(Modifier.height(tokens.microGap))
-                Text(subtitle, color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
             }
             Spacer(Modifier.width(tokens.contentGap))
             Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, contentDescription = null, tint = color, modifier = Modifier.size(tokens.iconLarge))
