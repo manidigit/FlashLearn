@@ -16,6 +16,8 @@ import com.flashlearn.domain.usecase.DeleteTagUseCase
 import com.flashlearn.domain.usecase.RemoveExactDuplicateConceptsUseCase
 import com.flashlearn.domain.usecase.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -69,10 +71,19 @@ class LibraryViewModel @Inject constructor(
     private val _state = MutableStateFlow(LibraryUiState())
     val state: StateFlow<LibraryUiState> = _state.asStateFlow()
     private var refreshGeneration = 0L
+    private var refreshJob: Job? = null
+    private var queryChangeJob: Job? = null
 
     init { refresh() }
     fun setLanguagePair(pair: LanguagePair) { if (_state.value.sourceLanguage == pair.source.code && _state.value.targetLanguage == pair.target.code) return; _state.value = _state.value.copy(sourceLanguage = pair.source.code, targetLanguage = pair.target.code); refresh() }
-    fun onQueryChange(value: String) { _state.value = _state.value.copy(query = value); refresh() }
+    fun onQueryChange(value: String) {
+        _state.value = _state.value.copy(query = value)
+        queryChangeJob?.cancel()
+        queryChangeJob = viewModelScope.launch {
+            delay(250)
+            refresh()
+        }
+    }
     fun onFavoritesChange(value: Boolean) { _state.value = _state.value.copy(favoritesOnly = value); refresh() }
     fun onFilterChange(value: LibraryFilter) { _state.value = _state.value.copy(filter = value); refresh() }
     fun onCategoryChange(ids: Set<UUID>) { _state.value = _state.value.copy(selectedCategoryIds = ids); refresh() }
@@ -87,6 +98,8 @@ class LibraryViewModel @Inject constructor(
     fun removeExactDuplicates(onDone: (Int) -> Unit = {}) { if (_state.value.isDuplicateCleanupBusy) return; viewModelScope.launch { _state.value = _state.value.copy(isDuplicateCleanupBusy = true, error = null); runCatching { removeExactDuplicates(_state.value.sourceLanguage, _state.value.targetLanguage) }.onSuccess { count -> refresh(); onDone(count) }.onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در پاکسازی تکراری‌ها") }; _state.value = _state.value.copy(isDuplicateCleanupBusy = false) } }
 
     fun refresh() {
+        queryChangeJob?.cancel()
+        refreshJob?.cancel()
         val generation = ++refreshGeneration
         val snapshot = _state.value
         val query = snapshot.query.trim()
@@ -96,15 +109,13 @@ class LibraryViewModel @Inject constructor(
         val filter = snapshot.filter
         val sourceLanguage = snapshot.sourceLanguage
         val targetLanguage = snapshot.targetLanguage
-        viewModelScope.launch {
+        refreshJob = viewModelScope.launch {
             if (generation != refreshGeneration) return@launch
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 val cats = categoriesRepo.getAll()
                 val tags = tagsRepo.getAll().sortedBy { it.name.lowercase() }
                 val cs = if (query.isBlank()) concepts.getAllActive() else concepts.searchActive(query)
-                val allHistory = reviewHistoryRepository.getAll()
-                val reviewedIds = allHistory.asSequence().map { it.conceptId }.toSet()
                 val learningById = learningRepository.getAll().associateBy { it.conceptId }
                 val tagLinks = conceptTags.getAll().groupBy { it.conceptId }.mapValues { (_, links) -> links.map { it.tagId }.toSet() }
                 val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
@@ -112,8 +123,8 @@ class LibraryViewModel @Inject constructor(
                 val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
                 val tagCounts = filteredBase.asSequence().flatMap { tagLinks[it.id].orEmpty().asSequence() }.groupingBy { it }.eachCount()
                 val learnedIds = filteredBase.asSequence().filter { learningById[it.id]?.stage == Stage.LEARNED }.map { it.id }.toSet()
-                val learningIds = filteredBase.asSequence().filter { it.id in reviewedIds && it.id !in learnedIds }.map { it.id }.toSet()
-                val newIds = filteredBase.asSequence().filter { it.id !in reviewedIds }.map { it.id }.toSet()
+                val learningIds = filteredBase.asSequence().filter { learningById[it.id]?.lastReviewedAt != null && it.id !in learnedIds }.map { it.id }.toSet()
+                val newIds = filteredBase.asSequence().filter { learningById[it.id]?.lastReviewedAt == null }.map { it.id }.toSet()
                 val filteredConcepts = filteredBase.asSequence().filter { selectedCategories.isEmpty() || it.categoryId in selectedCategories }.filter { concept -> when (filter) { LibraryFilter.ALL -> true; LibraryFilter.LEARNED -> concept.id in learnedIds; LibraryFilter.LEARNING -> concept.id in learningIds; LibraryFilter.NEW -> concept.id in newIds } }.toList()
                 val catMap = cats.associateBy { it.id }
                 val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
