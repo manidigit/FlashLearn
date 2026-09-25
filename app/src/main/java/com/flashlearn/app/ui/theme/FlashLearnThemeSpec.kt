@@ -76,7 +76,23 @@ data class FlashLearnThemeSpec(
             cornerSmall = 12f, cornerMedium = 16f, cornerLarge = 24f,
             typographyScale = 1f, densityScale = 1f
         )
-        val BUILT_IN = listOf(GROK, CLAUD, MODERN_MINIMAL)
+        val SPARK = FlashLearnThemeSpec(
+            id = "spark", name = "جرقه",
+            lightPrimary = 0xFF58CC02, darkPrimary = 0xFF78E633,
+            lightSecondary = 0xFF7C4DFF, darkSecondary = 0xFFA98BFF,
+            lightBackground = 0xFFF7F9F5, darkBackground = 0xFF111713,
+            lightSurface = 0xFFFFFFFF, darkSurface = 0xFF19221C,
+            lightSurfaceVariant = 0xFFEFF6EC, darkSurfaceVariant = 0xFF223026,
+            lightOnSurface = 0xFF24302A, darkOnSurface = 0xFFF2F7F3,
+            lightOnSurfaceVariant = 0xFF6B756E, darkOnSurfaceVariant = 0xFFB8C4BB,
+            lightCard = 0xFFFFFFFF, darkCard = 0xFF19221C,
+            lightOutline = 0xFFD7E3D2, darkOutline = 0xFF344338,
+            gradientStart = 0xFF58CC02, gradientEnd = 0xFF7C4DFF,
+            iconStyle = "filled", elevationScale = 0.92f,
+            cornerSmall = 14f, cornerMedium = 20f, cornerLarge = 24f,
+            typographyScale = 1.02f, densityScale = 1f
+        )
+        val BUILT_IN = listOf(GROK, CLAUD, MODERN_MINIMAL, SPARK)
 
         fun fromJson(raw:String):FlashLearnThemeSpec {
             val j=JSONObject(raw); require(j.optInt("formatVersion")==FORMAT_VERSION)
