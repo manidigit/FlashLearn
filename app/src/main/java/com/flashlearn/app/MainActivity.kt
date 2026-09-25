@@ -16,7 +16,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.toComposeLayoutDirection
@@ -138,13 +137,14 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ReviewSessionContent(viewModel: ReviewViewModel, personalDifficulty: com.flashlearn.domain.model.VocabularyDifficulty?, quizDifficulty: com.flashlearn.domain.model.QuizDifficulty, onFinished: () -> Unit) {
         val reviewState by viewModel.state.collectAsState()
+        val tokens = com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens.current
         val sessionActive = !reviewState.isSelectingMode && !reviewState.isFinished
         fun exitToSetup() { viewModel.exitReview { viewModel.prepareReviewType(reviewState.selectedReviewType) } }
         BackHandler(enabled = sessionActive) { exitToSetup() }
         Column(Modifier.fillMaxSize()) {
             if (sessionActive) {
-                Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .45f)) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.compactPadding), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .45f)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = tokens.compactPadding, vertical = tokens.tinyGap), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { exitToSetup() }) { Icon(Icons.Outlined.Close, contentDescription = "بستن مرور") }
                         Spacer(Modifier.weight(1f))
                         Column(horizontalAlignment = Alignment.End) {
