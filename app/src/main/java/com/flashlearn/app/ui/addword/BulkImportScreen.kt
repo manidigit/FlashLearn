@@ -159,7 +159,7 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
                     enabled = !state.isImporting && !state.isPreviewing && !state.done && !duplicateOnly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(tokens.icons.add, null)
+                    Icon(tokens.icons.upload, null)
                     Spacer(Modifier.width(tokens.compactGap))
                     Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
                 }
