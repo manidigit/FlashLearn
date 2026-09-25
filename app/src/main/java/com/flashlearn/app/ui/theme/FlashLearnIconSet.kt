@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MenuBook
@@ -34,6 +36,7 @@ data class FlashLearnIconSet(
     val style: IconStyle,
     val back: ImageVector,
     val add: ImageVector,
+    val close: ImageVector,
     val search: ImageVector,
     val refresh: ImageVector,
     val settings: ImageVector,
@@ -49,6 +52,7 @@ data class FlashLearnIconSet(
                 style = style,
                 back = if (filled) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Outlined.ArrowBack,
                 add = if (filled) Icons.Filled.Add else Icons.Outlined.Add,
+                close = if (filled) Icons.Filled.Close else Icons.Outlined.Close,
                 search = if (filled) Icons.Filled.Search else Icons.Outlined.Search,
                 refresh = if (filled) Icons.Filled.Refresh else Icons.Outlined.Refresh,
                 settings = if (filled) Icons.Filled.Settings else Icons.Outlined.Settings,
