@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.flashlearn.app"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 625
         versionName = "6.25"
