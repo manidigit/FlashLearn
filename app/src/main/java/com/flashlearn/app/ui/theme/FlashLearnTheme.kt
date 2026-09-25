@@ -166,6 +166,7 @@ fun FlashLearnTheme(
         
         // --- Layout & Appearance ---
         iconStyle = if (spec.iconStyle.equals("filled", true)) IconStyle.FILLED else IconStyle.OUTLINED,
+        icons = FlashLearnIconSet.forStyle(if (spec.iconStyle.equals("filled", true)) IconStyle.FILLED else IconStyle.OUTLINED),
         elevationScale = spec.elevationScale,
         densityScale = spec.densityScale,
         typographyScale = spec.typographyScale,
