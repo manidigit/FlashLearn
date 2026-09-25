@@ -1,6 +1,6 @@
 # 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
 
-**Version:** 6.25 | **Theme System:** 2.0-Complete | **Date:** 2026-09-25
+**Version:** 6.26 | **Theme System:** 2.0-Complete | **Date:** 2026-09-25
 
 ---
 
@@ -19,7 +19,7 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 
 ---
 
-## 📊 Version 6.25 - Theme System Complete
+## 📊 Version 6.26 - Review Performance Hardening
 
 ### 🎨 What's New
 
@@ -240,12 +240,12 @@ FlashLearn © 2026 - All rights reserved
 
 ## 🔄 Recent Changes
 
-### v6.25 (2026-09-25)
-- Theme System Complete Overhaul
-- 3 Critical Screens Fixed
-- 8 Reusable Patterns Added
-- Full Documentation
-- GROK + CLAUD Themes Ready
+### v6.26 (2026-09-25)
+- Review answer persistence and quiz generation moved off the UI thread
+- Per-answer full ReviewHistory scan removed
+- Review queue/count selection now uses LearningState.lastReviewedAt for same-day exclusion
+- Library search is debounced and stale refresh jobs are cancelled
+- Runtime/CI identity advanced to 6.26 / 626
 
 ### v6.24 (2026-09-24)
 - Initial Release
