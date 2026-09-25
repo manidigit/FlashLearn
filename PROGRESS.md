@@ -1,3 +1,9 @@
+## v6.26 — Review responsiveness hardening
+- Runtime identity is 6.26 / 626; previous upgrade gate is 6.25 / 625.
+- Quiz generation and review persistence are moved off the UI thread; same-day review checks no longer scan full ReviewHistory.
+- Library search is debounced and stale refresh jobs are cancelled.
+- Final status is pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.
+
 ## v6.21 — Modern Minimal + CI correction in progress
 - Runtime identity: 6.21 / 121; previous gate: 6.20 / 120.
 - Modern Minimal is now available in the built-in catalog and is the active default theme presentation.
