@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
@@ -35,11 +34,7 @@ fun FlashLearnBackButton(
     enabled: Boolean = true
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
-    val icon = if (tokens.iconStyle == IconStyle.FILLED) {
-        Icons.AutoMirrored.Filled.ArrowBack
-    } else {
-        Icons.AutoMirrored.Outlined.ArrowBack
-    }
+    val icon = tokens.icons.back
     IconButton(onClick = onClick, enabled = enabled) {
         FlashLearnIcon(icon, contentDescription, tint = tokens.onSurface)
     }
