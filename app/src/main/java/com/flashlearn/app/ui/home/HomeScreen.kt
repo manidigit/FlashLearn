@@ -208,7 +208,7 @@ fun HomeScreen(
 
         // ── CTA ────────────────────────────────────────────────
         FlashLearnPrimaryButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(tokens.iconMedium))
+            Icon(tokens.icons.add, contentDescription = null, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
             Text("افزودن واژه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
