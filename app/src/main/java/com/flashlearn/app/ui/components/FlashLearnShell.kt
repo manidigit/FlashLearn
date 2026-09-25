@@ -27,7 +27,7 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
             NavItem(AppRoutes.HOME, "خانه", tokens.icons.home, selectedRoute, onNavigate)
             NavItem(AppRoutes.REVIEW, "مرور", tokens.icons.review, selectedRoute, onNavigate)
             NavItem(AppRoutes.LIBRARY, "واژگان", tokens.icons.library, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", null, selectedRoute, onNavigate)
+            NavItem(AppRoutes.PROGRESS, "آمار", tokens.icons.progress, selectedRoute, onNavigate)
             NavItem(AppRoutes.SETTINGS, "تنظیمات", tokens.icons.settings, selectedRoute, onNavigate)
         }
     }
@@ -50,7 +50,7 @@ private fun RowScope.NavItem(route: String, label: String, icon: androidx.compos
                     .padding(horizontal = tokens.dp(13f), vertical = tokens.dp(6f))
             ) {
                 Icon(
-                    imageVector = icon ?: androidx.compose.material.icons.Icons.Outlined.BarChart,
+                    imageVector = icon ?: tokens.icons.progress,
                     contentDescription = label,
                     modifier = Modifier.size(tokens.iconMedium)
                 )
