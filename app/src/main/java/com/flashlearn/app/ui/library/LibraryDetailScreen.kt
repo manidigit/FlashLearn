@@ -184,7 +184,7 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("یادداشت") }, minLines = 2, maxLines = 3)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
+                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Icon(tokens.icons.save, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (isBusy) "در حال ذخیره..." else "ذخیره") }
                 OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text("انصراف") }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
