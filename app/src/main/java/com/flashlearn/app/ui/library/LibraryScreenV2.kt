@@ -48,7 +48,7 @@ fun LibraryScreenV2(
             placeholder = {
                 Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.onSurfaceVariant)
             },
-            trailingIcon = { Icon(Icons.Outlined.Search, "جستجو", tint = tokens.primary) },
+            trailingIcon = { Icon(tokens.icons.search, "جستجو", tint = tokens.primary) },
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
@@ -61,7 +61,7 @@ fun LibraryScreenV2(
 
         Spacer(Modifier.height(tokens.sectionGap))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.dp(9f))) {
-            StatCard("جدید", state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), Icons.Outlined.Add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
+            StatCard("جدید", state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), tokens.icons.add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
             StatCard("در حال یادگیری", state.learningCount, tokens.secondary, tokens.secondary.copy(alpha = .10f), Icons.Outlined.History, Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
             StatCard("یادگرفته", state.learnedCount, tokens.success, tokens.success.copy(alpha = .10f), Icons.Outlined.CheckCircle, Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
             StatCard("کل واژگان", state.totalCount, tokens.primary, tokens.surfaceVariant, Icons.Outlined.Book, Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
@@ -114,7 +114,7 @@ fun LibraryScreenV2(
                 modifier = Modifier.weight(1f).height(tokens.controlHeight),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(Icons.Outlined.Refresh, "رفرش واژگان", modifier = Modifier.size(tokens.iconMedium))
+                Icon(tokens.icons.refresh, "رفرش واژگان", modifier = Modifier.size(tokens.iconMedium))
                 Spacer(Modifier.width(tokens.compactGap))
                 Text("رفرش")
             }
@@ -130,7 +130,7 @@ fun LibraryScreenV2(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Icon(
-                    if (state.isDuplicateCleanupBusy) Icons.Outlined.Sync else Icons.Outlined.Search,
+                    if (state.isDuplicateCleanupBusy) Icons.Outlined.Sync else tokens.icons.search,
                     "تکراری‌ها",
                     modifier = Modifier.size(tokens.iconMedium)
                 )
