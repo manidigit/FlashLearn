@@ -48,8 +48,7 @@ fun FlashLearnTheme(
     }
     
     // =========== Primary Color Selection ===========
-    // GROK theme: always use its gold palette
-    // Others: respect accent override
+    // Personality themes own their primary palette; legacy accent overrides remain for the neutral theme.
     val accentLight = when (accentColor) {
         AccentColor.PURPLE -> Color(spec.lightPrimary)
         AccentColor.BLUE -> Color(0xFF2563EB)
@@ -68,13 +67,15 @@ fun FlashLearnTheme(
     val primary = when {
         spec.id == "grok" && isDark -> Color(spec.darkPrimary)
         spec.id == "grok" -> Color(spec.lightPrimary)
+        spec.id == "spark" && isDark -> Color(spec.darkPrimary)
+        spec.id == "spark" -> Color(spec.lightPrimary)
         isDark -> accentDark
         else -> accentLight
     }
     
     val onPrimaryColor = when (spec.id) {
-        "grok" -> Color(0xFF0F1419)  // dark on gold
-        "claud" -> Color.White
+        "grok" -> Color(0xFF0F1419)
+        "spark" -> Color(0xFF12300A)
         else -> Color.White
     }
     
@@ -192,11 +193,27 @@ fun FlashLearnTheme(
         critical = colorScheme.error,
         
         // --- Visual Personality ---
-        cardBorderAlpha = if (spec.id == "grok") 0.55f else 0.40f,
-        cardBorderStrongAlpha = if (spec.id == "grok") 0.85f else 0.65f,
-        accentSurfaceAlpha = if (spec.id == "grok") 0.16f else 0.10f,
-        hierarchyBoost = if (spec.id == "grok") 1.08f else 1f,
-        preferFilledButtons = spec.id == "grok" || spec.iconStyle.equals("filled", true)
+        cardBorderAlpha = when (spec.id) {
+            "grok" -> 0.55f
+            "spark" -> 0.20f
+            else -> 0.40f
+        },
+        cardBorderStrongAlpha = when (spec.id) {
+            "grok" -> 0.85f
+            "spark" -> 0.45f
+            else -> 0.65f
+        },
+        accentSurfaceAlpha = when (spec.id) {
+            "grok" -> 0.16f
+            "spark" -> 0.12f
+            else -> 0.10f
+        },
+        hierarchyBoost = when (spec.id) {
+            "grok" -> 1.08f
+            "spark" -> 1.06f
+            else -> 1f
+        },
+        preferFilledButtons = spec.id == "grok" || spec.id == "spark" || spec.iconStyle.equals("filled", true)
     )
     
     // =========== Density Adjustment ===========
