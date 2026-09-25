@@ -36,7 +36,7 @@ class DirectionThemeMatrixTest {
         var observedBackground: Color? = null
 
         composeRule.setContent {
-            FlashLearnTheme(appearance = currentCase.second) {
+            FlashLearnTheme(appearance = currentCase.second, themeId = FlashLearnThemeSpec.MODERN_MINIMAL.id) {
                 CompositionLocalProvider(
                     LocalLayoutDirection provides currentCase.first.toComposeLayoutDirection()
                 ) {
