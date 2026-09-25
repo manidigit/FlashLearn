@@ -30,7 +30,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -213,7 +215,7 @@ class ReviewViewModel @Inject constructor(
                 if (_state.value.selectedMode == ReviewMode.QUIZ) {
                     // Refresh once per review session so newly added/edited vocabulary is
                     // available to the distractor generator without refreshing per card.
-                    generateQuizQuestion.refreshBank()
+                    withContext(Dispatchers.IO) { generateQuizQuestion.refreshBank() }
                 }
                 queue = validCandidates.map { it.concept.id }.distinct(); index = 0
                 if (queue.isEmpty()) {
@@ -250,13 +252,15 @@ class ReviewViewModel @Inject constructor(
         val baseCard = ReviewCardUiState(source.text, source.notes, target.text)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
-            when (val result = generateQuizQuestion(
-                concept,
-                QuizLanguagePair(pair.source.code, pair.target.code),
-                sessionDifficulties[conceptId],
-                quizDifficulty,
-                usedQuizDistractorTexts
-            )) {
+            when (val result = withContext(Dispatchers.Default) {
+                generateQuizQuestion(
+                    concept,
+                    QuizLanguagePair(pair.source.code, pair.target.code),
+                    sessionDifficulties[conceptId],
+                    quizDifficulty,
+                    usedQuizDistractorTexts.toSet()
+                )
+            }) {
                 is QuizQuestionResult.QuizQuestion -> {
                     usedQuizDistractorTexts += result.options
                         .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
@@ -280,7 +284,7 @@ class ReviewViewModel @Inject constructor(
         viewModelScope.launch {
             if (generation != sessionGeneration || sessionId != session) return@launch
             _state.value = _state.value.copy(isSubmitting = true, error = null)
-            runCatching { submitReviewAnswer(SubmitReviewAnswerRequest(conceptId, session, UUID.randomUUID(), reviewType, isCorrect, Instant.now())) }
+            runCatching { withContext(Dispatchers.IO) { submitReviewAnswer(SubmitReviewAnswerRequest(conceptId, session, UUID.randomUUID(), reviewType, isCorrect, Instant.now())) } }
                 .onSuccess { result ->
                     if (generation != sessionGeneration || sessionId != session) return@onSuccess
                     val answered = _state.value.answered + 1; val correct = _state.value.correct + if (isCorrect) 1 else 0; val wrong = _state.value.wrong + if (isCorrect) 0 else 1
