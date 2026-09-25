@@ -50,32 +50,6 @@ fun FlashLearnScreen(
 }
 
 /**
- * FlashLearnCard - Universal Card Component
- * 
- * تمام Cards باید با این component ساخته شوند.
- * خودکار:
- * - MaterialTheme.shapes.medium استفاده می‌کند
- * - MaterialTheme.colorScheme.surface استفاده می‌کند
- * - Elevation درست است
- */
-@Composable
-fun FlashLearnCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    val tokens = LocalFlashLearnThemeTokens.current
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = tokens.cardElevation,
-        shadowElevation = tokens.cardElevation
-    ) {
-        content()
-    }
-}
-
-/**
  * FlashLearnButton - Universal Button Component
  * 
  * تمام Buttons باید بر اساس این الگو ساخته شوند.
