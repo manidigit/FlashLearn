@@ -6,8 +6,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -145,7 +143,7 @@ class MainActivity : ComponentActivity() {
             if (sessionActive) {
                 Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.compactPadding), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .45f)) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = tokens.compactPadding, vertical = tokens.tinyGap), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { exitToSetup() }) { Icon(Icons.Outlined.Close, contentDescription = "بستن مرور") }
+                        IconButton(onClick = { exitToSetup() }) { Icon(tokens.icons.close, contentDescription = "بستن مرور") }
                         Spacer(Modifier.weight(1f))
                         Column(horizontalAlignment = Alignment.End) {
                             Text("مرور کلمات", style = MaterialTheme.typography.titleMedium)
