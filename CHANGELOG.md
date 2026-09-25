@@ -11,9 +11,6 @@
 
 ### 🎨 Theme System Complete Overhaul
 
-
-### 🎨 Theme System Complete Overhaul
-
 #### Changes
 - **۳ Critical Screens Fixed (100% Theme-Compliant)**
   - NeedsReviewScreen: Added Surface + ColorScheme + Shapes + Tokens
