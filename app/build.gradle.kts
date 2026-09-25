@@ -31,7 +31,25 @@ android {
         buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-25\"")
     }
 
+    signingConfigs {
+        val ciDebugKeystore = rootProject.file("keystore/debug.keystore")
+        if (ciDebugKeystore.exists()) {
+            create("ciDebug") {
+                storeFile = ciDebugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "androiddebugkey"
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            val ciDebugKeystore = rootProject.file("keystore/debug.keystore")
+            if (ciDebugKeystore.exists()) {
+                signingConfig = signingConfigs.getByName("ciDebug")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
