@@ -140,8 +140,8 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         val difficulty = difficultyStateRepository.get(request.conceptId) ?: error("DATA_INTEGRITY_ERROR: DifficultyState not found for concept ${request.conceptId}")
         if (reviewHistoryRepository.existsByAttemptId(request.sessionId, request.reviewAttemptId)) error("Duplicate review attempt: ${request.reviewAttemptId}")
         val reviewedLocalDate = request.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate()
-        val alreadyPracticedToday = reviewHistoryRepository.getAll().any { it.conceptId == request.conceptId && it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == reviewedLocalDate }
-        if (alreadyPracticedToday) error("Concept has already been practiced today: ${request.conceptId}")
+        val lastReviewedLocalDate = learning.lastReviewedAt?.atZone(ZoneId.systemDefault())?.toLocalDate()
+        if (lastReviewedLocalDate == reviewedLocalDate) error("Concept has already been practiced today: ${request.conceptId}")
         if (request.reviewType != ReviewType.LEARNED) {
             val dueAt = learning.nextReviewAt
             if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt")
