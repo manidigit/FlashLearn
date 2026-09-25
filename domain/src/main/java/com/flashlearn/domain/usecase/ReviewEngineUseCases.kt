@@ -63,11 +63,6 @@ class SelectReviewQueueUseCase @Inject constructor(
         }
 
         val today = filters.now.atZone(ZoneId.systemDefault()).toLocalDate()
-        val practicedToday = reviewHistoryRepository.getAll()
-            .asSequence()
-            .filter { it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == today }
-            .map { it.conceptId }
-            .toSet()
         val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
         val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
         val tagsByConcept = conceptTagRepository.getAll()
@@ -76,7 +71,7 @@ class SelectReviewQueueUseCase @Inject constructor(
         val candidates = ArrayList<ReviewCandidate>(states.size)
 
         for (learning in states) {
-            if (learning.conceptId in practicedToday) continue
+            if (learning.lastReviewedAt?.atZone(ZoneId.systemDefault())?.toLocalDate() == today) continue
             val concept = conceptsById[learning.conceptId] ?: continue
             val difficulty = difficultiesById[learning.conceptId] ?: continue
             val tags = tagsByConcept[learning.conceptId].orEmpty()
