@@ -1,6 +1,16 @@
-# CHANGELOG - FlashLearn Theme System Fix
+# CHANGELOG - FlashLearn
 
-## [6.25] - 2026-09-25
+## [6.26] - 2026-09-25
+
+### ⚡ Review Responsiveness + Data-Path Hardening
+- Moved Quiz distractor generation to `Dispatchers.Default` so expensive similarity work does not block Compose/UI input.
+- Moved review-answer persistence to `Dispatchers.IO`.
+- Replaced per-answer full `ReviewHistory` scans with the current concept's `LearningState.lastReviewedAt` date check.
+- Review queue selection/count now use `LearningState.lastReviewedAt` for same-day exclusion instead of materializing all history.
+- Library search now debounces typing and cancels stale refresh jobs.
+
+### 🎨 Theme System Complete Overhaul
+
 
 ### 🎨 Theme System Complete Overhaul
 
@@ -54,6 +64,14 @@ None - changes are additive only
 
 #### Migration Guide
 See: IMPLEMENTATION_GUIDE.md
+
+---
+
+## [6.25] - 2026-09-25
+
+### 🎨 Theme System Complete Overhaul
+
+- Existing v6.25 theme changes retained from the previous checkpoint.
 
 ---
 
