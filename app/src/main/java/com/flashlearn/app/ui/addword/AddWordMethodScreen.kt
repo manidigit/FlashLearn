@@ -53,8 +53,8 @@ fun AddWordMethodScreen(
         Spacer(Modifier.height(tokens.sectionGap))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(tokens.dp(1f), MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
             Row(Modifier.fillMaxWidth().padding(tokens.contentGap), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
-                StatAction(Icons.Outlined.Search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
-                StatAction(Icons.Outlined.Refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
+                StatAction(tokens.icons.search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
+                StatAction(tokens.icons.refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("تعداد کل واژگان", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(libraryState.totalCount.toString(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
@@ -78,7 +78,7 @@ private fun MethodCard(title: String, subtitle: String, color: Color, background
                 Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
             }
             Spacer(Modifier.width(tokens.contentGap))
-            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, contentDescription = null, tint = color, modifier = Modifier.size(tokens.iconLarge))
+            Icon(tokens.icons.back, contentDescription = null, tint = color, modifier = Modifier.size(tokens.iconLarge))
         }
     }
 }
