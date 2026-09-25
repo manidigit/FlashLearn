@@ -82,7 +82,7 @@ data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: Stri
     }
 }
 
-private data class QuizBank(val contents: List<Content>, val concepts: List<Concept>, val difficultiesById: Map<UUID, DifficultyState>)
+private data class QuizBank(val contents: List<Content>, val contentsByConcept: Map<UUID, List<Content>>, val concepts: List<Concept>, val difficultiesById: Map<UUID, DifficultyState>)
 
 private data class DistractorCandidate(
     val displayText: String,
@@ -101,8 +101,10 @@ class GenerateQuizQuestionUseCase @Inject constructor(
     private var bank: QuizBank? = null
 
     suspend fun refreshBank() {
+        val contents = contentRepository.getAll()
         bank = QuizBank(
-            contents = contentRepository.getAll(),
+            contents = contents,
+            contentsByConcept = contents.groupBy { it.conceptId },
             concepts = conceptRepository.getAllActive(),
             difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
         )
@@ -121,7 +123,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             refreshBank()
             bank!!
         }
-        val contentsByConcept = snapshot.contents.groupBy { it.conceptId }
+        val contentsByConcept = snapshot.contentsByConcept
         val conceptContents = contentsByConcept[concept.id].orEmpty()
         // Quiz prompts are always Spanish. The answer language is still controlled
         // by the active target language, which gives the two documented modes:
