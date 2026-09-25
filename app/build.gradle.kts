@@ -61,6 +61,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":database"))
+    implementation(project(":core"))
 
     // Androidx
     implementation("androidx.core:core-ktx:1.12.0")
