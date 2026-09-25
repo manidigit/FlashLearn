@@ -21,7 +21,7 @@ import org.junit.Test
 
 class DirectionThemeMatrixTest {
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createAndroidComposeRule<ComposeTestActivity>()
 
     @Test
     fun rtlLtrAndLightDarkMatrixPreservesRootDirectionAndTheme() {
