@@ -2,27 +2,13 @@ package com.flashlearn.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.flashlearn.app.navigation.AppRoutes
-import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
@@ -38,17 +24,17 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
             containerColor = navigationBackground,
             tonalElevation = tokens.cardElevation
         ) {
-            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            NavItem(AppRoutes.HOME, "خانه", tokens.icons.home, selectedRoute, onNavigate)
+            NavItem(AppRoutes.REVIEW, "مرور", tokens.icons.review, selectedRoute, onNavigate)
+            NavItem(AppRoutes.LIBRARY, "واژگان", tokens.icons.library, selectedRoute, onNavigate)
+            NavItem(AppRoutes.PROGRESS, "آمار", null, selectedRoute, onNavigate)
+            NavItem(AppRoutes.SETTINGS, "تنظیمات", tokens.icons.settings, selectedRoute, onNavigate)
         }
     }
 }
 
 @Composable
-private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVector, filledIcon: ImageVector, selectedRoute: String, onNavigate: (String) -> Unit) {
+private fun RowScope.NavItem(route: String, label: String, icon: androidx.compose.ui.graphics.vector.ImageVector?, selectedRoute: String, onNavigate: (String) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val selected = selectedRoute == route
     val reviewRoute = selectedRoute == AppRoutes.REVIEW
@@ -64,7 +50,7 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
                     .padding(horizontal = tokens.dp(13f), vertical = tokens.dp(6f))
             ) {
                 Icon(
-                    imageVector = if (selected && tokens.iconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                    imageVector = icon ?: androidx.compose.material.icons.Icons.Outlined.BarChart,
                     contentDescription = label,
                     modifier = Modifier.size(tokens.iconMedium)
                 )
