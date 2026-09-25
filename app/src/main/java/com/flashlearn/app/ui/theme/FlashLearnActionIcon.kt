@@ -2,7 +2,7 @@ package com.flashlearn.app.ui.theme
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
@@ -61,7 +61,7 @@ fun FlashLearnActionIcon(
 }
 
 private fun FlashLearnAction.icon(filled: Boolean): ImageVector = when (this) {
-    FlashLearnAction.Back -> if (filled) Icons.Filled.ArrowBack else Icons.Outlined.ArrowBack
+    FlashLearnAction.Back -> if (filled) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Outlined.ArrowBack
     FlashLearnAction.Forward -> if (filled) Icons.Filled.ArrowForward else Icons.Outlined.ArrowForward
     FlashLearnAction.Add -> if (filled) Icons.Filled.Add else Icons.Outlined.Add
     FlashLearnAction.Close -> if (filled) Icons.Filled.Close else Icons.Outlined.Close

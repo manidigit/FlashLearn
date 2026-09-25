@@ -96,7 +96,7 @@ fun SettingsScreen(
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
             OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("وارد کردن") }
-            OutlinedButton(onClick = { val spec = themes.firstOrNull { it.id == themeId } ?: FlashLearnThemeSpec.MODERN_PURPLE; pendingExport = spec.toJson(); exportLauncher.launch("flashlearn-theme-${spec.id}.json") }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileDownload, null); Spacer(Modifier.width(tokens.compactGap)); Text("خروجی JSON") }
+            OutlinedButton(onClick = { val spec = themes.firstOrNull { it.id == themeId } ?: FlashLearnThemeSpec.GROK; pendingExport = spec.toJson(); exportLauncher.launch("flashlearn-theme-${spec.id}.json") }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileDownload, null); Spacer(Modifier.width(tokens.compactGap)); Text("خروجی JSON") }
         }
         if (importError) Text("فایل تم معتبر نیست یا قابل خواندن نیست.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
         if (exportError) Text("ذخیره فایل تم ناموفق بود.", color = tokens.error, style = MaterialTheme.typography.bodySmall)
