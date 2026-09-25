@@ -23,6 +23,12 @@ android {
         buildConfigField("String", "BUILD_DATE", "\"2026-09-25\"")
         buildConfigField("String", "THEME_VERSION", "\"2.0-Complete\"")
         buildConfigField("String", "THEME_STATUS", "\"۳ Screens Fixed, 8 Patterns Ready\"")
+        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_AUTHOR", "\"Mani\"")
+        buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
+        buildConfigField("String", "APP_DATABASE", "\"Room\"")
+        buildConfigField("String", "APP_AI_ASSISTANT", "\"ChatGPT\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-25\"")
     }
 
     buildTypes {
@@ -52,6 +58,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":database"))
+
     // Androidx
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
@@ -61,7 +71,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.5.4")
     implementation("androidx.compose.ui:ui-graphics:1.5.4")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
-    implementation("androidx.compose.material3:material3:1.1.1")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
     
     // Room
     implementation("androidx.room:room-runtime:2.6.0")
