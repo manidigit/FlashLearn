@@ -81,7 +81,7 @@ fun FlashLearnScreenHeader(
                 shadowElevation = tokens.reviewBackElevation
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    FlashLearnIcon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
+                    FlashLearnIcon(tokens.icons.back, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
                 }
             }
         }
