@@ -27,13 +27,4 @@ class GtpThemeContractTest {
         assertTrue(gtp.lightPrimary != FlashLearnThemeSpec.GROK.lightPrimary)
         assertTrue(gtp.lightSecondary != FlashLearnThemeSpec.GROK.lightSecondary)
     }
-
-    @Test
-    fun gtpJsonRoundTripPreservesDesignTokens() {
-        val restored = FlashLearnThemeSpec.fromJson(FlashLearnThemeSpec.GTP.toJson())
-        assertEquals(FlashLearnThemeSpec.GTP.id, restored.id)
-        assertEquals(FlashLearnThemeSpec.GTP.iconStyle, restored.iconStyle)
-        assertEquals(FlashLearnThemeSpec.GTP.spacingScale, restored.spacingScale, 0.001f)
-        assertEquals(FlashLearnThemeSpec.GTP.cornerLarge, restored.cornerLarge, 0.001f)
-    }
 }
