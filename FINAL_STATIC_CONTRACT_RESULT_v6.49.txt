@@ -1,0 +1,4 @@
+FlashLearn v6.49 / 649
+Theme/Design System static audit: PASS (29 active UI Kotlin files)
+Direct non-Theme shape scan: PASS
+Android build/runtime: UNVERIFIED until CI execution
