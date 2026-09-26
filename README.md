@@ -1,6 +1,6 @@
 # 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
 
-**Version:** 6.26 | **Theme System:** 2.0-Complete | **Date:** 2026-09-25
+**Version:** 6.50 | **Theme System:** 3.0-GTP | **Date:** 2026-09-26
 
 ---
 
@@ -19,37 +19,19 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 
 ---
 
-## 📊 Version 6.26 - Review Performance Hardening
+## 📊 Version 6.50 - GTP Theme Runtime Correction
 
-### 🎨 What's New
+### 🎨 Theme System
+- Added **GTP** as the fifth built-in theme.
+- GTP is not color-only: it owns compact spacing, sharper corners, stronger elevation, filled icons, typography scaling, density, and a violet/cyan visual language.
+- Theme picker consumes the built-in registry, so GTP is exposed automatically through Settings.
+- Theme persistence continues through the existing AppViewModel preference path.
+- Theme JSON format advanced to v3 while remaining backward-compatible with v2 custom themes.
 
-**Theme System Overhaul:**
-- ✅ 3 Critical Screens Fixed (100% Theme-Compliant)
-  - NeedsReviewScreen
-  - AboutScreen
-  - LibraryDetailScreen
-  
-- ✅ ColorScheme Integration
-  - Dynamic background colors
-  - Surface colors
-  - Text colors from MaterialTheme
-
-- ✅ Shape System
-  - All Cards: `MaterialTheme.shapes.medium`
-  - All Buttons: Dynamic corners
-  - BorderRadius responsive to theme
-
-- ✅ Spacing Standardization
-  - 47 hardcoded DPs → tokens
-  - Consistent spacing system
-  - 8 reusable patterns
-
-### 📚 Documentation
-- PATTERN_GUIDE_COMPLETE.md - 8 patterns for remaining screens
-- IMPLEMENTATION_GUIDE.md - Step-by-step instructions
-- CHANGELOG.md - Detailed changelog
-
----
+### 🧪 Verification
+- Added JVM contract coverage for the five-theme catalog and GTP token values.
+- Added instrumentation coverage for GTP spacing, shape, and icon-token binding.
+- GitHub Actions remains the authoritative build, unit-test, instrumentation, APK, and upgrade-gate verifier.
 
 ## 🛠️ Tech Stack
 
