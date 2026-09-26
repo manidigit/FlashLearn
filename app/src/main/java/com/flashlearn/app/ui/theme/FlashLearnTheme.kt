@@ -170,6 +170,7 @@ fun FlashLearnTheme(
         elevationScale = spec.elevationScale,
         densityScale = spec.densityScale,
         typographyScale = spec.typographyScale,
+        spacingScale = spec.spacingScale,
         
         // --- Shapes (Corners) ---
         cornerSmall = spec.cornerSmall.dp,
@@ -196,24 +197,28 @@ fun FlashLearnTheme(
         cardBorderAlpha = when (spec.id) {
             "grok" -> 0.55f
             "spark" -> 0.20f
+            "gtp" -> 0.70f
             else -> 0.40f
         },
         cardBorderStrongAlpha = when (spec.id) {
             "grok" -> 0.85f
             "spark" -> 0.45f
+            "gtp" -> 0.95f
             else -> 0.65f
         },
         accentSurfaceAlpha = when (spec.id) {
             "grok" -> 0.16f
             "spark" -> 0.12f
+            "gtp" -> 0.18f
             else -> 0.10f
         },
         hierarchyBoost = when (spec.id) {
             "grok" -> 1.08f
             "spark" -> 1.06f
+            "gtp" -> 1.12f
             else -> 1f
         },
-        preferFilledButtons = spec.id == "grok" || spec.id == "spark" || spec.iconStyle.equals("filled", true)
+        preferFilledButtons = spec.id == "grok" || spec.id == "spark" || spec.id == "gtp" || spec.iconStyle.equals("filled", true)
     )
     
     // =========== Density Adjustment ===========
