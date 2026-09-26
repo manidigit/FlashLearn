@@ -10,7 +10,7 @@
 - Advanced theme JSON format to v3 with backward-compatible import of v2 custom themes.
 - Added JVM and instrumentation regression coverage for the five-theme registry and GTP token binding.
 - Updated application/CI release identity to versionName 6.50 / versionCode 650 with 6.49 / 649 as the previous-version gate.
-- Verification status: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+- Verification status: GitHub Actions run 1429 is GREEN for Build + Unit Test and Instrumentation + Upgrade Gate.
 
 ## [6.26] - 2026-09-25
 

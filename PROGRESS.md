@@ -6,7 +6,7 @@
 - Theme picker remains registry-driven through AppViewModel.availableThemes() → SettingsScreen, so the new entry is now on the actual runtime path.
 - Theme JSON format advanced to v3 and remains backward-compatible with v2 custom themes.
 - Added JVM and instrumentation contracts for the five-theme catalog and GTP token binding.
-- Verification status: source correction is committed; final release status remains pending until GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+- Verification status: GitHub Actions run 1429 is GREEN for Build + Unit Test and Instrumentation + Upgrade Gate, including the 6.49 → 6.50 upgrade check.
 
 ## v6.26 — Review responsiveness hardening
 - Runtime identity is 6.26 / 626; previous upgrade gate is 6.25 / 625.
