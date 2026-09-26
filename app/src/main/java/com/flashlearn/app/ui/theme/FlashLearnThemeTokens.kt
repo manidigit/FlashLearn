@@ -31,6 +31,7 @@ data class FlashLearnThemeTokens(
     val elevationScale: Float,
     val densityScale: Float,
     val typographyScale: Float,
+    val spacingScale: Float,
     val cornerSmall: Dp,
     val cornerMedium: Dp,
     val cornerLarge: Dp,
@@ -53,7 +54,7 @@ data class FlashLearnThemeTokens(
     val hierarchyBoost: Float = 1f,
     val preferFilledButtons: Boolean = false
 ) {
-    fun dp(value: Float): Dp = value.dp
+    fun dp(value: Float): Dp = (value * spacingScale).dp
 
     // Semantic layout tokens. Screens should consume these instead of repeating
     // raw dp values that represent the design system.
@@ -166,6 +167,7 @@ val LocalFlashLearnThemeTokens = staticCompositionLocalOf {
         elevationScale = 1f,
         densityScale = 1f,
         typographyScale = 1f,
+        spacingScale = 1f,
         cornerSmall = 12.dp,
         cornerMedium = 16.dp,
         cornerLarge = 24.dp,
