@@ -83,16 +83,12 @@ FlashLearn-main/
 
 ## 🎯 Theme System
 
-### Available Themes (9 Total)
-1. **GROK** - Luxury Gold Dark (New)
-2. **CLAUD** - Modern Minimalist (New)
-3. MODERN_MINIMAL
-4. MODERN_PURPLE
-5. OCEAN_BLUE
-6. FRESH_GREEN
-7. SUNSET_ORANGE
-8. MIDNIGHT
-9. FOREST
+### Available Themes (5 Built-in)
+1. **GROK** - Gold / deep-blue personality
+2. **CLAUD** - Green minimalist personality
+3. **MODERN_MINIMAL** - Blue/slate minimalism
+4. **SPARK** - Green/violet energetic style
+5. **GTP** - Compact violet/cyan, sharper geometry and filled-action style
 
 ### Switching Themes
 Go to Settings → Appearance → Select Theme
