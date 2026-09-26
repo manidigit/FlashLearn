@@ -1,5 +1,17 @@
 # CHANGELOG - FlashLearn
 
+## [6.50] - 2026-09-26
+
+### GTP Theme Runtime Correction
+- Root cause confirmed: v6.49 advertised five built-in themes in BuildConfig/metadata, but the actual runtime ThemeSpec catalog contained only four entries, so GTP could not appear in Settings.
+- Added the fifth built-in theme gtp to the actual FlashLearnThemeSpec.BUILT_IN registry.
+- Added a genuinely distinct GTP design language: violet/cyan palette, compact spacing scale, sharper corner geometry, stronger elevation, filled action icons, typography scaling, and compact density.
+- Bound GTP spacing through FlashLearnThemeTokens, so screens using shared theme tokens visibly respond to the GTP geometry.
+- Advanced theme JSON format to v3 with backward-compatible import of v2 custom themes.
+- Added JVM and instrumentation regression coverage for the five-theme registry and GTP token binding.
+- Updated application/CI release identity to versionName 6.50 / versionCode 650 with 6.49 / 649 as the previous-version gate.
+- Verification status: pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate run.
+
 ## [6.26] - 2026-09-25
 
 ### ⚡ Review Responsiveness + Data-Path Hardening
