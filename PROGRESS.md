@@ -1,3 +1,13 @@
+## v6.50 — GTP Theme Runtime Correction
+- Current application identity: versionName 6.50 / versionCode 650; previous-version gate 6.49 / 649.
+- Confirmed against the shipped v6.49 DEBUG APK: no GTP/gtp string exists in the DEX payload, so the installed build could not expose a GTP theme option.
+- Confirmed against GitHub main: BuildConfig claimed five built-in themes, while FlashLearnThemeSpec.BUILT_IN actually contained only GROK, CLAUD, MODERN_MINIMAL, and SPARK.
+- Added GTP to the real built-in registry, with distinct color, typography, spacing, density, corner, elevation, and filled-icon tokens.
+- Theme picker remains registry-driven through AppViewModel.availableThemes() → SettingsScreen, so the new entry is now on the actual runtime path.
+- Theme JSON format advanced to v3 and remains backward-compatible with v2 custom themes.
+- Added JVM and instrumentation contracts for the five-theme catalog and GTP token binding.
+- Verification status: source correction is committed; final release status remains pending until GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.26 — Review responsiveness hardening
 - Runtime identity is 6.26 / 626; previous upgrade gate is 6.25 / 625.
 - Quiz generation and review persistence are moved off the UI thread; same-day review checks no longer scan full ReviewHistory.
