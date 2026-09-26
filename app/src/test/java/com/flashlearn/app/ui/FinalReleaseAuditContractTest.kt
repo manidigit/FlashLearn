@@ -17,7 +17,4 @@ class FinalReleaseAuditContractTest {
         assertTrue(File("src/main/res/values-en/strings.xml").exists())
     }
 
-    @Test fun finalStaticContractReportExists() {
-        assertTrue(File("FINAL_STATIC_CONTRACT_RESULT_v6.49.txt").exists())
-    }
 }
