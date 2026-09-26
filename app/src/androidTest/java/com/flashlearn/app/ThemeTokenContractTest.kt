@@ -36,4 +36,24 @@ class ThemeTokenContractTest {
             assertEquals(58f, reviewChoiceHeight, 0.001f)
         }
     }
+    @Test
+    fun gtpBindsDistinctDensitySpacingAndShapeTokens() {
+        var spacingGap = 0f
+        var corner = 0f
+        var iconStyle = ""
+        composeRule.setContent {
+            FlashLearnTheme(themeId = FlashLearnThemeSpec.GTP.id) {
+                val tokens = LocalFlashLearnThemeTokens.current
+                spacingGap = tokens.compactGap.value
+                corner = tokens.cornerMedium.value
+                iconStyle = tokens.iconStyle.name
+            }
+        }
+        composeRule.runOnIdle {
+            assertEquals(8f * FlashLearnThemeSpec.GTP.spacingScale, spacingGap, 0.001f)
+            assertEquals(FlashLearnThemeSpec.GTP.cornerMedium, corner, 0.001f)
+            assertEquals("FILLED", iconStyle)
+        }
+    }
+
 }
