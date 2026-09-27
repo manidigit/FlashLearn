@@ -30,7 +30,7 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 
 ---
 
-## 📊 Version 6.52 - Review Eligibility + Grok Visual Reconstruction
+## 📊 Version 6.52 - Unified Review Eligibility + Grok Visual Reconstruction
 
 ### 🎨 Grok Theme
 - Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
