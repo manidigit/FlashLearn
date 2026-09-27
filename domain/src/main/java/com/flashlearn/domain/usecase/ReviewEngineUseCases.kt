@@ -24,6 +24,16 @@ data class ReviewCandidate(
     val tagIds: List<UUID>
 )
 
+/**
+ * A concept is unavailable for every review surface after its first review
+ * on the same local calendar day. Shared by queue, counts, summaries and
+ * answer submission so Quiz and Flashcard cannot diverge.
+ */
+internal fun wasReviewedToday(lastReviewedAt: Instant?, now: Instant, zoneId: ZoneId = ZoneId.systemDefault()): Boolean {
+    if (lastReviewedAt == null) return false
+    return lastReviewedAt.atZone(zoneId).toLocalDate() == now.atZone(zoneId).toLocalDate()
+}
+
 private object EmptyReviewHistoryRepository : ReviewHistoryRepository {
     override suspend fun insert(entry: ReviewHistory) = Unit
     override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
@@ -62,7 +72,6 @@ class SelectReviewQueueUseCase @Inject constructor(
             ReviewType.LEARNED -> learningStateRepository.getAllByStage(Stage.LEARNED)
         }
 
-        val today = filters.now.atZone(ZoneId.systemDefault()).toLocalDate()
         val conceptsById = conceptRepository.getAllActive().associateBy { it.id }
         val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
         val tagsByConcept = conceptTagRepository.getAll()
@@ -71,7 +80,7 @@ class SelectReviewQueueUseCase @Inject constructor(
         val candidates = ArrayList<ReviewCandidate>(states.size)
 
         for (learning in states) {
-            if (learning.lastReviewedAt?.atZone(ZoneId.systemDefault())?.toLocalDate() == today) continue
+            if (wasReviewedToday(learning.lastReviewedAt, filters.now)) continue
             val concept = conceptsById[learning.conceptId] ?: continue
             val difficulty = difficultiesById[learning.conceptId] ?: continue
             val tags = tagsByConcept[learning.conceptId].orEmpty()
