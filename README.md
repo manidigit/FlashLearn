@@ -39,8 +39,8 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 - Older theme JSON remains compatible when the design object is absent.
 
 ### 🧪 Process / Verification
-- Version identity: 6.51 / 651.
-- Previous-version upgrade gate: 6.50 / 650.
+- Version identity: 6.52 / 652.
+- Previous-version upgrade gate: 6.51 / 651.
 - GitHub Actions is authoritative for build, unit tests, instrumentation and upgrade compatibility.
 
 ## 📊 Version 6.50 - GTP Theme Runtime Correction
