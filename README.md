@@ -1,294 +1,48 @@
-# 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
+# FlashLearn
 
-**Version:** 6.53 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
+Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
----
+**Current version:** 6.53 (versionCode 653)
 
-## v6.53 — Independent Learning + Difficulty
+## Core features
 
-- Learning and Difficulty are two separate systems.
-- Learning: **Daily → Weekly → Monthly → Learned**.
-- Correct moves Learning one stage forward; wrong returns to Daily.
-- Difficulty: **Easy → Medium → Hard → Very Hard**.
-- Difficulty uses only consecutive correct/wrong answers and the configurable Settings threshold (default 3).
-- Review stage does not create a special Difficulty rule.
-- Weekly/Monthly-specific Difficulty escalation, monthly-wrong-count escalation, and path-failure-driven Difficulty changes are not part of the algorithm.
-- Easy and Very Hard are hard boundaries.
-- Same-day review eligibility remains shared across Flashcard, Quiz, queue counts, answer submission, Home and progress.
-- Version identity: **6.53 / 653**; previous gate **6.52 / 652**.
+- Spaced-repetition review: Daily → Weekly → Monthly → Learned
+- Independent vocabulary difficulty: Easy → Medium → Hard → Very Hard
+- Flashcard and 4-choice Quiz review
+- Bulk vocabulary import with parser warnings and review queue
+- Categories, favorites, tags and duplicate cleanup
+- Progress, statistics and achievements
+- Offline-first Room database
+- Multiple built-in themes and custom theme JSON compatibility
+- Backup/restore with legacy-format compatibility
 
-- Review eligibility is one domain contract across Flashcard, Quiz, review queue, Home due counts, and progress summary.
-- After a concept is reviewed once on a local calendar day, it is excluded from further review that day regardless of answer correctness.
-- Correct transitions: DAILY → WEEKLY → MONTHLY → LEARNED.
-- Wrong transitions: DAILY → DAILY, WEEKLY → DAILY, MONTHLY → DAILY.
-- LEARNED remains a separate review population and is not part of the normal non-learned scheduler.
-- The same wasReviewedToday(...) rule is reused by queue selection, queue counts, answer submission, and summary/Home counts.
-- Regression coverage was added for same-day exclusion and local-calendar-day semantics.
-- Version identity: 6.52 / versionCode 652. CI is the authoritative verification gate.
+## Architecture
 
-## 📱 About
+- `app` — Android UI, Compose screens, ViewModels and navigation
+- `domain` — algorithms, parser, models, repositories and use cases
+- `data` — Room-backed repository implementations and backup/restore
+- `database` — Room entities, DAOs and migrations
+- `core` — Hilt dependency-injection bindings
 
-FlashLearn is a comprehensive offline language learning app for Spanish-Persian vocabulary using spaced repetition algorithm.
+## Build and test
 
-### Features
-- ✅ Spaced repetition learning
-- ✅ Quiz mode (4-choice)
-- ✅ Statistics dashboard
-- ✅ Multiple themes (GROK, CLAUD, Modern Minimal, etc)
-- ✅ Offline-first architecture
-- ✅ Room database
-- ✅ Jetpack Compose UI
-
----
-
-## 📊 Version 6.53 - Independent Learning + Difficulty + Grok Visual Reconstruction
-
-### 🎨 Grok Theme
-- Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
-- Shared components consume Grok-owned border, navigation and header design tokens.
-- Built-in themes carry the complete ThemeDesign profile in the runtime ThemeSpec; the existing custom-theme JSON contract remains unchanged.
-- Older theme JSON remains compatible when the design object is absent.
-
-### 🧪 Process / Verification
-- Version identity: 6.53 / 653.
-- Previous-version upgrade gate: 6.52 / 652.
-- Previous-version upgrade gate: 6.51 / 651.
-- GitHub Actions is authoritative for build, unit tests, instrumentation and upgrade compatibility.
-
-## 📊 Version 6.50 - GTP Theme Runtime Correction
-
-### 🎨 Theme System
-- Added **GTP** as the fifth built-in theme.
-- GTP is not color-only: it owns compact spacing, sharper corners, stronger elevation, filled icons, typography scaling, density, and a violet/cyan visual language.
-- Theme picker consumes the built-in registry, so GTP is exposed automatically through Settings.
-- Theme persistence continues through the existing AppViewModel preference path.
-- Theme JSON format advanced to v3 while remaining backward-compatible with v2 custom themes.
-
-### 🧪 Verification
-- Added JVM contract coverage for the five-theme catalog and GTP token values.
-- Added instrumentation coverage for GTP spacing, shape, and icon-token binding.
-- GitHub Actions remains the authoritative build, unit-test, instrumentation, APK, and upgrade-gate verifier.
-
-## 🛠️ Tech Stack
-
-- **Language:** Kotlin
-- **Framework:** Jetpack Compose
-- **Database:** Room
-- **DI:** Hilt
-- **Architecture:** MVVM + Repository Pattern
-- **Min SDK:** 24
-- **Target SDK:** 34
-- **Compile SDK:** 34
-
----
-
-## 📁 Project Structure
-
-```
-FlashLearn-main/
-├── app/
-│   └── src/
-│       └── main/
-│           └── java/com/flashlearn/app/
-│               ├── ui/
-│               │   ├── theme/
-│               │   │   ├── FlashLearnTheme.kt
-│               │   │   ├── FlashLearnThemeSpec.kt
-│               │   │   └── FlashLearnThemeTokens.kt
-│               │   ├── review/
-│               │   │   └── ReviewScreen.kt
-│               │   ├── library/
-│               │   │   ├── LibraryScreen.kt
-│               │   │   └── LibraryDetailScreen.kt
-│               │   ├── about/
-│               │   │   └── AboutScreen.kt
-│               │   └── [other screens]
-│               └── domain/
-│                   ├── model/
-│                   └── usecase/
-│
-├── CHANGELOG.md
-├── DOCUMENTATION/
-│   ├── PATTERN_GUIDE_COMPLETE.md
-│   ├── IMPLEMENTATION_GUIDE.md
-│   └── [other docs]
-└── README.md
-```
-
----
-
-## 🎯 Theme System
-
-### Available Themes (5 Built-in)
-1. **GROK** - Gold / deep-blue personality
-2. **CLAUD** - Green minimalist personality
-3. **MODERN_MINIMAL** - Blue/slate minimalism
-4. **SPARK** - Green/violet energetic style
-5. **GTP** - Compact violet/cyan, sharper geometry and filled-action style
-
-### Switching Themes
-Go to Settings → Appearance → Select Theme
-
-All UI updates automatically.
-
----
-
-## 🚀 Getting Started
-
-### Build
 ```bash
-./gradlew build
-```
-
-### Run
-```bash
-./gradlew installDebug
-```
-
-### Run Tests
-```bash
+./gradlew assembleDebug
 ./gradlew test
+./gradlew connectedDebugAndroidTest
+./gradlew assembleRelease
 ```
 
----
+GitHub Actions is the authoritative CI gate for debug build, unit tests, instrumentation tests and the previous-version upgrade path.
 
-## 📖 Theme System Guide
+## Review rules
 
-### For Developers
+Learning and difficulty are independent systems. A concept reviewed once on the current local calendar day is excluded from subsequent review that day. Correct answers advance the learning stage; incorrect answers return non-learned concepts to Daily. Difficulty changes only after the configured consecutive-answer threshold.
 
-**New Screens:**
-1. Read: `DOCUMENTATION/PATTERN_GUIDE_COMPLETE.md`
-2. Reference: `LibraryScreen_REFACTORED.kt`
-3. Apply patterns
-4. Test theme switching
+## Repository hygiene
 
-**Remaining Screens (10):**
-- Can be fixed using provided patterns
-- Expected time: 1-2 hours
-- All documentation included
+Generated reports, audit archives, obsolete design-system documentation and duplicate screen implementations are kept out of the production source tree. Release builds use R8 code shrinking and resource shrinking.
 
-### Key Tokens
-```kotlin
-// Spacing
-tokens.screenPadding        // 20.dp
-tokens.contentGap          // 12.dp
-tokens.compactGap          // 8.dp
-tokens.controlHeight       // 52.dp
+## License
 
-// Shapes
-MaterialTheme.shapes.small      // 12.dp
-MaterialTheme.shapes.medium     // 16.dp
-MaterialTheme.shapes.large      // 24.dp
-
-// Colors
-MaterialTheme.colorScheme.background
-MaterialTheme.colorScheme.surface
-MaterialTheme.colorScheme.primary
-```
-
----
-
-## ✅ Verification
-
-### Theme Switching Test
-1. Open Settings
-2. Change theme to GROK
-3. Navigate all screens
-4. Verify: Colors, Corners, Spacing all changed
-5. Change to CLAUD
-6. Verify again
-
-### Fixed Screens (v6.25)
-- ✅ NeedsReviewScreen
-- ✅ AboutScreen
-- ✅ LibraryDetailScreen
-- ✅ All use MaterialTheme tokens
-- ✅ All respond to theme changes
-
----
-
-## 📋 Architecture
-
-### Models
-- `Concept` - Vocabulary item
-- `ReviewQueueItem` - Item for review
-- `VocabularyDifficulty` - Difficulty levels
-
-### Repositories
-- `ConceptRepository` - Vocabulary data
-- `ContentRepository` - Translations
-- `CategoryRepository` - Categories
-
-### Use Cases
-- Learning algorithm
-- Spaced repetition
-- Difficulty calculation
-
----
-
-## 🐛 Known Issues & TODOs
-
-### Fixed (v6.25)
-- ✅ Theme system ColorScheme not applied (7 screens)
-- ✅ Hardcoded DPs preventing dynamic spacing (47 instances)
-- ✅ Cards without proper shapes (6 screens)
-
-### Remaining
-- Remaining visual pages follow the same ThemeDesign contract and are audited in docs/V6.51_GROK_VISUAL_RECONSTRUCTION.md.
-
----
-
-## 📝 License
-
-FlashLearn © 2026 - All rights reserved
-
----
-
-## 👨‍💻 Contributors
-
-- **AI Assistant:** Theme System Design & Audit
-- **Date:** September 25, 2026
-
----
-
-## 🔄 Recent Changes
-
-### v6.53 (2026-09-27)
-- Separated Learning and Difficulty into independent answer-driven systems.
-- Learning remains Daily → Weekly → Monthly → Learned.
-- Difficulty now changes only through consecutive correct/wrong threshold logic, default threshold 3.
-- Removed Weekly/Monthly special Difficulty escalation rules.
-- Added regression coverage for the independence contract.
-
-### v6.52 (2026-09-27)
-- Unified same-day review eligibility across queue selection, queue counts, answer submission, progress summary and Home due counts.
-- Enforced the canonical review transitions and kept LEARNED separate from the normal scheduler.
-- Added local-calendar-day regression coverage and deterministic timezone injection for tests.
-
-### v6.26 (2026-09-25)
-- Review answer persistence and quiz generation moved off the UI thread
-- Per-answer full ReviewHistory scan removed
-- Review queue/count selection now uses LearningState.lastReviewedAt for same-day exclusion
-- Library search is debounced and stale refresh jobs are cancelled
-- Runtime/CI identity advanced to 6.26 / 626
-
-### v6.24 (2026-09-24)
-- Initial Release
-- Base Theme System
-- 9 Pre-built Themes
-
----
-
-## 📞 Support
-
-**Documentation:**
-- `CHANGELOG.md` - Version history
-- `DOCUMENTATION/PATTERN_GUIDE_COMPLETE.md` - Patterns
-- `DOCUMENTATION/IMPLEMENTATION_GUIDE.md` - How-to guide
-
----
-
-**Build Status:** ⏳ CI verification pending
-**Last Updated:** 2026-09-27
-**Version:** 6.53
-
+FlashLearn © 2026
