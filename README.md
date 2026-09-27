@@ -1,10 +1,21 @@
 # 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
 
-**Version:** 6.52 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
+**Version:** 6.53 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
 
 ---
 
-## v6.52 — Unified Review Eligibility & Same-Day Lock
+## v6.53 — Independent Learning + Difficulty
+
+- Learning and Difficulty are two separate systems.
+- Learning: **Daily → Weekly → Monthly → Learned**.
+- Correct moves Learning one stage forward; wrong returns to Daily.
+- Difficulty: **Easy → Medium → Hard → Very Hard**.
+- Difficulty uses only consecutive correct/wrong answers and the configurable Settings threshold (default 3).
+- Review stage does not create a special Difficulty rule.
+- Weekly/Monthly-specific Difficulty escalation, monthly-wrong-count escalation, and path-failure-driven Difficulty changes are not part of the algorithm.
+- Easy and Very Hard are hard boundaries.
+- Same-day review eligibility remains shared across Flashcard, Quiz, queue counts, answer submission, Home and progress.
+- Version identity: **6.53 / 653**; previous gate **6.52 / 652**.
 
 - Review eligibility is one domain contract across Flashcard, Quiz, review queue, Home due counts, and progress summary.
 - After a concept is reviewed once on a local calendar day, it is excluded from further review that day regardless of answer correctness.
@@ -30,7 +41,7 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 
 ---
 
-## 📊 Version 6.52 - Unified Review Eligibility + Grok Visual Reconstruction
+## 📊 Version 6.53 - Independent Learning + Difficulty + Grok Visual Reconstruction
 
 ### 🎨 Grok Theme
 - Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
@@ -39,7 +50,8 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 - Older theme JSON remains compatible when the design object is absent.
 
 ### 🧪 Process / Verification
-- Version identity: 6.52 / 652.
+- Version identity: 6.53 / 653.
+- Previous-version upgrade gate: 6.52 / 652.
 - Previous-version upgrade gate: 6.51 / 651.
 - GitHub Actions is authoritative for build, unit tests, instrumentation and upgrade compatibility.
 
@@ -241,6 +253,13 @@ FlashLearn © 2026 - All rights reserved
 
 ## 🔄 Recent Changes
 
+### v6.53 (2026-09-27)
+- Separated Learning and Difficulty into independent answer-driven systems.
+- Learning remains Daily → Weekly → Monthly → Learned.
+- Difficulty now changes only through consecutive correct/wrong threshold logic, default threshold 3.
+- Removed Weekly/Monthly special Difficulty escalation rules.
+- Added regression coverage for the independence contract.
+
 ### v6.52 (2026-09-27)
 - Unified same-day review eligibility across queue selection, queue counts, answer submission, progress summary and Home due counts.
 - Enforced the canonical review transitions and kept LEARNED separate from the normal scheduler.
@@ -271,5 +290,5 @@ FlashLearn © 2026 - All rights reserved
 
 **Build Status:** ⏳ CI verification pending
 **Last Updated:** 2026-09-27
-**Version:** 6.52
+**Version:** 6.53
 
