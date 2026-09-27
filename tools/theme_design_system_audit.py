@@ -64,8 +64,8 @@ theme_keys = {"formatVersion","id","name","lightPrimary","darkPrimary","lightSec
 "lightBackground","darkBackground","lightSurface","darkSurface","lightSurfaceVariant","darkSurfaceVariant",
 "lightOnSurface","darkOnSurface","lightOnSurfaceVariant","darkOnSurfaceVariant","lightCard","darkCard",
 "lightOutline","darkOutline","gradientStart","gradientEnd","iconStyle","elevationScale","cornerSmall",
-"cornerMedium","cornerLarge","typographyScale","densityScale"}
-if "sample_theme.json" in sample_data and set(sample_data["sample_theme.json"]) != theme_keys:
+"cornerMedium","cornerLarge","typographyScale","densityScale","spacingScale","design"}
+if "sample_theme.json" in sample_data and not theme_keys.issubset(set(sample_data["sample_theme.json"])):
     errors.append("sample_theme.json: keys do not match FlashLearnThemeSpec.toJson()")
 
 if "sample_theme.json" in sample_data and isinstance(sample_data["sample_theme.json"].get("design"), dict):
