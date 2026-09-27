@@ -61,5 +61,6 @@
       "accentSurfaceAlpha": 0.16,
       "hierarchyBoost": 1.08
     }
-  }
+  },
+  "spacingScale": 1
 }
