@@ -1,5 +1,18 @@
 # CHANGELOG - FlashLearn
 
+## [6.51] - 2026-09-27
+
+### Grok Visual Reconstruction + Full Theme Design Contract
+- Rebuilt the shared Grok visual language around the supplied reference screens: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense statistics and selected navigation pills.
+- Shared cards now consume theme-owned border parameters; Grok navigation consumes theme-owned selected-pill behavior; Grok standard headers use theme-owned centered ornamentation.
+- Theme JSON v3 now persists the complete ThemeDesign profile in a design object.
+- Older custom theme JSON without a design object remains backward-compatible through the matching built-in design fallback.
+- Runtime identity advanced to 6.51/651 with 6.50/650 as the upgrade gate.
+
+### Verification
+- The checkpoint is verified only after authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate both pass.
+
+
 ## [6.50] - 2026-09-26
 
 ### GTP Theme Runtime Correction

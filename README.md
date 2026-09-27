@@ -1,6 +1,6 @@
 # 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
 
-**Version:** 6.50 | **Theme System:** 3.0-GTP | **Date:** 2026-09-26
+**Version:** 6.51 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
 
 ---
 
@@ -18,6 +18,19 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 - ✅ Jetpack Compose UI
 
 ---
+
+## 📊 Version 6.51 - Grok Visual Reconstruction
+
+### 🎨 Grok Theme
+- Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
+- Shared components consume Grok-owned border, navigation and header design tokens.
+- Theme JSON v3 persists the complete ThemeDesign profile, including metrics and layout/style strategies.
+- Older theme JSON remains compatible when the design object is absent.
+
+### 🧪 Process / Verification
+- Version identity: 6.51 / 651.
+- Previous-version upgrade gate: 6.50 / 650.
+- GitHub Actions is authoritative for build, unit tests, instrumentation and upgrade compatibility.
 
 ## 📊 Version 6.50 - GTP Theme Runtime Correction
 
@@ -198,8 +211,7 @@ MaterialTheme.colorScheme.primary
 - ✅ Cards without proper shapes (6 screens)
 
 ### Remaining
-- 10 screens need pattern application
-- See: IMPLEMENTATION_GUIDE.md
+- Remaining visual pages follow the same ThemeDesign contract and are audited in docs/V6.51_GROK_VISUAL_RECONSTRUCTION.md.
 
 ---
 
@@ -242,6 +254,6 @@ FlashLearn © 2026 - All rights reserved
 ---
 
 **Build Status:** ✅ Ready for GitHub
-**Last Updated:** 2026-09-25
+**Last Updated:** 2026-09-27
 **Version:** 6.26
 

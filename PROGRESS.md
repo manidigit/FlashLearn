@@ -1,3 +1,11 @@
+## v6.51 — Grok Visual Reconstruction + Theme Contract
+- Current application identity: 6.51 / 651; previous-version gate: 6.50 / 650.
+- Supplied Grok screenshots are the visual source of truth for the Grok design language.
+- Shared cards render theme-owned borders; Grok navigation uses a theme-owned selected pill; Grok standard headers are centered and ornamental.
+- Theme JSON v3 persists the complete ThemeDesign profile while remaining compatible with older JSON that lacks the design object.
+- Learning algorithms, Review Engine, scheduling, persistence, Room schema, import/restore semantics and quiz evaluation are unchanged.
+- Verification is pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.
+
 ## v6.50 — GTP Theme Runtime Correction
 - Current application identity: versionName 6.50 / versionCode 650; previous-version gate 6.49 / 649.
 - Confirmed against the shipped v6.49 DEBUG APK: no GTP/gtp string exists in the DEX payload, so the installed build could not expose a GTP theme option.
