@@ -1,5 +1,21 @@
 # CHANGELOG - FlashLearn
 
+## [6.52] - 2026-09-27
+
+### Unified Review Eligibility + Same-Day Lock
+- Unified review eligibility across Flashcard, Quiz, review queue, queue counts, Home due counts, and progress summary.
+- A concept reviewed once on its local calendar day is excluded from further review that day, regardless of answer correctness.
+- Correct transitions remain DAILY → WEEKLY → MONTHLY → LEARNED.
+- Wrong transitions remain DAILY → DAILY, WEEKLY → DAILY, MONTHLY → DAILY.
+- LEARNED remains a separate review population and is not scheduled by the normal non-learned queue.
+- Centralized `wasReviewedToday(...)` calendar-day logic is reused across queue selection, queue counts, answer submission, and progress/Home eligibility.
+- Added regression coverage for same-day exclusion and deterministic local-calendar-day semantics.
+- Runtime/CI identity is 6.52 / 652 with 6.51 / 651 as the previous-version gate.
+
+### Verification
+- GitHub Actions is the authoritative verification gate.
+- The v6.52 checkpoint remains pending until the current Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+
 ## [6.51] - 2026-09-27
 
 ### Grok Visual Reconstruction + Full Theme Design Contract
