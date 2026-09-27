@@ -9,7 +9,6 @@ import com.flashlearn.domain.model.Content
 import com.flashlearn.domain.model.Stage
 import com.flashlearn.domain.model.Tag
 import com.flashlearn.domain.model.VocabularyDifficulty
-import com.flashlearn.domain.progress.CalculateProgressUseCase
 import com.flashlearn.domain.repository.*
 import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
@@ -18,12 +17,23 @@ import com.flashlearn.domain.usecase.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
 data class LibraryItem(val concept: Concept, val source: Content?, val targets: List<Content>, val category: Category?, val difficulty: VocabularyDifficulty? = null)
+private data class LibraryPreparedData(
+    val filteredBase: List<Concept>,
+    val counts: Map<UUID, Int>,
+    val tagCounts: Map<UUID, Int>,
+    val learnedIds: Set<UUID>,
+    val learningIds: Set<UUID>,
+    val newIds: Set<UUID>,
+    val filteredConcepts: List<Concept>
+)
 enum class LibraryFilter { ALL, LEARNED, LEARNING, NEW }
 data class LibraryUiState(
     val query: String = "",
@@ -61,8 +71,6 @@ class LibraryViewModel @Inject constructor(
     private val conceptTags: ConceptTagRepository,
     private val difficultyRepository: DifficultyStateRepository,
     private val learningRepository: LearningStateRepository,
-    private val reviewHistoryRepository: ReviewHistoryRepository,
-    private val calculateProgress: CalculateProgressUseCase,
     private val createTagUseCase: CreateTagUseCase,
     private val updateTagUseCase: UpdateTagUseCase,
     private val deleteTagUseCase: DeleteTagUseCase,
@@ -119,18 +127,58 @@ class LibraryViewModel @Inject constructor(
                 val learningById = learningRepository.getAll().associateBy { it.conceptId }
                 val tagLinks = conceptTags.getAll().groupBy { it.conceptId }.mapValues { (_, links) -> links.map { it.tagId }.toSet() }
                 val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
-                val filteredBase = cs.asSequence().filter { !favoritesOnly || it.favorite }.filter { selectedTag == null || selectedTag in tagLinks[it.id].orEmpty() }.toList()
-                val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
-                val tagCounts = filteredBase.asSequence().flatMap { tagLinks[it.id].orEmpty().asSequence() }.groupingBy { it }.eachCount()
-                val learnedIds = filteredBase.asSequence().filter { learningById[it.id]?.stage == Stage.LEARNED }.map { it.id }.toSet()
-                val learningIds = filteredBase.asSequence().filter { learningById[it.id]?.lastReviewedAt != null && it.id !in learnedIds }.map { it.id }.toSet()
-                val newIds = filteredBase.asSequence().filter { learningById[it.id]?.lastReviewedAt == null }.map { it.id }.toSet()
-                val filteredConcepts = filteredBase.asSequence().filter { selectedCategories.isEmpty() || it.categoryId in selectedCategories }.filter { concept -> when (filter) { LibraryFilter.ALL -> true; LibraryFilter.LEARNED -> concept.id in learnedIds; LibraryFilter.LEARNING -> concept.id in learningIds; LibraryFilter.NEW -> concept.id in newIds } }.toList()
+                val prepared = withContext(Dispatchers.Default) {
+                    val filteredBase = cs.asSequence()
+                        .filter { !favoritesOnly || it.favorite }
+                        .filter { selectedTag == null || selectedTag in tagLinks[it.id].orEmpty() }
+                        .toList()
+                    val counts = filteredBase.asSequence().mapNotNull { it.categoryId }.groupingBy { it }.eachCount()
+                    val tagCounts = filteredBase.asSequence()
+                        .flatMap { tagLinks[it.id].orEmpty().asSequence() }
+                        .groupingBy { it }
+                        .eachCount()
+                    val learnedIds = filteredBase.asSequence()
+                        .filter { learningById[it.id]?.stage == Stage.LEARNED }
+                        .map { it.id }
+                        .toSet()
+                    val learningIds = filteredBase.asSequence()
+                        .filter { learningById[it.id]?.lastReviewedAt != null && it.id !in learnedIds }
+                        .map { it.id }
+                        .toSet()
+                    val newIds = filteredBase.asSequence()
+                        .filter { learningById[it.id]?.lastReviewedAt == null }
+                        .map { it.id }
+                        .toSet()
+                    val filteredConcepts = filteredBase.asSequence()
+                        .filter { selectedCategories.isEmpty() || it.categoryId in selectedCategories }
+                        .filter { concept ->
+                            when (filter) {
+                                LibraryFilter.ALL -> true
+                                LibraryFilter.LEARNED -> concept.id in learnedIds
+                                LibraryFilter.LEARNING -> concept.id in learningIds
+                                LibraryFilter.NEW -> concept.id in newIds
+                            }
+                        }
+                        .toList()
+                    LibraryPreparedData(filteredBase, counts, tagCounts, learnedIds, learningIds, newIds, filteredConcepts)
+                }
                 val catMap = cats.associateBy { it.id }
-                val contentMap = contents.findForConcepts(filteredConcepts.map { it.id }).groupBy { it.conceptId }
-                val items = filteredConcepts.map { c -> val cc = contentMap[c.id].orEmpty(); LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, c.categoryId?.let(catMap::get), difficultyById[c.id]?.current) }
+                val contentMap = contents.findForConcepts(prepared.filteredConcepts.map { it.id }).groupBy { it.conceptId }
+                val items = withContext(Dispatchers.Default) {
+                    prepared.filteredConcepts.map { c ->
+                        val cc = contentMap[c.id].orEmpty()
+                        LibraryItem(
+                            c,
+                            cc.firstOrNull { it.languageCode == sourceLanguage },
+                            cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex },
+                            c.categoryId?.let(catMap::get),
+                            difficultyById[c.id]?.current
+                        )
+                    }
+                }
+ }
                 if (generation != refreshGeneration) return@launch
-                _state.value = _state.value.copy(tags = tags, categories = cats, tagCounts = tagCounts, categoryCounts = counts, categoryTotalCount = filteredBase.size, totalCount = filteredBase.size, learnedCount = learnedIds.size, learningCount = learningIds.size, newCount = newIds.size, items = items, isLoading = false)
+                _state.value = _state.value.copy(tags = tags, categories = cats, tagCounts = prepared.tagCounts, categoryCounts = prepared.counts, categoryTotalCount = prepared.filteredBase.size, totalCount = prepared.filteredBase.size, learnedCount = prepared.learnedIds.size, learningCount = prepared.learningIds.size, newCount = prepared.newIds.size, items = items, isLoading = false)
             } catch (e: Exception) {
                 if (generation != refreshGeneration) return@launch
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "خطا در بارگذاری لغات")
