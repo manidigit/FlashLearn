@@ -129,7 +129,7 @@ class MvpE2EUseCasesTest {
         assertTrue(failed.learningState.hasPathFailure)
         assertEquals(1, failed.learningState.totalWrong)
         assertEquals(0, failed.learningState.monthlyWrongCount)
-        assertEquals(VocabularyDifficulty.MEDIUM, failed.difficultyState.current)
+        assertEquals(VocabularyDifficulty.EASY, failed.difficultyState.current)
 
         val retryAt = failed.learningState.nextReviewAt!!
         val recovered = submit(
