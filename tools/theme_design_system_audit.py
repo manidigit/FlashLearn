@@ -64,14 +64,9 @@ theme_keys = {"formatVersion","id","name","lightPrimary","darkPrimary","lightSec
 "lightBackground","darkBackground","lightSurface","darkSurface","lightSurfaceVariant","darkSurfaceVariant",
 "lightOnSurface","darkOnSurface","lightOnSurfaceVariant","darkOnSurfaceVariant","lightCard","darkCard",
 "lightOutline","darkOutline","gradientStart","gradientEnd","iconStyle","elevationScale","cornerSmall",
-"cornerMedium","cornerLarge","typographyScale","densityScale","spacingScale","design"}
-if "sample_theme.json" in sample_data and not theme_keys.issubset(set(sample_data["sample_theme.json"])):
+"cornerMedium","cornerLarge","typographyScale","densityScale"}
+if "sample_theme.json" in sample_data and set(sample_data["sample_theme.json"]) != theme_keys:
     errors.append("sample_theme.json: keys do not match FlashLearnThemeSpec.toJson()")
-
-if "sample_theme.json" in sample_data and isinstance(sample_data["sample_theme.json"].get("design"), dict):
-    required_design = {"buttonStyle","navStyle","statsLayout","reviewsLayout","libraryLayout","reviewPresentation","showReviewOrnaments","metrics"}
-    if not required_design.issubset(set(sample_data["sample_theme.json"]["design"])):
-        errors.append("sample_theme.json: design object is missing ThemeDesign contract fields")
 
 def require_sections(name, sections):
     d=sample_data.get(name)
