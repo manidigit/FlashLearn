@@ -167,11 +167,6 @@ fun FlashLearnTheme(
         critical = colorScheme.error,
         
         // --- Visual Personality ---
-        cardBorderAlpha = spec.design.metric("cardBorderAlpha"),
-        cardBorderStrongAlpha = spec.design.metric("cardBorderStrongAlpha"),
-        accentSurfaceAlpha = spec.design.metric("accentSurfaceAlpha"),
-        hierarchyBoost = spec.design.metric("hierarchyBoost"),
-        preferFilledButtons = spec.design.buttonStyle == ButtonStyle.FILLED,
         design = spec.design
     )
     
