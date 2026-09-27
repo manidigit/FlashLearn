@@ -1,3 +1,18 @@
+## v6.53 — Independent Learning + Difficulty systems
+- Advanced application identity to **6.53 / versionCode 653**; previous-version gate is **6.52 / 652**.
+- Learning is now only: **Daily → Weekly → Monthly → Learned**.
+- Learning correct: one stage forward; wrong: return to Daily.
+- Difficulty is a separate system: **Easy → Medium → Hard → Very Hard**.
+- Difficulty uses only consecutive correct/wrong answers plus the Settings threshold; default threshold remains **3**.
+- Removed the special Weekly/Monthly Difficulty escalation rules from the executable algorithm.
+- Difficulty no longer consumes Learning Stage, Monthly wrong count, or path-failure state.
+- Difficulty boundaries remain hard-capped at Easy and Very Hard.
+- Regression tests now explicitly protect the independence contract.
+- Legacy Learning metadata fields remain persisted only for data/backward compatibility; they are not used to drive Difficulty.
+
+### Verification gate
+GitHub Actions is authoritative. v6.53 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 # CHANGELOG - FlashLearn
 
 ## [6.52] - 2026-09-27
