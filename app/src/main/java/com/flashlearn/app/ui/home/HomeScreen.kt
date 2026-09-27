@@ -148,40 +148,42 @@ fun HomeScreen(
                 progress = { (progress / 100f).coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(tokens.progressTrackHeight + 2.dp)
+                    .height(tokens.progressTrackHeight + tokens.borderStrong)
                     .clip(RoundedCornerShape(tokens.cornerSmall)),
                 color = tokens.primary,
                 trackColor = tokens.surfaceVariant
             )
         }
 
-        // ── Stats 2×2 (mockup: big gold numbers) ───────────────
-        FlashLearnCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(tokens.cardPadding),
-                verticalArrangement = Arrangement.spacedBy(tokens.contentGap)
-            ) {
-                Text(
-                    "خلاصه آمار",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = tokens.onSurface
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                    FlashLearnStatTile("کل واژه‌ها", total.toString(), Modifier.weight(1f))
-                    FlashLearnStatTile("تمرین‌شده", (stats?.practicedWords ?: 0).toString(), Modifier.weight(1f))
+        when (tokens.statsLayout) {
+            com.flashlearn.app.ui.theme.StatsLayoutStrategy.GRID_4_COLUMNS ->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.itemGap)){
+                    FlashLearnStatTile("کل",total.toString(),Modifier.weight(1f))
+                    FlashLearnStatTile("تمرین", (stats?.practicedWords ?: 0).toString(),Modifier.weight(1f))
+                    FlashLearnStatTile("باقی", (stats?.unpracticedWords ?: total).toString(),Modifier.weight(1f))
+                    FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.weight(1f))
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                    FlashLearnStatTile("تمرین‌نشده", (stats?.unpracticedWords ?: total).toString(), Modifier.weight(1f))
-                    FlashLearnStatTile(
-                        "یادگرفته",
-                        (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),
-                        Modifier.weight(1f)
-                    )
+            com.flashlearn.app.ui.theme.StatsLayoutStrategy.VERTICAL_LIST ->
+                Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(tokens.itemGap)){
+                    FlashLearnStatTile("کل واژه‌ها",total.toString(),Modifier.fillMaxWidth())
+                    FlashLearnStatTile("تمرین‌شده",(stats?.practicedWords ?: 0).toString(),Modifier.fillMaxWidth())
+                    FlashLearnStatTile("تمرین‌نشده",(stats?.unpracticedWords ?: total).toString(),Modifier.fillMaxWidth())
+                    FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.fillMaxWidth())
                 }
-            }
+            else ->
+                FlashLearnCard(modifier=Modifier.fillMaxWidth()){
+                    Column(Modifier.fillMaxWidth().padding(tokens.cardPadding),verticalArrangement=Arrangement.spacedBy(tokens.contentGap)){
+                        Text("خلاصه آمار",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=tokens.onSurface)
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.compactGap)){
+                            FlashLearnStatTile("کل واژه‌ها",total.toString(),Modifier.weight(1f))
+                            FlashLearnStatTile("تمرین‌شده",(stats?.practicedWords ?: 0).toString(),Modifier.weight(1f))
+                        }
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.compactGap)){
+                            FlashLearnStatTile("تمرین‌نشده",(stats?.unpracticedWords ?: total).toString(),Modifier.weight(1f))
+                            FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.weight(1f))
+                        }
+                    }
+                }
         }
 
         // ── Ready reviews ──────────────────────────────────────

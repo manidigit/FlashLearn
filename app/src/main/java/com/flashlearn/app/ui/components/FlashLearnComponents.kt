@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.flashlearn.app.ui.theme.IconStyle
+import com.flashlearn.app.ui.theme.ButtonStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 
 @Composable
@@ -123,13 +124,11 @@ fun FlashLearnPrimaryButton(
     content: @Composable RowScope.() -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.height(tokens.buttonHeight),
-        shape = MaterialTheme.shapes.medium,
-        content = content
-    )
+    if (tokens.buttonStyle == ButtonStyle.OUTLINED) {
+        OutlinedButton(onClick=onClick,enabled=enabled,modifier=modifier.height(tokens.buttonHeight),shape=MaterialTheme.shapes.medium,content=content)
+    } else {
+        Button(onClick=onClick,enabled=enabled,modifier=modifier.height(tokens.buttonHeight),shape=MaterialTheme.shapes.medium,content=content)
+    }
 }
 
 @Composable

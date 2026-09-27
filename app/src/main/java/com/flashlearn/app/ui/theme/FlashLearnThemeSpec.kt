@@ -4,6 +4,65 @@ import android.content.Context
 import androidx.compose.ui.graphics.Color
 import org.json.JSONObject
 
+data class ThemeDesign(
+    val metrics: Map<String, Float>,
+    val buttonStyle: ButtonStyle = ButtonStyle.FILLED,
+    val navStyle: NavigationStyle = NavigationStyle.STANDARD,
+    val statsLayout: StatsLayoutStrategy = StatsLayoutStrategy.GRID_2X2,
+    val reviewsLayout: ReviewsLayoutStrategy = ReviewsLayoutStrategy.VERTICAL_ROWS,
+    val libraryLayout: LibraryLayoutStrategy = LibraryLayoutStrategy.GRID_2_COLUMNS,
+    val reviewPresentation: ReviewPresentation = ReviewPresentation.STANDARD,
+    val showReviewOrnaments: Boolean = true,
+    val lightOnPrimary: Long = 0xFFFFFFFF,
+    val darkOnPrimary: Long = 0xFFFFFFFF,
+    val lightSuccess: Long = 0xFF138A5B,
+    val darkSuccess: Long = 0xFF52D49A,
+    val lightWarning: Long = 0xFFF59E0B,
+    val darkWarning: Long = 0xFFFBBF24,
+    val lightError: Long = 0xFFD92D48,
+    val darkError: Long = 0xFFFF8A9A,
+    val lightInfo: Long = 0xFF536DFE,
+    val darkInfo: Long = 0xFF7C8CFF
+) {
+    fun metric(name: String): Float = metrics[name] ?: error("Theme design metric missing: $name")
+    companion object {
+        private val BASE = mapOf(
+            "screenPadding" to 20f,"screenVerticalPadding" to 12f,"contentPadding" to 16f,"cardPadding" to 16f,
+            "compactPadding" to 8f,"tinyGap" to 4f,"microGap" to 6f,"contentGap" to 12f,"compactGap" to 8f,
+            "sectionGap" to 16f,"itemGap" to 8f,"headerHeight" to 58f,"headerPadding" to 10f,"controlHeight" to 52f,
+            "buttonHeight" to 52f,"fieldHeight" to 52f,"cardMinHeight" to 84f,"statCardHeight" to 132f,
+            "largeChoiceHeight" to 96f,"mediumChoiceHeight" to 72f,"chartHeight" to 210f,"progressTrackHeight" to 9f,
+            "borderThin" to 1f,"borderStrong" to 2f,"borderEmphasis" to 3f,"iconTileSize" to 48f,"choiceIconSize" to 30f,
+            "iconSmall" to 20f,"iconMedium" to 24f,"iconLarge" to 28f,"navHeight" to 76f,"libraryHeaderHeight" to 58f,
+            "librarySearchHeight" to 58f,"libraryStatIconSize" to 42f,"libraryWordIconSize" to 25f,"libraryFavoriteIconSize" to 31f,
+            "libraryDifficultyHorizontalPadding" to 16f,"libraryDifficultyVerticalPadding" to 7f,"reviewHeaderHeight" to 92f,
+            "reviewHeaderGap" to 8f,"reviewBackButtonSize" to 50f,"reviewBackIcon" to 28f,"reviewBackElevation" to 2f,
+            "reviewOrnamentLine" to 36f,"reviewOrnamentHeight" to 2f,"reviewOrnamentIcon" to 12f,"reviewTinyGap" to 3f,
+            "reviewSectionGap" to 7f,"reviewItemGap" to 7f,"reviewChoiceHeight" to 58f,"reviewCategoryHeight" to 56f,
+            "reviewDifficultyHeight" to 56f,"reviewQuizHeight" to 56f,"reviewFullChoiceHeight" to 48f,"reviewCountHeight" to 44f,
+            "reviewCardPadding" to 12f,"reviewCompactPadding" to 8f,"reviewContentPadding" to 14f,"reviewIconLarge" to 26f,
+            "reviewIconMedium" to 24f,"reviewCategoryIconTile" to 38f,"reviewSelectedBadgeInset" to 4f,"reviewSelectedBadgePadding" to 2f,
+            "reviewSelectedBadgeIcon" to 12f,"reviewCardElevation" to 1.5f,"reviewButtonHeight" to 50f,"reviewPlayCircle" to 30f,
+            "reviewPlayIcon" to 19f,"reviewNavHeight" to 70f,"cardElevationBase" to 4f,"dividerAlpha" to .65f,
+            "reviewSelectedAlpha" to .10f,"cardBorderAlpha" to .40f,"cardBorderStrongAlpha" to .65f,"accentSurfaceAlpha" to .10f,
+            "hierarchyBoost" to 1f
+        )
+        private fun metrics(scale: Float, overrides: Map<String,Float> = emptyMap()) =
+            BASE.mapValues { (_,v) -> v * scale }.toMutableMap().apply { putAll(overrides) }
+        fun grok() = ThemeDesign(metrics(1.03f,mapOf("screenPadding" to 22f,"contentGap" to 14f,"sectionGap" to 20f,"statCardHeight" to 138f,"navHeight" to 80f,"reviewHeaderHeight" to 96f,"cardElevationBase" to 5f,"dividerAlpha" to .72f,"reviewSelectedAlpha" to .16f,"cardBorderAlpha" to .55f,"cardBorderStrongAlpha" to .85f,"accentSurfaceAlpha" to .16f,"hierarchyBoost" to 1.08f)),ButtonStyle.FILLED,NavigationStyle.PILL,StatsLayoutStrategy.GRID_4_COLUMNS,ReviewsLayoutStrategy.HORIZONTAL_CARDS,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.SWIPE_STACK,true,0xFF1A140A,0xFF0F1419)
+        fun claud() = ThemeDesign(metrics(1.05f,mapOf("screenPadding" to 24f,"contentGap" to 16f,"sectionGap" to 24f,"statCardHeight" to 112f,"navHeight" to 78f,"reviewHeaderHeight" to 100f,"cardElevationBase" to 2f,"dividerAlpha" to .45f,"reviewSelectedAlpha" to .08f,"cardBorderAlpha" to .25f,"cardBorderStrongAlpha" to .45f,"accentSurfaceAlpha" to .08f)),ButtonStyle.OUTLINED,NavigationStyle.STANDARD,StatsLayoutStrategy.VERTICAL_LIST,ReviewsLayoutStrategy.VERTICAL_ROWS,LibraryLayoutStrategy.EXPANDED_LIST,ReviewPresentation.FLIP_FULLSCREEN,false)
+        fun spark() = ThemeDesign(metrics(0.96f,mapOf("sectionGap" to 18f,"statCardHeight" to 126f,"navHeight" to 74f,"cardElevationBase" to 3f,"accentSurfaceAlpha" to .12f,"hierarchyBoost" to 1.06f)),ButtonStyle.FILLED,NavigationStyle.STANDARD,StatsLayoutStrategy.GRID_2X2,ReviewsLayoutStrategy.VERTICAL_ROWS,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.STANDARD,true)
+        fun gtp() = ThemeDesign(metrics(.88f,mapOf("screenPadding" to 16f,"contentGap" to 10f,"sectionGap" to 14f,"statCardHeight" to 118f,"navHeight" to 70f,"cardElevationBase" to 5f,"cardBorderAlpha" to .70f,"cardBorderStrongAlpha" to .95f,"accentSurfaceAlpha" to .18f,"hierarchyBoost" to 1.12f)),ButtonStyle.FILLED,NavigationStyle.COMPACT,StatsLayoutStrategy.GRID_4_COLUMNS,ReviewsLayoutStrategy.COMPACT_LIST,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.SWIPE_STACK,true)
+        fun default() = ThemeDesign(metrics(1f))
+    }
+}
+enum class ButtonStyle { FILLED, OUTLINED }
+enum class NavigationStyle { STANDARD, COMPACT, PILL }
+enum class StatsLayoutStrategy { GRID_2X2, GRID_4_COLUMNS, VERTICAL_LIST, HORIZONTAL_ROW }
+enum class ReviewsLayoutStrategy { VERTICAL_ROWS, HORIZONTAL_CARDS, COMPACT_LIST }
+enum class LibraryLayoutStrategy { GRID_2_COLUMNS, EXPANDED_LIST }
+enum class ReviewPresentation { STANDARD, SWIPE_STACK, FLIP_FULLSCREEN }
+
 data class FlashLearnThemeSpec(
     val id: String, val name: String, val lightPrimary: Long, val darkPrimary: Long,
     val lightSecondary: Long, val darkSecondary: Long, val lightBackground: Long, val darkBackground: Long,

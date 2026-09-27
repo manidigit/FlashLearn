@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
+import com.flashlearn.app.ui.theme.NavigationStyle
 
 @Composable
 fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content: @Composable ColumnScope.() -> Unit) {
@@ -60,8 +61,8 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
         icon = {
             Box(
                 Modifier
-                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = .12f), MaterialTheme.shapes.medium) else Modifier)
-                    .padding(horizontal = tokens.dp(13f), vertical = tokens.dp(6f))
+                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = if (tokens.navStyle == NavigationStyle.PILL) .16f else .10f), MaterialTheme.shapes.medium) else Modifier)
+                    .padding(horizontal = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(8f) else tokens.dp(13f), vertical = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(4f) else tokens.dp(6f))
             ) {
                 Icon(
                     imageVector = if (selected && tokens.iconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,

@@ -49,35 +49,8 @@ fun FlashLearnTheme(
     
     // =========== Primary Color Selection ===========
     // Personality themes own their primary palette; legacy accent overrides remain for the neutral theme.
-    val accentLight = when (accentColor) {
-        AccentColor.PURPLE -> Color(spec.lightPrimary)
-        AccentColor.BLUE -> Color(0xFF2563EB)
-        AccentColor.GREEN -> Color(0xFF16A34A)
-        AccentColor.ORANGE -> Color(0xFFEA580C)
-        AccentColor.PINK -> Color(0xFFDB2777)
-    }
-    val accentDark = when (accentColor) {
-        AccentColor.PURPLE -> Color(spec.darkPrimary)
-        AccentColor.BLUE -> Color(0xFF60A5FA)
-        AccentColor.GREEN -> Color(0xFF4ADE80)
-        AccentColor.ORANGE -> Color(0xFFFB923C)
-        AccentColor.PINK -> Color(0xFFF472B6)
-    }
-    
-    val primary = when {
-        spec.id == "grok" && isDark -> Color(spec.darkPrimary)
-        spec.id == "grok" -> Color(spec.lightPrimary)
-        spec.id == "spark" && isDark -> Color(spec.darkPrimary)
-        spec.id == "spark" -> Color(spec.lightPrimary)
-        isDark -> accentDark
-        else -> accentLight
-    }
-    
-    val onPrimaryColor = when (spec.id) {
-        "grok" -> Color(0xFF0F1419)
-        "spark" -> Color(0xFF12300A)
-        else -> Color.White
-    }
+    val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
+    val onPrimaryColor = if (isDark) Color(spec.design.darkOnPrimary) else Color(spec.design.lightOnPrimary)
     
     // =========== Material Color Scheme ===========
     // This is what screens use for all colors
@@ -94,7 +67,7 @@ fun FlashLearnTheme(
             onSurface = Color(spec.darkOnSurface),
             onSurfaceVariant = Color(spec.darkOnSurfaceVariant),
             outline = Color(spec.darkOutline),
-            error = Color(0xFFFF8A9A)
+            error = Color(spec.design.darkError)
         )
     } else {
         lightColorScheme(
@@ -109,7 +82,7 @@ fun FlashLearnTheme(
             onSurface = Color(spec.lightOnSurface),
             onSurfaceVariant = Color(spec.lightOnSurfaceVariant),
             outline = Color(spec.lightOutline),
-            error = Color(0xFFD92D48)
+            error = Color(spec.design.lightError)
         )
     }
     
@@ -156,9 +129,9 @@ fun FlashLearnTheme(
         onSurface = colorScheme.onSurface,
         onSurfaceVariant = colorScheme.onSurfaceVariant,
         outlineColor = colorScheme.outline,
-        dividerColor = colorScheme.outline.copy(alpha = 0.65f),
-        success = if (isDark) Color(0xFF52D49A) else Color(0xFF138A5B),
-        warning = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+        dividerColor = colorScheme.outline.copy(alpha = spec.design.metric("dividerAlpha")),
+        success = if (isDark) Color(spec.design.darkSuccess) else Color(spec.design.lightSuccess),
+        warning = if (isDark) Color(spec.design.darkWarning) else Color(spec.design.lightWarning),
         error = colorScheme.error,
         
         // --- Gradients ---
@@ -180,7 +153,7 @@ fun FlashLearnTheme(
         // --- Review Screen Colors ---
         reviewBackground = colorScheme.background,
         reviewSurface = colorScheme.surface,
-        reviewSurfaceSelected = colorScheme.primary.copy(alpha = 0.10f).compositeOver(colorScheme.surface),
+        reviewSurfaceSelected = colorScheme.primary.copy(alpha = spec.design.metric("reviewSelectedAlpha")).compositeOver(colorScheme.surface),
         reviewAccent = colorScheme.primary,
         reviewText = colorScheme.onSurface,
         reviewMutedText = colorScheme.onSurfaceVariant,
@@ -194,31 +167,12 @@ fun FlashLearnTheme(
         critical = colorScheme.error,
         
         // --- Visual Personality ---
-        cardBorderAlpha = when (spec.id) {
-            "grok" -> 0.55f
-            "spark" -> 0.20f
-            "gtp" -> 0.70f
-            else -> 0.40f
-        },
-        cardBorderStrongAlpha = when (spec.id) {
-            "grok" -> 0.85f
-            "spark" -> 0.45f
-            "gtp" -> 0.95f
-            else -> 0.65f
-        },
-        accentSurfaceAlpha = when (spec.id) {
-            "grok" -> 0.16f
-            "spark" -> 0.12f
-            "gtp" -> 0.18f
-            else -> 0.10f
-        },
-        hierarchyBoost = when (spec.id) {
-            "grok" -> 1.08f
-            "spark" -> 1.06f
-            "gtp" -> 1.12f
-            else -> 1f
-        },
-        preferFilledButtons = spec.id == "grok" || spec.id == "spark" || spec.id == "gtp" || spec.iconStyle.equals("filled", true)
+        cardBorderAlpha = spec.design.metric("cardBorderAlpha"),
+        cardBorderStrongAlpha = spec.design.metric("cardBorderStrongAlpha"),
+        accentSurfaceAlpha = spec.design.metric("accentSurfaceAlpha"),
+        hierarchyBoost = spec.design.metric("hierarchyBoost"),
+        preferFilledButtons = spec.design.buttonStyle == ButtonStyle.FILLED,
+        design = spec.design
     )
     
     // =========== Density Adjustment ===========
