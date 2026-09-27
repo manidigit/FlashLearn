@@ -3,6 +3,7 @@ package com.flashlearn.domain.usecase
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 
@@ -52,7 +53,10 @@ class GetProgressSummaryUseCase @Inject constructor(
                 ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${concept.id}")
 
             if (state.stage == Stage.LEARNED) learned++
-            if (state.stage != Stage.LEARNED && (state.nextReviewAt == null || state.nextReviewAt <= now)) {
+
+            // Reviewed concepts are unavailable for the remainder of their local calendar day.
+            val reviewedToday = wasReviewedToday(state.lastReviewedAt, now, ZoneId.systemDefault())
+            if (!reviewedToday && state.stage != Stage.LEARNED && (state.nextReviewAt == null || state.nextReviewAt <= now)) {
                 due++
                 when (state.stage) {
                     Stage.DAILY -> dailyDue++
