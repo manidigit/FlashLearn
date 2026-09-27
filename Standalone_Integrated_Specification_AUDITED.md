@@ -7979,248 +7979,38 @@ SelectReviewQueue نباید:
 
 ## 27.4 Difficulty Calculation
 
-### Levels
+Levels: `EASY | MEDIUM | HARD | VERY_HARD`
 
-``` text
-EASY
-MEDIUM
-HARD
-VERY_HARD
-```
+Threshold پیش‌فرض `3` است و از Settings قابل تغییر است.
 
-### Threshold
-
-مقدار پیش‌فرض:
-
-``` text
-threshold_difficulty = 3
-```
-
-Threshold باید از Settings خوانده شود و مقدار معتبر آن حداقل 1 است.
-
-در قرارداد پایه، UI نسخهٔ اولیه برای تغییر Threshold الزام نشده است.
-
-### شمارنده‌ها
-
--   `consecutiveCorrect`
--   `consecutiveWrong`
-
-پاسخ صحیح:
-
--   `consecutiveCorrect += 1`
--   `consecutiveWrong = 0`
-
-پاسخ غلط:
-
--   `consecutiveWrong += 1`
--   `consecutiveCorrect = 0`
-
-### رسیدن به Threshold
-
-اگر شمارنده به Threshold برسد:
-
--   فقط یک Step تغییر Difficulty انجام شود.
--   هر دو Counter صفر شوند.
-
-### مرزها
-
-Easy پایین‌تر نمی‌رود.
-
-Very Hard بالاتر نمی‌رود.
-
-### One Step Easier
-
-``` text
-VERY_HARD → HARD
-HARD      → MEDIUM
-MEDIUM    → EASY
-EASY      → EASY
-```
-
-### One Step Harder
-
-``` text
-EASY      → MEDIUM
-MEDIUM    → HARD
-HARD      → VERY_HARD
-VERY_HARD → VERY_HARD
-```
-
-### تغییر Level
-
-هر تغییر Level:
-
-``` text
-consecutiveCorrect = 0
-consecutiveWrong = 0
-```
-
-### Flag تاریخی
-
-اگر Difficulty به Very Hard برسد:
-
-``` text
-hasReachedVeryHard = true
-```
-
-و این Flag بعداً False نمی‌شود.
+- درست: شمارندهٔ Correct پشت‌سرهم +1 و Wrong صفر می‌شود.
+- غلط: شمارندهٔ Wrong پشت‌سرهم +1 و Correct صفر می‌شود.
+- رسیدن شمارنده به Threshold: یک پله تغییر سطح و سپس صفر شدن هر دو شمارنده.
+- EASY پایین‌تر نمی‌رود.
+- VERY_HARD بالاتر نمی‌رود.
+- Learning Stage، ReviewType، `monthlyWrongCount` و `hasPathFailure` هیچ اثر ویژه‌ای بر Difficulty ندارند.
 
 ------------------------------------------------------------------------
 
-## 27.5 Forced Difficulty Exceptions
+## 27.5 قرارداد بین Learning و Difficulty
 
-این بخش بر مسیر عادی Threshold اولویت دارد.
-
-### Weekly Wrong
-
-``` text
-Difficulty >= MEDIUM
-```
-
-یعنی:
-
--   اگر Easy → Medium
--   اگر Medium/Hard/Very Hard → سطح فعلی حفظ می‌شود.
-
-هر دو Counter صفر می‌شوند.
-
-### Monthly Wrong
-
-بعد از افزایش `monthlyWrongCount`:
-
-``` text
-newMonthlyWrongCount == 1
-    → HARD
-
-newMonthlyWrongCount >= 2
-    → VERY_HARD
-```
-
-هر دو Counter صفر می‌شوند.
-
-اگر Very Hard شد:
-
-``` text
-hasReachedVeryHard = true
-```
-
-### اولویت
-
-ترتیب:
-
-1.  Forced Weekly/Monthly
-2.  Normal consecutive threshold
-
-این دو مسیر نباید برای یک Review Event هم‌زمان DifficultyState را دوبار
-تغییر دهند.
+Learning فقط Stage را تغییر می‌دهد. Difficulty فقط DifficultyState را با توجه به درست/غلط و Threshold تغییر می‌دهد. این دو سیستم مستقل هستند.
 
 ------------------------------------------------------------------------
 
-## 27.6 قرارداد بین Learning Transition و Difficulty
+## 27.6 SubmitReviewAnswer
 
-`monthlyWrongCountBefore` باید **مقدار قبل از اجرای Transition** باشد.
-
-ترتیب منطقی:
-
-``` text
-load LearningState
-load DifficultyState
-
-validate state existence
-
-detect duplicate attempt
-
-validate due
-
-transition = calculateLearningTransition(...)
-
-difficulty = calculateDifficulty(
-    oldDifficulty,
-    answer,
-    reviewType,
-    monthlyWrongCountBefore,
-    threshold
-)
-
-persist:
-    LearningState
-    DifficultyState
-    ReviewHistory
-inside one transaction
-```
+یک Review Event نتیجهٔ درست/غلط را به هر دو سیستم می‌دهد. Learning و Difficulty سپس Algorithm مستقل خودشان را اجرا می‌کنند و هر سه تغییر لازم در یک Transaction ثبت می‌شوند.
 
 ------------------------------------------------------------------------
 
-## 27.7 SubmitReviewAnswer
+## 27.7 استقلال از Review Type
 
-### پیش‌شرط
-
-اگر Concept فعال باشد ولی LearningState یا DifficultyState وجود نداشته
-باشد:
-
-``` text
-DATA_INTEGRITY_ERROR
-```
-
-هیچ State جدیدی خودکار ساخته نمی‌شود.
-
-### Duplicate
-
-Unique key:
-
-``` text
-(sessionId, reviewAttemptId)
-```
-
-Duplicate باید قبل از اعمال Transition جدید تشخیص داده شود.
-
-### Atomicity
-
-``` text
-BEGIN TRANSACTION
-
-read states
-validate duplicate
-validate due
-calculate transition
-calculate difficulty
-update learning
-update difficulty
-insert history
-
-COMMIT
-```
-
-هر Exception:
-
-``` text
-ROLLBACK
-```
+هیچ ReviewType ویژه‌ای قانون Difficulty جداگانه ندارد. پاسخ غلط یا صحیح در Daily، Weekly، Monthly یا Learned برای Difficulty دقیقاً از همان Threshold متوالی استفاده می‌کند.
 
 ------------------------------------------------------------------------
 
 ## 27.8 CreateConcept
-
-``` text
-BEGIN TRANSACTION
-
-create Concept
-create Content(s)
-create LearningState(stage = DAILY)
-create DifficultyState(current = EASY)
-
-COMMIT
-```
-
-هر Failure:
-
-``` text
-ROLLBACK
-```
-
-Concept ناقص نباید به‌عنوان Concept معتبر باقی بماند.
-
-------------------------------------------------------------------------
 
 ## 27.9 Quiz Question Generation
 
