@@ -102,7 +102,7 @@ data class FlashLearnThemeSpec(
             put("lightWarning", hex(design.lightWarning)); put("darkWarning", hex(design.darkWarning))
             put("lightError", hex(design.lightError)); put("darkError", hex(design.darkError))
             put("lightInfo", hex(design.lightInfo)); put("darkInfo", hex(design.darkInfo))
-            put("metrics", JSONObject().apply { design.metrics.forEach { (k,v) -> put(k,v) } })
+            put("metrics", JSONObject().apply { design.metrics.forEach { (k,v) -> put(k,v.toDouble()) } })
         })
     }.toString(2)
 
