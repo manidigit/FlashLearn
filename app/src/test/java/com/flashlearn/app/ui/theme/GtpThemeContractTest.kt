@@ -27,4 +27,30 @@ class GtpThemeContractTest {
         assertTrue(gtp.lightPrimary != FlashLearnThemeSpec.GROK.lightPrimary)
         assertTrue(gtp.lightSecondary != FlashLearnThemeSpec.GROK.lightSecondary)
     }
+
+    @Test
+    fun grokOwnsTheReferenceLayoutContract() {
+        val grok = FlashLearnThemeSpec.GROK
+        assertEquals(ButtonStyle.FILLED, grok.design.buttonStyle)
+        assertEquals(NavigationStyle.PILL, grok.design.navStyle)
+        assertEquals(StatsLayoutStrategy.GRID_4_COLUMNS, grok.design.statsLayout)
+        assertEquals(ReviewsLayoutStrategy.HORIZONTAL_CARDS, grok.design.reviewsLayout)
+        assertEquals(LibraryLayoutStrategy.GRID_2_COLUMNS, grok.design.libraryLayout)
+        assertEquals(ReviewPresentation.SWIPE_STACK, grok.design.reviewPresentation)
+        assertEquals(22f, grok.design.metric("screenPadding"), 0.001f)
+        assertEquals(20f, grok.design.metric("sectionGap"), 0.001f)
+        assertTrue(grok.design.metric("cardBorderAlpha") > 0.5f)
+    }
+
+    @Test
+    fun themeJsonPersistsDesignContract() {
+        val json = FlashLearnThemeSpec.GROK.toJson()
+        assertTrue(json.contains("\"design\""))
+        assertTrue(json.contains("\"statsLayout\": \"GRID_4_COLUMNS\""))
+        assertTrue(json.contains("\"navStyle\": \"PILL\""))
+        val restored = FlashLearnThemeSpec.fromJson(json)
+        assertEquals(FlashLearnThemeSpec.GROK.design.statsLayout, restored.design.statsLayout)
+        assertEquals(FlashLearnThemeSpec.GROK.design.navStyle, restored.design.navStyle)
+        assertEquals(FlashLearnThemeSpec.GROK.design.metric("screenPadding"), restored.design.metric("screenPadding"), 0.001f)
+    }
 }
