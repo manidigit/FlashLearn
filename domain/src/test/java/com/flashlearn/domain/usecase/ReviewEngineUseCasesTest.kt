@@ -44,6 +44,36 @@ class ReviewEngineUseCasesTest {
     private fun learning(id: UUID, stage: Stage, due: Instant? = now.minusSeconds(1)) = LearningState(UUID.randomUUID(), id, stage, due, 0, false, 0, 0, null)
     private fun difficulty(id: UUID, level: VocabularyDifficulty) = DifficultyState(UUID.randomUUID(), id, level, 0, 0, false)
 
+    @Test
+    fun everyReviewMode_excludesConceptReviewedEarlierToday() = runBlocking {
+        val id = UUID.randomUUID()
+        val state = learning(id, Stage.DAILY).copy(lastReviewedAt = now.minusSeconds(60))
+        val repo = SelectReviewQueueUseCase(
+            CRepo(listOf(concept(id))),
+            LRepo(listOf(state)),
+            DRepo(listOf(difficulty(id, VocabularyDifficulty.EASY))),
+            TRepo(emptyMap())
+        )
+
+        assertTrue(repo(ReviewSelectionFilters(ReviewType.DAILY, now = now)).isEmpty())
+        assertTrue(repo(ReviewSelectionFilters(ReviewType.RANDOM, now = now)).isEmpty())
+    }
+
+    @Test
+    fun sameDayEligibility_usesLocalCalendarDate_not24HourWindow() = runBlocking {
+        val id = UUID.randomUUID()
+        val reviewTime = Instant.parse("2026-09-11T23:30:00Z")
+        val checkTime = Instant.parse("2026-09-12T00:30:00Z")
+        val repo = SelectReviewQueueUseCase(
+            CRepo(listOf(concept(id))),
+            LRepo(listOf(learning(id, Stage.DAILY).copy(lastReviewedAt = reviewTime))),
+            DRepo(listOf(difficulty(id, VocabularyDifficulty.EASY))),
+            TRepo(emptyMap())
+        )
+
+        assertEquals(1, repo(ReviewSelectionFilters(ReviewType.DAILY, now = checkTime)).size)
+    }
+
     @Test fun dailyMode_returnsOnlyDueDailyCandidates() = runBlocking {
         val a = UUID.randomUUID(); val b = UUID.randomUUID()
         val repo = SelectReviewQueueUseCase(CRepo(listOf(concept(a), concept(b))), LRepo(listOf(learning(a, Stage.DAILY), learning(b, Stage.DAILY, now.plusSeconds(60)))), DRepo(listOf(difficulty(a, VocabularyDifficulty.EASY), difficulty(b, VocabularyDifficulty.EASY))), TRepo(emptyMap()))
