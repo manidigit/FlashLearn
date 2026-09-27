@@ -39,8 +39,9 @@ class ProgressSummaryUseCaseTest {
         stage: Stage,
         nextReviewAt: Instant?,
         correct: Int = 0,
-        wrong: Int = 0
-    ) = LearningState(UUID.randomUUID(), conceptId, stage, nextReviewAt, 0, false, correct, wrong, null)
+        wrong: Int = 0,
+        lastReviewedAt: Instant? = null
+    ) = LearningState(UUID.randomUUID(), conceptId, stage, nextReviewAt, 0, false, correct, wrong, lastReviewedAt)
 
     @Test
     fun summary_counts_due_by_stage_and_ignores_inactive_concepts() = runBlocking {
@@ -72,6 +73,22 @@ class ProgressSummaryUseCaseTest {
         assertEquals(7, result.totalCorrect)
         assertEquals(3, result.totalWrong)
         assertEquals(70, result.accuracyPercent)
+    }
+
+    @Test
+    fun summary_excludes_words_reviewed_today_from_home_due_counts() = runBlocking {
+        val reviewedToday = UUID.randomUUID()
+        val stillDue = UUID.randomUUID()
+        val concepts = Concepts(listOf(concept(reviewedToday), concept(stillDue)))
+        val learning = Learning(listOf(
+            state(reviewedToday, Stage.DAILY, now.minusSeconds(60), lastReviewedAt = now.minusSeconds(120)),
+            state(stillDue, Stage.DAILY, now.minusSeconds(60))
+        ))
+
+        val result = GetProgressSummaryUseCase(concepts, learning)(now)
+
+        assertEquals(1, result.dueConceptCount)
+        assertEquals(1, result.dailyDueConceptCount)
     }
 
     @Test
