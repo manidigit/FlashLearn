@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -57,9 +59,10 @@ class HomeViewModel @Inject constructor(
                 val now = Instant.now()
                 val summary = getProgressSummary(now)
                 val basicStats = getBasicStatistics()
-                val streak = calculateStreak.calculate(
-                    historyRepository.getAll(), now, ZoneId.systemDefault()
-                )
+                val history = historyRepository.getAll()
+                val streak = withContext(Dispatchers.Default) {
+                    calculateStreak.calculate(history, now, ZoneId.systemDefault())
+                }
                 val progressPercentage = calculateProgressPercentage()
                 // Home uses the same review-eligible counts as the Review engine.
                 val dailyTotal = summary.dailyDueConceptCount
