@@ -3,9 +3,6 @@ package com.flashlearn.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.ProgressSummary
-import com.flashlearn.domain.model.Stage
-import com.flashlearn.domain.repository.ConceptRepository
-import com.flashlearn.domain.repository.LearningStateRepository
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.statistics.BasicStatistics
 import com.flashlearn.domain.statistics.CalculateStreakUseCase
@@ -42,8 +39,6 @@ class HomeViewModel @Inject constructor(
     private val ensureStarterData: EnsureStarterDataUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
-    private val learningStateRepository: LearningStateRepository,
-    private val conceptRepository: ConceptRepository,
     private val calculateProgressPercentage: CalculateProgressPercentage
 ) : ViewModel() {
 
@@ -66,10 +61,10 @@ class HomeViewModel @Inject constructor(
                     historyRepository.getAll(), now, ZoneId.systemDefault()
                 )
                 val progressPercentage = calculateProgressPercentage()
-                val activeConceptIds = conceptRepository.getAllActive().map { it.id }.toSet()
-                val dailyTotal = learningStateRepository.getAllByStage(Stage.DAILY).count { it.conceptId in activeConceptIds }
-                val weeklyTotal = learningStateRepository.getAllByStage(Stage.WEEKLY).count { it.conceptId in activeConceptIds }
-                val monthlyTotal = learningStateRepository.getAllByStage(Stage.MONTHLY).count { it.conceptId in activeConceptIds }
+                // Home uses the same review-eligible counts as the Review engine.
+                val dailyTotal = summary.dailyDueConceptCount
+                val weeklyTotal = summary.weeklyDueConceptCount
+                val monthlyTotal = summary.monthlyDueConceptCount
                 HomeSnapshot(summary, basicStats, streak, progressPercentage, dailyTotal, weeklyTotal, monthlyTotal)
             }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
