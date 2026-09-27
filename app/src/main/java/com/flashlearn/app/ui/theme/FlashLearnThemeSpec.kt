@@ -74,7 +74,8 @@ data class FlashLearnThemeSpec(
     val iconStyle: String = "outlined", val elevationScale: Float = 1f,
     val cornerSmall: Float = 12f, val cornerMedium: Float = 16f, val cornerLarge: Float = 24f,
     val typographyScale: Float = 1f, val densityScale: Float = 1f,
-    val spacingScale: Float = 1f
+    val spacingScale: Float = 1f,
+    val design: ThemeDesign = when (id.lowercase()) { "grok" -> ThemeDesign.grok(); "claud","claude" -> ThemeDesign.claud(); "spark" -> ThemeDesign.spark(); "gtp" -> ThemeDesign.gtp(); else -> ThemeDesign.default() }
 ) {
     fun toJson(): String = JSONObject().apply {
         put("formatVersion", FORMAT_VERSION); put("id", id); put("name", name)
@@ -103,7 +104,7 @@ data class FlashLearnThemeSpec(
             lightOnSurface=0xFF111827, darkOnSurface=0xFFF3F4F6, lightOnSurfaceVariant=0xFF64748B, darkOnSurfaceVariant=0xFFB8C1CE,
             lightCard=0xFFFFFFFF, darkCard=0xFF171D26, lightOutline=0xFFD8E0EA, darkOutline=0xFF344152,
             gradientStart=0xFF2563EB, gradientEnd=0xFF475569, iconStyle="outlined", elevationScale=0.9f,
-            cornerSmall=10f, cornerMedium=14f, cornerLarge=20f, typographyScale=1f, densityScale=1f, spacingScale=1f
+            cornerSmall=10f, cornerMedium=14f, cornerLarge=20f, typographyScale=1f, densityScale=1f, spacingScale=1f, design=ThemeDesign.default()
         )
 
         val GROK = FlashLearnThemeSpec(
