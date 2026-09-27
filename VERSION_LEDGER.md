@@ -2,6 +2,10 @@
 
 | Version | Code | Date | Checkpoint | Verification |
 |---|---:|---|---|---|
+| 6.52 | 652 | 2026-09-27 | Unified Review eligibility + same-day lock + Home due-count alignment | Pending CI |
+
+| Version | Code | Date | Checkpoint | Verification |
+|---|---:|---|---|---|
 | 6.51 | 651 | 2026-09-27 | Grok visual reconstruction + full ThemeDesign persistence | Pending CI |
 | 6.50 | 650 | 2026-09-26 | GTP fifth built-in theme runtime correction | GREEN — GitHub Actions run 1429 |
 
