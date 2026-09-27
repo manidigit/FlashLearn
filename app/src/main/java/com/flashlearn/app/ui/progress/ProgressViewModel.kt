@@ -94,9 +94,7 @@ class ProgressViewModel @Inject constructor(
                 val history = historyRepository.getAll()
                 val existingAchievements = achievementRepository.getAll()
                 val cpu = withContext(Dispatchers.Default) {
-                    val history = historyRepository.getAll()
                     val streak = calculateStreak.calculate(history, now, zoneId)
-                    val existingAchievements = achievementRepository.getAll()
                     val achievementResult = evaluateAchievements.evaluate(
                         DefaultAchievements.definitions,
                         existingAchievements,
@@ -109,7 +107,6 @@ class ProgressViewModel @Inject constructor(
                             learnedConcepts = summary.learnedConceptCount
                         )
                     )
-                    achievementRepository.upsertAll(achievementResult.states)
                     val achievements = DefaultAchievements.definitions.mapNotNull { definition ->
                         achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
                     }
@@ -132,18 +129,21 @@ class ProgressViewModel @Inject constructor(
                         DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                     }
                     val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)
-                    ProgressPayload(
-                        progress, progressPercentage, summary, stats, streak, achievements, daily, initialActivity,
+                    ProgressCpuData(
+                        streak,
+                        achievements,
+                        daily,
+                        initialActivity,
                         ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
                         ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
-                        ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
-
+                        ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect }),
+                        achievementResult.states
+                    )
                 }
                 achievementRepository.upsertAll(cpu.achievementStates)
                 ProgressPayload(
                     progress, progressPercentage, summary, stats, cpu.streak, cpu.achievements, cpu.dailyReviews, cpu.activityReviews,
                     cpu.todayReviews, cpu.weekReviews, cpu.monthReviews
-                )
                 )
             }.onSuccess { payload ->
                 if (generation == refreshGeneration) {
