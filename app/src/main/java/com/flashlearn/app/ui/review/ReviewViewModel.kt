@@ -174,14 +174,16 @@ class ReviewViewModel @Inject constructor(
         val categories = snapshot.selectedCategoryIds
         viewModelScope.launch {
             val count = runCatching {
-                val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
-                val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
-                var total = 0
-                val now = Instant.now()
-                for (d in difficultyOptions) for (c in categoryOptions) {
-                    total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                withContext(Dispatchers.Default) {
+                    val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
+                    val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
+                    var total = 0
+                    val now = Instant.now()
+                    for (d in difficultyOptions) for (c in categoryOptions) {
+                        total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                    }
+                    total
                 }
-                total
             }.getOrDefault(0)
             val current = _state.value
             if (current.selectedReviewType == reviewType && current.selectedDifficulties == difficulties && current.selectedCategoryIds == categories) {
@@ -204,7 +206,7 @@ class ReviewViewModel @Inject constructor(
             _state.value = currentState.copy(isLoading = true, isSelectingMode = false, selectedReviewType = normalizedReviewType, selectedDifficulties = difficulties, selectedDifficulty = difficulties.singleOrNull(), selectedCategoryIds = categories, selectedCategoryId = categories.singleOrNull(), maximumReviewCards = maxCards, selectedQuizDifficulty = quizDifficulty, card = null, quizCard = null, answerFeedback = null, error = null, answered = 0, correct = 0, wrong = 0)
             try {
                 sessionId?.let { endReviewSession(it); sessionId = null }
-                val candidates = selectCandidates(normalizedReviewType, difficulties, categories, now, maxCards)
+                val candidates = withContext(Dispatchers.Default) { selectCandidates(normalizedReviewType, difficulties, categories, now, maxCards) }
                 if (generation != sessionGeneration) return@launch
                 val candidateIds = candidates.map { it.concept.id }.distinct()
                 val contents = contentRepository.findForConcepts(candidateIds)
