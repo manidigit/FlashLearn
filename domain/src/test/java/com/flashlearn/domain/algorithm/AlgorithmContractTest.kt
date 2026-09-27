@@ -16,7 +16,7 @@ class AlgorithmContractTest {
     @Test fun weeklyWrong(){val r=calculateLearningTransition(state(Stage.WEEKLY),false,now,ZoneOffset.UTC);assertEquals(Stage.DAILY,r.newStage);assertFalse(r.hasPathFailure);assertEquals(0,r.monthlyWrongCount)}
     @Test fun monthlyWrong(){val r=calculateLearningTransition(state(Stage.MONTHLY,2,true),false,now,ZoneOffset.UTC);assertEquals(2,r.monthlyWrongCount);assertTrue(r.hasPathFailure)}
     @Test fun monthlyCorrect(){val r=calculateLearningTransition(state(Stage.MONTHLY,1,true),true,now,ZoneOffset.UTC);assertEquals(Stage.LEARNED,r.newStage);assertNull(r.nextReviewAt);assertTrue(r.hasPathFailure);assertEquals(1,r.monthlyWrongCount)}
-    @Test fun threeConsecutiveWrongsFromEasyGoToMedium(){var s=difficulty(); repeat(2){s=calculateDifficulty(s,false)}; assertEquals(VocabularyDifficulty.EASY,s.current); s=calculateDifficulty(s,false,ReviewType.DAILY,0); assertEquals(VocabularyDifficulty.MEDIUM,s.current); assertEquals(0,s.consecutiveWrong); assertEquals(0,s.consecutiveCorrect)}
+    @Test fun threeConsecutiveWrongsFromEasyGoToMedium(){var s=difficulty(); repeat(2){s=calculateDifficulty(s,false)}; assertEquals(VocabularyDifficulty.EASY,s.current); s=calculateDifficulty(s,false); assertEquals(VocabularyDifficulty.MEDIUM,s.current); assertEquals(0,s.consecutiveWrong); assertEquals(0,s.consecutiveCorrect)}
     @Test fun threeConsecutiveCorrectsAtEasyStayEasy(){var s=difficulty(); repeat(3){s=calculateDifficulty(s,true)}; assertEquals(VocabularyDifficulty.EASY,s.current); assertEquals(0,s.consecutiveCorrect); assertEquals(0,s.consecutiveWrong)}
     @Test fun weeklyAndMonthlyWrongFollowTheSameThresholdRule(){
         val weekly = calculateDifficulty(difficulty(VocabularyDifficulty.EASY), false)
