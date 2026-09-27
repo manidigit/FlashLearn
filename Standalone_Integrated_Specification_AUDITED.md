@@ -78,42 +78,36 @@ Paste کند، داده را Import/Export کند، کتابخانه را جست
 
 `conceptId + languageCode`
 
-### 2.3 چرخهٔ چهارمرحله‌ای
+### 2.3 دو سیستم مستقل: Learning و Difficulty
 
-#### Daily
+#### Learning
 
-مرحلهٔ شروع یادگیری و مرور نزدیک.
+چرخهٔ Learning فقط از نتیجهٔ درست/غلط پاسخ مرور استفاده می‌کند:
 
--   پاسخ صحیح → Weekly
--   پاسخ غلط → Daily و مرور در ابتدای روز تقویمی بعد
+**Daily → Weekly → Monthly → Learned**
 
-#### Weekly
+- درست: Daily → Weekly → Monthly → Learned
+- غلط: Daily → Daily، Weekly → Daily، Monthly → Daily
+- Learned پایان مسیر است و وارد زمان‌بندی معمول نمی‌شود.
+- Learning هیچ قانون دیگری برای تغییر Difficulty ندارد.
 
-مرور فاصله‌دار هفتگی.
+#### Difficulty
 
--   پاسخ صحیح → Monthly با فاصلهٔ ۳۰ روز
--   پاسخ غلط → Daily، مرور در ابتدای روز بعد، و `hasPathFailure = true`
--   شکست Weekly باید سختی Concept را حداقل به Medium برساند.
+Difficulty کاملاً مستقل از Learning Stage است و فقط از درست/غلط پاسخ مرور استفاده می‌کند:
 
-#### Monthly
+**Easy → Medium → Hard → Very Hard**
 
-مرور فاصله‌دار ماهانه.
+- Threshold پیش‌فرض: **3**
+- Threshold از Settings قابل تغییر است.
+- Threshold پاسخ صحیحِ پشت‌سرهم → یک پله آسان‌تر.
+- Threshold پاسخ غلطِ پشت‌سرهم → یک پله سخت‌تر.
+- Easy پایین‌تر نمی‌رود.
+- Very Hard بالاتر نمی‌رود.
+- Stage فعلی در محاسبهٔ Difficulty هیچ استثنای ویژه‌ای ایجاد نمی‌کند.
+- `monthlyWrongCount` و `hasPathFailure` در تصمیم‌گیری Difficulty نقشی ندارند.
 
--   پاسخ صحیح → Learned
--   پاسخ غلط → Daily، مرور در ابتدای روز بعد، `hasPathFailure = true`
--   شمارندهٔ `monthlyWrongCount` یک واحد افزایش می‌یابد.
--   اولین شکست Monthly سختی را به Hard می‌رساند.
--   شکست‌های بعدی Monthly سختی را به Very Hard می‌رسانند.
-
-#### Learned
-
-وضعیت یادگیری تثبیت‌شده.
-
--   مرور Learned مسیر جداگانه دارد.
--   انتخاب Learned به `nextReviewAt` وابسته نیست.
--   پاسخ در Learned به‌طور خودکار Concept را به Daily/Weekly/Monthly
-    برنمی‌گرداند.
--   قواعد ارائهٔ Learned باید از چرخهٔ معمول Due جدا بمانند.
+Learning و Difficulty فقط یک ورودی مشترک دارند: **نتیجهٔ درست/غلط همان Review Event**.
+هیچ‌کدام به دیگری دستور نمی‌دهد.
 
 ------------------------------------------------------------------------
 
@@ -5743,6 +5737,2219 @@ FUNCTION LearningTransition(stage, correct, now, monthlyWrong, pathFailure):
             RETURN DAILY, startOfNextCalendarDay(now),
                    true, monthlyWrong + 1
 ```
+
+------------------------------------------------------------------------
+
+## 27.2 Due Rule
+
+برای:
+
+-   Daily
+-   Weekly
+-   Monthly
+
+شرط:
+
+``` text
+nextReviewAt IS NOT NULL
+AND
+nextReviewAt <= now
+```
+
+پس:
+
+-   `nextReviewAt < now` → Due
+-   `nextReviewAt == now` → Due
+-   `nextReviewAt > now` → Not Due
+-   `nextReviewAt == null` → Not Eligible
+
+برای Learned، `nextReviewAt` در انتخاب Learned نادیده گرفته می‌شود.
+
+`now` باید در ابتدای عملیات Selection گرفته شود و در طول همان اجرای
+Algorithm تغییر نکند.
+
+------------------------------------------------------------------------
+
+## 27.3 Card Selection / SelectReviewQueue
+
+### ورودی
+
+``` text
+reviewType:
+    DAILY
+    WEEKLY
+    MONTHLY
+    LEARNED
+
+filters:
+    difficulty?
+    category?
+    tag?
+    languagePair?
+
+now
+```
+
+### Candidate Set
+
+Daily:
+
+``` text
+stage = DAILY
+AND nextReviewAt IS NOT NULL
+AND nextReviewAt <= now
+```
+
+Weekly:
+
+``` text
+stage = WEEKLY
+AND nextReviewAt IS NOT NULL
+AND nextReviewAt <= now
+```
+
+Monthly:
+
+``` text
+stage = MONTHLY
+AND nextReviewAt IS NOT NULL
+AND nextReviewAt <= now
+```
+
+Learned:
+
+``` text
+stage = LEARNED
+```
+
+### فیلترها
+
+همهٔ فیلترهای فعال با AND ترکیب می‌شوند:
+
+``` text
+difficulty == selectedDifficulty
+AND category == selectedCategory
+AND ConceptTag contains selectedTag
+AND languagePair == selectedLanguagePair
+```
+
+### Duplicate Concept
+
+``` text
+distinctBy(concept.id)
+```
+
+هر Concept فقط یک بار در Session قرار می‌گیرد.
+
+### Sort
+
+برای Daily/Weekly/Monthly:
+
+``` text
+nextReviewAt ASC
+concept.id ASC
+```
+
+یعنی کارت قدیمی‌تر ابتدا می‌آید.
+
+برای Learned:
+
+``` text
+shuffle()
+```
+
+`nextReviewAt` در Learned برای Sort استفاده نمی‌شود.
+
+### خروجی خالی
+
+اگر هیچ Candidate باقی نماند:
+
+``` text
+return []
+```
+
+این Error نیست.
+
+### Read-only
+
+SelectReviewQueue نباید:
+
+-   Stage
+-   nextReviewAt
+-   Difficulty
+-   counters
+-   Concept
+-   LearningState
+-   DifficultyState
+-   Statistics
+
+را تغییر دهد.
+
+------------------------------------------------------------------------
+
+## 27.4 Difficulty Calculation
+
+### Levels
+
+``` text
+EASY
+MEDIUM
+HARD
+VERY_HARD
+```
+
+### Threshold
+
+مقدار پیش‌فرض:
+
+``` text
+threshold_difficulty = 3
+```
+
+Threshold باید از Settings خوانده شود و مقدار معتبر آن حداقل 1 است.
+
+در قرارداد پایه، UI نسخهٔ اولیه برای تغییر Threshold الزام نشده است.
+
+### شمارنده‌ها
+
+-   `consecutiveCorrect`
+-   `consecutiveWrong`
+
+پاسخ صحیح:
+
+-   `consecutiveCorrect += 1`
+-   `consecutiveWrong = 0`
+
+پاسخ غلط:
+
+-   `consecutiveWrong += 1`
+-   `consecutiveCorrect = 0`
+
+### رسیدن به Threshold
+
+اگر شمارنده به Threshold برسد:
+
+-   فقط یک Step تغییر Difficulty انجام شود.
+-   هر دو Counter صفر شوند.
+
+### مرزها
+
+Easy پایین‌تر نمی‌رود.
+
+Very Hard بالاتر نمی‌رود.
+
+### One Step Easier
+
+``` text
+VERY_HARD → HARD
+HARD      → MEDIUM
+MEDIUM    → EASY
+EASY      → EASY
+```
+
+### One Step Harder
+
+``` text
+EASY      → MEDIUM
+MEDIUM    → HARD
+HARD      → VERY_HARD
+VERY_HARD → VERY_HARD
+```
+
+### تغییر Level
+
+هر تغییر Level:
+
+``` text
+consecutiveCorrect = 0
+consecutiveWrong = 0
+```
+
+### Flag تاریخی
+
+اگر Difficulty به Very Hard برسد:
+
+``` text
+hasReachedVeryHard = true
+```
+
+و این Flag بعداً False نمی‌شود.
+
+------------------------------------------------------------------------
+
+## 27.5 Forced Difficulty Exceptions
+
+این بخش بر مسیر عادی Threshold اولویت دارد.
+
+### Weekly Wrong
+
+``` text
+Difficulty >= MEDIUM
+```
+
+یعنی:
+
+-   اگر Easy → Medium
+-   اگر Medium/Hard/Very Hard → سطح فعلی حفظ می‌شود.
+
+هر دو Counter صفر می‌شوند.
+
+### Monthly Wrong
+
+بعد از افزایش `monthlyWrongCount`:
+
+``` text
+newMonthlyWrongCount == 1
+    → HARD
+
+newMonthlyWrongCount >= 2
+    → VERY_HARD
+```
+
+هر دو Counter صفر می‌شوند.
+
+اگر Very Hard شد:
+
+``` text
+hasReachedVeryHard = true
+```
+
+### اولویت
+
+ترتیب:
+
+1.  Forced Weekly/Monthly
+2.  Normal consecutive threshold
+
+این دو مسیر نباید برای یک Review Event هم‌زمان DifficultyState را دوبار
+تغییر دهند.
+
+------------------------------------------------------------------------
+
+## 27.6 قرارداد بین Learning Transition و Difficulty
+
+`monthlyWrongCountBefore` باید **مقدار قبل از اجرای Transition** باشد.
+
+ترتیب منطقی:
+
+``` text
+load LearningState
+load DifficultyState
+
+validate state existence
+
+detect duplicate attempt
+
+validate due
+
+transition = calculateLearningTransition(...)
+
+difficulty = calculateDifficulty(
+    oldDifficulty,
+    answer,
+    reviewType,
+    monthlyWrongCountBefore,
+    threshold
+)
+
+persist:
+    LearningState
+    DifficultyState
+    ReviewHistory
+inside one transaction
+```
+
+------------------------------------------------------------------------
+
+## 27.7 SubmitReviewAnswer
+
+### پیش‌شرط
+
+اگر Concept فعال باشد ولی LearningState یا DifficultyState وجود نداشته
+باشد:
+
+``` text
+DATA_INTEGRITY_ERROR
+```
+
+هیچ State جدیدی خودکار ساخته نمی‌شود.
+
+### Duplicate
+
+Unique key:
+
+``` text
+(sessionId, reviewAttemptId)
+```
+
+Duplicate باید قبل از اعمال Transition جدید تشخیص داده شود.
+
+### Atomicity
+
+``` text
+BEGIN TRANSACTION
+
+read states
+validate duplicate
+validate due
+calculate transition
+calculate difficulty
+update learning
+update difficulty
+insert history
+
+COMMIT
+```
+
+هر Exception:
+
+``` text
+ROLLBACK
+```
+
+------------------------------------------------------------------------
+
+## 27.8 CreateConcept
+
+``` text
+BEGIN TRANSACTION
+
+create Concept
+create Content(s)
+create LearningState(stage = DAILY)
+create DifficultyState(current = EASY)
+
+COMMIT
+```
+
+هر Failure:
+
+``` text
+ROLLBACK
+```
+
+Concept ناقص نباید به‌عنوان Concept معتبر باقی بماند.
+
+------------------------------------------------------------------------
+
+## 27.9 Quiz Question Generation
+
+### اصل
+
+Algorithm فقط سؤال را تولید می‌کند.
+
+### مراحل
+
+1.  Concept/Content هدف را مشخص کن.
+2.  تمام Translationهای غیرخالی هدف را در یک Target Group جمع کن.
+3.  Candidateهای Distractor را پیدا کن.
+4.  Concept فعلی را حذف کن.
+5.  CanonicalKeyهای تکراری را حذف کن.
+6.  Candidateهای همان Session را در صورت قرارداد حذف کن.
+7.  Category را در صورت فعال بودن Filter ترجیح بده.
+8.  همان Difficulty را ترجیح بده.
+9.  Difficultyهای مجاور را در مرحلهٔ بعد بررسی کن.
+10. در صورت نیاز کل بانک را بررسی کن.
+11. سه Distractor معتبر لازم است.
+12. پاسخ صحیح + سه Distractor = چهار گزینه.
+13. گزینه‌ها قبل از خروجی Shuffle شوند.
+
+اگر سه Distractor معتبر وجود ندارد:
+
+``` text
+Fallback → Flashcard
+```
+
+### Non-mutation
+
+این Algorithm نباید هیچ Persistence انجام دهد.
+
+------------------------------------------------------------------------
+
+## 27.10 Parser Pipeline
+
+``` text
+RAW IMPORT
+    ↓
+NORMALIZATION
+    ↓
+LANGUAGE DETECTOR
+    ↓
+LINE CLASSIFIER
+    ↓
+ENTRY STATE MACHINE
+    ↓
+Translation / Breakdown / Notes
+    ↓
+ENTRY VALIDATOR
+    ↓
+DUPLICATE ENGINE
+    ↓
+RELATIONSHIP ENGINE
+    ↓
+DATABASE
+```
+
+### Normalization
+
+-   Trim
+-   whitespace collapse
+-   lowercase برای canonical comparison
+-   حفظ Accent
+-   حفظ punctuation معنی‌دار
+
+### Language Detection
+
+حداقل باید برای:
+
+-   Persian
+-   English
+-   Spanish
+-   Mixed
+-   Unknown
+
+قابل استفاده باشد.
+
+### Entry State Machine
+
+Parser نباید یک Regex بزرگ و غیرقابل نگهداری باشد.
+
+Boundaryهای Entry باید بر اساس:
+
+-   numbering
+-   line structure
+-   language transition
+-   translation markers
+-   blank/gap
+-   known note/grammar patterns
+
+تشخیص داده شوند.
+
+------------------------------------------------------------------------
+
+## 27.11 ResolveConceptForParsedEntry
+
+### خروجی
+
+``` text
+ReuseConcept(
+    conceptId,
+    newContentsToInsert
+)
+
+CreateNewConcept(
+    allContentsToInsert
+)
+
+Conflict(
+    matchedConceptIds,
+    pieces
+)
+```
+
+### Match
+
+برای هر Piece:
+
+``` text
+SELECT DISTINCT conceptId
+FROM Content
+WHERE languageCode = piece.languageCode
+AND canonicalKey = normalize(piece.text)
+```
+
+### چند Match
+
+اگر:
+
+``` text
+matchedIds.size > 1
+```
+
+→ `Conflict`
+
+و Merge خودکار ممنوع است.
+
+### هیچ Match
+
+``` text
+matchedIds.size == 0
+→ CreateNewConcept
+```
+
+### یک Match
+
+``` text
+matchedIds.size == 1
+→ ReuseConcept
+```
+
+و فقط Contentهای جدید درج شوند.
+
+------------------------------------------------------------------------
+
+## 27.12 Backup Algorithm
+
+### انواع
+
+``` text
+VOCABULARY
+PROGRESS
+FULL
+```
+
+Vocabulary شامل:
+
+-   Languages
+-   Categories
+-   Tags
+-   LanguagePairs
+-   Concepts
+-   Contents
+
+Progress شامل:
+
+-   Settings
+-   ReviewSessions
+-   ReviewHistory
+-   LearningStates
+-   DifficultyStates
+-   Achievements
+
+Full شامل هر دو مجموعه است.
+
+### Export Metadata
+
+``` text
+schemaVersion
+exportedAt
+backupType
+data
+```
+
+### UUID
+
+UUID شناسهٔ پایدار بین Backup و Restore است.
+
+Database ID فقط داخلی است.
+
+------------------------------------------------------------------------
+
+## 27.13 Restore Algorithm
+
+### ValidateBackup
+
+قبل از هر Mutation:
+
+1.  Backup موجود باشد.
+2.  Schema Version پشتیبانی شود.
+3.  ساختار کامل باشد.
+4.  UUIDها معتبر باشند.
+5.  UUIDهای تکراری تشخیص داده شوند.
+6.  Referenceها معتبر باشند.
+7.  Required fields معتبر باشند.
+8.  Backup Type با جداول موجود سازگار باشد.
+
+Failure:
+
+``` text
+Error
+```
+
+بدون تغییر Database.
+
+### Auto Backup
+
+قبل از Restore تلاش برای Full Backup فعلی انجام شود.
+
+اگر Auto Backup شکست خورد:
+
+-   به کاربر هشدار داده شود.
+-   امکان Cancel وجود داشته باشد.
+-   ادامه بدون Auto Backup فقط در صورت Contract صریح مجاز است.
+
+### Transaction
+
+کل Restore در یک Transaction اجرا شود.
+
+Mapهای UUID → Database ID ساخته شوند:
+
+``` text
+LanguageUUID → LanguageID
+CategoryUUID → CategoryID
+TagUUID → TagID
+LanguagePairUUID → LanguagePairID
+ConceptUUID → ConceptID
+ReviewSessionUUID → ReviewSessionID
+```
+
+------------------------------------------------------------------------
+
+## 27.14 Restore Dependency Order
+
+``` text
+Languages
+    ↓
+Categories
+    ↓
+Tags
+    ↓
+LanguagePairs
+    ↓
+Concepts
+    ↓
+Contents
+    ↓
+ConceptTags
+    ↓
+ReviewSessions
+    ↓
+ReviewHistory
+    ↓
+LearningStates
+    ↓
+DifficultyStates
+    ↓
+Settings
+    ↓
+Achievements
+```
+
+اگر Reference ضروری پیدا نشود:
+
+``` text
+Exception
+→ Rollback
+```
+
+پس از Commit:
+
+``` text
+CheckIntegrity
+```
+
+اجرا شود.
+
+------------------------------------------------------------------------
+
+## 27.15 Statistics Calculation
+
+اصل:
+
+-   Read-only
+-   Database/Repository driven
+-   بدون Load کل History
+
+محاسبات پایه باید بر اساس Queryهای محدود به Window زمانی انجام شوند.
+
+### Progress
+
+Progress مرحله‌ای می‌تواند بر تعداد Conceptهای هر Stage تکیه کند:
+
+``` text
+Daily
+Weekly
+Monthly
+Learned
+```
+
+و درصدهای نمایش داده‌شده باید از دادهٔ پایدار استخراج شوند.
+
+### Streak
+
+Streak باید از روزهای دارای Review ثبت‌شده محاسبه شود.
+
+منطق کلی:
+
+1.  روز جاری را بررسی کن.
+2.  اگر روز جاری فعالیت معتبر دارد، از آن شروع کن.
+3.  در غیر این صورت طبق قرارداد روز قبل بررسی شود.
+4.  روزها تا اولین Gap شمارش شوند.
+
+Streak نباید با باز کردن صفحه یا صرفاً شروع Session ایجاد شود.
+
+------------------------------------------------------------------------
+
+## 27.16 Achievement
+
+Achievementها از دادهٔ پایدار مشتق می‌شوند.
+
+نمونهٔ شروط:
+
+``` text
+SEVEN_DAY_STREAK
+streak >= 7
+
+THIRTY_DAY_STREAK
+streak >= 30
+
+MEMORY_BUILDER
+learnedCount >= 100
+
+VOCABULARY_BUILDER
+conceptCount >= 500
+
+LONG_TERM_MEMORY
+monthlyCorrectCount >= 50
+
+VERY_HARD_REACHED
+hasReachedVeryHard == true
+```
+
+هر Achievement باید فقط یک بار Unlock شود.
+
+------------------------------------------------------------------------
+
+## 27.17 RefreshDataUseCase
+
+### هدف
+
+ارتقای دادهٔ قدیمی بدون حذف و ورود مجدد.
+
+### نسخه‌های مستقل
+
+``` text
+CURRENT_CONCEPT_VERSION
+CURRENT_CONTENT_VERSION
+```
+
+و دو لیست Migration مستقل:
+
+``` text
+conceptMigrations
+contentMigrations
+```
+
+### قانون
+
+Migration نسخه N فقط روی نسخه N-1 اجرا شود.
+
+همهٔ Migrationها:
+
+-   Idempotent
+-   محدود به نوع خود
+-   مستقل از LearningState
+-   مستقل از ReviewHistory
+
+باشند.
+
+### خروجی
+
+``` text
+Success(updatedCount)
+NoChange
+Error(message)
+```
+
+### الگوریتم
+
+برای هر Active Concept:
+
+1.  Concept را تا `CURRENT_CONCEPT_VERSION` ارتقا بده.
+2.  Contentهای متعلق به Concept را تا `CURRENT_CONTENT_VERSION` ارتقا
+    بده.
+3.  اگر Concept یا یکی از Contentها تغییر کرد، `updatedCount++`.
+4.  اگر هیچ تغییری نبود، NoChange.
+
+### Transaction
+
+کل Refresh باید Transactional باشد.
+
+Failure:
+
+``` text
+ROLLBACK
+```
+
+### مرز با Room Migration
+
+ترتیب:
+
+``` text
+Room Schema Migration
+        ↓
+Database structure ready
+        ↓
+RefreshDataUseCase
+        ↓
+Old data migrated
+        ↓
+Normal app execution
+```
+
+Room Schema Migration ساختار را تغییر می‌دهد.
+
+RefreshDataUseCase دادهٔ داخل رکوردها را تغییر می‌دهد.
+
+------------------------------------------------------------------------
+
+## 27.18 Import Recovery
+
+Import باید وضعیت عملیاتی مشخص داشته باشد:
+
+``` text
+NOT_STARTED
+RUNNING
+SUCCESS
+FAILED
+CANCELLED
+```
+
+### Failure
+
+-   Transaction state قابل پیش‌بینی باشد.
+-   Batch boundary صریح باشد.
+-   Retry بدون Checkpoint معتبر از ابتدا و ایمن انجام شود.
+-   Cancel نباید دادهٔ نیمه‌کاره را به‌صورت تصادفی Commit کند.
+
+### Memory
+
+فایل Import کامل در RAM قرار نگیرد.
+
+------------------------------------------------------------------------
+
+## 27.19 Restore Recovery
+
+-   Auto Backup قبل از Restore
+-   Restore هماهنگ همهٔ مجموعه‌های مرتبط
+-   Rollback در Failure
+-   Snapshot معتبر در صورت نیاز
+-   Integrity Check بعد از Commit
+-   Restore ناقص = Success نیست
+
+------------------------------------------------------------------------
+
+## 27.20 Migration Recovery
+
+هر Migration باید:
+
+-   From Version مشخص
+-   To Version مشخص
+-   قابل تست
+-   قابل تکرار کنترل‌شده
+-   Idempotent در سطح قرارداد خود
+
+باشد.
+
+Failure نباید Database را در وضعیت نامعلوم بگذارد.
+
+بعد از Migration:
+
+-   Integrity Check
+-   Regression Test
+
+اجرا شوند.
+
+Migration نباید Learning/Difficulty/History را بدون تصمیم صریح تغییر
+دهد.
+
+------------------------------------------------------------------------
+
+## 27.21 Process Death و Lifecycle
+
+State حیاتی نباید فقط داخل Composable یا ViewModel باشد.
+
+Rotation:
+
+-   نباید Review را دوباره ثبت کند.
+-   نباید Session state را بی‌دلیل از بین ببرد.
+
+Background:
+
+-   نباید Commit ناقص بسازد.
+
+Process Death:
+
+-   باید از Source of Truth پایدار قابل بازیابی باشد.
+
+File Picker:
+
+-   بازگشت باید State عملیات را درست بازیابی کند.
+
+Low Memory:
+
+-   نباید Data Corruption ایجاد کند.
+
+------------------------------------------------------------------------
+
+## 27.22 Concurrency
+
+Offline بودن به معنی نبود Concurrency نیست.
+
+مسیرهای همزمان ممکن:
+
+-   UI
+-   Worker
+-   Import
+-   Notification
+-   Retry
+
+قواعد:
+
+-   دو پاسخ همزمان برای یک Concept نباید State ناسازگار بسازند.
+-   دو Import همزمان باید ممنوع یا Serialize شوند.
+-   Restore با Mutation همزمان نشود.
+-   Migration فقط در حالت امن Database اجرا شود.
+
+------------------------------------------------------------------------
+
+## 27.23 قرارداد Performance برای Queryها
+
+Queryهای حساس باید برای Dataset بزرگ Plan/Index شوند.
+
+موارد مهم:
+
+-   `(stage, nextReviewAt)`
+-   `languageCode + canonicalKey`
+-   Unique روی `(conceptId, languageCode)`
+-   Unique روی `(sessionId, reviewAttemptId)`
+-   Queryهای Tag relation
+-   Count Queryهای Category
+-   Aggregateهای تاریخ‌محور
+
+Index جدید باید با Benchmark قبل/بعد بررسی شود.
+
+------------------------------------------------------------------------
+
+## 27.24 معیار نهایی الگوریتمی
+
+هیچ Algorithm نباید:
+
+-   به UI تصمیم‌گیری بسپارد که چه Stateی باید ذخیره شود.
+-   Database را خارج از مرز Use Case تغییر دهد.
+-   Presentation را با Business Logic مخلوط کند.
+-   اطلاعاتی را که در ورودی نیست اختراع کند.
+-   دادهٔ تاریخی را برای راحتی Performance حذف کند.
+
+Algorithm باید تا حد امکان:
+
+-   Pure
+-   Deterministic
+-   Testable
+-   Versionable
+-   Replaceable
+
+باشد.
+
+------------------------------------------------------------------------
+
+# 32. Technical Reference --- الگوریتم‌های تکمیلی استخراج‌شده
+
+> این آخرین بخش سند است. موارد زیر جزئیات فنی منبع‌محور هستند که برای
+> جلوگیری از حذف هیچ Contract یا قاعدهٔ الگوریتمی نگه داشته شده‌اند.
+> متن‌های تکراری قبلاً Deduplicate شده‌اند. مواردی که در منابع با برچسب
+> Legacy/Superseded مشخص شده‌اند با همان ماهیت تاریخی حفظ شده‌اند و
+> جایگزین قراردادهای اصلی این سند نیستند.
+
+## 32.1 Parser و Vocabulary Import
+
+FlashLearn --- الگوریتم‌های اصلی (Main Algorithms) نسخهٔ مستندشده
+استخراج‌شده از فایل ادغام‌شده FlashLearn_ALL_WORD_DOCUMENTS_MERGED_v4.20
+--- بدون حذف محتوا. فقط جداسازی الگوریتم‌های اصلی از بقیه توضیحات.
+FlashLearn --- Vocabulary Import & Parsing Algorithm نسخهٔ مستندشده
+Version: مستندشده Platform: Android Architecture: Offline-First
+Processing: کاملاً Deterministic / Local AI / Cloud Dependency: ندارد
+Status: FROZEN --- 1. هدف سیستم سیستم Import باید بتواند متن‌های نامنظم و
+ترکیبی را دریافت کرده و به‌صورت خودکار: 1. واژه یا عبارت اصلی اسپانیایی
+را تشخیص دهد. 2. ترجمه فارسی آن را پیدا کند. 3. شماره‌گذاری، بولت،
+علامت‌ها و فرمت‌های غیرضروری را حذف کند. 4. توضیحات، نکات گرامری، مثال‌ها و
+تحلیل اجزای عبارت را از واژه اصلی جدا کند. 5. تشخیص دهد چه چیزی Entry
+اصلی است و چه چیزی صرفاً توضیح آن است. 6. موارد تکراری را شناسایی کند. 7.
+اطلاعات مرتبط با Entry را بدون از بین بردن اطلاعات اصلی ذخیره کند. 8.
+تمام عملیات را بدون اینترنت و بدون AI انجام دهد. 2. اصل بنیادی Parser
+Parser نباید بر اساس یک Regex بزرگ ساخته شود. ساختار پیشنهادی: RAW TEXT
+↓ Normalization Line Segmentation Language Detection Line Classification
+Entry Boundary Detection Main Entry Detection Translation Detection
+Breakdown Detection Notes / Grammar Detection Entry Type Detection
+Duplicate Detection Relationship Detection Validation Vocabulary DB
+Parser باید یک State Machine چندمرحله‌ای باشد. 3. مرحله اول ---
+Normalization قبل از هرگونه تشخیص، متن باید Normalize شود. 3.1 مواردی که
+باید حذف شوند این موارد معنای واژه را تغییر نمی‌دهند: • \* - --- \_ → » «
+➜ \# همچنین: 1. 2) 3 - 47: در صورت تشخیص شماره‌گذاری باید شماره از ابتدای
+Entry حذف شود. 3.2 مواردی که نباید حذف شوند علائم زیر ممکن است بخشی از
+معنی یا ساختار باشند: ¿ ? ¡ ! ... , . : ; ( ) مثلاً: si hubiese... tener
+miedo de ... ¿qué quieres? باید حفظ شوند. 4. نرمال‌سازی Unicode متن باید
+با Unicode NFC نرمال شود. - فاصله‌های پشت سر هم → یک فاصله - Tab →
+Space - Zero Width Space → حذف - Line Endingهای مختلف → "`\n`{=tex}" -
+اعداد فارسی → در صورت نیاز به اعداد استاندارد برای تحلیل شماره‌گذاری
+تبدیل شوند. ۱. el científico از نظر Parser معادل: 1. el científico است.
+اما متن اصلی برای نمایش کاربر باید حفظ شود. 5. تشخیص زبان سیستم حداقل
+باید سه حالت داشته باشد: SPANISH PERSIAN MIXED UNKNOWN 5.1 تشخیص فارسی
+وجود حروف اصلی فارسی: ا ب پ ت ث ج چ ح خ د ذ ر ز ژ س ش ص ض ط ظ ع غ ف ق ک
+گ ل م ن و ه ی امتیاز فارسی را افزایش می‌دهد. 5.2 تشخیص اسپانیایی موارد
+زیر امتیاز اسپانیایی را افزایش می‌دهند: á é í ó ú ü ñ ¿ ¡ همچنین کلمات
+رایج Function Word: el la los las un una de del que para con por en a y
+o pero si como اما این Dictionary نباید به‌تنهایی ملاک باشد. 6. متن MIXED
+quiero: می‌خواهم (از querer) این خط: اما این به معنی Entry جدید نیست.
+ممکن است: ANALYSIS باشد. بنابراین: «Language Detection به‌تنهایی Line
+Classification را تعیین نمی‌کند.» 7. Line Classification هر خط باید ابتدا
+به یکی از این انواع تبدیل شود: ENTRY_HEADER TRANSLATION BREAKDOWN NOTE
+GRAMMAR_NOTE DERIVATIVE RELATION COMMENT NUMBER SEPARATOR 8.
+ENTRY_HEADER خطی که احتمالاً واژه یا عبارت اصلی است. مثال: el científico;
+la científica یا: contar con estoy seguro de que todo irá bien no puedes
+hacer una tortilla sin romper huevos 9. TRANSLATION ترجمه فارسی Entry
+اصلی. دانشمند (مذکر)؛ دانشمند (مؤنث) روی کسی/چیزی حساب کردن مطمئنم که
+همه‌چیز خوب پیش می‌رود 10. BREAKDOWN Breakdown توضیح اجزای یک Entry است.
+estoy seguro de que: مطمئنم که todo: همه‌چیز irá bien: خوب پیش خواهد رفت
+این موارد نباید به‌صورت پیش‌فرض Entry مستقل ایجاد شوند. ساختار: Main Entry
+├── Breakdown 1 ├── Breakdown 2 └── Breakdown 3 11. NOTE مواردی مانند:
+نکته: توضیحات: احتمال اشتباه: توجه: در شماره ۹ استفاده شد باید به‌عنوان
+Note ذخیره شوند. نکته: با esta vez در شماره ۲ هم‌خانواده است. نباید Entry
+جدید ایجاد کند. 12. GRAMMAR_NOTE نکته گرامری: این عبارت از زمان گذشته
+استفاده می‌کند. باید جدا از Note عمومی ذخیره شود. grammarNotes 13.
+DERIVATIVE اگر متن می‌گوید: از ir مشتق شده از ... این به‌صورت پیش‌فرض Entry
+جدید نیست. بلکه: DERIVED_FROM رابطه ایجاد می‌کند. irá bien ممکن است دارای
+رابطه: irá bien → derived/inflected from → ir اما Parser نباید صرفاً به
+دلیل مشاهده‌ی "ir" یک Entry جدید بسازد. 14. COMMENT متن‌هایی مانند: کلمات
+این صفحه تنوع بالایی داشتند... در این بخش چند عبارت مهم بررسی می‌شود...
+Entry نیستند. باید به: تبدیل شوند. 15. تشخیص Boundary مهم‌ترین بخش Parser
+تشخیص شروع Entry جدید است. شماره‌گذاری فقط یکی از Signalها است. 24.
+palabra 29. otra palabra 47. tercera palabra نباید فرض شود که: 25 تا 28
+وجود دارند. Gap در شماره‌گذاری کاملاً معتبر است. 16. Rule شماره‌گذاری اگر
+خط با این الگو شروع شود: \^`\s*`{=tex}`\d+`{=tex}`\s*[\.\):\-]`{=tex}یک
+Signal قوی برای شروع Entry است. 24. la esperanza 29. contar con 47. el
+enemigo اما: به‌تنهایی Entry نیست. 17. Entry بدون شماره Entry می‌تواند
+بدون شماره باشد: روی کسی حساب کردن پس شماره‌گذاری نباید Requirement باشد.
+18. State Machine Parser باید State فعلی را نگه دارد. States: IDLE
+WAITING_FOR_TRANSLATION READING_ENTRY READING_BREAKDOWN READING_NOTE
+READING_COMMENT FINALIZING_ENTRY 19. حالت IDLE Parser در ابتدا: وقتی یک
+Entry Candidate پیدا شد: 20. بعد از Entry Parser منتظر ترجمه می‌شود: اگر
+خط بعد: باشد: Translation = detected و Entry کامل می‌شود. 21. Entry
+چندخطی گاهی Entry اصلی ممکن است چند خط باشد. no puedes hacer una
+tortilla sin romper huevos اگر Parser تشخیص دهد که خط دوم ادامه‌ی
+اسپانیایی خط اول است، باید: sourceText = "no puedes hacer una tortilla
+sin romper huevos" بسازد. 22. تشخیص Translation ترجمه معمولاً یکی از
+حالت‌های زیر است: حالت A Spanish Persian حالت B Spanish: Persian حالت C
+در حالت C نیز Parser باید بتواند رابطه را تشخیص دهد. 23. Persian Before
+Spanish دانشمند el científico Parser نباید صرفاً به دلیل قرارگیری فارسی
+در ابتدا آن را Comment تشخیص دهد. باید Candidate Pair ساخته شود:
+Candidate A: Persian = دانشمند Candidate B: Spanish = el científico و
+سپس رابطه Translation تعیین شود. 24. Translation Score برای هر جفت
+Candidate یک امتیاز ساخته شود. +30 Spanish candidate +30 Persian
+candidate +20 خطوط مجاور +10 شماره‌گذاری مشترک +10 ساختار مشابه Entryهای
+قبلی -30 وجود Marker مربوط به Note -40 وجود توضیح طولانی اگر: score \>=
+threshold باشد، Pair به Entry تبدیل شود. Threshold پیشنهادی: 70 25. Main
+Entry vs Breakdown این بخش بسیار مهم است. Entry اصلی: و سه خط بعدی:
+هستند. 26. Rule مربوط به Colon وجود ":" به‌تنهایی به معنی Entry نیست.
+quiero: می‌خواهم می‌تواند Breakdown باشد. اما اگر: 47. quiero می‌خواهم
+باشد، احتمال Entry بسیار بیشتر است. «Colon فقط Signal است، نه تصمیم
+نهایی.» 27. Breakdown Detection اگر چند خط پشت سر هم ساختار: Spanish :
+Persian داشته باشند و قبل از آن یک Main Entry معتبر وجود داشته باشد: →
+BREAKDOWN 28. Breakdown Promotion به‌صورت پیش‌فرض: promoteBreakdownToEntry
+= false یعنی Breakdown وارد Vocabulary اصلی نمی‌شود. این Option می‌تواند
+در آینده قابل فعال‌سازی باشد. 29. Parenthetical Notes la esperanza امید
+(در شماره ۹ استفاده شد) sourceText = la esperanza translation = امید
+note = در شماره ۹ استفاده شد نباید Parenthetical Note حذف شود. 30.
+Parentheses داخل Translation نباید به‌صورت خودکار حذف شود. چون: (مذکر)
+(مؤنث) جزء اطلاعات ترجمه هستند. بنابراین Parser فقط زمانی Parentheses را
+Note می‌داند که الگوی آن نشان دهد Metadata است. 31. Gender Variants نباید
+به‌صورت پیش‌فرض دو Entry کاملاً مستقل شود. ساختار بهتر: sourceVariants: -
+el científico - la científica translationVariants: - دانشمند (مذکر) -
+دانشمند (مؤنث) و Entry اصلی: entryType = WORD 32. Alternative Separators
+برای Variantها این موارد قابل قبول باشند: / یا el enemigo / la enemiga
+اما "/" همیشه به معنی Variant نیست. پس Context باید بررسی شود. 33. Entry
+Type هر Entry باید یکی از این انواع را داشته باشد: WORD PHRASE SENTENCE
+IDIOM COLLOCATION STRUCTURE 34. تشخیص WORD esperanza análisis científico
+35. تشخیص PHRASE tener miedo de a no ser que 36. تشخیص SENTENCE اگر
+Entry دارای ساختار کامل جمله باشد: به: تبدیل شود. 37. تشخیص IDIOM عبارات
+ثابت مانند: estar en las nubes no hay mal que por bien no venga می‌توانند
+Candidate برای: باشند. این تشخیص در نسخه اول می‌تواند Rule-Based باشد.
+38. تشخیص STRUCTURE a no ser que... که بیشتر یک الگوی زبانی است تا یک
+واژه معمولی. 39. جلوگیری از استخراج کلمات داخل توضیحات این فعل از ir
+ساخته شده و در اینجا به معنی رفتن است. نباید: ir و: رفتـن به‌عنوان Entry
+جدید ساخته شوند. Rule: «وقتی Parser وارد NOTE / GRAMMAR_NOTE / COMMENT
+شد، هیچ Candidate داخلی نباید به Entry اصلی Promote شود؛ مگر اینکه
+Option مربوطه فعال باشد.» 40. Duplicate Detection Duplicate Detection
+باید بعد از Parsing انجام شود. اشتباه است که قبل از Parsing فقط بر اساس
+متن خام Duplicate حذف شود. 41. Canonical Key برای هر Source یک:
+canonicalKey ساخته شود. " El Científico " تبدیل شود به: اما Accent نباید
+حذف شود. 42. Accent مهم است این دو را نباید یکسان فرض کرد: sí él Accent
+در اسپانیایی می‌تواند معنی را تغییر دهد. 43. Duplicate Types سیستم حداقل
+این حالات را داشته باشد: EXACT_DUPLICATE
+SAME_SOURCE_DIFFERENT_TRANSLATION POSSIBLE_DUPLICATE RELATED_FORM 44.
+Exact Duplicate در دو Import وجود داشته باشد. نتیجه: 45. Same Source /
+Different Translation cura کشیش درمان نباید یکی حذف شود. same source
+different meanings و هر دو Translation باید نگهداری شوند. 46. Duplicate
+Policy سیستم نباید خودسرانه اطلاعات را حذف کند. Import Mode: ADD_NEW
+SKIP_DUPLICATE MERGE UPDATE پیشنهاد Default: 47. Merge اگر Entry جدید
+همان Source را داشته باشد: Existing: el cura → کشیش New: → درمان
+Translations: - کشیش - درمان 48. Stable ID Duplicate یا Merge نباید ID
+قبلی را خراب کند. برای Refresh آینده بسیار مهم است. هر Vocabulary باید:
+id داشته باشد. 49. Relationship System ارتباط‌ها: USED_IN INFLECTED_FORM
+SYNONYM ANTONYM CONTRAST EXAMPLE_OF RELATED_TO 50. مثال Relationship اگر
+متن: اما اگر "ir" هنوز در Database نیست، رابطه می‌تواند به‌صورت Pending
+ذخیره شود. 51. Typo Handling Parser نباید متن را اصلاح کند. مثلاً اگر
+ورودی: lo melhor باشد، باید همان را ذخیره کند. نه: lo mejor 52. Possible
+Correction در صورت نیاز: possibleCorrection = "lo mejor" ذخیره شود.
+sourceText = "lo melhor" باید بدون تغییر باقی بماند. 53. Confidence هر
+Entry باید Confidence داشته باشد: 0 - 100 95 = بسیار مطمئن 80 = مطمئن 65
+= قابل قبول 50 = مشکوک \<50 = نیازمند بررسی 54. Evidence برای Debugging
+بهتر است دلیل Confidence ذخیره شود: evidence: - numbered -
+spanishDetected - adjacentPersianTranslation - translationMarker -
+noteMarkerAbsent این اطلاعات برای توسعه آینده بسیار ارزشمند است. 55.
+Validation قبل از Insert: sourceText != empty translationText != empty
+sourceLanguage != UNKNOWN باید بررسی شود. 56. Orphan Detection وجود دارد
+ولی Translation پیدا نشد: ORPHAN_SOURCE و نباید بدون اجازه حذف شود. 57.
+Orphan Persian فارسی وجود دارد ولی Source پیدا نشد: ORPHAN_TRANSLATION و
+برای Review/Manual Import نگهداری شود. 58. Import Warning هر مشکل باید
+در Import Log ثبت شود: warningType lineNumber rawText message confidence
+Line 37: Possible orphan source 59. مدل پیشنهادی Vocabulary data class
+VocabularyEntry( val id: Long, val sourceText: String, val canonicalKey:
+String, val translationText: String, val sourceLanguage: String, val
+targetLanguage: String, val entryType: EntryType, val confidence: Int,
+val notes: String?, val grammarNotes: String?, val isDuplicate: Boolean,
+val duplicateOf: Long?, val originalImportText: String 60. Variant data
+class VocabularyVariant( val vocabularyId: Long, val translationText:
+String?, val variantType: VariantType MASCULINE FEMININE ALTERNATIVE 61.
+Breakdown data class VocabularyBreakdown( val sourcePart: String, val
+translationPart: String, val orderIndex: Int 62. Notes data class
+VocabularyNote( val noteType: NoteType, val content: String 63.
+Relationship data class VocabularyRelation( val fromVocabularyId: Long,
+val toVocabularyId: Long?, val relationType: RelationType, val
+unresolvedText: String?, val confidence: Int 64. Import Log data class
+ImportIssue( val importId: Long, val lineNumber: Int, val rawText:
+String, val issueType: IssueType, val message: String, 65. الگوریتم اصلی
+Pseudocode: function parse(text): normalized = normalize(text) lines =
+splitIntoLines(normalized) classifiedLines = \[\] for line in lines:
+language = detectLanguage(line) type = classifyLine(line, language)
+classifiedLines.add(line, language, type) entries = \[\] currentEntry =
+null for line in classifiedLines: if isNewEntry(line, currentEntry):
+finalize(currentEntry) currentEntry = createEntryCandidate(line) else if
+isTranslation(line, currentEntry): attachTranslation(currentEntry, line)
+else if isBreakdown(line, currentEntry): attachBreakdown(currentEntry,
+line) else if isNote(line): attachNote(currentEntry, line) else if
+isGrammarNote(line): attachGrammarNote(currentEntry, line) else:
+attachToCurrentContext(line) validate(entries) detectDuplicates(entries)
+detectRelations(entries) return entries 66. ترتیب اولویت Rules در صورت
+Conflict، اولویت: 1. Explicit Entry Marker 2. Numbered Entry 3. Strong
+Entry Pattern 4. Translation Relationship 5. Note Marker 6. Breakdown
+Pattern 7. Context 8. Language Score 9. Generic fallback 67. Marker
+Dictionary Dictionary باید قابل تغییر باشد. نکته نکته گرامری توضیحات
+توجه احتمال اشتباه مقایسه مشتق شده هم‌خانواده ترکیب ترکیب بخش‌ها واژه‌های
+جدید کلمات جدید مثال معنی در آینده: nota gramática explicación derivado
+sinónimo antónimo ejemplo 68. Marker نباید Hardcoded شود بهتر است:
+ParserMarkers داشته باشیم. تا بعداً بدون تغییر Core Parser بتوان
+Dictionary را توسعه داد. 69. Configuration ParserConfig( sourceLanguage
+= "es", targetLanguage = "fa", promoteBreakdownToEntry = false,
+preserveOriginalText = true, detectDuplicates = true, duplicateMode =
+MERGE, confidenceThreshold = 70, allowUnnumberedEntries = true 70. اصل
+مهم: Preserve Original سیستم باید دو نسخه داشته باشد: originalImportText
+normalizedText Original: 24. el científico !!! Normalized: el científico
+!!! اطلاعات اصلی هرگز نباید از بین برود. 71. Test Case 1 Input: 1. el
+científico; la científica Output: la científica translation: type: 72.
+Test Case 2 cuenta conmigo روی من حساب کن اگر هر دو دارای ساختار مستقل
+Entry باشند: Entry 1: Entry 2: و در صورت وجود Evidence مناسب: 73. Test
+Case 3 Main Entry: Translation: Breakdown: 1. estoy seguro de que →
+مطمئنم که 2. todo → همه‌چیز 3. irá bien → خوب پیش خواهد رفت 74. Test Case
+4 source = la esperanza 75. Test Case 5 el análisis تحلیل این واژه در
+این ساختار استفاده شده است. source = el análisis translation = تحلیل
+grammarNote = 76. Test Case 6 اگر قبل از آن Main Entry وجود داشته باشد:
+نه Entry مستقل. 77. Test Case 7 3 Entries بدون ایجاد Entry برای: 25 26
+27 28 30... 78. Test Case 8 79. Test Case 9 نمی‌توانی برای درست کردن املت
+تخم‌مرغ‌ها را نشکنی tortilla قبلاً در شماره ۱۸ ترجمه شد. Note: 80. Test
+Case 10 ترجمه... sourceText = lo melhor possibleCorrection = lo mejor و
+هرگز: sourceText = lo mejor نشود. 81. Duplicate Test و رکورد دوم بدون
+بررسی حذف نشود؛ بلکه Import Policy تصمیم بگیرد. 82. Duplicate با
+Translation متفاوت هر دو معنی باید باقی بمانند. 83. مواردی که Parser
+نباید انجام دهد Parser نباید: ترجمه را حدس قطعی بزند غلط املایی را
+خودکار اصلاح کند واژه داخل Note را Entry کند شماره‌های گمشده را ایجاد کند
+Duplicate را بدون Policy حذف کند Accent اسپانیایی را حذف کند Parentheses
+را کورکورانه حذف کند Breakdown را Entry مستقل کند 84. Performance چون
+برنامه Offline است، Parser باید روی گوشی اجرا شود. هدف: O(n) برای تعداد
+خطوط. Duplicate Search باید با: و Index دیتابیس انجام شود. 85. Database
+Index روی این فیلد Index ایجاد شود: sourceLanguage targetLanguage ترکیب
+پیشنهادی: (sourceLanguage, targetLanguage, canonicalKey) 86. Import
+Pipeline در نهایت: Input Normalize Classify Parse Validate Merge / Add /
+Skip Save Import Report 87. Import Report بعد از Import باید نتیجه قابل
+نمایش باشد: Total Lines: 150 Entries Detected: 42 New Entries: 35
+Duplicates: 5 Merged: 3 Warnings: 2 Unresolved: 1 88. Manual Review اگر
+Confidence پایین باشد: confidence \< 50 Entry مستقیماً وارد Vocabulary
+اصلی نشود و در: Needs Review قرار گیرد. 89. سه سطح Import Auto
+confidence \>= 80 → ورود مستقیم Review 50 \<= confidence \< 80 → ورود
+همراه با هشدار یا Review Reject/Unresolved → نیازمند بررسی دستی 90. نکته
+بسیار مهم درباره Refresh این Parser باید از سیستم Refresh آینده
+FlashLearn جدا ولی سازگار باشد. برای هر Vocabulary: نباید با Refresh
+تغییر کند. بنابراین اگر نسخه جدید برنامه اطلاعات واژه را اصلاح کرد:
+Existing ID Refresh Update metadata / translation / notes / rules نه
+اینکه رکورد قدیمی حذف و رکورد جدید ساخته شود. 91. ارتباط Import با
+Refresh Import: Text → Vocabulary Refresh: New App Data Compare
+canonicalKey Find Existing Vocabulary Apply Versioned Changes
+«"canonicalKey" یکی از کلیدی‌ترین فیلدهای کل معماری FlashLearn است.» 92.
+اصل نهایی سیستم Parser نباید تلاش کند متن را «زیبا» یا «اصلاح» کند.
+وظیفه آن: Detect Separate Relate Preserve یعنی: «اطلاعات را از متن
+استخراج کن، نه اینکه اطلاعات جدیدی از خودت بساز.» 93. اولویت پیاده‌سازی
+P0 --- ضروری Entry Boundary Note Detection Room DB Output P1 --- مهم
+Confidence Evidence Gender Variants Entry Type Relationships Manual
+Review P2 --- بعداً Possible Correction Inflection Detection Word Family
+Synonym Detection Antonym Detection Advanced Grammar Detection 94. نتیجه
+معماری معماری نهایی: ┌─────────────────────┐ │ RAW IMPORT │
+└──────────┬──────────┘ │ NORMALIZATION │ │ LANGUAGE DETECTOR │ │ LINE
+CLASSIFIER │ │ ENTRY STATE MACHINE│ ┌────────────────┼────────────────┐
+↓ ↓ ↓ Translation Breakdown Notes │ │ │
+└────────────────┼────────────────┘ │ ENTRY VALIDATOR │ │ DUPLICATE
+ENGINE │ │ RELATIONSHIP ENGINE │ │ ROOM DB │ └─────────────────────┘ 95.
+اصل Frozen برای نسخه 1.0 برای جلوگیری از تغییرات پراکنده در آینده، این
+قواعد باید به‌عنوان Contract نسخه 1.0 در نظر گرفته شوند: 1. Parser کاملاً
+Offline است. 2. هیچ AI یا API خارجی در Parsing وجود ندارد. 3. شماره‌گذاری
+فقط Signal است. 4. Gap در شماره‌ها معتبر است. 5. Breakdown به‌صورت پیش‌فرض
+Entry نیست. 6. Note و Grammar Note Entry نیستند. 7. متن اصلی هرگز خودکار
+اصلاح نمی‌شود. 8. Accent اسپانیایی حفظ می‌شود. 9. Parentheses بدون تحلیل
+حذف نمی‌شوند. 10. Duplicate بدون Policy حذف نمی‌شود. 11. ID رکوردهای موجود
+نباید هنگام Merge/Refresh تغییر کند. 12. "canonicalKey" برای تشخیص رکورد
+پایدار استفاده می‌شود. 13. Confidence و Warning برای موارد مبهم ثبت
+می‌شوند. 14. اطلاعات استخراج‌شده باید قابل ردیابی به متن اصلی باشند. 15.
+Parser نباید اطلاعاتی را که در متن وجود ندارد، به‌عنوان حقیقت تولید کند.
+
+## 32.845 Learning Transition
+
+پایان Specification نسخهٔ مستندشده Learning Transition Algorithm Version:
+مستندشده 1. هدف این الگوریتم فقط نتیجه Transition مسیر یادگیری را از روی
+Stage فعلی، نتیجه پاسخ و زمان ثبت پاسخ تعیین می‌کند. الگوریتم Pure و
+Deterministic است و مستقیماً Database را تغییر نمی‌دهد. 2. مراحل یادگیری
+DAILY WEEKLY MONTHLY LEARNED 3. ورودی‌ها currentStage : ReviewStage
+isCorrect : Boolean currentTime : Timestamp currentMonthlyWrongCount :
+Int currentHasPathFailure : Boolean 4. خروجی TransitionResult { newStage
+: ReviewStage, nextReviewAt : Timestamp \| null, hasPathFailure :
+Boolean, monthlyWrongCount : Int } 5. قوانین قطعی LEARNED → LEARNED و
+nextReviewAt=null؛ پاسخ در LEARNED آن را به چرخه عادی برنمی‌گرداند.
+DAILY + Correct → WEEKLY و currentTime + 7 days. WEEKLY + Correct →
+MONTHLY و currentTime + 30 days. MONTHLY + Correct → LEARNED و
+nextReviewAt=null. DAILY + Wrong → DAILY و
+startOfNextCalendarDay(currentTime). WEEKLY + Wrong → DAILY و
+startOfNextCalendarDay(currentTime) و hasPathFailure=true. MONTHLY +
+Wrong → DAILY و startOfNextCalendarDay(currentTime) و
+hasPathFailure=true و monthlyWrongCount=currentMonthlyWrongCount+1.
+monthlyWrongCount در همه حالت‌های دیگر بدون تغییر باقی می‌ماند و هرگز
+Reset نمی‌شود. hasPathFailure اگر قبلاً true باشد در انتقال موفق دوباره
+false نمی‌شود. 6. Pseudocode نهایی FUNCTION
+LearningTransition(currentStage, isCorrect, currentTime,
+currentMonthlyWrongCount, currentHasPathFailure): IF currentStage ==
+LEARNED: RETURN TransitionResult(LEARNED, null, currentHasPathFailure,
+currentMonthlyWrongCount) IF isCorrect == true: IF currentStage ==
+DAILY: RETURN TransitionResult(WEEKLY, currentTime + 7 days,
+currentHasPathFailure, currentMonthlyWrongCount) IF currentStage ==
+WEEKLY: RETURN TransitionResult(MONTHLY, currentTime + 30 days,
+currentHasPathFailure, currentMonthlyWrongCount) IF currentStage ==
+MONTHLY: RETURN TransitionResult(DAILY,
+startOfNextCalendarDay(currentTime), currentHasPathFailure,
+currentMonthlyWrongCount) RETURN TransitionResult(DAILY,
+startOfNextCalendarDay(currentTime), true, currentMonthlyWrongCount)
+RETURN TransitionResult(DAILY, startOfNextCalendarDay(currentTime),
+true, currentMonthlyWrongCount + 1) 7. مرزبندی با Difficulty Learning
+Transition مالک Stage، nextReviewAt، hasPathFailure و monthlyWrongCount
+است. DifficultyState توسط Difficulty Calculation Algorithm به‌روزرسانی
+می‌شود. قواعد اجباری Difficulty برای شکست WEEKLY/MONTHLY در قرارداد
+Difficulty/SubmitReviewAnswer اعمال می‌شوند و نباید دو Update همزمان روی
+DifficultyState انجام شود. End of Algorithm
+
+## 32.896 Review Scheduling و Card Selection
+
+# الگوریتم کامل Review Scheduling / Card Selection
+
+REVIEW SCHEDULING / CARD SELECTION ALGORITHM نام الگوریتم:
+SelectReviewQueue نسخه: Final انتخاب تمام Conceptهایی که در زمان شروع
+Session واجد شرایط مرور هستند، اعمال فیلترهای انتخابی کاربر، و تولید یک
+لیست مرتب‌شده برای Review Session. این الگوریتم فقط کارت‌ها را انتخاب
+می‌کند و هیچ تغییری در وضعیت یادگیری، Difficulty یا زمان Review ایجاد
+نمی‌کند. 1. ورودی‌ها reviewType : Enum مقادیر مجاز: reviewType مشخص می‌کند
+کاربر کدام نوع کارت را می‌خواهد مرور کند. این مقدار از انتخاب کاربر در
+Home Screen دریافت می‌شود.
+------------------------------------------------------------ filters :
+Object تمام فیلترها اختیاری هستند. filters.difficulty : Difficulty?
+filters.category : CategoryId? filters.tag : TagId? filters.languagePair
+: LanguagePairId? مقادیر Difficulty: EASY MEDIUM HARD VERY_HARD اگر یک
+فیلتر NULL باشد، آن فیلتر اعمال نمی‌شود. now : Timestamp زمان دقیق شروع
+درخواست Review Session. تمام مقایسه‌های زمانی این الگوریتم بر اساس همین
+مقدار انجام می‌شوند. الگوریتم نباید در وسط اجرای خود چند بار زمان سیستم
+را بخواند. now در ابتدای اجرای الگوریتم تعیین شده و تا پایان همان اجرا
+ثابت می‌ماند. 2. خروجی orderedConceptList : List`<Concept>`{=html} لیست
+Conceptهای واجد شرایط برای Review. ویژگی‌های خروجی: - می‌تواند خالی
+باشد. - فقط Conceptهای واجد شرایط را شامل می‌شود. - هیچ Concept تکراری
+نباید در خروجی وجود داشته باشد. - ترتیب خروجی بر اساس reviewType تعیین
+می‌شود. اگر هیچ کارت واجد شرایطی وجود نداشته باشد: return \[\] نمایش
+پیام‌هایی مانند: "چیزی برای مرور نیست" جزء این الگوریتم نیست و توسط UI
+انجام می‌شود. 3. پیش‌شرط‌های داده برای هر LearningState باید یک Concept
+مرتبط وجود داشته باشد. هر Concept باید اطلاعات موردنیاز فیلترها را در
+اختیار داشته باشد: concept.id concept.categoryId ConceptTag relation
+(Concept ↔ Tag) concept.languagePairId LearningState باید حداقل شامل
+اطلاعات زیر باشد: stage nextReviewAt و وضعیت Difficulty مربوط به
+Concept/یادگیری باید قابل دسترسی باشد. اگر یک LearningState فاقد Concept
+مرتبط معتبر باشد، نباید باعث Crash شدن الگوریتم شود. آن رکورد باید از
+Candidate Set کنار گذاشته شود. 4. مرحله اول --- ایجاد Candidate Set 4.1.
+DAILY reviewType == DAILY آنگاه تمام LearningStateهایی انتخاب می‌شوند که:
+stage == DAILY nextReviewAt IS NOT NULL nextReviewAt \<= now candidates
+= LearningState WHERE stage == DAILY AND nextReviewAt IS NOT NULL AND
+nextReviewAt \<= now 4.2. WEEKLY reviewType == WEEKLY آنگاه: WHERE stage
+== WEEKLY 4.3. MONTHLY reviewType == MONTHLY WHERE stage == MONTHLY 4.4.
+LEARNED reviewType == LEARNED WHERE stage == LEARNED در حالت LEARNED:
+کاملاً نادیده گرفته می‌شود. یعنی حتی اگر: nextReviewAt == NULL باشد، کارت
+LEARNED همچنان واجد شرایط است. همچنین اگر: دارای هر مقدار دیگری باشد، در
+انتخاب LEARNED هیچ تأثیری ندارد. 5. مرحله دوم --- اتصال LearningState به
+Concept برای هر LearningState موجود در candidates: Concept مرتبط با آن
+پیدا می‌شود. ساختار منطقی هر Candidate: Candidate { learningState concept
+اگر Concept مرتبط پیدا نشود: آن Candidate حذف می‌شود. در این مرحله هیچ
+داده‌ای تغییر نمی‌کند. 6. مرحله سوم --- اعمال فیلترها تمام فیلترهای فعال
+با منطق AND اعمال می‌شوند. یعنی یک کارت فقط زمانی باقی می‌ماند که تمام
+فیلترهای انتخاب‌شده را پاس کند. 6.1. فیلتر Difficulty filters.difficulty
+!= NULL candidate.difficultyState.current == filters.difficulty
+filters.difficulty == NULL هیچ محدودیتی بابت Difficulty اعمال نمی‌شود.
+6.2. فیلتر Category filters.category != NULL
+candidate.concept.categoryId == filters.category اگر NULL باشد: تمام
+Categoryها مجاز هستند. 6.3. فیلتر Tag filters.tag != NULL CONTAINS
+filters.tag یعنی اگر Concept دارای Tag انتخاب‌شده باشد، Candidate واجد
+شرایط است. اگر Concept چند Tag داشته باشد، وجود حداقل یک Tag مطابق کافی
+است. filters.tag == NULL هیچ محدودیتی بابت Tag اعمال نمی‌شود. 6.4. فیلتر
+Language Pair filters.languagePair != NULL
+candidate.concept.languagePairId == filters.languagePair تمام Language
+Pairها مجاز هستند. 7. شرط نهایی واجد شرایط بودن برای DAILY / WEEKLY /
+MONTHLY: یک Candidate فقط در صورتی وارد خروجی می‌شود که: stage ==
+reviewType AND difficulty filter را پاس کند category filter را پاس کند
+tag filter را پاس کند languagePair filter را پاس کند برای LEARNED: stage
+== LEARNED در LEARNED: جزء شروط انتخاب نیست. 8. مرحله چهارم --- حذف
+موارد تکراری هر Concept فقط یک بار باید در خروجی وجود داشته باشد. اگر به
+هر دلیل بیش از یک LearningState به یک Concept اشاره کند: Concept باید
+فقط یک بار در orderedConceptList قرار گیرد. در حالت عادی Data Model باید
+رابطه مشخصی بین Concept و LearningState داشته باشد تا چنین تکراری ایجاد
+نشود. این قانون برای جلوگیری از نمایش یک کارت به‌صورت تکراری در یک
+Session است. 9. مرحله پنجم --- مرتب‌سازی 9.1. DAILY برای: مرتب‌سازی:
+nextReviewAt ASC سپس در صورت برابر بودن: concept.id ASC قدیمی‌ترین کارت
+ابتدا. 9.2. WEEKLY سپس: 9.3. MONTHLY بنابراین در هر سه حالت: PRIMARY
+KEY: SECONDARY KEY: اگر یک کارت مدت بیشتری از زمان تعیین‌شده Review آن
+گذشته باشد، قبل از کارت‌هایی قرار می‌گیرد که دیرکرد کمتری دارند. 10.
+مرتب‌سازی LEARNED candidates.shuffle() ترتیب کارت‌های LEARNED تصادفی است.
+برای مرتب‌سازی نیز استفاده نمی‌شود. برای تعیین ترتیب LEARNED استفاده
+نمی‌شود. هدف این است که ترتیب نمایش کارت‌های Learned قابل پیش‌بینی و ثابت
+نباشد. 11. مرحله ششم --- تبدیل Candidate به Concept List پس از پایان
+فیلتر و مرتب‌سازی: orderedConceptList = candidates.map { candidate -\>
+candidate.concept خروجی فقط شامل: Concept LearningState و
+DifficultyState در خروجی این الگوریتم بازگردانده نمی‌شوند، مگر اینکه
+معماری داخلی برنامه برای اجرای Session به آن‌ها نیاز داشته باشد. 12.
+خروجی خالی اگر پس از Candidate Selection و Filtering هیچ کارت باقی
+نماند: این حالت خطا محسوب نمی‌شود. DAILY انتخاب شده است. هیچ کارت DAILY
+وجود ندارد که: \[\] UI می‌تواند بر اساس خروجی خالی پیام مناسب نمایش دهد.
+13. رفتار در برابر nextReviewAt کارت واجد شرایط نیست. nextReviewAt \<
+now کارت واجد شرایط است. nextReviewAt == now nextReviewAt \> now کارت
+هنوز واجد شرایط نیست. تمام موارد بالا نادیده گرفته می‌شوند. 14. رفتار
+Read-Only SelectReviewQueue نباید هیچ‌یک از موارد زیر را تغییر دهد:
+difficulty consecutiveCorrect consecutiveWrong DifficultyState
+statistics این الگوریتم فقط عملیات Read / Query / Filter / Sort انجام
+می‌دهد. 15. عدم تغییر وضعیت کارت انتخاب یک کارت برای Review به معنی شروع
+Review واقعی یا ثبت پاسخ کاربر نیست. بنابراین صرفاً قرار گرفتن کارت در:
+orderedConceptList هیچ تغییری در Stage یا Difficulty ایجاد نمی‌کند. تغییر
+وضعیت فقط پس از پاسخ کاربر و از طریق الگوریتم‌های مربوطه انجام می‌شود. 16.
+استقلال از Learning Transition SelectReviewQueue مسئول تعیین Stage نیست.
+این الگوریتم فقط Stage فعلی را می‌خواند. تعیین می‌کند که کارت در چه Stage
+قرار دارد و nextReviewAt چه زمانی باشد. بر اساس همان وضعیت موجود کارت را
+انتخاب می‌کند. هیچ‌کدام جایگزین دیگری نیستند. 17. استقلال از Difficulty
+Calculation SelectReviewQueue Difficulty را محاسبه نمی‌کند. Difficulty
+قبلاً توسط: Difficulty Calculation Algorithm محاسبه و ذخیره شده است.
+SelectReviewQueue فقط در صورت فعال بودن: filters.difficulty از
+Difficulty فعلی به‌عنوان فیلتر استفاده می‌کند. 18. استقلال از UI این
+الگوریتم نباید درباره موارد زیر تصمیم بگیرد: نمایش پیام نمایش Empty
+State نمایش Loading نمایش Error تعداد کارت قابل نمایش در UI طراحی صفحه
+دکمه‌ها انیمیشن Progress Bar وظیفه الگوریتم فقط: SELECT FILTER SORT
+RETURN 19. Pseudocode نهایی FUNCTION SelectReviewQueue( reviewType,
+filters, ): IF reviewType == DAILY OR reviewType == WEEKLY OR reviewType
+== MONTHLY: SELECT LearningState WHERE ELSE IF reviewType == LEARNED:
+ELSE: RETURN \[\]
+-------------------------------------------------------- -- اتصال به
+Concept candidates JOIN Concept حذف Candidateهایی که Concept معتبر
+ندارند. -- اعمال فیلترها candidates.filter { LEGACY / SUPERSEDED:
+Difficulty must be read from candidate.difficultyState.current per final
+Data Model contract. filters.category == NULL OR
+candidate.concept.categoryId LEGACY / SUPERSEDED: Tag filtering must use
+the ConceptTag relation per final Data Model contract.
+filters.languagePair == NULL OR candidate.concept.languagePairId -- حذف
+Duplicate Concept .distinctBy { candidate.concept.id } -- مرتب‌سازی
+candidates.sortedWith( nextReviewAt ASC, -- تبدیل به خروجی
+candidates.map { RETURN orderedConceptList END FUNCTION 20. مثال ---
+DAILY فرض کنیم now برابر است با: 10 September 2026 - 12:00 سه کارت
+داریم: Card A stage = DAILY nextReviewAt = 08:00 Card B nextReviewAt =
+11:00 Card C nextReviewAt = 15:00 Card C هنوز زمان Review آن نرسیده است.
+21. مثال --- فیلترها فرض: reviewType = WEEKLY filters.difficulty = HARD
+filters.category = Animals filters.tag = Important filters.languagePair
+= Spanish-Persian فقط کارت‌هایی انتخاب می‌شوند که: stage == WEEKLY
+difficulty == HARD category == Animals tag شامل Important languagePair
+== Spanish-Persian اگر حتی یکی از این شروط برقرار نباشد، کارت حذف می‌شود.
+22. مثال --- LEARNED reviewType = LEARNED کارت‌های زیر: Card A: stage =
+LEARNED nextReviewAt = NULL Card B: nextReviewAt = 2027-01-01 Card C:
+nextReviewAt = 2026-01-01 هر سه کارت واجد شرایط هستند. زیرا در LEARNED
+فقط: بررسی می‌شود. سپس ترتیب آن‌ها: shuffle() می‌شود. 23. مثال --- نتیجه
+خالی اگر کاربر انتخاب کند: ولی هیچ کارت MONTHLY با: وجود نداشته باشد:
+orderedConceptList = \[\] الگوریتم بدون خطا: و UI تصمیم می‌گیرد پیام
+مناسب نمایش دهد. 24. ویژگی‌های نهایی الگوریتم این الگوریتم: READ-ONLY
+مستقل از Stage Transition مستقل از Difficulty Calculation مستقل از UI
+مستقل از Quiz Generation مستقل از Statistics مستقل از Backup/Restore
+مستقل از Import/Parsing مسئولیت آن فقط این است: دریافت Review Type پیدا
+کردن Candidateها بررسی زمان Review اتصال به Concept اعمال Filterها حذف
+Duplicateها Sort / Shuffle بازگرداندن Concept List 25. اصل کلیدی
+SelectReviewQueue هیچ تصمیمی درباره اینکه: «کارت بعد از پاسخ چه وضعیتی
+پیدا کند» نمی‌گیرد. فقط تصمیم می‌گیرد: «در این لحظه، با این Review Type و
+این Filterها، کدام کارت‌ها باید برای Review در اختیار Session قرار
+بگیرند؟» وضعیت نهایی
+
+## 32.1260 Concept Resolution و Duplicate Handling
+
+این نسخه، نسخه کامل الگوریتم Review Scheduling / Card Selection است و
+می‌تواند به‌عنوان بخش ۷.۱ در Master Specification قرار بگیرد. نام:
+ResolveConceptForParsedEntry ورودی: parsedPieces : List`<Piece>`{=html}
+هر Piece شامل: { languageCode, text parsedPieces خروجی Parser برای یک خط
+/ یک ورودی است و می‌تواند شامل ۲ یا چند Piece باشد؛ source + translation
+یا source + چند translation خروجی یکی از سه حالت: ReuseConcept(
+conceptId, newContentsToInsert: List`<Piece>`{=html} CreateNewConcept(
+allContentsToInsert: List`<Piece>`{=html} Conflict( matchedConceptIds:
+Set`<Long>`{=html}, pieces: List`<Piece>`{=html} تابع کمکی:
+normalize(text): return text.trim().lowercase()
+──────────────────────────────────── مرحله ۱ --- پیدا کردن Match برای هر
+Piece برای هر piece در parsedPieces: normalizedText =
+normalize(piece.text) matchedConceptIdsForPiece = SELECT DISTINCT
+conceptId FROM Content languageCode == piece.languageCode AND
+normalize(text) == normalizedText piece.matchedConceptIds =
+matchedConceptIdsForPiece مرحله ۲ --- تعیین وضعیت کلی ورودی matchedIds =
+مجموعه یکتای تمام conceptIdهایی که در matchedConceptIdsForPieceهای همه
+Pieceها وجود دارند اگر matchedIds.size \> 1: return Conflict(
+matchedConceptIds = matchedIds, pieces = parsedPieces // یعنی Pieceهای
+این ورودی به بیش از یک Concept // موجود متصل شده‌اند. // // سیستم نباید
+به‌صورت خودکار Conceptها را Merge کند. // تصمیم نهایی باید توسط کاربر
+انجام شود. اگر matchedIds.size == 0: return CreateNewConcept(
+allContentsToInsert = parsedPieces // هیچ‌یک از Pieceها قبلاً در دیتابیس
+وجود ندارد. // بنابراین یک Concept کاملاً جدید ساخته می‌شود. اگر
+matchedIds.size == 1: conceptId = matchedIds.single() مرحله ۲.۱ ---
+تشخیص Contentهای جدید newPieces = parsedPieces.filter { piece -\> NOT
+EXISTS Content conceptId == conceptId AND languageCode ==
+piece.languageCode AND normalize(text) == normalize(piece.text) return
+ReuseConcept( conceptId = conceptId, newContentsToInsert = newPieces
+مرحله ۳ --- اجرای نتیجه توسط لایه بالاتر اگر نتیجه CreateNewConcept
+باشد: 1. یک Concept جدید ایجاد شود. 2. تمام allContentsToInsert به‌عنوان
+Content زیر Concept جدید درج شوند. اگر نتیجه ReuseConcept باشد: 1.
+Concept موجود حفظ شود. 2. فقط newContentsToInsert به‌عنوان Content جدید
+زیر همان conceptId درج شوند. 3. اگر newContentsToInsert خالی باشد: هیچ
+کاری انجام نشود. // یعنی کل ورودی دقیقاً از قبل وجود داشته است. اگر نتیجه
+Conflict باشد: 1. هیچ Concept یا Content جدیدی ایجاد نشود. 2. هیچ
+Content موجودی تغییر نکند. 3. Conflict به کاربر نمایش داده شود. 4.
+matchedConceptIds به کاربر ارائه شود. 5. کاربر یکی از گزینه‌های زیر را
+انتخاب کند: - انتخاب یکی از Conceptهای موجود - لغو ورود 6. در صورت
+انتخاب Concept توسط کاربر، لایه بالاتر می‌تواند Pieceهای جدید را زیر
+Concept انتخاب‌شده درج کند.
+
+## 32.1348 Backup و Restore
+
+7.  این الگوریتم خودش Conceptها را Merge نمی‌کند. الگوریتم نهایی: Backup
+    & Restore --- بخش ۹ بخش الف: Backup نام: "CreateBackup" backupType :
+    Enum { VOCABULARY, PROGRESS, FULL خروجی: ExportData شامل:
+    schemaVersion exportedAt داده‌های جداول مربوطه جداول Vocabulary:
+    Languages Categories Tags LanguagePairs Concepts Contents جداول
+    Progress: Settings ReviewSessions ReviewHistory LearningStates
+    DifficultyStates Achievements الگوریتم: اگر backupType ==
+    VOCABULARY: فقط جداول Vocabulary را Export کن اگر backupType ==
+    PROGRESS: جداول Progress را Export کن علاوه بر آن: ConceptUUIDهای
+    مورد استفاده توسط را به عنوان ConceptReferences ذخیره کن // خود
+    Conceptها و Contentها در این نوع Backup // ذخیره نمی‌شوند. اگر
+    backupType == FULL: تمام جداول Vocabulary
+
+-   تمام جداول Progress را Export کن return ExportData( داده‌های
+    انتخاب‌شده، schemaVersion فعلی، exportedAt = زمان فعلی اصل شناسه‌ها:
+    در Backup، تمام موجودیت‌هایی که بین دیتابیس‌ها منتقل می‌شوند باید دارای
+    UUID پایدار باشند. UUID = شناسه پایدار بین Backup و Restore Database
+    ID = شناسه داخلی همان دیتابیس Database ID نباید مبنای ارتباط بین
+    Backup و دیتابیس مقصد قرار گیرد. بخش ب: Restore "RestoreBackup" data
+    : ExportData Success(newCount, mergedCount) \| AbortedByUser
+    Error(message) مرحله ۱ --- اعتبارسنجی Backup قبل از هرگونه تغییر در
+    دیتابیس: ValidateBackup(data) موارد زیر بررسی شوند:
+
+1.  data وجود داشته باشد.
+2.  schemaVersion معتبر و قابل پشتیبانی باشد.
+3.  ساختار ExportData کامل و قابل خواندن باشد.
+4.  UUID موجودیت‌های هر جدول معتبر باشند.
+5.  UUIDهای تکراری داخل یک Backup شناسایی شوند.
+6.  ارجاع‌های ضروری بین موجودیت‌ها معتبر باشند.
+7.  داده‌های اجباری فاقد مقدار نامعتبر باشند.
+8.  backupType و مجموعه جداول موجود با ساختار Backup سازگار باشند. اگر
+    Validation شکست خورد: return Error(message) و هیچ تغییری در دیتابیس
+    انجام نشود. مرحله ۲ --- Backup ایمنی خودکار از وضعیت فعلی
+    autoBackupResult = تلاش برای CreateBackup(FULL) و ذخیره آن در محل
+    امن اگر Backup ایمنی موفق شد: ادامه بده اگر Backup ایمنی شکست خورد:
+    به کاربر هشدار بده: "Backup ایمنی گرفته نشد، مطمئنی می‌خواهی ادامه
+    بدهی؟" اگر کاربر لغو کرد: return AbortedByUser اگر کاربر ادامه داد:
+    Restore را بدون Backup ایمنی ادامه بده مرحله ۳ --- اجرای کل Restore
+    داخل یک Transaction واحد db.withTransaction { newCount = 0
+    mergedCount = 0 conceptIdMap = Map\<ConceptUUID,
+    DatabaseConceptID\>() languageIdMap = Map\<LanguageUUID,
+    DatabaseLanguageID\>() categoryIdMap = Map\<CategoryUUID,
+    DatabaseCategoryID\>() tagIdMap = Map\<TagUUID, DatabaseTagID\>()
+    languagePairIdMap = Map\<LanguagePairUUID,
+    DatabaseLanguagePairID\>() reviewSessionIdMap =
+    Map\<ReviewSessionUUID, DatabaseReviewSessionID\>() مرحله ۳.۱ ---
+    Restore Languages برای هر Language در Backup: existing =
+    languageRepo.findByUuid(language.uuid) اگر موجود بود:
+    languageRepo.update( language با id = existing.id
+    languageIdMap\[language.uuid\] = existing.id mergedCount++ اگر موجود
+    نبود: newId = languageRepo.insert(language)
+    languageIdMap\[language.uuid\] = newId newCount++ مرحله ۳.۲ ---
+    Restore Categories برای هر Category:
+    categoryRepo.findByUuid(category.uuid) categoryRepo.update( category
+    با id = existing.id categoryIdMap\[category.uuid\] = existing.id در
+    غیر این صورت: categoryRepo.insert(category)
+    categoryIdMap\[category.uuid\] = newId مرحله ۳.۳ --- Restore Tags
+    برای هر Tag: tagRepo.findByUuid(tag.uuid) tagRepo.update( tag با id
+    = existing.id tagIdMap\[tag.uuid\] = existing.id tagRepo.insert(tag)
+    tagIdMap\[tag.uuid\] = newId مرحله ۳.۴ --- Restore LanguagePairs
+    برای هر LanguagePair: ابتدا UUID زبان‌های مبدأ و مقصد از طریق:
+    languageIdMap به ID واقعی دیتابیس مقصد تبدیل شوند.
+    languagePairRepo.findByUuid(languagePair.uuid)
+    languagePairRepo.update( languagePair با id = existing.id و language
+    IDهای واقعی مقصد languagePairIdMap\[languagePair.uuid\] =
+    existing.id languagePairRepo.insert( با language IDهای واقعی مقصد
+    languagePairIdMap\[languagePair.uuid\] = newId اگر Language موردنیاز
+    پیدا نشد: Restore را متوقف کن Exception پرتاب کن مرحله ۳.۵ ---
+    Restore Concepts برای هر Concept:
+    conceptRepo.findByUuid(concept.uuid) conceptRepo.update(
+    conceptIdMap\[concept.uuid\] = existing.id
+    conceptRepo.insert(concept) conceptIdMap\[concept.uuid\] = newId در
+    صورت وجود وابستگی به جداول مرجع، شناسه‌های آن‌ها باید از Mapهای مربوطه
+    به ID واقعی دیتابیس مقصد تبدیل شوند. مرحله ۳.۶ --- Restore Contents
+    برای هر Content: conceptId = conceptIdMap\[content.conceptUuid\] اگر
+    Concept متناظر پیدا نشد: skip existingByUuid =
+    contentRepo.findByUuid(content.uuid) اگر Content با همان UUID وجود
+    داشت: contentRepo.update(content, با id = existingByUuid.id و
+    conceptId = conceptId) // canonicalKey هم‌زمان از Content.text نهایی
+    بازمحاسبه می‌شود اگر UUID موجود نبود: existing =
+    contentRepo.find(conceptId, content.languageCode) اگر existing وجود
+    داشت: اگر existing.text == content.text: وگرنه:
+    contentRepo.update(content, با id = existing.id و conceptId =
+    conceptId) اگر existing وجود نداشت: contentRepo.insert(content, با
+    conceptId = conceptId) اصل نهایی Duplicate در Restore Content:
+9.  ابتدا UUID بررسی می‌شود.
+10. اگر UUID یافت نشد، رکورد داخل همان Concept فقط با (conceptId +
+    languageCode) جست‌وجو می‌شود.
+11. اگر رکورد موجود و متن یکسان باشد، Skip.
+12. اگر رکورد موجود و متن متفاوت باشد، Update همان رکورد.
+13. اگر رکورد موجود نباشد، Insert.
+14. canonicalKey فقط از Content.text نهایی محاسبه می‌شود و معیار Restore
+    Merge نیست. بنابراین Restore یک Backup تکراری نباید Contentهای یکسان
+    را دوباره ایجاد کند. مرحله ۳.۷ --- Restore ReviewSessions برای هر
+    ReviewSession: reviewSessionRepo.findByUuid(session.uuid)
+    reviewSessionRepo.update( session reviewSessionIdMap\[session.uuid\]
+    = existing.id reviewSessionRepo.insert(session)
+    reviewSessionIdMap\[session.uuid\] = newId مرحله ۳.۸ --- Restore
+    ReviewHistory برای هر History: ابتدا: conceptId =
+    conceptIdMap\[history.conceptUuid\] sessionId =
+    reviewSessionIdMap\[history.sessionUuid\] اگر هرکدام پیدا نشد:
+    reviewHistoryRepo.findByUuid(history.uuid) reviewHistoryRepo.update(
+    history و conceptId = conceptId و sessionId = sessionId
+    reviewHistoryRepo.insert( با conceptId = conceptId اصل:
+    "ReviewHistory" هرگز نباید صرفاً با "insert" بدون بررسی UUID Restore
+    شود. این کار از ایجاد Historyهای تکراری در Restoreهای چندباره
+    جلوگیری می‌کند. مرحله ۳.۹ --- Restore LearningStates برای هر
+    LearningState: conceptIdMap\[state.conceptUuid\] اگر Concept پیدا
+    نشد: learningStateRepo.findByConcept(conceptId)
+    learningStateRepo.update( state learningStateRepo.insert( هر Concept
+    فقط باید یک LearningState فعال داشته باشد. اگر رکورد (conceptId,
+    tagId) وجود نداشت، درج می‌شود؛ اگر وجود داشت، بدون ایجاد Duplicate
+    نادیده گرفته می‌شود (Idempotent Insert). برای هر ConceptTag در
+    Backup، conceptId و tagId متناظر از conceptIdMap و tagIdMap گرفته
+    می‌شود. مرحله ۳.۱۱ --- Restore ConceptTags اصل: هر Concept فقط باید
+    یک DifficultyState فعال داشته باشد.
+    difficultyStateRepo.insert(state, conceptId = conceptId)
+    difficultyStateRepo.update(state, id = existing.id, conceptId =
+    conceptId) existing = difficultyStateRepo.findByConcept(conceptId)
+    conceptId = conceptIdMap\[state.conceptUuid\] برای هر
+    DifficultyState: مرحله ۳.۱۰ --- Restore DifficultyStates مرحله ۳.۱۲
+    --- Restore Settings برای هر Setting:
+    settingsRepo.findByKey(setting.key) settingsRepo.update(setting)
+    settingsRepo.insert(setting) Settings بر اساس "key" شناخته می‌شوند و
+    نباید با Database ID فایل Backup Merge شوند. مرحله ۳.۱۳ --- Restore
+    Achievements برای هر Achievement:
+    achievementRepo.findByType(achievement.type) achievementRepo.update(
+    achievement achievementRepo.insert(achievement) مرحله ۴ --- Commit
+    اگر تمام مراحل Transaction بدون Exception اجرا شدند: Transaction
+    Commit return Success( newCount, mergedCount مرحله ۵ --- Rollback در
+    صورت خطا اگر در هر مرحله داخل Transaction Exception رخ دهد:
+    withTransaction کل تغییرات را Rollback می‌کند دیتابیس مقصد = وضعیت
+    دقیقاً قبل از شروع Restore اگر مرحله Backup ایمنی موفق بوده باشد:
+    Backup ایمنی معتبر از وضعیت قبل از Restore در اختیار کاربر باقی
+    می‌ماند. قوانین قطعی الگوریتم قانون ۱ --- UUID ID = شناسه داخلی
+    دیتابیس هیچ رابطه‌ای نباید صرفاً بر اساس Database ID موجود در Backup
+    Restore شود. قانون ۲ --- Mapping برای موجودیت‌هایی که ID داخلی دارند،
+    Restore باید Map زیر را ایجاد و استفاده کند: UUID → Database ID
+    واقعی مقصد به‌خصوص برای: قانون ۳ --- Transaction تمام تغییرات Restore
+    در یک Transaction واحد انجام می‌شوند. هیچ بخشی از Restore نباید خارج
+    از Transaction تغییر دائمی در دیتابیس ایجاد کند. قانون ۴ ---
+    Duplicate Restore چندباره یک Backup نباید باعث ایجاد رکوردهای تکراری
+    شود. برای Content، معیار Merge نهایی همان قرارداد بخش M است: ابتدا
+    UUID؛ در نبود UUID، (conceptId + languageCode). canonicalKey برای
+    Matching/Import استفاده می‌شود و معیار Restore Merge نیست. تغییر
+    Content.text در رکورد موجود باید با Update همان رکورد انجام شود.
+    قانون ۵ --- Progress Backup "PROGRESS" شامل خود Vocabulary نیست.
+    برای حفظ ارتباط Progress با Vocabulary، UUID مربوط به Conceptهای
+    مورد استفاده به‌عنوان "ConceptReferences" ذخیره می‌شوند. PROGRESS
+    Backup برای Restore نیازمند وجود Conceptهای متناظر در دیتابیس مقصد
+    است. اگر Concept موردنیاز وجود نداشته باشد، رکورد وابسته‌ای که بدون
+    آن قابل Restore نیست: قانون ۶ --- Safety Backup قبل از Restore همیشه
+    تلاش می‌شود: FULL Backup از وضعیت فعلی گرفته و ذخیره شود. اگر این
+    Backup ناموفق باشد، ادامه Restore فقط با تأیید صریح کاربر مجاز است.
+    قانون ۷ --- Validation Backup نامعتبر قبل از شروع Transaction رد
+    می‌شود و هیچ تغییری در دیتابیس ایجاد نمی‌کند. قانون ۸ --- Atomicity
+    نتیجه Restore فقط یکی از این دو حالت است: همه تغییرات موفق → Commit
+    حداقل یک خطا → Rollback کامل
+
+## 32.1640 Statistics و Streak و Achievement
+
+هیچ حالت نیمه‌Restore مجاز نیست. === الگوریتم نهایی: Statistics
+Calculation --- بخش ۱۱ === ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ۱۱.۱ ---
+آمار پایه نام: GetBasicStatistics totalActiveWords practicedWords
+unpracticedWords learnedWords تعریف: totalActiveWords = COUNT(\*) FROM
+concept WHERE active = true practicedWords = COUNT(DISTINCT
+review_history.conceptId) FROM review_history JOIN concept ON concept.id
+= review_history.conceptId WHERE concept.active = true unpracticedWords
+= MAX(0, totalActiveWords - practicedWords) learnedWords = FROM
+learning_state ON concept.id = learning_state.conceptId WHERE
+learning_state.stage = 'LEARNED' AND concept.active = true تمام آمار
+اصلی این بخش بر اساس Conceptهای Active محاسبه می‌شوند. داده‌های مربوط به
+Conceptهای غیرفعال در آمار جاری کاربر محاسبه نمی‌شوند. ۱۱.۲ --- درصد
+پیشرفت نام: CalculateProgressPercentage لیست همه Conceptهای Active اگر
+لیست خالی باشد: return 0 totalScore = 0 برای هر concept: state =
+learningState متناظر با concept.id score = بر اساس state?.stage: → 100 →
+80 → 60 → 35 اگر state وجود ندارد یا Stage دیگری دارد: اگر تعداد
+ReviewHistoryهای این Concept \> 0: → 15 → 0 totalScore += score return:
+totalScore / تعداد کل Conceptهای Active نوع مقدار: می‌تواند اعشاری
+نگهداری شود. نحوه گرد کردن فقط در لایه نمایش تعیین می‌شود. ۱۱.۳ ---
+Streak نام: CalculateStreak reviewDays = مجموعه یکتای روزهای تقویمی محلی
+که در آن‌ها حداقل یک ReviewHistory ثبت شده است. Timestamp هر
+ReviewHistory باید با Device Local Timezone به LocalDate تبدیل شود. سپس
+reviewDays به ترتیب نزولی (جدیدترین روز اول) مرتب می‌شود. اگر reviewDays
+خالی باشد: today = روز تقویمی فعلی در Device Local Timezone
+mostRecentDay = reviewDays\[0\] mostRecentDay != today mostRecentDay !=
+(today - 1 روز) // قانون ملایم: // اگر امروز هنوز Review ثبت نشده ولی
+دیروز Review داشته، // Streak دیروز همچنان معتبر است. streak = 1 برای i
+از 1 تا آخر reviewDays: reviewDays\[i\] == reviewDays\[i-1\] - 1 روز
+streak += 1 توقف حلقه return streak ۱۱.۴ --- Achievements Dependency
+جدید در DifficultyState: hasReachedVeryHard : Boolean = false این فیلد
+یک Historical Flag است. هرگاه Difficulty یک Concept به VERY_HARD برسد:
+hasReachedVeryHard = true اگر Difficulty بعداً از VERY_HARD پایین‌تر آمد:
+hasReachedVeryHard همچنان true باقی می‌ماند. این مقدار هرگز به false
+برنمی‌گردد، مگر در حذف/Reset صریح داده توسط سیستم یا کاربر طبق قوانین
+مربوط به Reset. CheckAndUnlockAchievements این تابع می‌تواند: - بعد از هر
+پاسخ Review - یا هنگام باز شدن صفحه Statistics اجرا شود. newlyUnlocked :
+List`<Achievement>`{=html} فقط Achievementهایی که در همین اجرای تابع
+برای اولین بار Unlock شده‌اند. مقداردهی: newlyUnlocked = \[\]
+Achievementها: 1. FIRST_TEN_WORDS شرط: practicedWords \>= 10 2.
+SEVEN_DAY_STREAK streak \>= 7 3. THIRTY_DAY_STREAK streak \>= 30 4.
+MEMORY_BUILDER learnedWords \>= 100 5. VOCABULARY_BUILDER
+totalActiveWords \>= 500 6. HARD_MODE_MASTER COUNT(
+difficultyState.hasReachedVeryHard == true learningState.stage ==
+'LEARNED' concept.active == true ) \>= 25 7. LONG_TERM_MEMORY
+COUNT(DISTINCT conceptId) reviewStage == 'MONTHLY' isCorrect == true AND
+concept.active == true \>= 50 منطق Unlock: alreadyUnlocked =
+achievementRepository .findByType(type) ?.isUnlocked ?: false اگر
+alreadyUnlocked == true: رد شو در غیر این صورت اگر شرط Achievement
+برقرار است: achievement = Achievement( type = type, ..., isUnlocked =
+true, unlockedAt = now achievementRepository.upsert(achievement)
+newlyUnlocked.add(achievement) هیچ کاری انجام نده return newlyUnlocked
+قانون UI: UI فقط newlyUnlocked را برای: - Animation - Notification -
+Achievement Popup استفاده می‌کند. Achievementهایی که قبلاً Unlock شده‌اند
+
+## 32.1793 Difficulty Calculation
+
+نباید مجدداً به‌عنوان Achievement جدید نمایش داده شوند. Scope: محاسبه و
+به‌روزرسانی Difficulty بر اساس نتیجه مرور Dependency: "AppSetting →
+threshold_difficulty" AI Dependency: None Execution Mode: Offline /
+Deterministic این الگوریتم مسئول محاسبه و به‌روزرسانی سطح سختی
+("Difficulty") یک Concept بر اساس نتایج متوالی مرورهای کاربر است.
+Difficulty از Learning Stage مستقل است. سطوح Difficulty: این الگوریتم
+فقط Difficulty را محاسبه می‌کند و مسئول تعیین موارد زیر نیست: Learning
+Stage Review Interval Review Scheduling 2. ورودی‌ها
+currentDifficultyState : DifficultyState( current, consecutiveCorrect,
+hasReachedVeryHard isCorrect : Boolean threshold : Integer 2.1 current
+سطح فعلی Difficulty: 2.2 consecutiveCorrect تعداد پاسخ‌های صحیح متوالی که
+از آخرین تغییر Difficulty یا آخرین پاسخ غلط ثبت شده‌اند. 2.3
+consecutiveWrong تعداد پاسخ‌های غلط متوالی که از آخرین تغییر Difficulty
+یا آخرین پاسخ صحیح ثبت شده‌اند. 2.4 isCorrect نتیجه پاسخ فعلی: true =
+پاسخ صحیح false = پاسخ غلط 2.5 threshold تعداد پاسخ‌های متوالی لازم برای
+تغییر یک‌پله‌ای Difficulty. مقدار از: AppSetting → threshold_difficulty
+دریافت می‌شود. مقدار پیش‌فرض: 3 شرط اعتبار: threshold \>= 1 اعتبارسنجی
+"threshold_difficulty" باید در لایه Settings انجام شود. این الگوریتم
+باید فقط مقدار معتبر دریافت کند و مسئول Validation تنظیمات نیست. 3.
+خروجی newDifficultyState : 4. قوانین پایه قانون 1 --- پاسخ صحیح با
+دریافت پاسخ صحیح: consecutiveCorrect += 1 consecutiveWrong = 0 قانون 2
+--- پاسخ غلط با دریافت پاسخ غلط: consecutiveWrong += 1
+consecutiveCorrect = 0 قانون 3 --- رسیدن به Threshold وقتی یکی از
+شمارنده‌ها به "threshold" برسد: Difficulty فقط یک پله تغییر می‌کند. قانون
+4 --- Reset پس از اعمال تغییر Difficulty: قانون 5 --- عدم رسیدن به
+Threshold اگر شمارنده هنوز به "threshold" نرسیده باشد: Difficulty بدون
+تغییر باقی می‌ماند. 5. منطق پاسخ صحیح newConsecutiveCorrect =
+currentDifficultyState.consecutiveCorrect + 1 newConsecutiveWrong = 0 IF
+newConsecutiveCorrect \>= threshold: newLevel = OneStepEasier(current)
+newConsecutiveCorrect = 0 newLevel = current 6. منطق پاسخ غلط isCorrect
+== false newConsecutiveWrong = currentDifficultyState.consecutiveWrong +
+1 IF newConsecutiveWrong \>= threshold: OneStepHarder(current) 7. تابع
+OneStepEasier FUNCTION OneStepEasier(current): SWITCH current:
+VERY_HARD: RETURN HARD HARD: RETURN MEDIUM MEDIUM: RETURN EASY EASY:
+VERY_HARD → HARD HARD → MEDIUM MEDIUM → EASY EASY → EASY Difficulty هرگز
+پایین‌تر از "EASY" نمی‌رود. 8. تابع OneStepHarder FUNCTION
+OneStepHarder(current): RETURN VERY_HARD EASY → MEDIUM MEDIUM → HARD
+HARD → VERY_HARD VERY_HARD → VERY_HARD Difficulty هرگز بالاتر از
+"VERY_HARD" نمی‌رود. 9. شبه‌کد کامل FUNCTION CalculateDifficulty(
+currentDifficultyState, isCorrect, currentMonthlyWrongCount, threshold
+current = currentDifficultyState.current consecutiveCorrect =
+currentDifficultyState.consecutiveCorrect consecutiveWrong =
+currentDifficultyState.consecutiveWrong hasReachedVeryHard =
+currentDifficultyState.hasReachedVeryHard // --- Forced Updates (اولویت
+بالاتر از شمارنده متوالی) --- IF reviewType == WEEKLY AND isCorrect ==
+false: newLevel = max(current, MEDIUM) ELSE IF reviewType == MONTHLY AND
+isCorrect == false: IF currentMonthlyWrongCount == 0: newLevel = HARD
+newLevel = VERY_HARD newConsecutiveCorrect = consecutiveCorrect + 1
+newLevel = OneStepEasier(current) consecutiveCorrect =
+newConsecutiveCorrect newConsecutiveWrong = consecutiveWrong + 1
+newLevel = OneStepHarder(current) consecutiveWrong = newConsecutiveWrong
+// --- hasReachedVeryHard (monotonic) --- IF newLevel == VERY_HARD:
+RETURN DifficultyState( current = newLevel, consecutiveCorrect =
+consecutiveCorrect, consecutiveWrong = consecutiveWrong,
+hasReachedVeryHard = hasReachedVeryHard 10. مثال‌های رفتاری مثال 1 --- سه
+پاسخ صحیح Initial: Difficulty = MEDIUM Correct = 0 Wrong = 0 threshold =
+3 Review 1 → Correct Correct = 1 Review 2 → Correct Correct = 2 Review 3
+→ Correct Difficulty = EASY مثال 2 --- سه پاسخ غلط Review 1 → Wrong
+Wrong = 1 Review 2 → Wrong Wrong = 2 Review 3 → Wrong Difficulty = HARD
+مثال 3 --- شکستن زنجیره صحیح Correct Wrong Difficulty = unchanged دو
+پاسخ صحیح قبلی دیگر برای رسیدن به Threshold محسوب نمی‌شوند. مثال 4 ---
+شکستن زنجیره غلط مثال 5 --- رسیدن به سقف Difficulty = VERY_HARD سطح
+بالاتر از "VERY_HARD" وجود ندارد. مثال 6 --- رسیدن به کف سطح پایین‌تر از
+"EASY" وجود ندارد. 11. استقلال از Learning Stage Difficulty Calculation
+مستقل از: این الگوریتم Stage را تغییر نمی‌دهد. همچنین مستقیماً
+"nextReviewAt" یا فاصله مرور بعدی را محاسبه نمی‌کند. 12. قرارداد با
+Learning Transition این بخش قرارداد بین دو الگوریتم است و جزو منطق داخلی
+Difficulty Calculation محسوب نمی‌شود. 12.1 مرور عادی اگر مرور از نوع:
+باشد و هیچ Exception از طرف Transition وجود نداشته باشد: Learning
+Transition Difficulty Calculation می‌تواند نتیجه پاسخ را پردازش کند. 12.2
+LEARNED اگر Concept در Stage زیر باشد: Difficulty Calculation اجرا
+نمی‌شود. Concept در این وضعیت دیگر در چرخه معمول Review قرار ندارد. 12.3
+Weekly/Monthly Exception این Exception بخشی از قرارداد Review Response
+است و فقط یک مسیر باید DifficultyState را برای همان پاسخ تغییر دهد.
+WEEKLY + Wrong → Difficulty حداقل MEDIUM می‌شود؛ اگر current=EASY باشد به
+MEDIUM می‌رود و اگر current از MEDIUM بالاتر باشد حفظ می‌شود. هر دو
+consecutive counter صفر می‌شوند. MONTHLY + Wrong → پس از افزایش
+monthlyWrongCount، اگر مقدار جدید 1 باشد Difficulty=HARD و اگر مقدار
+جدید \>=2 باشد Difficulty=VERY_HARD. هر دو consecutive counter صفر
+می‌شوند. اگر Difficulty به VERY_HARD برسد، hasReachedVeryHard=true می‌شود
+و در کاهش‌های بعدی false نمی‌شود. این Exception جایگزین اجرای عادی
+threshold برای همان Review Event است و هر دو مسیر نباید همزمان اجرا
+شوند. 13. قانون جلوگیری از Double Update در یک Review Event، Difficulty
+نباید توسط دو مسیر مختلف تغییر کند. Normal Review Weekly/Monthly
+Exception Learning Transition Direct Update اما هر دو مسیر نباید همزمان
+اجرا شوند. 14. Initialization Contract مقدار اولیه "DifficultyState"
+هنگام ایجاد یک Concept جدید، جزء این الگوریتم نیست. این مقدار باید در
+Data Model / Concept Creation Specification تعریف شود. قرارداد پیشنهادی:
+current = EASY, consecutiveCorrect = 0, Initialization ≠ Difficulty
+Calculation الگوریتم Difficulty فقط یک "DifficultyState" موجود را دریافت
+کرده و State جدید را محاسبه می‌کند. 15. Deterministic بودن این الگوریتم
+باید کاملاً Deterministic باشد. برای ورودی‌های یکسان:
+currentDifficultyState isCorrect خروجی همیشه باید یکسان باشد. نباید به
+موارد زیر وابسته باشد: Randomness AI Internet Server Current Time
+External API 16. Offline بودن تمام محاسبات روی دستگاه قابل انجام است.
+نیازی به: Cloud وجود ندارد. 17. Invariants پس از اجرای الگوریتم، شرایط
+زیر باید همیشه برقرار باشند: 1. current ∈ {EASY, MEDIUM, HARD,
+VERY_HARD} 2. consecutiveCorrect \>= 0 3. consecutiveWrong \>= 0 4.
+consecutiveCorrect و consecutiveWrong نمی‌توانند همزمان بزرگ‌تر از صفر
+باشند. 5. اگر Difficulty تغییر کند: 6. Difficulty در هر اجرای الگوریتم
+حداکثر یک پله تغییر می‌کند. 7. Difficulty هرگز از EASY پایین‌تر یا از
+VERY_HARD بالاتر نمی‌رود. 18. خلاصه نهایی رفتار CORRECT │ ▼
+consecutiveCorrect + 1 آیا به threshold رسید؟ │ │ خیر بله ▼ ▼ بدون تغییر
+یک پله آسان‌تر هر دو Counter = 0 WRONG consecutiveWrong + 1 بدون تغییر یک
+پله سخت‌تر 19. وضعیت نهایی Algorithm: Version: 1.1 Status: FROZEN
+Responsibility: Calculate and update Difficulty only Stages handled:
+None Default threshold: Difficulty levels: AI: Network: Deterministic:
+Yes
+
+## 32.2055 Refresh و Data Migration
+
+Offline: ۷.X --- Refresh / Data Migration Algorithm RefreshDataUseCase
+اعمال تغییرات نسخه‌های جدید برنامه روی داده‌های قدیمی موجود در دیتابیس،
+بدون نیاز به حذف یا ورود مجدد داده‌ها.
+================================================== 1. ثابت‌های سراسری
+CURRENT_CONCEPT_VERSION : Int آخرین نسخه معتبر Concept در نسخه فعلی
+برنامه. CURRENT_CONTENT_VERSION : Int آخرین نسخه معتبر Content در نسخه
+فعلی برنامه. conceptMigrations : Ordered List لیست ترتیبی Migrationهای
+مربوط به Concept: \[ migrateConceptToVersion1, migrateConceptToVersion2,
+migrateConceptToVersion3,\] contentMigrations : Ordered List لیست ترتیبی
+Migrationهای مربوط به Content: migrateContentToVersion1,
+migrateContentToVersion2, migrateContentToVersion3, 2. قرارداد
+Migrationها هر Concept Migration فقط یک نسخه را ارتقا می‌دهد:
+migrateConceptToVersionN( conceptVersionNMinus1 -\> conceptVersionN هر
+Content Migration فقط یک نسخه را ارتقا می‌دهد: migrateContentToVersionN(
+contentVersionNMinus1 contentVersionN Concept version مستندشده
+migrateConceptToVersion2 Concept version مستندشده
+migrateConceptToVersion3 Concept version مستندشده قانون: Migration نسخه
+N فقط باید روی رکورد نسخه N-1 قابل اعمال باشد. تمام Migrationها باید: -
+Idempotent باشند. - فقط داده مربوط به نوع خود را تغییر دهند. - Migration
+مربوط به Concept، Content را تغییر ندهد. - Migration مربوط به Content،
+Concept را تغییر ندهد. - LearningState را تغییر ندهند. - ReviewHistory
+را تغییر ندهند. 3. ورودی ندارد. UseCase روی تمام Conceptهای Active موجود
+در دیتابیس اجرا می‌شود. Success(updatedCount) حداقل یک Concept یا Content
+به‌روزرسانی شده است. updatedCount = تعداد Conceptهایی که خود Concept یا
+حداقل یکی از Contentهای متعلق به آن تغییر کرده است. NoChange هیچ Concept
+یا Contentای نیاز به Migration نداشته است. اجرای Refresh با خطا مواجه
+شده است. 5. الگوریتم اصلی updatedCount = 0 برای هر concept در تمام
+Active Concepts: -------------------------------------------------- 5.1
+--- Migration مربوط به Concept conceptChanged = false v =
+concept.dataVersion تا زمانی که: v \< CURRENT_CONCEPT_VERSION مراحل زیر
+انجام شود: nextVersion = v + 1 اگر Migration مربوط به nextVersion در
+conceptMigrations وجود نداشت: return Error( "Missing Concept Migration
+for version" + nextVersion concept =
+conceptMigrations[nextVersion](concept) v = nextVersion conceptChanged =
+true پس از پایان حلقه: اگر conceptChanged == true: concept.dataVersion =
+v ذخیره Concept در دیتابیس 5.2 --- Migration مربوط به Content
+contentChangedForConcept = false برای هر content متعلق به همین concept:
+contentChanged = false cv = content.dataVersion cv \<
+CURRENT_CONTENT_VERSION nextVersion = cv + 1 در contentMigrations وجود
+نداشت: "Missing Content Migration for version" content =
+contentMigrations[nextVersion](content) cv = nextVersion contentChanged
+= true اگر contentChanged == true: content.dataVersion = cv ذخیره
+Content در دیتابیس contentChangedForConcept = true 5.3 --- شمارش
+conceptChanged == true OR contentChangedForConcept == true updatedCount
+= updatedCount + 1 6. پایان الگوریتم updatedCount \> 0 return
+Success(updatedCount) return NoChange 7. مدیریت خطا اگر هر Migration در
+هنگام اجرا با خطا مواجه شود: اگر Migration موردنیاز برای نسخه بعدی وجود
+نداشته باشد: اگر ذخیره Concept یا Content در دیتابیس با خطا مواجه شود:
+Refresh نباید در صورت وجود خطا، نتیجه Success یا NoChange برگرداند. 8.
+قوانین Transaction اجرای Refresh باید به‌صورت Transaction انجام شود. شروع
+Transaction اجرای تمام Migrationهای موردنیاز و ذخیره تغییرات اگر همه
+عملیات موفق بودند: Commit اگر هر مرحله‌ای با خطا مواجه شد: Rollback
+جلوگیری از باقی ماندن دیتابیس در وضعیت نیمه‌به‌روزشده. 9. محدوده داده‌های
+قابل تغییر این الگوریتم فقط موارد زیر را تغییر می‌دهد: Content این
+الگوریتم به‌صورت مستقیم یا غیرمستقیم نباید تغییر دهد: مگر اینکه در نسخه
+آینده یک Migration مستقل و صریح برای آن‌ها به Master Specification اضافه
+شود. 10. Idempotency هر Migration باید به‌صورت مستقل Idempotent باشد.
+همچنین شرط: dataVersion \< CURRENT_VERSION باعث می‌شود رکوردی که قبلاً به
+آخرین نسخه رسیده است، در اجرای بعدی دوباره Migration نشود.
+CURRENT_CONCEPT_VERSION = 4 Concept Version = 1 اجرای Refresh: 1 → 2 2 →
+3 3 → 4 اجرای مجدد Refresh: 4 \< 4 → false هیچ Migrationای اجرا نمی‌شود.
+11. استقلال Concept و Content نسخه Concept تعیین‌کننده نسخه Content نیست.
+Concept.dataVersion = 4 Content.dataVersion = 2 CURRENT_CONTENT_VERSION
+= 5 در این حالت: Concept: هیچ Migrationای ندارد. Content: 4 → 5 این دو
+فرآیند مستقل از یکدیگر هستند. ۷.X --- Refresh / Data Migration Algorithm
+این دو فرآیند مستقل از یکدیگر هستند. 12. جداسازی از Room Schema
+Migration Room Schema Migration و RefreshDataUseCase دو فرآیند کاملاً
+مستقل هستند. ترتیب اجرای آن‌ها: 1. اجرای Room Schema Migration 2. آماده
+شدن ساختار دیتابیس 3. اجرای RefreshDataUseCase 4. آماده شدن داده‌های
+قدیمی برای نسخه فعلی برنامه 5. اجرای عادی برنامه Room Schema Migration:
+مسئول تغییر ساختار دیتابیس است. - اضافه کردن ستون - حذف ستون - تغییر
+ساختار جدول - تغییر Index - تغییر Constraint RefreshDataUseCase: مسئول
+تغییر داده‌های موجود داخل رکوردهاست. RefreshDataUseCase نباید ساختار جدول
+را تغییر دهد. 13. رفتار دکمه Refresh هر زمان کاربر Refresh را اجرا کند:
+Room Schema Migration قبلاً توسط Room انجام شده است. روی تمام Active
+Concepts اجرا می‌شود. اگر داده‌ای نیاز به Migration داشته باشد: اگر هیچ
+داده‌ای نیاز به Migration نداشته باشد: اگر مشکلی رخ دهد: 14. اصل نهایی
+RefreshDataUseCase برای این طراحی شده است که: نسخه جدید برنامه بتواند
+داده‌های قدیمی موجود در دیتابیس را بدون حذف اطلاعات کاربر، مرحله‌به‌مرحله
+به ساختار و محتوای مورد انتظار نسخه فعلی ارتقا دهد.
+
+## 32.2247 Implementation-ready Algorithm Contracts
+
+هر نسخه جدید برنامه فقط Migrationهای جدید خود را اضافه می‌کند. مثال:
+Status: IMPLEMENTATION-READY (v4 --- Canonical, referenced by Algorithms
+v4) Source: Descriptions v4 + Algorithms v4 + Code نسخهٔ مستندشده +
+Corrections 2026-09-10 Date: 2026-09-10 (v4 revision) 1. Enums &
+Supporting Types package com.flashlearn.domain.model enum class Stage {
+DAILY, WEEKLY, MONTHLY, LEARNED } enum class VocabularyDifficulty {
+EASY, MEDIUM, HARD, VERY_HARD } enum class ReviewType { DAILY, WEEKLY,
+MONTHLY, LEARNED, // voluntary only RANDOM // Due DAILY+WEEKLY+MONTHLY
+only (shuffle) } data class TransitionResult( val newStage: Stage, val
+nextReviewAt: java.time.Instant?, val hasPathFailure: Boolean, val
+monthlyWrongCount: Int ) 2. Learning Transition Algorithm (Pure &
+Deterministic) Rules (from Algorithms §5 + Corrections): - DAILY +
+Correct → WEEKLY, nextReviewAt = now + 7 days - DAILY + Wrong → DAILY,
+nextReviewAt = start of next calendar day - WEEKLY + Correct → MONTHLY,
+nextReviewAt = now + 30 days - WEEKLY + Wrong → DAILY, nextReviewAt =
+start of next calendar day, hasPathFailure = true - MONTHLY + Correct →
+LEARNED, nextReviewAt = null - MONTHLY + Wrong → DAILY, nextReviewAt =
+start of next calendar day, hasPathFailure = true, monthlyWrongCount +
+1 - LEARNED → stays LEARNED, nextReviewAt = null (no change to
+flags/counters) - monthlyWrongCount is cumulative and never reset by a
+successful transition - hasPathFailure is never reset by normal review
+package com.flashlearn.domain.algorithm import
+com.flashlearn.domain.model.\* import java.time.Instant import
+java.time.ZoneId import java.time.temporal.ChronoUnit /\*\* \* Pure
+function. Does NOT touch the database. \* All state changes are applied
+later inside SubmitReviewAnswer @Transaction. */ fun
+calculateLearningTransition( learningState: LearningState, isCorrect:
+Boolean, reviewedAt: Instant, zoneId: ZoneId = ZoneId.systemDefault() ):
+TransitionResult { val currentStage = learningState.stage val
+currentMonthlyWrong = learningState.monthlyWrongCount val
+currentHasPathFailure = learningState.hasPathFailure // LEARNED is
+terminal for normal flow if (currentStage == Stage.LEARNED) { return
+TransitionResult( newStage = Stage.LEARNED, nextReviewAt = null,
+hasPathFailure = currentHasPathFailure, monthlyWrongCount =
+currentMonthlyWrong ) } return if (isCorrect) { when (currentStage) {
+Stage.DAILY -\> TransitionResult( newStage = Stage.WEEKLY, nextReviewAt
+= reviewedAt.plus(7, ChronoUnit.DAYS), hasPathFailure =
+currentHasPathFailure, monthlyWrongCount = currentMonthlyWrong )
+Stage.WEEKLY -\> TransitionResult( newStage = Stage.MONTHLY,
+nextReviewAt = reviewedAt.plus(30, ChronoUnit.DAYS), hasPathFailure =
+currentHasPathFailure, monthlyWrongCount = currentMonthlyWrong )
+Stage.MONTHLY -\> TransitionResult( newStage = Stage.LEARNED,
+nextReviewAt = null, hasPathFailure = currentHasPathFailure,
+monthlyWrongCount = currentMonthlyWrong ) else -\> error("Unexpected
+stage: \$currentStage") } } else { when (currentStage) { Stage.DAILY -\>
+TransitionResult( newStage = Stage.DAILY, nextReviewAt =
+startOfNextCalendarDay(reviewedAt, zoneId), hasPathFailure =
+currentHasPathFailure, // DAILY wrong does NOT set path failure
+monthlyWrongCount = currentMonthlyWrong ) Stage.WEEKLY -\>
+TransitionResult( newStage = Stage.DAILY, nextReviewAt =
+startOfNextCalendarDay(reviewedAt, zoneId), hasPathFailure = true,
+monthlyWrongCount = currentMonthlyWrong ) Stage.MONTHLY -\>
+TransitionResult( newStage = Stage.DAILY, nextReviewAt =
+startOfNextCalendarDay(reviewedAt, zoneId), hasPathFailure = true,
+monthlyWrongCount = currentMonthlyWrong + 1 ) else -\> error("Unexpected
+stage: \$currentStage") } } } /** \* Returns the Instant of 00:00:00 of
+the next calendar day \* in the given ZoneId (device local timezone). */
+fun startOfNextCalendarDay(instant: Instant, zoneId: ZoneId): Instant {
+val localDate = instant.atZone(zoneId).toLocalDate() return
+localDate.plusDays(1).atStartOfDay(zoneId).toInstant() } 3. Difficulty
+Calculation Algorithm (Final Corrected) Priority order (from Algorithms
+§5 + §6 + Corrections 2026-09-10): 11. 1. Forced Updates (WEEKLY wrong /
+MONTHLY wrong) have higher priority than consecutive counters. 12. 2.
+WEEKLY + Wrong → at least MEDIUM + reset both counters. 13. 3. MONTHLY +
+Wrong → first failure (monthlyWrongCountBefore == 0) → HARD; subsequent
+→ VERY_HARD + reset counters. 14. 4. Normal path: consecutive
+correct/wrong with threshold (default 3). Opposite answer zeros the
+other counter. 15. 5. Any level change (forced or normal) resets both
+consecutiveCorrect and consecutiveWrong to 0. 16. 6. hasReachedVeryHard
+is monotonic: once true under normal review, stays true. 17. 7. Forced
+updates only apply to real WEEKLY and MONTHLY reviews (not RANDOM or
+LEARNED). package com.flashlearn.domain.algorithm import
+com.flashlearn.domain.model.* /** * Pure function. Does NOT touch the
+database. \* \* Important contract: \* - monthlyWrongCountBefore must be
+the value FROM LearningState BEFORE Transition is applied. \* - This
+allows correct detection of "first MONTHLY failure" vs "subsequent". */
+fun calculateDifficulty( state: DifficultyState, isCorrect: Boolean,
+reviewType: ReviewType, monthlyWrongCountBefore: Int, // pre-increment
+value from LearningState threshold: Int = 3 ): DifficultyState { var
+newLevel = state.current var cc = state.consecutiveCorrect var cw =
+state.consecutiveWrong var reachedVeryHard = state.hasReachedVeryHard //
+------------------------------------------------- // 1. Forced Updates
+(highest priority) // -------------------------------------------------
+when { reviewType == ReviewType.WEEKLY && !isCorrect -\> { // At least
+MEDIUM newLevel = if (state.current.ordinal \<
+VocabularyDifficulty.MEDIUM.ordinal) { VocabularyDifficulty.MEDIUM }
+else { state.current } cc = 0 cw = 0 } reviewType == ReviewType.MONTHLY
+&& !isCorrect -\> { // First failure → HARD, subsequent → VERY_HARD
+newLevel = if (monthlyWrongCountBefore == 0) { VocabularyDifficulty.HARD
+} else { VocabularyDifficulty.VERY_HARD } cc = 0 cw = 0 } else -\> { //
+------------------------------------------------- // 2. Normal
+consecutive-counter logic //
+------------------------------------------------- if (isCorrect) { cw =
+0 val newCC = cc + 1 if (newCC \>= threshold) { newLevel =
+oneStepEasier(state.current) cc = 0 cw = 0 } else { newLevel =
+state.current cc = newCC } } else { cc = 0 val newCW = cw + 1 if (newCW
+\>= threshold) { newLevel = oneStepHarder(state.current) cc = 0 cw = 0 }
+else { newLevel = state.current cw = newCW } } } } //
+------------------------------------------------- // 3. Monotonic
+hasReachedVeryHard // -------------------------------------------------
+if (newLevel == VocabularyDifficulty.VERY_HARD) { reachedVeryHard = true
+} return state.copy( current = newLevel, consecutiveCorrect = cc,
+consecutiveWrong = cw, hasReachedVeryHard = reachedVeryHard ) } private
+fun oneStepEasier(d: VocabularyDifficulty): VocabularyDifficulty = when
+(d) { VocabularyDifficulty.VERY_HARD -\> VocabularyDifficulty.HARD
+VocabularyDifficulty.HARD -\> VocabularyDifficulty.MEDIUM
+VocabularyDifficulty.MEDIUM -\> VocabularyDifficulty.EASY
+VocabularyDifficulty.EASY -\> VocabularyDifficulty.EASY } private fun
+oneStepHarder(d: VocabularyDifficulty): VocabularyDifficulty = when (d)
+{ VocabularyDifficulty.EASY -\> VocabularyDifficulty.MEDIUM
+VocabularyDifficulty.MEDIUM -\> VocabularyDifficulty.HARD
+VocabularyDifficulty.HARD -\> VocabularyDifficulty.VERY_HARD
+VocabularyDifficulty.VERY_HARD -\> VocabularyDifficulty.VERY_HARD } 4.
+Correct Call Order inside SubmitReviewAnswer This order is mandatory so
+that monthlyWrongCountBefore is the pre-increment value. // Inside
+@Transaction val learning =
+learningStateRepository.get(request.conceptId) ?: error("LearningState
+not found") val difficulty =
+difficultyStateRepository.get(request.conceptId) ?:
+error("DifficultyState not found") validateDue(learning,
+request.reviewedAt) validateAttemptUniqueness(request.sessionId,
+request.reviewAttemptId) // 1. Transition first (calculates new
+monthlyWrongCount) val transition = calculateLearningTransition(
+learningState = learning, isCorrect = request.isCorrect, reviewedAt =
+request.reviewedAt ) // 2. Difficulty second -- MUST pass the OLD
+monthlyWrongCount val newDifficulty = calculateDifficulty( state =
+difficulty, isCorrect = request.isCorrect, reviewType =
+request.reviewType, monthlyWrongCountBefore =
+learning.monthlyWrongCount, // BEFORE transition threshold = 3 ) // 3.
+Persist both + ReviewHistory atomically learningStateRepository.upsert(
+learning.copy( stage = transition.newStage, nextReviewAt =
+transition.nextReviewAt, hasPathFailure = transition.hasPathFailure,
+monthlyWrongCount = transition.monthlyWrongCount, totalCorrect = if
+(request.isCorrect) learning.totalCorrect + 1 else
+learning.totalCorrect, totalWrong = if (!request.isCorrect)
+learning.totalWrong + 1 else learning.totalWrong, lastReviewedAt =
+request.reviewedAt ) ) difficultyStateRepository.upsert(newDifficulty)
+reviewHistoryRepository.insert( ReviewHistory( sessionId =
+request.sessionId, reviewAttemptId = request.reviewAttemptId, conceptId
+= request.conceptId, reviewedAt = request.reviewedAt, isCorrect =
+request.isCorrect, reviewType = request.reviewType ) ) 5. Unit Tests
+(JUnit 5) 5.1 Learning Transition Tests package
+com.flashlearn.domain.algorithm import com.flashlearn.domain.model.*
+import org.junit.jupiter.api.Assertions.\* import
+org.junit.jupiter.api.Test import java.time.Instant import
+java.time.ZoneOffset import java.util.UUID class LearningTransitionTest
+{ private val now = Instant.parse("2026-09-10T10:00:00Z") private val
+zone = ZoneOffset.UTC private fun baseState( stage: Stage, monthlyWrong:
+Int = 0, pathFailure: Boolean = false ) = LearningState( id =
+UUID.randomUUID(), conceptId = UUID.randomUUID(), stage = stage,
+nextReviewAt = now, monthlyWrongCount = monthlyWrong, hasPathFailure =
+pathFailure, totalCorrect = 0, totalWrong = 0, lastReviewedAt = null )
+@Test fun `DAILY correct goes to WEEKLY with +7 days`() { val result =
+calculateLearningTransition(baseState(Stage.DAILY), true, now, zone)
+assertEquals(Stage.WEEKLY, result.newStage)
+assertEquals(now.plusSeconds(7 \* 86400), result.nextReviewAt)
+assertFalse(result.hasPathFailure) assertEquals(0,
+result.monthlyWrongCount) } @Test fun
+`DAILY wrong stays DAILY, next calendar day, pathFailure unchanged`() {
+val result = calculateLearningTransition(baseState(Stage.DAILY), false,
+now, zone) assertEquals(Stage.DAILY, result.newStage)
+assertEquals(startOfNextCalendarDay(now, zone), result.nextReviewAt)
+assertFalse(result.hasPathFailure) assertEquals(0,
+result.monthlyWrongCount) } @Test fun
+`WEEKLY wrong goes to DAILY + pathFailure true`() { val result =
+calculateLearningTransition(baseState(Stage.WEEKLY), false, now, zone)
+assertEquals(Stage.DAILY, result.newStage)
+assertTrue(result.hasPathFailure) assertEquals(0,
+result.monthlyWrongCount) } @Test fun
+`MONTHLY wrong increases monthlyWrongCount and sets pathFailure`() { val
+result = calculateLearningTransition(baseState(Stage.MONTHLY,
+monthlyWrong = 2), false, now, zone) assertEquals(Stage.DAILY,
+result.newStage) assertTrue(result.hasPathFailure) assertEquals(3,
+result.monthlyWrongCount) } @Test fun
+`MONTHLY correct goes to LEARNED, counters unchanged`() { val result =
+calculateLearningTransition( baseState(Stage.MONTHLY, monthlyWrong = 1,
+pathFailure = true), true, now, zone ) assertEquals(Stage.LEARNED,
+result.newStage) assertNull(result.nextReviewAt)
+assertTrue(result.hasPathFailure) assertEquals(1,
+result.monthlyWrongCount) } @Test fun
+`LEARNED stays LEARNED regardless of answer`() { val correct =
+calculateLearningTransition(baseState(Stage.LEARNED), true, now, zone)
+val wrong = calculateLearningTransition(baseState(Stage.LEARNED), false,
+now, zone) assertEquals(Stage.LEARNED, correct.newStage)
+assertEquals(Stage.LEARNED, wrong.newStage)
+assertNull(correct.nextReviewAt) assertNull(wrong.nextReviewAt) } } 5.2
+Difficulty Calculation Tests package com.flashlearn.domain.algorithm
+import com.flashlearn.domain.model.\* import
+org.junit.jupiter.api.Assertions.\* import org.junit.jupiter.api.Test
+import java.util.UUID class DifficultyCalculationTest { private fun
+state( current: VocabularyDifficulty = VocabularyDifficulty.EASY, cc:
+Int = 0, cw: Int = 0, reached: Boolean = false ) = DifficultyState( id =
+UUID.randomUUID(), conceptId = UUID.randomUUID(), current = current,
+consecutiveCorrect = cc, consecutiveWrong = cw, hasReachedVeryHard =
+reached ) // ---------- Forced Updates ---------- @Test fun
+`WEEKLY wrong forces at least MEDIUM and resets counters`() { val result
+= calculateDifficulty(state(VocabularyDifficulty.EASY), false,
+ReviewType.WEEKLY, 0) assertEquals(VocabularyDifficulty.MEDIUM,
+result.current) assertEquals(0, result.consecutiveCorrect)
+assertEquals(0, result.consecutiveWrong) } @Test fun
+`WEEKLY wrong keeps existing HARD`() { val result =
+calculateDifficulty(state(VocabularyDifficulty.HARD), false,
+ReviewType.WEEKLY, 0) assertEquals(VocabularyDifficulty.HARD,
+result.current) } @Test fun
+`MONTHLY first wrong (countBefore=0) sets HARD`() { val result =
+calculateDifficulty(state(), false, ReviewType.MONTHLY,
+monthlyWrongCountBefore = 0) assertEquals(VocabularyDifficulty.HARD,
+result.current) assertEquals(0, result.consecutiveCorrect)
+assertEquals(0, result.consecutiveWrong) } @Test fun
+`MONTHLY subsequent wrong (countBefore greater than 0) sets VERY_HARD`()
+{ val result = calculateDifficulty(state(), false, ReviewType.MONTHLY,
+monthlyWrongCountBefore = 1)
+assertEquals(VocabularyDifficulty.VERY_HARD, result.current)
+assertTrue(result.hasReachedVeryHard) } // ---------- Normal consecutive
+logic ---------- @Test fun
+`three consecutive wrongs from EASY go to MEDIUM`() { var s = state()
+repeat(2) { s = calculateDifficulty(s, false, ReviewType.DAILY, 0)
+assertEquals(VocabularyDifficulty.EASY, s.current) } s =
+calculateDifficulty(s, false, ReviewType.DAILY, 0)
+assertEquals(VocabularyDifficulty.MEDIUM, s.current) assertEquals(0,
+s.consecutiveWrong) } @Test fun
+`opposite answer zeros the previous counter`() { var s = state(cc = 2) s
+= calculateDifficulty(s, false, ReviewType.DAILY, 0) assertEquals(0,
+s.consecutiveCorrect) assertEquals(1, s.consecutiveWrong)
+assertEquals(VocabularyDifficulty.EASY, s.current) } @Test fun
+`hasReachedVeryHard is monotonic`() { var s = state(current =
+VocabularyDifficulty.HARD, cw = 2) s = calculateDifficulty(s, false,
+ReviewType.DAILY, 0) // → VERY_HARD
+assertEquals(VocabularyDifficulty.VERY_HARD, s.current)
+assertTrue(s.hasReachedVeryHard) // later become easier s =
+calculateDifficulty(s.copy(consecutiveCorrect = 2), true,
+ReviewType.DAILY, 0) assertEquals(VocabularyDifficulty.HARD, s.current)
+assertTrue(s.hasReachedVeryHard) // still true } @Test fun
+`threshold not reached keeps level and increments counter`() { val s =
+calculateDifficulty(state(cw = 1), false, ReviewType.DAILY, 0)
+assertEquals(VocabularyDifficulty.EASY, s.current) assertEquals(2,
+s.consecutiveWrong) } } 6. Recommended Next Steps 18. Copy the two pure
+functions + enums into the domain module. 19. Run the Unit Tests above
+(they should all pass). 20. Implement Repository interfaces
+(LearningStateRepository, DifficultyStateRepository, ...). 21. Implement
+SubmitReviewAnswerUseCase exactly with the call order shown in section
+4. 22. Add Integration Test that proves the @Transaction rolls back on
+any failure. This document is the authoritative implementation guide for
+Phase 2 algorithms. All rules are taken from the frozen نسخهٔ مستندشده
+triad + 2026-09-10 corrections. نسخهٔ مستندشده --- Phase 2 Algorithm
+Corrections این بخش به‌عنوان الحاقیهٔ اصلاحی نسخهٔ مستندشده اضافه شده و در
+تعارض با بخش‌های قدیمی‌تر همین سند، همین الحاقیه مرجع اجرایی است. 1)
+Threshold correction در نسخهٔ اجرایی نسخهٔ مستندشده، threshold_difficulty
+پیش‌فرض 3 است. منطق شمارندهٔ عادی بر پاسخ‌های متوالی هم‌نوع اعمال می‌شود. سه
+پاسخ صحیح متوالی در EASY باعث MEDIUM شدن نمی‌شود؛ EASY کف سختی است. سه
+پاسخ غلط متوالی در DAILY از EASY به MEDIUM می‌رود و هر دو شمارنده پس از
+تغییر Difficulty صفر می‌شوند. 2) Duplicate-attempt ordering برای
+SubmitReviewAnswer، ابتدا وجود LearningState و DifficultyState بررسی
+می‌شود؛ سپس Duplicate Detection بر اساس (sessionId, reviewAttemptId)
+انجام می‌شود؛ بعد Due Validation اجرا می‌شود. این ترتیب باعث می‌شود replay
+یک attempt قبلاً ثبت‌شده همیشه به‌صورت Duplicate شناخته شود، حتی اگر
+nextReviewAt در تلاش اول جلو رفته باشد. 3) ReviewSession schema
+ReviewSessionEntity شامل id، startedAt، endedAt و reviewType است. این
+تغییر نسبت به bootstrap نسخهٔ مستندشده باعث ارتقای Room schema از 1 به 2
+شده است. 4) Migration برای مرز schema 1→2، ستون reviewType در
+review_sessions با مقدار پیش‌فرض DAILY اضافه می‌شود و migration در
+database builder ثبت شده است. 5) Transaction CreateConcept و
+SubmitReviewAnswer همچنان باید تمام نوشتن‌های وابسته را در یک
+FlashLearnDatabase.withTransaction انجام دهند. 6) Hilt/build graph
+Dependency graph نهایی نسخهٔ مستندشده شامل Hilt plugin/dependencies و
+application bootstrap است. core به domain/data/database وابسته است؛ data
+به domain/database وابسته است؛ database به domain وابسته است. 7) Test
+corrections Instrumentation gateها از nested runBlocking حذف شده‌اند.
+Gate rollback مستقیماً DAO را برای بررسی ReviewHistory می‌خواند و Gate
+threshold سه wrong متوالی را با زمان‌های متناسب با due schedule آزمایش
+می‌کند. 8) Verification status این نسخه static-audit corrected است. در
+این محیط Gradle/Android build اجرا نشده است؛ بنابراین PASS نهایی build و
+instrumentation فقط پس از اجرای CI در GitHub قابل اعلام است. FlashLearn
+--- Phase 3: Room Database IMPLEMENTATION-READY --- pending integration
+validation Source of Truth: Descriptions v4 + Algorithms v4 + Phase 1
+v4 + Phase 2 v4. The نسخهٔ مستندشده Room document is implementation
+source material only; v4 contracts take precedence. 0. v4 Alignment -
+ConceptEntity uses entryType, not the legacy contentType name. - Domain
+repository signatures must match Phase 1 v4. - LearningState and
+DifficultyState are independent tables/models. - Active Concept without
+LearningState or DifficultyState is DATA_INTEGRITY_ERROR; never invent
+state. - Content is unique on (conceptId, languageCode).### 27.1 Learning Transition
+
+FUNCTION LearningTransition(stage, correct, now):
+
+    IF stage == LEARNED:
+        RETURN LEARNED, null
+
+    IF correct:
+        IF stage == DAILY:
+            RETURN WEEKLY, now + 7d
+        IF stage == WEEKLY:
+            RETURN MONTHLY, now + 30d
+        IF stage == MONTHLY:
+            RETURN LEARNED, null
+
+    ELSE:
+        IF stage == DAILY:
+            RETURN DAILY, startOfNextCalendarDay(now)
+        IF stage == WEEKLY:
+            RETURN DAILY, startOfNextCalendarDay(now)
+        IF stage == MONTHLY:
+            RETURN DAILY, startOfNextCalendarDay(now)
+
+Learning Transition هیچ DifficultyState یا Difficulty Counter را تغییر نمی‌دهد.
 
 ------------------------------------------------------------------------
 
