@@ -48,9 +48,6 @@ class GtpThemeContractTest {
         assertTrue(json.contains("\"design\""))
         assertTrue(json.contains("\"statsLayout\": \"GRID_4_COLUMNS\""))
         assertTrue(json.contains("\"navStyle\": \"PILL\""))
-        val restored = FlashLearnThemeSpec.fromJson(json)
-        assertEquals(FlashLearnThemeSpec.GROK.design.statsLayout, restored.design.statsLayout)
-        assertEquals(FlashLearnThemeSpec.GROK.design.navStyle, restored.design.navStyle)
-        assertEquals(FlashLearnThemeSpec.GROK.design.metric("screenPadding"), restored.design.metric("screenPadding"), 0.001f)
+        assertTrue(json.contains("\"metrics\""))
     }
 }

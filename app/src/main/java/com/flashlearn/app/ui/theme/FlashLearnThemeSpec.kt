@@ -233,26 +233,28 @@ data class FlashLearnThemeSpec(
                 while (keys.hasNext()) { val key = keys.next(); metrics[key] = m.optDouble(key, metrics[key]?.toDouble() ?: 0.0).toFloat() }
             }
             fun e(k:String, f:String)=d.optString(k,f)
-            return ThemeDesign(
-                metrics=metrics,
-                buttonStyle=runCatching{ButtonStyle.valueOf(e("buttonStyle",fallback.buttonStyle.name))}.getOrDefault(fallback.buttonStyle),
-                navStyle=runCatching{NavigationStyle.valueOf(e("navStyle",fallback.navStyle.name))}.getOrDefault(fallback.navStyle),
-                statsLayout=runCatching{StatsLayoutStrategy.valueOf(e("statsLayout",fallback.statsLayout.name))}.getOrDefault(fallback.statsLayout),
-                reviewsLayout=runCatching{ReviewsLayoutStrategy.valueOf(e("reviewsLayout",fallback.reviewsLayout.name))}.getOrDefault(fallback.reviewsLayout),
-                libraryLayout=runCatching{LibraryLayoutStrategy.valueOf(e("libraryLayout",fallback.libraryLayout.name))}.getOrDefault(fallback.libraryLayout),
-                reviewPresentation=runCatching{ReviewPresentation.valueOf(e("reviewPresentation",fallback.reviewPresentation.name))}.getOrDefault(fallback.reviewPresentation),
-                showReviewOrnaments=d.optBoolean("showReviewOrnaments",fallback.showReviewOrnaments),
-                lightOnPrimary=parseColor(d.optString("lightOnPrimary",hex(fallback.lightOnPrimary))),
-                darkOnPrimary=parseColor(d.optString("darkOnPrimary",hex(fallback.darkOnPrimary))),
-                lightSuccess=parseColor(d.optString("lightSuccess",hex(fallback.lightSuccess))),
-                darkSuccess=parseColor(d.optString("darkSuccess",hex(fallback.darkSuccess))),
-                lightWarning=parseColor(d.optString("lightWarning",hex(fallback.lightWarning))),
-                darkWarning=parseColor(d.optString("darkWarning",hex(fallback.darkWarning))),
-                lightError=parseColor(d.optString("lightError",hex(fallback.lightError))),
-                darkError=parseColor(d.optString("darkError",hex(fallback.darkError))),
-                lightInfo=parseColor(d.optString("lightInfo",hex(fallback.lightInfo))),
-                darkInfo=parseColor(d.optString("darkInfo",hex(fallback.darkInfo)))
-            )
+            return runCatching {
+                ThemeDesign(
+                    metrics=metrics,
+                    buttonStyle=runCatching{ButtonStyle.valueOf(e("buttonStyle",fallback.buttonStyle.name))}.getOrDefault(fallback.buttonStyle),
+                    navStyle=runCatching{NavigationStyle.valueOf(e("navStyle",fallback.navStyle.name))}.getOrDefault(fallback.navStyle),
+                    statsLayout=runCatching{StatsLayoutStrategy.valueOf(e("statsLayout",fallback.statsLayout.name))}.getOrDefault(fallback.statsLayout),
+                    reviewsLayout=runCatching{ReviewsLayoutStrategy.valueOf(e("reviewsLayout",fallback.reviewsLayout.name))}.getOrDefault(fallback.reviewsLayout),
+                    libraryLayout=runCatching{LibraryLayoutStrategy.valueOf(e("libraryLayout",fallback.libraryLayout.name))}.getOrDefault(fallback.libraryLayout),
+                    reviewPresentation=runCatching{ReviewPresentation.valueOf(e("reviewPresentation",fallback.reviewPresentation.name))}.getOrDefault(fallback.reviewPresentation),
+                    showReviewOrnaments=d.optBoolean("showReviewOrnaments",fallback.showReviewOrnaments),
+                    lightOnPrimary=safeColor(d.optString("lightOnPrimary",hex(fallback.lightOnPrimary)),fallback.lightOnPrimary),
+                    darkOnPrimary=safeColor(d.optString("darkOnPrimary",hex(fallback.darkOnPrimary)),fallback.darkOnPrimary),
+                    lightSuccess=safeColor(d.optString("lightSuccess",hex(fallback.lightSuccess)),fallback.lightSuccess),
+                    darkSuccess=safeColor(d.optString("darkSuccess",hex(fallback.darkSuccess)),fallback.darkSuccess),
+                    lightWarning=safeColor(d.optString("lightWarning",hex(fallback.lightWarning)),fallback.lightWarning),
+                    darkWarning=safeColor(d.optString("darkWarning",hex(fallback.darkWarning)),fallback.darkWarning),
+                    lightError=safeColor(d.optString("lightError",hex(fallback.lightError)),fallback.lightError),
+                    darkError=safeColor(d.optString("darkError",hex(fallback.darkError)),fallback.darkError),
+                    lightInfo=safeColor(d.optString("lightInfo",hex(fallback.lightInfo)),fallback.lightInfo),
+                    darkInfo=safeColor(d.optString("darkInfo",hex(fallback.darkInfo)),fallback.darkInfo)
+                )
+            }.getOrDefault(fallback)
         }
 
         fun loadCustom(context:Context):List<FlashLearnThemeSpec> =
@@ -267,6 +269,8 @@ data class FlashLearnThemeSpec(
             s.add(spec.toJson())
             p.edit().putStringSet("custom",s).apply()
         }
+
+        private fun safeColor(v:String, fallback:Long):Long = runCatching { parseColor(v) }.getOrDefault(fallback)
 
         private fun parseColor(v:String):Long{
             val x=v.removePrefix("#")
