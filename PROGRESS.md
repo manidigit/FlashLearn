@@ -1,3 +1,14 @@
+## v6.52 — Unified Review Eligibility + Same-Day Lock
+- Current application identity: 6.52 / 652; previous-version gate: 6.51 / 651.
+- Review eligibility is unified across Flashcard, Quiz, review queue, queue counts, Home due counts, and progress summary.
+- Once a concept is reviewed on a local calendar day, it is excluded from further review that day regardless of answer correctness.
+- Correct transitions: DAILY → WEEKLY → MONTHLY → LEARNED.
+- Wrong transitions: DAILY → DAILY, WEEKLY → DAILY, MONTHLY → DAILY.
+- LEARNED remains separate and is not scheduled by the normal non-learned scheduler.
+- `wasReviewedToday(...)` is centralized and reused by queue selection, queue counts, answer submission, and summary/Home eligibility.
+- Regression coverage includes same-day exclusion and local-calendar-day semantics.
+- Verification is pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.
+
 ## v6.51 — Grok Visual Reconstruction + Theme Contract
 - Current application identity: 6.51 / 651; previous-version gate: 6.50 / 650.
 - Supplied Grok screenshots are the visual source of truth for the Grok design language.
