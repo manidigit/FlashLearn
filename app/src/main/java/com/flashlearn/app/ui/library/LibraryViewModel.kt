@@ -176,7 +176,6 @@ class LibraryViewModel @Inject constructor(
                         )
                     }
                 }
- }
                 if (generation != refreshGeneration) return@launch
                 _state.value = _state.value.copy(tags = tags, categories = cats, tagCounts = prepared.tagCounts, categoryCounts = prepared.counts, categoryTotalCount = prepared.filteredBase.size, totalCount = prepared.filteredBase.size, learnedCount = prepared.learnedIds.size, learningCount = prepared.learningIds.size, newCount = prepared.newIds.size, items = items, isLoading = false)
             } catch (e: Exception) {
