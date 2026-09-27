@@ -92,18 +92,6 @@ data class FlashLearnThemeSpec(
         put("iconStyle", iconStyle); put("elevationScale", elevationScale)
         put("cornerSmall", cornerSmall); put("cornerMedium", cornerMedium); put("cornerLarge", cornerLarge)
         put("typographyScale", typographyScale); put("densityScale", densityScale); put("spacingScale", spacingScale)
-        put("design", JSONObject().apply {
-            put("buttonStyle", design.buttonStyle.name); put("navStyle", design.navStyle.name)
-            put("statsLayout", design.statsLayout.name); put("reviewsLayout", design.reviewsLayout.name)
-            put("libraryLayout", design.libraryLayout.name); put("reviewPresentation", design.reviewPresentation.name)
-            put("showReviewOrnaments", design.showReviewOrnaments)
-            put("lightOnPrimary", hex(design.lightOnPrimary)); put("darkOnPrimary", hex(design.darkOnPrimary))
-            put("lightSuccess", hex(design.lightSuccess)); put("darkSuccess", hex(design.darkSuccess))
-            put("lightWarning", hex(design.lightWarning)); put("darkWarning", hex(design.darkWarning))
-            put("lightError", hex(design.lightError)); put("darkError", hex(design.darkError))
-            put("lightInfo", hex(design.lightInfo)); put("darkInfo", hex(design.darkInfo))
-            put("metrics", JSONObject().apply { design.metrics.forEach { (k,v) -> put(k,v.toDouble()) } })
-        })
     }.toString(2)
 
     companion object {
@@ -216,45 +204,8 @@ data class FlashLearnThemeSpec(
                 j.optDouble("cornerLarge",24.0).toFloat().coerceIn(0f,56f),
                 j.optDouble("typographyScale",1.0).toFloat().coerceIn(.85f,1.25f),
                 j.optDouble("densityScale",1.0).toFloat().coerceIn(.85f,1.15f),
-                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f),
-                design = parseDesign(j, j.getString("id").take(80))
+                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f)
             )
-        }
-
-        private fun parseDesign(j: JSONObject, id: String): ThemeDesign {
-            val fallback = when (id.lowercase()) {
-                "grok" -> ThemeDesign.grok(); "claud", "claude" -> ThemeDesign.claud()
-                "spark" -> ThemeDesign.spark(); "gtp" -> ThemeDesign.gtp(); else -> ThemeDesign.default()
-            }
-            val d = j.optJSONObject("design") ?: return fallback
-            val metrics = fallback.metrics.toMutableMap()
-            d.optJSONObject("metrics")?.let { m ->
-                val keys = m.keys()
-                while (keys.hasNext()) { val key = keys.next(); metrics[key] = m.optDouble(key, metrics[key]?.toDouble() ?: 0.0).toFloat() }
-            }
-            fun e(k:String, f:String)=d.optString(k,f)
-            return runCatching {
-                ThemeDesign(
-                    metrics=metrics,
-                    buttonStyle=runCatching{ButtonStyle.valueOf(e("buttonStyle",fallback.buttonStyle.name))}.getOrDefault(fallback.buttonStyle),
-                    navStyle=runCatching{NavigationStyle.valueOf(e("navStyle",fallback.navStyle.name))}.getOrDefault(fallback.navStyle),
-                    statsLayout=runCatching{StatsLayoutStrategy.valueOf(e("statsLayout",fallback.statsLayout.name))}.getOrDefault(fallback.statsLayout),
-                    reviewsLayout=runCatching{ReviewsLayoutStrategy.valueOf(e("reviewsLayout",fallback.reviewsLayout.name))}.getOrDefault(fallback.reviewsLayout),
-                    libraryLayout=runCatching{LibraryLayoutStrategy.valueOf(e("libraryLayout",fallback.libraryLayout.name))}.getOrDefault(fallback.libraryLayout),
-                    reviewPresentation=runCatching{ReviewPresentation.valueOf(e("reviewPresentation",fallback.reviewPresentation.name))}.getOrDefault(fallback.reviewPresentation),
-                    showReviewOrnaments=d.optBoolean("showReviewOrnaments",fallback.showReviewOrnaments),
-                    lightOnPrimary=safeColor(d.optString("lightOnPrimary",hex(fallback.lightOnPrimary)),fallback.lightOnPrimary),
-                    darkOnPrimary=safeColor(d.optString("darkOnPrimary",hex(fallback.darkOnPrimary)),fallback.darkOnPrimary),
-                    lightSuccess=safeColor(d.optString("lightSuccess",hex(fallback.lightSuccess)),fallback.lightSuccess),
-                    darkSuccess=safeColor(d.optString("darkSuccess",hex(fallback.darkSuccess)),fallback.darkSuccess),
-                    lightWarning=safeColor(d.optString("lightWarning",hex(fallback.lightWarning)),fallback.lightWarning),
-                    darkWarning=safeColor(d.optString("darkWarning",hex(fallback.darkWarning)),fallback.darkWarning),
-                    lightError=safeColor(d.optString("lightError",hex(fallback.lightError)),fallback.lightError),
-                    darkError=safeColor(d.optString("darkError",hex(fallback.darkError)),fallback.darkError),
-                    lightInfo=safeColor(d.optString("lightInfo",hex(fallback.lightInfo)),fallback.lightInfo),
-                    darkInfo=safeColor(d.optString("darkInfo",hex(fallback.darkInfo)),fallback.darkInfo)
-                )
-            }.getOrDefault(fallback)
         }
 
         fun loadCustom(context:Context):List<FlashLearnThemeSpec> =

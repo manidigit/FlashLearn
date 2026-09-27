@@ -42,12 +42,4 @@ class GtpThemeContractTest {
         assertTrue(grok.design.metric("cardBorderAlpha") > 0.5f)
     }
 
-    @Test
-    fun themeJsonPersistsDesignContract() {
-        val json = FlashLearnThemeSpec.GROK.toJson()
-        assertTrue(json.contains("\"design\""))
-        assertTrue(json.contains("\"statsLayout\": \"GRID_4_COLUMNS\""))
-        assertTrue(json.contains("\"navStyle\": \"PILL\""))
-        assertTrue(json.contains("\"metrics\""))
-    }
 }
