@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 
 class ReviewEngineUseCasesTest {
@@ -71,7 +72,7 @@ class ReviewEngineUseCasesTest {
             TRepo(emptyMap())
         )
 
-        assertEquals(1, repo(ReviewSelectionFilters(ReviewType.DAILY, now = checkTime)).size)
+        assertEquals(1, repo(ReviewSelectionFilters(ReviewType.DAILY, now = checkTime, zoneId = ZoneId.of("UTC"))).size)
     }
 
     @Test fun dailyMode_returnsOnlyDueDailyCandidates() = runBlocking {
