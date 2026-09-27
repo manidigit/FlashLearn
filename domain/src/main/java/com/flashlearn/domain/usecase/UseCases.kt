@@ -147,7 +147,7 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         }
         val transition = calculateLearningTransition(learning, request.isCorrect, request.reviewedAt)
         val threshold = settingsRepository.getInt("threshold_difficulty", default = 3)
-        val newDifficulty = calculateDifficulty(state = difficulty, isCorrect = request.isCorrect, reviewType = request.reviewType, monthlyWrongCountBefore = learning.monthlyWrongCount, threshold = threshold)
+        val newDifficulty = calculateDifficulty(state = difficulty, isCorrect = request.isCorrect, threshold = threshold)
         val updatedLearning = learning.copy(stage = transition.newStage, nextReviewAt = transition.nextReviewAt, hasPathFailure = transition.hasPathFailure, monthlyWrongCount = transition.monthlyWrongCount, totalCorrect = if (request.isCorrect) learning.totalCorrect + 1 else learning.totalCorrect, totalWrong = if (!request.isCorrect) learning.totalWrong + 1 else learning.totalWrong, lastReviewedAt = request.reviewedAt)
         learningStateRepository.upsert(updatedLearning); difficultyStateRepository.upsert(newDifficulty)
         reviewHistoryRepository.insert(ReviewHistory(UUID.randomUUID(), request.sessionId, request.reviewAttemptId, request.conceptId, request.reviewedAt, request.isCorrect, request.reviewType))
