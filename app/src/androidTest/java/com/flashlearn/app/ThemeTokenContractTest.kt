@@ -50,7 +50,7 @@ class ThemeTokenContractTest {
             }
         }
         composeRule.runOnIdle {
-            assertEquals(8f * FlashLearnThemeSpec.GTP.spacingScale, spacingGap, 0.001f)
+            assertEquals(FlashLearnThemeSpec.GTP.design.metric("compactGap") * FlashLearnThemeSpec.GTP.spacingScale, spacingGap, 0.001f)
             assertEquals(FlashLearnThemeSpec.GTP.cornerMedium, corner, 0.001f)
             assertEquals("FILLED", iconStyle)
         }
