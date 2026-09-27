@@ -8,7 +8,7 @@
 ## v6.51 release alignment
 - app/build.gradle.kts: versionName 6.51 / versionCode 651.
 - CI: current gate 6.51/651; previous-version upgrade gate 6.50/650.
-- Theme system: format version 3 with complete ThemeDesign persistence.
+- Theme system: format version 3 with complete runtime ThemeDesign ownership.
 - Grok owns its full visual profile: palette, metrics, borders, elevation, typography, navigation, buttons, statistics, review, library and ornaments.
 - Verification is pending the authoritative GitHub Actions run.
 

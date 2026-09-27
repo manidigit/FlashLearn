@@ -24,7 +24,7 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 ### 🎨 Grok Theme
 - Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
 - Shared components consume Grok-owned border, navigation and header design tokens.
-- Theme JSON v3 persists the complete ThemeDesign profile, including metrics and layout/style strategies.
+- Built-in themes carry the complete ThemeDesign profile in the runtime ThemeSpec; the existing custom-theme JSON contract remains unchanged.
 - Older theme JSON remains compatible when the design object is absent.
 
 ### 🧪 Process / Verification

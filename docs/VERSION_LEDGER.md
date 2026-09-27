@@ -3,7 +3,7 @@
 - Version code: 651
 - Previous-version gate: 6.50 / 650
 - Supplied Grok reference screens are the visual source of truth.
-- ThemeDesign is persisted in Theme JSON v3, including metrics and layout/style strategies.
+- ThemeDesign is owned by the runtime ThemeSpec, including metrics and layout/style strategies.
 - Shared card/navigation/header components consume theme-owned Grok visual parameters.
 - Verification remains pending until both authoritative GitHub Actions jobs are green.
 

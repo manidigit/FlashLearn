@@ -1,6 +1,6 @@
 ## v6.51 — Grok Visual Reconstruction
 - Application identity: 6.51 / 651; previous-version gate: 6.50 / 650.
-- Scope: supplied Grok reference reconstruction plus full ThemeDesign persistence and shared-component integration.
+- Scope: supplied Grok reference reconstruction plus full runtime ThemeDesign ownership and shared-component integration.
 - Process records synchronized across build identity, runtime gate, CI, README, changelogs, version ledgers and progress tracking.
 - No learning/business logic, Review Engine, scheduling, persistence, Room schema, parser/import, backup/restore or quiz semantics were changed.
 - Verification is pending authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.

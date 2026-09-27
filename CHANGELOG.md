@@ -5,7 +5,7 @@
 ### Grok Visual Reconstruction + Full Theme Design Contract
 - Rebuilt the shared Grok visual language around the supplied reference screens: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense statistics and selected navigation pills.
 - Shared cards now consume theme-owned border parameters; Grok navigation consumes theme-owned selected-pill behavior; Grok standard headers use theme-owned centered ornamentation.
-- Theme JSON v3 now persists the complete ThemeDesign profile in a design object.
+- Built-in themes now carry the complete ThemeDesign profile directly in ThemeSpec; the existing custom-theme JSON contract remains unchanged.
 - Older custom theme JSON without a design object remains backward-compatible through the matching built-in design fallback.
 - Runtime identity advanced to 6.51/651 with 6.50/650 as the upgrade gate.
 

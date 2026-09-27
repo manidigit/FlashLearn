@@ -2,7 +2,7 @@
 - Current application identity: 6.51 / 651; previous-version gate: 6.50 / 650.
 - Supplied Grok screenshots are the visual source of truth for the Grok design language.
 - Shared cards render theme-owned borders; Grok navigation uses a theme-owned selected pill; Grok standard headers are centered and ornamental.
-- Theme JSON v3 persists the complete ThemeDesign profile while remaining compatible with older JSON that lacks the design object.
+- Built-in ThemeSpec owns the complete ThemeDesign profile; existing custom-theme JSON remains unchanged.
 - Learning algorithms, Review Engine, scheduling, persistence, Room schema, import/restore semantics and quiz evaluation are unchanged.
 - Verification is pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.
 
