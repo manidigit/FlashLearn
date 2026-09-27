@@ -2,7 +2,16 @@
 
 | Version | Code | Date | Checkpoint | Verification |
 |---|---:|---|---|---|
-| 6.52 | 652 | 2026-09-27 | Unified Review eligibility + same-day lock + Home due-count alignment | Pending CI |
+| **6.53** | **653** | 2026-09-27 | Independent Learning + Difficulty algorithms; threshold-only Difficulty | Pending CI |
+| 6.52 | 652 | 2026-09-27 | Unified Review eligibility + same-day lock + Home due-count alignment | Prior checkpoint |
+
+## v6.53 release alignment
+- app/build.gradle.kts: versionName 6.53 / versionCode 653.
+- CI: current gate 6.53/653; previous-version upgrade gate 6.52/652.
+- Learning: Daily → Weekly → Monthly → Learned; correct advances, wrong returns to Daily.
+- Difficulty: Easy → Medium → Hard → Very Hard; threshold-only consecutive answer logic, default threshold 3.
+- No Weekly/Monthly-specific Difficulty escalation.
+- Verification is pending the authoritative GitHub Actions run.
 
 | Version | Code | Date | Checkpoint | Verification |
 |---|---:|---|---|---|
