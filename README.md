@@ -1,3 +1,14 @@
+## v6.52 — Unified Review Eligibility & Same-Day Lock
+
+- Review eligibility is one domain contract across Flashcard, Quiz, review queue, Home due counts, and progress summary.
+- After a concept is reviewed once on a local calendar day, it is excluded from further review that day regardless of answer correctness.
+- Correct transitions: DAILY → WEEKLY → MONTHLY → LEARNED.
+- Wrong transitions: DAILY → DAILY, WEEKLY → DAILY, MONTHLY → DAILY.
+- LEARNED remains a separate review population and is not part of the normal non-learned scheduler.
+- The same wasReviewedToday(...) rule is reused by queue selection, queue counts, answer submission, and summary/Home counts.
+- Regression coverage was added for same-day exclusion and local-calendar-day semantics.
+- Version identity: 6.52 / versionCode 652. CI is the authoritative verification gate.
+
 # 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
 
 **Version:** 6.51 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
