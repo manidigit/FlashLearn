@@ -241,6 +241,11 @@ FlashLearn © 2026 - All rights reserved
 
 ## 🔄 Recent Changes
 
+### v6.52 (2026-09-27)
+- Unified same-day review eligibility across queue selection, queue counts, answer submission, progress summary and Home due counts.
+- Enforced the canonical review transitions and kept LEARNED separate from the normal scheduler.
+- Added local-calendar-day regression coverage and deterministic timezone injection for tests.
+
 ### v6.26 (2026-09-25)
 - Review answer persistence and quiz generation moved off the UI thread
 - Per-answer full ReviewHistory scan removed
