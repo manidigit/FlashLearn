@@ -34,7 +34,8 @@ fun FlashLearnIcon(
 fun FlashLearnBackButton(
     onClick: () -> Unit,
     contentDescription: String = "بازگشت",
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
     val icon = if (tokens.iconStyle == IconStyle.FILLED) {
@@ -42,7 +43,7 @@ fun FlashLearnBackButton(
     } else {
         Icons.AutoMirrored.Outlined.ArrowBack
     }
-    IconButton(onClick = onClick, enabled = enabled) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
         FlashLearnIcon(icon, contentDescription, tint = tokens.onSurface)
     }
 }
