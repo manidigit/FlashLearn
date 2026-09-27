@@ -264,7 +264,7 @@ FlashLearn © 2026 - All rights reserved
 
 ---
 
-**Build Status:** ✅ Ready for GitHub
+**Build Status:** ⏳ CI verification pending
 **Last Updated:** 2026-09-27
-**Version:** 6.26
+**Version:** 6.52
 
