@@ -23,6 +23,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class ActivityRange(val label: String, val days: Int?) {
     WEEK("هفتگی", 7),
@@ -90,48 +92,58 @@ class ProgressViewModel @Inject constructor(
                 val progressPercentage = calculateProgressPercentage()
                 val summary = getProgressSummary(now)
                 val history = historyRepository.getAll()
-                val streak = calculateStreak.calculate(history, now, zoneId)
                 val existingAchievements = achievementRepository.getAll()
-                val achievementResult = evaluateAchievements.evaluate(
-                    DefaultAchievements.definitions,
-                    existingAchievements,
-                    AchievementContext(
-                        totalReviews = stats.totalReviews,
-                        totalCorrect = stats.totalCorrect,
-                        totalWrong = stats.totalWrong,
-                        currentStreakDays = streak.currentStreakDays,
-                        longestStreakDays = streak.longestStreakDays,
-                        learnedConcepts = summary.learnedConceptCount
+                val cpu = withContext(Dispatchers.Default) {
+                    val history = historyRepository.getAll()
+                    val streak = calculateStreak.calculate(history, now, zoneId)
+                    val existingAchievements = achievementRepository.getAll()
+                    val achievementResult = evaluateAchievements.evaluate(
+                        DefaultAchievements.definitions,
+                        existingAchievements,
+                        AchievementContext(
+                            totalReviews = stats.totalReviews,
+                            totalCorrect = stats.totalCorrect,
+                            totalWrong = stats.totalWrong,
+                            currentStreakDays = streak.currentStreakDays,
+                            longestStreakDays = streak.longestStreakDays,
+                            learnedConcepts = summary.learnedConceptCount
+                        )
                     )
-                )
-                achievementRepository.upsertAll(achievementResult.states)
-                val achievements = DefaultAchievements.definitions.mapNotNull { definition ->
-                    achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
+                    achievementRepository.upsertAll(achievementResult.states)
+                    val achievements = DefaultAchievements.definitions.mapNotNull { definition ->
+                        achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
+                    }
+                    val today = now.atZone(zoneId).toLocalDate()
+                    val weekStart = today.minusDays(6)
+                    val monthStart = today.minusDays(29)
+                    val todayEntries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == today }
+                    val weekEntries = history.filter {
+                        val date = it.reviewedAt.atZone(zoneId).toLocalDate()
+                        !date.isBefore(weekStart) && !date.isAfter(today)
+                    }
+                    val monthEntries = history.filter {
+                        val date = it.reviewedAt.atZone(zoneId).toLocalDate()
+                        !date.isBefore(monthStart) && !date.isAfter(today)
+                    }
+                    val dayNames = listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")
+                    val daily = (6 downTo 0).map { offset ->
+                        val date = today.minusDays(offset.toLong())
+                        val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
+                        DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
+                    }
+                    val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)
+                    ProgressPayload(
+                        progress, progressPercentage, summary, stats, streak, achievements, daily, initialActivity,
+                        ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
+                        ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
+                        ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
+
                 }
-                val today = now.atZone(zoneId).toLocalDate()
-                val weekStart = today.minusDays(6)
-                val monthStart = today.minusDays(29)
-                val todayEntries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == today }
-                val weekEntries = history.filter {
-                    val date = it.reviewedAt.atZone(zoneId).toLocalDate()
-                    !date.isBefore(weekStart) && !date.isAfter(today)
-                }
-                val monthEntries = history.filter {
-                    val date = it.reviewedAt.atZone(zoneId).toLocalDate()
-                    !date.isBefore(monthStart) && !date.isAfter(today)
-                }
-                val dayNames = listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")
-                val daily = (6 downTo 0).map { offset ->
-                    val date = today.minusDays(offset.toLong())
-                    val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
-                    DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
-                }
-                val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)
+                achievementRepository.upsertAll(cpu.achievementStates)
                 ProgressPayload(
-                    progress, progressPercentage, summary, stats, streak, achievements, daily, initialActivity,
-                    ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
-                    ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
-                    ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect })
+                    progress, progressPercentage, summary, stats, cpu.streak, cpu.achievements, cpu.dailyReviews, cpu.activityReviews,
+                    cpu.todayReviews, cpu.weekReviews, cpu.monthReviews
+                )
                 )
             }.onSuccess { payload ->
                 if (generation == refreshGeneration) {
@@ -158,6 +170,17 @@ class ProgressViewModel @Inject constructor(
         }
     }
 }
+
+private data class ProgressCpuData(
+    val streak: StreakSnapshot,
+    val achievements: List<Pair<AchievementDefinition, AchievementState>>,
+    val dailyReviews: List<DailyReviewStat>,
+    val activityReviews: List<ActivityReviewStat>,
+    val todayReviews: ReviewPeriodStat,
+    val weekReviews: ReviewPeriodStat,
+    val monthReviews: ReviewPeriodStat,
+    val achievementStates: List<AchievementState>
+)
 
 private data class ProgressPayload(
     val progress: com.flashlearn.domain.progress.ProgressSnapshot,
