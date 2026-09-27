@@ -1,3 +1,13 @@
+## v6.53 — Independent Learning + Difficulty
+- Application identity: **6.53 / 653**; previous-version gate: **6.52 / 652**.
+- Learning contract: Daily → Weekly → Monthly → Learned.
+- Correct advances one Learning stage; wrong returns to Daily.
+- Difficulty contract is independent: Easy → Medium → Hard → Very Hard.
+- Difficulty changes only from consecutive correct/wrong answers and the Settings threshold, default 3.
+- Weekly/Monthly-specific Difficulty forcing was removed from production logic and replaced with the same threshold rule used by every review result.
+- Regression coverage now asserts that Weekly/Monthly do not receive special Difficulty treatment.
+- Verification remains pending until the authoritative GitHub Actions gates pass.
+
 ## v6.52 — Unified Review Eligibility + Same-Day Lock
 - Current application identity: 6.52 / 652; previous-version gate: 6.51 / 651.
 - Review eligibility is unified across Flashcard, Quiz, review queue, queue counts, Home due counts, and progress summary.
