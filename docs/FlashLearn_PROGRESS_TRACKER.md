@@ -1,3 +1,13 @@
+## v6.53 — Independent Learning + Difficulty
+- Runtime identity: **6.53 / 653**; previous-version gate: **6.52 / 652**.
+- Learning is exactly four stages: Daily → Weekly → Monthly → Learned.
+- Correct moves one Learning stage forward; wrong returns to Daily.
+- Difficulty is independent: Easy → Medium → Hard → Very Hard.
+- Difficulty uses only consecutive correct/wrong answers and the configurable Settings threshold, default 3.
+- No Weekly-specific or Monthly-specific Difficulty escalation exists.
+- No Difficulty decision reads Learning Stage, monthly wrong count, or path-failure state.
+- Verification is pending the authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate.
+
 ## v6.51 — Grok Visual Reconstruction
 - Application identity: 6.51 / 651; previous-version gate: 6.50 / 650.
 - Scope: supplied Grok reference reconstruction plus full runtime ThemeDesign ownership and shared-component integration.
