@@ -67,7 +67,7 @@ class ReviewEngineUseCasesTest {
         val checkTime = Instant.parse("2026-09-12T00:30:00Z")
         val repo = SelectReviewQueueUseCase(
             CRepo(listOf(concept(id))),
-            LRepo(listOf(learning(id, Stage.DAILY).copy(lastReviewedAt = reviewTime))),
+            LRepo(listOf(learning(id, Stage.DAILY, due = checkTime.minusSeconds(1)).copy(lastReviewedAt = reviewTime))),
             DRepo(listOf(difficulty(id, VocabularyDifficulty.EASY))),
             TRepo(emptyMap())
         )
