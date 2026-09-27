@@ -14,6 +14,7 @@ data class ReviewSelectionFilters(
     val categoryId: UUID? = null,
     val tagId: UUID? = null,
     val now: Instant,
+    val zoneId: ZoneId = ZoneId.systemDefault(),
     val maxCards: Int = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
 )
 
@@ -80,7 +81,7 @@ class SelectReviewQueueUseCase @Inject constructor(
         val candidates = ArrayList<ReviewCandidate>(states.size)
 
         for (learning in states) {
-            if (wasReviewedToday(learning.lastReviewedAt, filters.now)) continue
+            if (wasReviewedToday(learning.lastReviewedAt, filters.now, filters.zoneId)) continue
             val concept = conceptsById[learning.conceptId] ?: continue
             val difficulty = difficultiesById[learning.conceptId] ?: continue
             val tags = tagsByConcept[learning.conceptId].orEmpty()
