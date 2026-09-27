@@ -1,3 +1,9 @@
+# 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
+
+**Version:** 6.52 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
+
+---
+
 ## v6.52 — Unified Review Eligibility & Same-Day Lock
 
 - Review eligibility is one domain contract across Flashcard, Quiz, review queue, Home due counts, and progress summary.
@@ -8,12 +14,6 @@
 - The same wasReviewedToday(...) rule is reused by queue selection, queue counts, answer submission, and summary/Home counts.
 - Regression coverage was added for same-day exclusion and local-calendar-day semantics.
 - Version identity: 6.52 / versionCode 652. CI is the authoritative verification gate.
-
-# 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
-
-**Version:** 6.51 | **Theme System:** 3.1-GROK | **Date:** 2026-09-27
-
----
 
 ## 📱 About
 
@@ -30,7 +30,7 @@ FlashLearn is a comprehensive offline language learning app for Spanish-Persian 
 
 ---
 
-## 📊 Version 6.51 - Grok Visual Reconstruction
+## 📊 Version 6.52 - Review Eligibility + Grok Visual Reconstruction
 
 ### 🎨 Grok Theme
 - Grok follows the supplied visual references: deep navy/black surfaces, warm gold accents, thin gold borders, centered ornamental headers, dense dashboard layouts, selected navigation pills and dashboard cards.
