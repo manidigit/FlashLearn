@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -97,20 +98,29 @@ fun FlashLearnScreenHeader(
         }
         return
     }
-    Row(
-        Modifier.fillMaxWidth().height(tokens.headerHeight).padding(horizontal = tokens.screenPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (onBack != null) {
-            FlashLearnBackButton(onBack)
-        } else {
-            Spacer(Modifier.width(tokens.iconLarge))
+    if (tokens.navStyle == com.flashlearn.app.ui.theme.NavigationStyle.PILL) {
+        Box(Modifier.fillMaxWidth().height(tokens.headerHeight)) {
+            if (onBack != null) FlashLearnBackButton(onBack, modifier = Modifier.align(Alignment.CenterEnd))
+            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = tokens.primary)
+                if (subtitle != null || tokens.design.showReviewOrnaments) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)) {
+                        Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)))
+                        FlashLearnIcon(Icons.Outlined.AutoAwesome, null, tint = tokens.primary, modifier = Modifier.size(tokens.reviewOrnamentIcon))
+                        Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)))
+                    }
+                }
+                subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant) }
+            }
+            trailing?.let { Box(Modifier.align(Alignment.CenterStart)) { it() } }
         }
+        return
+    }
+    Row(Modifier.fillMaxWidth().height(tokens.headerHeight).padding(horizontal = tokens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
+        if (onBack != null) FlashLearnBackButton(onBack) else Spacer(Modifier.width(tokens.iconLarge))
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
             Text(title, style = MaterialTheme.typography.titleLarge)
-            subtitle?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant)
-            }
+            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant) }
         }
         trailing?.invoke() ?: Spacer(Modifier.width(tokens.iconLarge))
     }
@@ -161,6 +171,7 @@ fun FlashLearnCard(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = tokens.cardColor),
+        border = BorderStroke(tokens.borderThin, tokens.outlineColor.copy(alpha = tokens.cardBorderAlpha)),
         elevation = CardDefaults.cardElevation(defaultElevation = tokens.cardElevation),
         content = content
     )
@@ -194,7 +205,8 @@ fun FlashLearnStatTile(
     Surface(
         modifier = modifier.height(tokens.statCardHeight),
         shape = RoundedCornerShape(tokens.mediumCorner),
-        color = tokens.surfaceVariant
+        color = tokens.surfaceVariant,
+        border = BorderStroke(tokens.borderThin, tokens.outlineColor.copy(alpha = tokens.cardBorderAlpha))
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(tokens.contentPadding),

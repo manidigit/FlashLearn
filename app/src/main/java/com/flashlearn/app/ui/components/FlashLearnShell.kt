@@ -73,9 +73,9 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
         },
         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = selectedColor,
-            selectedTextColor = selectedColor,
-            indicatorColor = Color.Transparent,
+            selectedIconColor = if (tokens.navStyle == NavigationStyle.PILL) tokens.onPrimary else selectedColor,
+            selectedTextColor = if (tokens.navStyle == NavigationStyle.PILL) tokens.onPrimary else selectedColor,
+            indicatorColor = if (tokens.navStyle == NavigationStyle.PILL) selectedColor else Color.Transparent,
             unselectedIconColor = unselectedColor,
             unselectedTextColor = unselectedColor
         )

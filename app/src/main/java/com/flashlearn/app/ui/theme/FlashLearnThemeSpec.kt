@@ -92,6 +92,18 @@ data class FlashLearnThemeSpec(
         put("iconStyle", iconStyle); put("elevationScale", elevationScale)
         put("cornerSmall", cornerSmall); put("cornerMedium", cornerMedium); put("cornerLarge", cornerLarge)
         put("typographyScale", typographyScale); put("densityScale", densityScale); put("spacingScale", spacingScale)
+        put("design", JSONObject().apply {
+            put("buttonStyle", design.buttonStyle.name); put("navStyle", design.navStyle.name)
+            put("statsLayout", design.statsLayout.name); put("reviewsLayout", design.reviewsLayout.name)
+            put("libraryLayout", design.libraryLayout.name); put("reviewPresentation", design.reviewPresentation.name)
+            put("showReviewOrnaments", design.showReviewOrnaments)
+            put("lightOnPrimary", hex(design.lightOnPrimary)); put("darkOnPrimary", hex(design.darkOnPrimary))
+            put("lightSuccess", hex(design.lightSuccess)); put("darkSuccess", hex(design.darkSuccess))
+            put("lightWarning", hex(design.lightWarning)); put("darkWarning", hex(design.darkWarning))
+            put("lightError", hex(design.lightError)); put("darkError", hex(design.darkError))
+            put("lightInfo", hex(design.lightInfo)); put("darkInfo", hex(design.darkInfo))
+            put("metrics", JSONObject().apply { design.metrics.forEach { (k,v) -> put(k,v) } })
+        })
     }.toString(2)
 
     companion object {
@@ -109,16 +121,16 @@ data class FlashLearnThemeSpec(
 
         val GROK = FlashLearnThemeSpec(
             id = "grok", name = "گروک",
-            lightPrimary = 0xFFC9A227, darkPrimary = 0xFFD4AF37,
-            lightSecondary = 0xFFB8860B, darkSecondary = 0xFFE8C547,
-            lightBackground = 0xFFF8F4EC, darkBackground = 0xFF0F1419,
-            lightSurface = 0xFFFFFDF8, darkSurface = 0xFF1A2332,
-            lightSurfaceVariant = 0xFFF2EBDD, darkSurfaceVariant = 0xFF243044,
-            lightOnSurface = 0xFF1A140A, darkOnSurface = 0xFFF5F0E6,
-            lightOnSurfaceVariant = 0xFF6B5E4A, darkOnSurfaceVariant = 0xFFA8B0BC,
-            lightCard = 0xFFFFFCF5, darkCard = 0xFF1A2332,
-            lightOutline = 0xFFE6D5B5, darkOutline = 0xFF3D4A5C,
-            gradientStart = 0xFFC9A227, gradientEnd = 0xFFD4AF37,
+            lightPrimary = 0xFFC79B32, darkPrimary = 0xFFE0B44C,
+            lightSecondary = 0xFF9F7925, darkSecondary = 0xFFF0C65A,
+            lightBackground = 0xFFF7F2E8, darkBackground = 0xFF080D13,
+            lightSurface = 0xFFFFFCF5, darkSurface = 0xFF111820,
+            lightSurfaceVariant = 0xFFF0E8D8, darkSurfaceVariant = 0xFF18222D,
+            lightOnSurface = 0xFF17130C, darkOnSurface = 0xFFF7F0E3,
+            lightOnSurfaceVariant = 0xFF756A59, darkOnSurfaceVariant = 0xFFB9B2A6,
+            lightCard = 0xFFFFFBF2, darkCard = 0xFF121B24,
+            lightOutline = 0xFFD8C08A, darkOutline = 0xFF6A5833,
+            gradientStart = 0xFFC79B32, gradientEnd = 0xFFE0B44C,
             iconStyle = "filled", elevationScale = 1.35f,
             cornerSmall = 14f, cornerMedium = 20f, cornerLarge = 28f,
             typographyScale = 1.04f, densityScale = 0.97f, spacingScale = 1f
@@ -204,7 +216,42 @@ data class FlashLearnThemeSpec(
                 j.optDouble("cornerLarge",24.0).toFloat().coerceIn(0f,56f),
                 j.optDouble("typographyScale",1.0).toFloat().coerceIn(.85f,1.25f),
                 j.optDouble("densityScale",1.0).toFloat().coerceIn(.85f,1.15f),
-                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f)
+                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f),
+                design = parseDesign(j, j.getString("id").take(80))
+            )
+        }
+
+        private fun parseDesign(j: JSONObject, id: String): ThemeDesign {
+            val fallback = when (id.lowercase()) {
+                "grok" -> ThemeDesign.grok(); "claud", "claude" -> ThemeDesign.claud()
+                "spark" -> ThemeDesign.spark(); "gtp" -> ThemeDesign.gtp(); else -> ThemeDesign.default()
+            }
+            val d = j.optJSONObject("design") ?: return fallback
+            val metrics = fallback.metrics.toMutableMap()
+            d.optJSONObject("metrics")?.let { m ->
+                val keys = m.keys()
+                while (keys.hasNext()) { val key = keys.next(); metrics[key] = m.optDouble(key, metrics[key]?.toDouble() ?: 0.0).toFloat() }
+            }
+            fun e(k:String, f:String)=d.optString(k,f)
+            return ThemeDesign(
+                metrics=metrics,
+                buttonStyle=runCatching{ButtonStyle.valueOf(e("buttonStyle",fallback.buttonStyle.name))}.getOrDefault(fallback.buttonStyle),
+                navStyle=runCatching{NavigationStyle.valueOf(e("navStyle",fallback.navStyle.name))}.getOrDefault(fallback.navStyle),
+                statsLayout=runCatching{StatsLayoutStrategy.valueOf(e("statsLayout",fallback.statsLayout.name))}.getOrDefault(fallback.statsLayout),
+                reviewsLayout=runCatching{ReviewsLayoutStrategy.valueOf(e("reviewsLayout",fallback.reviewsLayout.name))}.getOrDefault(fallback.reviewsLayout),
+                libraryLayout=runCatching{LibraryLayoutStrategy.valueOf(e("libraryLayout",fallback.libraryLayout.name))}.getOrDefault(fallback.libraryLayout),
+                reviewPresentation=runCatching{ReviewPresentation.valueOf(e("reviewPresentation",fallback.reviewPresentation.name))}.getOrDefault(fallback.reviewPresentation),
+                showReviewOrnaments=d.optBoolean("showReviewOrnaments",fallback.showReviewOrnaments),
+                lightOnPrimary=parseColor(d.optString("lightOnPrimary",hex(fallback.lightOnPrimary))),
+                darkOnPrimary=parseColor(d.optString("darkOnPrimary",hex(fallback.darkOnPrimary))),
+                lightSuccess=parseColor(d.optString("lightSuccess",hex(fallback.lightSuccess))),
+                darkSuccess=parseColor(d.optString("darkSuccess",hex(fallback.darkSuccess))),
+                lightWarning=parseColor(d.optString("lightWarning",hex(fallback.lightWarning))),
+                darkWarning=parseColor(d.optString("darkWarning",hex(fallback.darkWarning))),
+                lightError=parseColor(d.optString("lightError",hex(fallback.lightError))),
+                darkError=parseColor(d.optString("darkError",hex(fallback.darkError))),
+                lightInfo=parseColor(d.optString("lightInfo",hex(fallback.lightInfo))),
+                darkInfo=parseColor(d.optString("darkInfo",hex(fallback.darkInfo)))
             )
         }
 
