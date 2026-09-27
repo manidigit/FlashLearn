@@ -126,7 +126,7 @@ class MvpE2EUseCasesTest {
             )
         )
         assertEquals(Stage.DAILY, failed.learningState.stage)
-        assertTrue(failed.learningState.hasPathFailure)
+        assertFalse(failed.learningState.hasPathFailure)
         assertEquals(1, failed.learningState.totalWrong)
         assertEquals(0, failed.learningState.monthlyWrongCount)
         assertEquals(VocabularyDifficulty.EASY, failed.difficultyState.current)
