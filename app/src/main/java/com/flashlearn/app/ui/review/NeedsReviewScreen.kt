@@ -24,7 +24,7 @@ import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.ReviewQueueItem
 
 @Composable
-fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
+fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit, onApprove: (ReviewQueueItem) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val items by viewModel.items.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -51,7 +51,7 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
                     items(items, key = { it.id }) { item ->
-                        ReviewQueueCard(item, viewModel)
+                        ReviewQueueCard(item, onApprove = { onApprove(item) }, onReject = { viewModel.reject(item) })
                     }
                 }
             }
@@ -60,7 +60,7 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewModel) {
+private fun ReviewQueueCard(item: ReviewQueueItem, onApprove: () -> Unit, onReject: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -80,8 +80,8 @@ private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewMod
             item.lineNumber?.let { Text("خط: $it") }
             item.warning?.let { Text(it) }
             Row(horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-                Button(onClick = { viewModel.approve(item) }) { Text("تأیید") }
-                Button(onClick = { viewModel.reject(item) }) { Text("رد") }
+                Button(onClick = onApprove) { Text("تأیید و ویرایش") }
+                Button(onClick = onReject) { Text("رد") }
             }
         }
     }

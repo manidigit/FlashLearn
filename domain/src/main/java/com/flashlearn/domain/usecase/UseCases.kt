@@ -73,6 +73,21 @@ class CreateConceptUseCase @Inject constructor(
     }
 }
 
+/** Finalizes manual review approval after the edited Add Word form is saved. */
+class ApproveReviewQueueItemUseCase @Inject constructor(
+    private val createConcept: CreateConceptUseCase,
+    private val reviewQueueRepository: ReviewQueueRepository,
+    private val database: FlashLearnDatabase
+) {
+    suspend operator fun invoke(item: ReviewQueueItem, sourceText: String, targetText: String, sourceLanguage: String, targetLanguage: String, categoryId: UUID? = null, notes: String? = null, pronunciation: String? = null, example: String? = null, entryType: EntryType = EntryType.WORD): UUID = database.withTransaction {
+        require(item.status == ReviewQueueStatus.PENDING) { "این مورد دیگر در صف انتظار نیست" }
+        require(sourceText.isNotBlank() && targetText.isNotBlank()) { "متن واژه و ترجمه نمی‌توانند خالی باشند" }
+        val conceptId = createConcept.createInTransaction(CreateConceptCommand(sourceText.trim(), targetText.trim(), sourceLanguage, targetLanguage, categoryId, notes, pronunciation, example, entryType, mergeExistingSource = true))
+        reviewQueueRepository.update(item.copy(status = ReviewQueueStatus.APPROVED))
+        conceptId
+    }
+}
+
 data class UpdateConceptCommand(
     val conceptId: UUID, val sourceText: String, val targetText: String,
     val notes: String? = null, val pronunciation: String? = null, val example: String? = null,

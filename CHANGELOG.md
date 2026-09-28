@@ -1,3 +1,13 @@
+## v6.57 — Manual Needs-Review approval flow
+- Changed تأیید in the manual-review queue to open the normal Add Word form prefilled with the queued source and translation.
+- The user can edit the source, translation and optional Add Word fields before saving.
+- The queue item remains PENDING while the form is open or unsaved.
+- On Save, Concept creation and transition of that queue item to APPROVED happen in one database transaction; a failed save leaves the queue item pending.
+- After a successful save, the new or merged concept is available in Library and the user is returned there.
+
+## Verification
+GitHub Actions is authoritative. v6.57 is not verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+
 ## v6.56 — Comprehensive audit hardening
 - Fixed flashcard feedback dead-end with an explicit **کارت بعدی** action and added **رد کردن کارت** when a quiz cannot generate enough distractors.
 - Quiz prompts and TTS now follow the active source language; review setup now receives the configured language pair and maximum-card setting.

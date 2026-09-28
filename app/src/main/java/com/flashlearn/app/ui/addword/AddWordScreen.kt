@@ -19,7 +19,7 @@ import com.flashlearn.app.ui.LearningLanguage
 import com.flashlearn.domain.model.EntryType
 
 @Composable
-fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit) {
+fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = LanguagePair(), onBack: () -> Unit, onReviewApprovalSaved: () -> Unit = {}) {
     val tokens = LocalFlashLearnThemeTokens.current
     val state by viewModel.state.collectAsState()
     var categoryMenuExpanded by remember { mutableStateOf(false) }
@@ -28,9 +28,10 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
     var targetMenuExpanded by remember { mutableStateOf(false) }
     var addingNewCategory by remember { mutableStateOf(false) }
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair.source.code, languagePair.target.code) }
+    LaunchedEffect(state.reviewApprovalCompleted) { if (state.reviewApprovalCompleted) { viewModel.consumeReviewApprovalCompletion(); onReviewApprovalSaved() } }
 
     Column(Modifier.fillMaxSize()) {
-        FlashLearnScreenHeader(title = "افزودن واژه", onBack = onBack)
+        FlashLearnScreenHeader(title = if (state.pendingReviewItem != null) "ویرایش و تأیید واژه" else "افزودن واژه", onBack = onBack)
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = tokens.screenPadding), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             Text("زبان‌های یادگیری", style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
@@ -95,7 +96,7 @@ fun AddWordScreen(viewModel: AddWordViewModel, languagePair: LanguagePair = Lang
         ) {
             Icon(Icons.Outlined.Save, null)
             Spacer(Modifier.width(tokens.compactGap))
-            Text(if (state.isSaving) "در حال ذخیره..." else "ذخیره واژه")
+            Text(if (state.isSaving) "در حال ذخیره..." else if (state.pendingReviewItem != null) "ذخیره و ورود به کتابخانه" else "ذخیره واژه")
         }
     }
 }

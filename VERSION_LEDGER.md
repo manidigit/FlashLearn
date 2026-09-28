@@ -1,3 +1,13 @@
+| **6.57** | **657** | 2026-09-28 | Manual Needs-Review approval opens editable Add Word flow; Concept creation + queue approval are atomic | Pending CI |
+
+## v6.57 release alignment
+- app/build.gradle.kts: versionName 6.57 / versionCode 657.
+- CI: current gate 6.57/657; previous-version upgrade gate 6.56/656.
+- Manual review approval no longer changes a queue item to APPROVED directly from the list.
+- The queue item remains PENDING until the edited Add Word form is successfully saved.
+- Concept creation and queue status update share one database transaction.
+- Verification is pending the authoritative GitHub Actions run.
+
 | **6.56** | **656** | 2026-09-28 | Comprehensive audit hardening: review flow, language-pair routing, backup/export integrity, one-time starter data, periodic soft-delete cleanup | Pending CI |
 
 ## v6.56 release alignment
