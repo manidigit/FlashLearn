@@ -19,7 +19,7 @@ class ImportParsedEntryUseCase @Inject constructor(
     private val database: FlashLearnDatabase
 ) {
     companion object { const val LOW_CONFIDENCE_THRESHOLD = 0.80; val REVIEW_SENTINEL: UUID = UUID(0L, 0L) }
-    suspend operator fun invoke(entry: ParsedEntry, sourceLanguage: String = "es", targetLanguage: String = "fa", mode: ImportMode = ImportMode.MERGE, lineNumber: Int? = null): UUID = database.withTransaction {
+    suspend operator fun invoke(entry: ParsedEntry, sourceLanguage: String = "es", targetLanguage: String = "fa", mode: ImportMode = ImportMode.MERGE, lineNumber: Int? = null, categoryId: UUID? = null): UUID = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
         val source = entry.sourceText.trim()
         val translations = entry.translationText.orEmpty().split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
@@ -29,7 +29,11 @@ class ImportParsedEntryUseCase @Inject constructor(
         if (entry.confidence < LOW_CONFIDENCE_THRESHOLD) { reviewQueueRepository.upsert(ReviewQueueItem(UUID.randomUUID(), null, source, translations.joinToString(" / "), entry.confidence, correction, ReviewQueueStatus.PENDING, lineNumber, "اعتماد پایین؛ نیازمند بررسی دستی")); return@withTransaction REVIEW_SENTINEL }
         val sourceKey = computeCanonicalKey(source)
         val existingSource = contentRepository.findByCanonicalKey(sourceLanguage, sourceKey).firstOrNull { conceptRepository.get(it.conceptId)?.active == true }
-        val conceptId = if (existingSource == null || mode == ImportMode.ADD_NEW) createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType(), mergeExistingSource = false)) else existingSource.conceptId
+        val conceptId = if (existingSource == null || mode == ImportMode.ADD_NEW) createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, categoryId = categoryId, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType(), mergeExistingSource = false)) else existingSource.conceptId
+        if (existingSource != null && categoryId != null) {
+            val existingConcept = conceptRepository.get(conceptId)
+            if (existingConcept?.categoryId == null) conceptRepository.update(existingConcept.copy(categoryId = categoryId))
+        }
         val existingTranslations = contentRepository.findAll(conceptId, targetLanguage)
         val existingKeys = existingTranslations.map { computeCanonicalKey(it.text) }.toSet()
         var nextIndex = (existingTranslations.maxOfOrNull { it.translationIndex } ?: -1) + 1
