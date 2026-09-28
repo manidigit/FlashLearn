@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
     private fun AppRootScreen() {
         val uiState by appViewModel.state
         val needsReviewItems by needsReviewViewModel.items.collectAsState()
-        uiState.operationError?.let { Text("خطا: $it", modifier = Modifier.fillMaxWidth().padding(8.dp), color = MaterialTheme.colorScheme.error) }
+        uiState.operationError?.let { Text(stringResource(R.string.ui_error_prefix, it), modifier = Modifier.fillMaxWidth().padding(8.dp), color = MaterialTheme.colorScheme.error) }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
             FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
