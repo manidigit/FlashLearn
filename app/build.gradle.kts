@@ -28,7 +28,7 @@ android {
         buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"ChatGPT\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-27\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-28\"")
     }
 
     signingConfigs {
