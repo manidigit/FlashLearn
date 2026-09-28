@@ -39,7 +39,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         val json = pendingJson
         if (uri != null && !json.isNullOrBlank()) scope.launch(Dispatchers.IO) {
             runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } }
-                .onFailure { viewModel.showMessage("ذخیره فایل ناموفق بود: ${it.message ?: "خطا"}") }
+                .onFailure { viewModel.showMessage(stringResource(R.string.backup_save_file_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
         }
         pendingJson = null
     }
@@ -47,16 +47,16 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         val file = pendingFile
         if (uri != null && file != null) scope.launch(Dispatchers.IO) {
             runCatching { file.inputStream().use { input -> context.contentResolver.openOutputStream(uri)?.use { output -> input.copyTo(output) } } }
-                .onFailure { viewModel.showMessage("ذخیره خروجی ناموفق بود: ${it.message ?: "خطا"}") }
+                .onFailure { viewModel.showMessage(stringResource(R.string.backup_save_output_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
         }
         pendingFile = null
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch(Dispatchers.IO) {
-            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error("فایل پشتیبان بیش از ۲۰ مگابایت است") ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
+            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error(stringResource(R.string.backup_too_large)) ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
                 .map { it.removePrefix("\uFEFF").trimStart() }
-                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.") }
-                .onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطا"}") }
+                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage(stringResource(R.string.backup_invalid_json)) }
+                .onFailure { viewModel.showMessage(stringResource(R.string.backup_read_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
         }
     }
 
@@ -116,12 +116,12 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                     Text(stringResource(R.string.backup_create_selected), fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else "انتخاب فعلی: " + state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> "کامل" } },
+                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else "انتخاب فعلی: " + state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> stringResource(R.string.backup_complete) } },
                     Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start
                 )
             }
         }
-        item { SectionHeader(icon = Icons.Outlined.FileDownload, title = "خروجی داده", subtitle = "خروجی قابل استفاده در قالب‌های مختلف دریافت کن.") }
+        item { SectionHeader(icon = Icons.Outlined.FileDownload, title = stringResource(R.string.backup_data_export), subtitle = stringResource(R.string.backup_data_export_summary)) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 ExportFormat.values().forEach { format ->
@@ -129,8 +129,8 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 }
             }
         }
-        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedLabel} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_json)) } } } }
-        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_file)) } } } }
+        state.exportedJson?.let { json -> item { ResultCard(title = stringResource(R.string.backup_export_ready, state.exportedLabel), detail = stringResource(R.string.backup_char_count, json.length)) { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_json)) } } } }
+        state.exportedFile?.let { file -> item { ResultCard(title = stringResource(R.string.backup_file_export_ready, state.exportedFormat?.name.orEmpty()), detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_file)) } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
     }
