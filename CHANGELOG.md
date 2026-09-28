@@ -6,7 +6,7 @@
 - The startup smoke test is now the authoritative regression check for MainActivity launch.
 
 ## Verification
-GitHub Actions is authoritative. v6.59 is not verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+GitHub Actions verification: GREEN — run 36393654803 (Build + Unit Test and Instrumentation + Upgrade Gate).
 
 ## v6.58 — Startup migration integrity hardening
 - Fixed Room migration 5→6 so the contents(languageCode, canonicalKey) index is recreated with the canonical Room name after the temporary table is renamed.
