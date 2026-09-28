@@ -28,7 +28,7 @@ class DataExportRepositoryImpl @Inject constructor(
     }
 
     private suspend fun rows(): List<Array<String?>> {
-        val concepts = db.conceptDao().getAll()
+        val concepts = db.conceptDao().getAllActive()
         val contents = db.contentDao().getAll()
         val byId = concepts.associateBy { it.id }
         return contents.map { content ->
@@ -60,9 +60,7 @@ class DataExportRepositoryImpl @Inject constructor(
         return file
     }
 
-    private fun escapeCsv(value: String?): String {
-        return "\"${(value ?: "").replace("\"", "\"\"")}\""
-    }
+    private fun escapeCsv(value: String?): String { val v = value ?: ""; val safe = if (v.firstOrNull() in charArrayOf('=','+','-','@')) "'$v" else v; return "\"${safe.replace("\"", "\"\"")}\"" }
 
     private suspend fun json(): File {
         val target = File(context.cacheDir, "flashlearn-vocabulary.json.gz")
@@ -157,7 +155,7 @@ class DataExportRepositoryImpl @Inject constructor(
     }
 
     private fun xlsxCell(value: String?): String {
-        return "<c t=\"inlineStr\"><is><t>${xml(value)}</t></is></c>"
+        val v = value ?: ""; val safe = if (v.firstOrNull() in charArrayOf('=','+','-','@')) "'$v" else v; return "<c t=\"inlineStr\"><is><t>${xml(safe)}</t></is></c>"
     }
 
     private fun xml(value: String?): String {

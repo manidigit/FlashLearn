@@ -34,8 +34,7 @@ fun LibraryScreenV2(
     var duplicateMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair) }
-    LaunchedEffect(Unit) { viewModel.refresh() }
-
+    
     Column(
         Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(8f))
     ) {
@@ -146,7 +145,7 @@ fun LibraryScreenV2(
 
         Spacer(Modifier.height(tokens.compactGap))
         when {
-            state.isLoading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            state.isLoading && state.items.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = tokens.primary)
             }
             state.error != null -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -160,7 +159,7 @@ fun LibraryScreenV2(
                 verticalArrangement = Arrangement.spacedBy(tokens.itemGap),
                 contentPadding = PaddingValues(bottom = tokens.compactGap)
             ) {
-                items(state.items, key = { it.concept.id }) { item -> VocabularyCardV2(item, languagePair) { onOpen(item.concept.id) } }
+                items(state.items, key = { it.concept.id }) { item -> VocabularyCardV2(item, languagePair, onFavorite = { viewModel.toggleFavorite(item.concept.id) }) { onOpen(item.concept.id) } }
             }
         }
     }
@@ -186,7 +185,7 @@ private fun StatCard(title: String, value: Int, color: Color, background: Color,
 }
 
 @Composable
-private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onClick: () -> Unit) {
+private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onFavorite: () -> Unit, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = BorderStroke(tokens.dp(1f), tokens.outlineColor)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(12f), vertical = tokens.dp(11f)), verticalAlignment = Alignment.CenterVertically) {
@@ -215,7 +214,7 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
                 item.category?.let { Text(it.name, color = tokens.secondary, style = MaterialTheme.typography.labelSmall) }
             }
             Spacer(Modifier.width(tokens.compactGap))
-            Icon(Icons.Outlined.StarBorder, "موردعلاقه", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge))
+            IconButton(onClick = onFavorite) { Icon(if (item.concept.favorite) Icons.Outlined.Star else Icons.Outlined.StarBorder, "موردعلاقه", tint = if (item.concept.favorite) tokens.primary else tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge)) }
         }
     }
 }
@@ -228,7 +227,7 @@ private fun DifficultyPillV2(difficulty: VocabularyDifficulty?) {
         VocabularyDifficulty.MEDIUM -> Triple("متوسط", tokens.warning.copy(alpha = .10f), tokens.warning)
         VocabularyDifficulty.HARD -> Triple("سخت", tokens.error.copy(alpha = .10f), tokens.error)
         VocabularyDifficulty.VERY_HARD -> Triple("خیلی سخت", tokens.error.copy(alpha = .10f), tokens.error)
-        null -> Triple("آسان", tokens.success.copy(alpha = .10f), tokens.success)
+        null -> Triple("نامشخص", tokens.surfaceVariant, tokens.onSurfaceVariant)
     }
     Surface(shape = MaterialTheme.shapes.medium, color = v.second) {
         Text(v.first, color = v.third, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = tokens.dp(12f), vertical = tokens.dp(7f)))

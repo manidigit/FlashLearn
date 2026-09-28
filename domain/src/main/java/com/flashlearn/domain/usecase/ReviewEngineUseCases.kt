@@ -12,6 +12,10 @@ data class ReviewSelectionFilters(
     val reviewType: ReviewType,
     val difficulty: VocabularyDifficulty? = null,
     val categoryId: UUID? = null,
+    val difficulties: Set<VocabularyDifficulty> = emptySet(),
+    val categoryIds: Set<UUID> = emptySet(),
+    val sourceLanguage: String? = null,
+    val targetLanguage: String? = null,
     val tagId: UUID? = null,
     val now: Instant,
     val zoneId: ZoneId = ZoneId.systemDefault(),
@@ -35,6 +39,8 @@ internal fun wasReviewedToday(lastReviewedAt: Instant?, now: Instant, zoneId: Zo
     return lastReviewedAt.atZone(zoneId).toLocalDate() == now.atZone(zoneId).toLocalDate()
 }
 
+private object EmptyContentRepository : ContentRepository { override suspend fun findByUuid(uuid: UUID): Content? = null; override suspend fun find(conceptId: UUID, languageCode: String): Content? = null; override suspend fun upsert(content: Content) = Unit; override suspend fun getAll(): List<Content> = emptyList() }
+
 private object EmptyReviewHistoryRepository : ReviewHistoryRepository {
     override suspend fun insert(entry: ReviewHistory) = Unit
     override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
@@ -46,7 +52,8 @@ class SelectReviewQueueUseCase @Inject constructor(
     private val learningStateRepository: LearningStateRepository,
     private val difficultyStateRepository: DifficultyStateRepository,
     private val conceptTagRepository: ConceptTagRepository,
-    private val reviewHistoryRepository: ReviewHistoryRepository
+    private val reviewHistoryRepository: ReviewHistoryRepository,
+    private val contentRepository: ContentRepository
 ) {
     constructor(
         conceptRepository: ConceptRepository,
@@ -78,6 +85,7 @@ class SelectReviewQueueUseCase @Inject constructor(
         val tagsByConcept = conceptTagRepository.getAll()
             .groupBy(ConceptTag::conceptId)
             .mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
+        val contentsByConcept = contentRepository.getAll().groupBy { it.conceptId }
         val candidates = ArrayList<ReviewCandidate>(states.size)
 
         for (learning in states) {
@@ -85,8 +93,14 @@ class SelectReviewQueueUseCase @Inject constructor(
             val concept = conceptsById[learning.conceptId] ?: continue
             val difficulty = difficultiesById[learning.conceptId] ?: continue
             val tags = tagsByConcept[learning.conceptId].orEmpty()
-            if (filters.difficulty != null && difficulty.current != filters.difficulty) continue
-            if (filters.categoryId != null && concept.categoryId != filters.categoryId) continue
+            val contents = contentsByConcept[learning.conceptId].orEmpty()
+            if (filters.sourceLanguage != null && contents.none { it.languageCode.equals(filters.sourceLanguage, true) && it.text.isNotBlank() }) continue
+            if (filters.targetLanguage != null && contents.none { it.languageCode.equals(filters.targetLanguage, true) && it.text.isNotBlank() }) continue
+            if (filters.difficulties.isNotEmpty() && difficulty.current !in filters.difficulties) continue
+            else if (filters.difficulty != null && difficulty.current != filters.difficulty) continue
+            if (filters.categoryIds.isNotEmpty() && concept.categoryId !in filters.categoryIds) continue
+            else if (filters.categoryId != null && concept.categoryId != filters.categoryId) continue
+            if (filters.difficulty != null && && difficulty.current != filters.difficulty) continue
             if (filters.tagId != null && filters.tagId !in tags) continue
             candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }

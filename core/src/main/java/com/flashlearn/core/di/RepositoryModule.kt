@@ -32,4 +32,5 @@ abstract class RepositoryModule {
  @Binds @Singleton abstract fun bindReviewQueueRepository(i:RoomReviewQueueRepository):ReviewQueueRepository
  @Binds @Singleton abstract fun bindLanguageRepository(i:RoomLanguageRepository):LanguageRepository
  @Binds @Singleton abstract fun bindDataExportRepository(i:DataExportRepositoryImpl):DataExportRepository
+ @Binds @Singleton abstract fun bindDeletedConceptCleanupRepository(i:RoomDeletedConceptCleanupRepository):DeletedConceptCleanupRepository
 }

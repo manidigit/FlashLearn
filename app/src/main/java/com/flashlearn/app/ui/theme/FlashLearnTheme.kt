@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -36,9 +37,9 @@ fun FlashLearnTheme(
     val context = LocalContext.current
     
     // =========== Theme Loading ===========
-    val spec = FlashLearnThemeSpec.BUILT_IN.firstOrNull { it.id == themeId }
+    val spec = remember(themeId) { FlashLearnThemeSpec.BUILT_IN.firstOrNull { it.id == themeId }
         ?: FlashLearnThemeSpec.loadCustom(context).firstOrNull { it.id == themeId }
-        ?: FlashLearnThemeSpec.GROK
+        ?: FlashLearnThemeSpec.GROK }
     
     // =========== Dark Mode Detection ===========
     val isDark = when (appearance) {

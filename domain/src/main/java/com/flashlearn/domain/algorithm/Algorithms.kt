@@ -15,8 +15,8 @@ fun calculateLearningTransition(
     val nextDay = reviewedAt.atZone(zoneId).toLocalDate().plusDays(1)
         .atStartOfDay(zoneId).toInstant()
     return if (isCorrect) when (current) {
-        Stage.DAILY -> TransitionResult(Stage.WEEKLY, reviewedAt.plus(7, ChronoUnit.DAYS), failure, wrong)
-        Stage.WEEKLY -> TransitionResult(Stage.MONTHLY, reviewedAt.plus(30, ChronoUnit.DAYS), failure, wrong)
+        Stage.DAILY -> TransitionResult(Stage.WEEKLY, reviewedAt.atZone(zoneId).toLocalDate().plusDays(7).atStartOfDay(zoneId).toInstant(), failure, wrong)
+        Stage.WEEKLY -> TransitionResult(Stage.MONTHLY, reviewedAt.atZone(zoneId).toLocalDate().plusDays(30).atStartOfDay(zoneId).toInstant(), failure, wrong)
         Stage.MONTHLY -> TransitionResult(Stage.LEARNED, null, failure, wrong)
         Stage.LEARNED -> TransitionResult(Stage.LEARNED, null, failure, wrong)
     } else when (current) {

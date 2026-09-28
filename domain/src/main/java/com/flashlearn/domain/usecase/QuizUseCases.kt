@@ -98,9 +98,10 @@ class GenerateQuizQuestionUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val difficultyStateRepository: DifficultyStateRepository
 ) {
-    private var bank: QuizBank? = null
+    @Volatile private var bank: QuizBank? = null
+    private val bankMutex = kotlinx.coroutines.sync.Mutex()
 
-    suspend fun refreshBank() {
+    suspend fun refreshBank() = bankMutex.withLock {
         val contents = contentRepository.getAll()
         bank = QuizBank(
             contents = contents,
@@ -109,6 +110,8 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
         )
     }
+
+    private suspend fun snapshotBank(): QuizBank = bank ?: run { refreshBank(); bank!! }
 
     suspend operator fun invoke(
         concept: Concept,
@@ -119,17 +122,14 @@ class GenerateQuizQuestionUseCase @Inject constructor(
     ): QuizQuestionResult {
         if (!concept.active) return QuizQuestionResult.FlashcardFallback
 
-        val snapshot = bank ?: run {
-            refreshBank()
-            bank!!
-        }
+        val snapshot = snapshotBank()
         val contentsByConcept = snapshot.contentsByConcept
         val conceptContents = contentsByConcept[concept.id].orEmpty()
         // Quiz prompts are always Spanish. The answer language is still controlled
         // by the active target language, which gives the two documented modes:
         // Spanish -> Spanish (Word Recognition) and Spanish -> Persian (Meaning Recognition).
         val prompt = conceptContents.firstOrNull {
-            it.languageCode.equals("es", true) && it.text.isNotBlank()
+            it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank()
         } ?: return QuizQuestionResult.FlashcardFallback
         val correct = conceptContents.firstOrNull {
             it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank()

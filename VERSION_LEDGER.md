@@ -1,3 +1,15 @@
+| **6.56** | **656** | 2026-09-28 | Comprehensive audit hardening: review flow, language-pair routing, backup/export integrity, one-time starter data, periodic soft-delete cleanup | Pending CI |
+
+## v6.56 release alignment
+- app/build.gradle.kts: versionName 6.56 / versionCode 656.
+- CI: current gate 6.56/656; previous-version upgrade gate 6.55/655.
+- Learning and Difficulty remain independent systems. Weekly/Monthly correct-review dates are aligned to local calendar-day start; legacy monthly/path fields remain compatibility data only.
+- Home ready counts use the active language pair and the same review eligibility rule as the review queue; denominators remain stage totals.
+- Translation editing is reconciled by target-language translation index, including deletion of removed meanings.
+- Starter data is guarded by a persisted one-time flag.
+- Deleted inactive concepts are periodically purged after 90 days.
+- Verification is pending the authoritative GitHub Actions run.
+
 | **6.54** | **654** | 2026-09-28 | Room database optimization: 6→7 safe migration, query indexes, atomic GZIP JSON export | Pending CI |
 
 ## v6.54 release alignment

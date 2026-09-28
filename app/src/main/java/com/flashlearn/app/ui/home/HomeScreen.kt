@@ -46,6 +46,7 @@ fun HomeScreen(
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
     val state by viewModel.state.collectAsState()
+    LaunchedEffect(languagePair) { viewModel.refresh(languagePair) }
     val summary = state.summary
     val stats = state.basicStats
     val total = stats?.totalActiveWords ?: summary?.activeConceptCount ?: 0

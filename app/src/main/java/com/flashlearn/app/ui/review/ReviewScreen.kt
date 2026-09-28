@@ -90,8 +90,8 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
                 state.isLoading -> CircularProgressIndicator()
                 state.isFinished -> FinishCard(state, onFinished)
                 state.selectedMode == ReviewMode.QUIZ && state.quizCard != null -> QuizCard(state, viewModel)
-                state.answerFeedback != null -> FeedbackCard(state)
-                state.selectedMode == ReviewMode.QUIZ -> QuizUnavailableCard()
+                state.answerFeedback != null -> FeedbackCard(state, viewModel)
+                state.selectedMode == ReviewMode.QUIZ -> QuizUnavailableCard(viewModel)
                 state.card != null -> FlashCard(state, viewModel)
             }
     }
@@ -310,14 +310,14 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     val card = state.card
     val context = androidx.compose.ui.platform.LocalContext.current
     var ttsReady by remember { mutableStateOf(false) }
-    val tts = remember(context) {
+    val tts = remember(context, state.sourceLanguage) {
         lateinit var engine: TextToSpeech
         engine = TextToSpeech(context) { status ->
-            val spanish = Locale("es", "ES")
+            val sourceLocale = Locale.forLanguageTag(state.sourceLanguage)
             ttsReady = status == TextToSpeech.SUCCESS &&
-                engine.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE
+                engine.isLanguageAvailable(sourceLocale) >= TextToSpeech.LANG_AVAILABLE
             if (ttsReady) {
-                engine.language = spanish
+                engine.language = sourceLocale
                 engine.setSpeechRate(0.92f)
             }
         }
@@ -342,14 +342,14 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
             Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             OutlinedButton(
                 onClick = {
-                    val spanish = Locale("es", "ES")
-                    if (tts.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE) {
-                        tts.language = spanish
+                    val sourceLocale = Locale.forLanguageTag(state.sourceLanguage)
+                    if (tts.isLanguageAvailable(sourceLocale) >= TextToSpeech.LANG_AVAILABLE) {
+                        tts.language = sourceLocale
                         tts.speak(quiz.promptText, TextToSpeech.QUEUE_FLUSH, null, "flashlearn_quiz_prompt")
                     }
                 },
                 enabled = !answered && ttsReady
-            ) { Text("🔊 پخش سؤال به اسپانیایی") }
+            ) { Text("🔊 پخش سؤال") }
             if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
             if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) }
         }
@@ -385,13 +385,13 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     }
 }
 
-@Composable private fun QuizUnavailableCard() {
+@Composable private fun QuizUnavailableCard(vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge); Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
-@Composable private fun FeedbackCard(state: ReviewUiState) {
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge); Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(tokens.compactGap)); Button(onClick = vm::skipCurrentCard) { Text("رد کردن کارت") } } } }
+@Composable private fun FeedbackCard(state: ReviewUiState, vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
     val f = state.answerFeedback ?: return
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط") } } }
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط"); Button(onClick = vm::nextCard, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text("کارت بعدی") } } } }
 @Composable private fun FinishCard(state: ReviewUiState, onFinished: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall); Text("${state.answered} کارت پاسخ داده شد"); Text("صحیح: ${state.correct} • غلط: ${state.wrong}"); Text("دقت این جلسه: ${if (state.answered == 0) 0 else state.correct * 100 / state.answered}٪"); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("بازگشت به خانه") } } } }

@@ -51,7 +51,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch(Dispatchers.IO) {
-            runCatching { context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
+            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error("فایل پشتیبان بیش از ۲۰ مگابایت است") ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
                 .map { it.removePrefix("\uFEFF").trimStart() }
                 .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.") }
                 .onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطا"}") }

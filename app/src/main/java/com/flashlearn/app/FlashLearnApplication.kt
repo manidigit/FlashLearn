@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 @InstallIn(SingletonComponent::class)
 interface DataRefreshEntryPoint {
     fun refreshDataUseCase(): RefreshDataUseCase
+    fun cleanupDeletedConceptsUseCase(): com.flashlearn.domain.usecase.CleanupDeletedConceptsUseCase
 }
 
 @HiltAndroidApp
@@ -24,8 +25,9 @@ class FlashLearnApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val refreshData = EntryPointAccessors.fromApplication(this, DataRefreshEntryPoint::class.java)
-            .refreshDataUseCase()
-        applicationScope.launch { runCatching { refreshData() } }
+        val entryPoint = EntryPointAccessors.fromApplication(this, DataRefreshEntryPoint::class.java)
+        val refreshData = entryPoint.refreshDataUseCase()
+        val cleanupDeleted = entryPoint.cleanupDeletedConceptsUseCase()
+        applicationScope.launch { runCatching { refreshData() }; runCatching { cleanupDeleted() } }
     }
 }

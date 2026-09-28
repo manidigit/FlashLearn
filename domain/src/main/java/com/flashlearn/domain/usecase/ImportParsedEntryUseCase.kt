@@ -28,8 +28,7 @@ class ImportParsedEntryUseCase @Inject constructor(
         if (source.isBlank() || translations.isEmpty()) throw IllegalArgumentException("مدخل ناقص")
         if (entry.confidence < LOW_CONFIDENCE_THRESHOLD) { reviewQueueRepository.upsert(ReviewQueueItem(UUID.randomUUID(), null, source, translations.joinToString(" / "), entry.confidence, correction, ReviewQueueStatus.PENDING, lineNumber, "اعتماد پایین؛ نیازمند بررسی دستی")); return@withTransaction REVIEW_SENTINEL }
         val sourceKey = computeCanonicalKey(source)
-        val activeIds = conceptRepository.getAllActive().map { it.id }.toSet()
-        val existingSource = contentRepository.getAll().firstOrNull { it.conceptId in activeIds && it.languageCode == sourceLanguage && computeCanonicalKey(it.text) == sourceKey }
+        val existingSource = contentRepository.findByCanonicalKey(sourceLanguage, sourceKey).firstOrNull { conceptRepository.get(it.conceptId)?.active == true }
         val conceptId = if (existingSource == null || mode == ImportMode.ADD_NEW) createConcept.createInTransaction(CreateConceptCommand(source, translations.first(), sourceLanguage, targetLanguage, notes = extractPlainNotes(entry), entryType = entry.entryType.toDomainEntryType(), mergeExistingSource = false)) else existingSource.conceptId
         val existingTranslations = contentRepository.findAll(conceptId, targetLanguage)
         val existingKeys = existingTranslations.map { computeCanonicalKey(it.text) }.toSet()

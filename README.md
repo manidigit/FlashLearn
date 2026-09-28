@@ -2,7 +2,7 @@
 
 Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
-**Current version:** 6.55 (versionCode 655)
+**Current version:** 6.56 (versionCode 656)
 
 ## Core features
 
@@ -12,6 +12,7 @@ Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compo
 - Bulk vocabulary import with parser warnings and review queue
 - Categories, favorites, tags and duplicate cleanup
 - Progress, statistics and achievements\n- Home review-ready counts separated from total words in each Learning stage
+- Review session language-pair routing, explicit flashcard next-card/quiz-skip controls, and same-day eligibility aligned with the active review queue
 - Offline-first Room database
 - Multiple built-in themes with theme-owned layout, navigation, icon and spacing profiles; custom theme JSON compatibility is preserved
 - Backup/restore with legacy-format compatibility

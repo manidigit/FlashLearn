@@ -106,41 +106,31 @@ class RefreshDataUseCase @Inject constructor(
 
     private suspend fun migrateContentToVersion3(): Pair<Int, Int> {
         var changed = 0
-        val all = contentRepository.getAll()
-        all.groupBy { it.conceptId to it.languageCode }.forEach { (_, rows) ->
-            var nextIndex = 0
-            rows.sortedWith(compareBy({ it.translationIndex }, { it.id })).forEach { row ->
-                val parts = row.text
-                    .split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
-                    .map(String::trim)
-                    .filter(String::isNotBlank)
-                    .distinctBy(::computeCanonicalKey)
-                if (parts.size <= 1) {
-                    if (row.translationIndex != nextIndex) {
-                        contentRepository.upsert(row.copy(translationIndex = nextIndex))
+        val groups = contentRepository.getAll().groupBy { it.conceptId to it.languageCode }
+        groups.forEach { (key, rows) ->
+            val language = key.second
+            if (!language.equals("fa", true)) return@forEach
+            val ordered = rows.sortedWith(compareBy({ it.translationIndex }, { it.id }))
+            val parts = ordered.flatMap { row ->
+                row.text.split(Regex("\\s*/\\s*|\\s*؛\\s*|\\s*;\\s*"))
+                    .map(String::trim).filter(String::isNotBlank).distinctBy(::computeCanonicalKey)
+                    .map { text -> row to text }
+            }
+            val normalized = parts.distinctBy { computeCanonicalKey(it.second) }
+            val needsRewrite = ordered.map { computeCanonicalKey(it.text) to it.translationIndex } != normalized.mapIndexed { i, p -> computeCanonicalKey(p.second) to i }
+            if (needsRewrite) {
+                contentRepository.deleteByConceptAndLanguage(key.first, language)
+                normalized.forEachIndexed { index, pair ->
+                    val row = pair.first
+                    val text = pair.second
+                    contentRepository.upsert(row.copy(id = if (index == 0) row.id else UUID.randomUUID(), text = text, canonicalKey = computeCanonicalKey(text), translationIndex = index))
+                    changed++
+                }
+            } else {
+                ordered.forEachIndexed { index, row ->
+                    if (row.translationIndex != index) {
+                        contentRepository.upsert(row.copy(translationIndex = index))
                         changed++
-                    }
-                    nextIndex++
-                } else {
-                    parts.forEach { text ->
-                        val index = nextIndex++
-                        val key = computeCanonicalKey(text)
-                        if (index == 0) {
-                            if (row.text != text || row.canonicalKey != key || row.translationIndex != index) {
-                                contentRepository.upsert(row.copy(text = text, canonicalKey = key, translationIndex = index))
-                                changed++
-                            }
-                        } else {
-                            contentRepository.insertTranslation(
-                                row.copy(
-                                    id = UUID.randomUUID(),
-                                    text = text,
-                                    canonicalKey = key,
-                                    translationIndex = index
-                                )
-                            )
-                            changed++
-                        }
                     }
                 }
             }

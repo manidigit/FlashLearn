@@ -14,6 +14,7 @@ import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
 import com.flashlearn.domain.usecase.RemoveExactDuplicateConceptsUseCase
 import com.flashlearn.domain.usecase.UpdateTagUseCase
+import com.flashlearn.domain.usecase.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -74,7 +75,8 @@ class LibraryViewModel @Inject constructor(
     private val createTagUseCase: CreateTagUseCase,
     private val updateTagUseCase: UpdateTagUseCase,
     private val deleteTagUseCase: DeleteTagUseCase,
-    private val removeExactDuplicates: RemoveExactDuplicateConceptsUseCase
+    private val removeExactDuplicates: RemoveExactDuplicateConceptsUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(LibraryUiState())
     val state: StateFlow<LibraryUiState> = _state.asStateFlow()
@@ -102,6 +104,8 @@ class LibraryViewModel @Inject constructor(
     fun renameTag(id: UUID, name: String, onDone: (String?) -> Unit = {}) = runTagMutation(onDone) { updateTagUseCase(id, name) }
     fun removeTag(id: UUID, onDone: (String?) -> Unit = {}) = runTagMutation(onDone) { deleteTagUseCase(id); if (_state.value.selectedTagId == id) _state.value = _state.value.copy(selectedTagId = null) }
     private fun runTagMutation(onDone: (String?) -> Unit, block: suspend () -> Unit) { if (_state.value.isTagBusy) return; viewModelScope.launch { _state.value = _state.value.copy(isTagBusy = true, error = null); runCatching { block(); refresh() }.onSuccess { onDone(null) }.onFailure { onDone(it.message ?: "خطا در مدیریت Tag") }; _state.value = _state.value.copy(isTagBusy = false) } }
+
+    fun toggleFavorite(id: UUID) { viewModelScope.launch { runCatching { toggleFavoriteUseCase(id); refresh() }.onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در علاقه‌مندی") } } }
 
     fun removeExactDuplicates(onDone: (Int) -> Unit = {}) { if (_state.value.isDuplicateCleanupBusy) return; viewModelScope.launch { _state.value = _state.value.copy(isDuplicateCleanupBusy = true, error = null); runCatching { removeExactDuplicates(_state.value.sourceLanguage, _state.value.targetLanguage) }.onSuccess { count -> refresh(); onDone(count) }.onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در پاکسازی تکراری‌ها") }; _state.value = _state.value.copy(isDuplicateCleanupBusy = false) } }
 

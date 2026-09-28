@@ -31,7 +31,9 @@ fun AddWordMethodScreen(
     onRestoreBackup: () -> Unit,
     libraryState: LibraryUiState = LibraryUiState(),
     onRefreshLibrary: () -> Unit = {},
-    onFindDuplicates: () -> Unit = {}
+    onFindDuplicates: () -> Unit = {},
+    needsReviewCount: Int = 0,
+    onNeedsReview: () -> Unit = {}
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
     Column(
@@ -54,6 +56,7 @@ fun AddWordMethodScreen(
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(tokens.dp(1f), MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
             Row(Modifier.fillMaxWidth().padding(tokens.contentGap), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
                 StatAction(Icons.Outlined.Search, "پیدا کردن تکراری‌ها", onFindDuplicates, Modifier.weight(1f))
+                StatAction(Icons.Outlined.RateReview, "نیازمند بررسی${if (needsReviewCount > 0) " ($needsReviewCount)" else ""}", onNeedsReview, Modifier.weight(1f))
                 StatAction(Icons.Outlined.Refresh, "رفرش", onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("تعداد کل واژگان", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

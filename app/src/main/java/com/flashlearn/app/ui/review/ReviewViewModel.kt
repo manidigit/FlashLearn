@@ -44,6 +44,7 @@ data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, v
 data class ReviewAnswerFeedbackUiState(val isCorrect: Boolean, val stageLabel: String, val difficultyLabel: String, val correctAnswerText: String? = null, val answered: Int, val correct: Int, val wrong: Int)
 
 data class ReviewUiState(
+    val sourceLanguage: String = "es",
     val isLoading: Boolean = false,
     val isSelectingMode: Boolean = true,
     val selectedMode: ReviewMode = ReviewMode.QUIZ,
@@ -119,6 +120,7 @@ class ReviewViewModel @Inject constructor(
     fun setLanguagePair(pair: LanguagePair) {
         if (pair == activeLanguagePair) return
         activeLanguagePair = pair
+        _state.value = _state.value.copy(sourceLanguage = pair.source.code)
         if (sessionId != null || queue.isNotEmpty()) { sessionGeneration++; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap() }
     }
 
@@ -238,7 +240,7 @@ class ReviewViewModel @Inject constructor(
         val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
         val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
         val results = mutableListOf<ReviewCandidate>()
-        for (d in difficultyOptions) for (c in categoryOptions) results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now, maxCards = maxCards))
+        results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulties = difficultyOptions, categoryIds = categories, sourceLanguage = activeLanguagePair.source.code, targetLanguage = activeLanguagePair.target.code, now = now, maxCards = SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT))
         val unique = results.distinctBy { it.concept.id }
         return if (reviewType == ReviewType.RANDOM || reviewType == ReviewType.LEARNED) unique.shuffled().take(maxCards) else unique.take(maxCards)
     }
@@ -302,8 +304,11 @@ class ReviewViewModel @Inject constructor(
         }
     }
 
+    fun skipCurrentCard() { if (isAdvancing || _state.value.isSubmitting || _state.value.isFinished) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
+
     fun nextCard() { if (_state.value.isSubmitting || _state.value.answerFeedback == null || isAdvancing) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
     fun resetAfterFinished() {
+        refreshAvailableReviewCount()
         sessionGeneration++
         sessionId = null
         queue = emptyList()

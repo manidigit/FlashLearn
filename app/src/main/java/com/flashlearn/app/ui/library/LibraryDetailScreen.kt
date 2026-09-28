@@ -59,9 +59,12 @@ class LibraryDetailViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
     private val _isBusy = MutableStateFlow(false)
+    private var activeSourceLanguage = "es"
+    private var activeTargetLanguage = "fa"
     val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
 
     fun load(id: UUID, sourceLanguage: String = "es", targetLanguage: String = "fa") = viewModelScope.launch {
+        activeSourceLanguage = sourceLanguage; activeTargetLanguage = targetLanguage; _item.value = null; _message.value = null
         runCatching {
             val c = concepts.get(id) ?: error("لغت پیدا نشد")
             val cc = contents.getAll().filter { it.conceptId == id }
@@ -75,7 +78,7 @@ class LibraryDetailViewModel @Inject constructor(
         if (_isBusy.value) return@launch
         val id = _item.value?.concept?.id ?: return@launch
         _isBusy.value = true
-        runCatching { toggleFavorite(id) }.onSuccess { load(id) }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
+        runCatching { toggleFavorite(id) }.onSuccess { load(id, activeSourceLanguage, activeTargetLanguage) }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
     fun save(source: String, target: String, notes: String?, pronunciation: String?, example: String?, entryType: EntryType, categoryId: UUID?, createCategoryName: String?, sourceLanguage: String, targetLanguage: String, onSuccess: () -> Unit = {}) = viewModelScope.launch {
@@ -156,6 +159,8 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(source, { source = it }, Modifier.fillMaxWidth(), label = { Text("واژه یا عبارت") }, singleLine = true)
             OutlinedTextField(target, { target = it }, Modifier.fillMaxWidth(), label = { Text("ترجمه") }, singleLine = true)
+            OutlinedTextField(pronunciation, { pronunciation = it }, Modifier.fillMaxWidth(), label = { Text("تلفظ") }, singleLine = true)
+            OutlinedTextField(example, { example = it }, Modifier.fillMaxWidth(), label = { Text("مثال") }, minLines = 2, maxLines = 3)
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = if (addingNewCategory) categoryName else categories.firstOrNull { it.id == selectedCategoryId }?.name ?: categoryName.ifBlank { "انتخاب دسته‌بندی" },

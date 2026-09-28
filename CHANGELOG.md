@@ -1,3 +1,18 @@
+## v6.56 — Comprehensive audit hardening
+- Fixed flashcard feedback dead-end with an explicit **کارت بعدی** action and added **رد کردن کارت** when a quiz cannot generate enough distractors.
+- Quiz prompts and TTS now follow the active source language; review setup now receives the configured language pair and maximum-card setting.
+- Home ready-review counts now use the same language-pair and same-day eligibility rules as the review queue, while stage totals remain aligned with Statistics.
+- Editing translations now reconciles, reorders, adds and removes target-language rows instead of leaving stale meanings behind.
+- Starter data is one-time only; deleting all vocabulary no longer recreates the sample set on every Home refresh.
+- Backup/export hardening: active-only CSV/JSON/XLSX exports, spreadsheet formula escaping, stronger enum validation, preservation of vocabulary metadata and translation rows, settings timestamp-aware restore, and periodic cleanup of old soft-deleted concepts.
+- Added periodic purge of inactive vocabulary older than 90 days, checked every 30 days.
+- Fixed local-day scheduling for Weekly/Monthly advancement and retained the independent Learning/Difficulty contract; legacy monthly/path fields remain persistence-compatible and do not drive Difficulty.
+- Added library favorite interaction, corrected detail reload language-pair behavior, and preserved pronunciation/example fields in the edit form.
+- Added explicit Android backup policy and bounded backup-file restore input.
+
+## Verification
+GitHub Actions is authoritative. v6.56 is not verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+
 ## v6.55 — Grok icon system + theme-owned visual profile
 - Advanced application identity to **6.55 / versionCode 655**; previous-version gate is **6.54 / 654**.
 - Grok action icons now use a theme-owned outlined icon profile while active navigation uses a separate theme-owned filled profile.

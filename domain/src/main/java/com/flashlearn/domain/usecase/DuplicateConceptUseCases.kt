@@ -12,7 +12,10 @@ import javax.inject.Inject
 class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val contentRepository: ContentRepository,
-    private val database: FlashLearnDatabase
+    private val database: FlashLearnDatabase,
+    private val learningRepository: com.flashlearn.domain.repository.LearningStateRepository,
+    private val difficultyRepository: com.flashlearn.domain.repository.DifficultyStateRepository,
+    private val conceptTagRepository: com.flashlearn.domain.repository.ConceptTagRepository
 ) {
     suspend operator fun invoke(sourceLanguage: String = "es", targetLanguage: String = "fa"): Int = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
@@ -26,6 +29,9 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
         for (group in groups) {
             val ordered = group.sortedWith(compareBy<Concept> { it.createdAt }.thenBy { it.id.toString() })
             val survivor = ordered.first()
+            val survivorLearning = learningRepository.get(survivor.id)
+            val survivorDifficulty = difficultyRepository.get(survivor.id)
+            val survivorTags = conceptTagRepository.getTagsForConcept(survivor.id).toSet()
             val survivorTargets = contentRepository.findAll(survivor.id, targetLanguage).sortedBy { it.translationIndex }
             val existingTargetKeys = survivorTargets.map { computeCanonicalKey(it.text) }.filter(String::isNotBlank).toMutableSet()
             var nextIndex = (survivorTargets.maxOfOrNull { it.translationIndex } ?: -1) + 1
@@ -34,6 +40,18 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
                     val targetKey = computeCanonicalKey(content.text)
                     if (targetKey.isNotBlank() && existingTargetKeys.add(targetKey)) contentRepository.insertTranslation(Content(UUID.randomUUID(), survivor.id, targetLanguage, content.text.trim(), targetKey, notes = content.notes, pronunciation = content.pronunciation, example = content.example, translationIndex = nextIndex++, grammarNote = content.grammarNote, possibleCorrection = content.possibleCorrection))
                 }
+                learningRepository.get(duplicate.id)?.let { duplicateLearning ->
+                    if (survivorLearning != null) {
+                        val rank = mapOf(com.flashlearn.domain.model.Stage.DAILY to 0, com.flashlearn.domain.model.Stage.WEEKLY to 1, com.flashlearn.domain.model.Stage.MONTHLY to 2, com.flashlearn.domain.model.Stage.LEARNED to 3)
+                        val preferred = if (rank.getValue(duplicateLearning.stage) > rank.getValue(survivorLearning.stage)) duplicateLearning else survivorLearning
+                        learningRepository.upsert(preferred.copy(id = survivorLearning.id, totalCorrect = survivorLearning.totalCorrect + duplicateLearning.totalCorrect, totalWrong = survivorLearning.totalWrong + duplicateLearning.totalWrong, lastReviewedAt = listOfNotNull(survivorLearning.lastReviewedAt, duplicateLearning.lastReviewedAt).maxOrNull()))
+                    }
+                }
+                difficultyRepository.get(duplicate.id)?.let { duplicateDifficulty ->
+                    if (survivorDifficulty != null && duplicateDifficulty.current.ordinal > survivorDifficulty.current.ordinal) difficultyRepository.upsert(duplicateDifficulty.copy(id = survivorDifficulty.id))
+                }
+                conceptRepository.update(survivor.copy(favorite = survivor.favorite || duplicate.favorite, updatedAt = Instant.now()))
+                conceptTagRepository.getTagsForConcept(duplicate.id).filter { it !in survivorTags }.forEach { conceptTagRepository.insert(com.flashlearn.domain.model.ConceptTag(survivor.id, it)) }
                 conceptRepository.softDelete(duplicate.id, Instant.now()); removed++
             }
         }

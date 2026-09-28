@@ -14,6 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NeedsReviewViewModel @Inject constructor(private val repository: ReviewQueueRepository) : ViewModel() {
+    init { refresh() }
     private val _items = MutableStateFlow<List<ReviewQueueItem>>(emptyList())
     val items: StateFlow<List<ReviewQueueItem>> = _items.asStateFlow()
 

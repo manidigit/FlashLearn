@@ -53,7 +53,7 @@ class CreateConceptUseCase @Inject constructor(
         val activeConcepts = conceptRepository.getAllActive()
         if (command.mergeExistingSource) {
             val existing = activeConcepts.firstOrNull { concept ->
-                contentRepository.find(concept.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey
+                contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).any { it.conceptId == concept.id }
             }
             if (existing != null) {
                 val translations = contentRepository.findAll(existing.id, command.targetLanguage)
@@ -95,7 +95,7 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
         val activeConcepts = conceptRepository.getAllActive().filter { it.id != command.conceptId }
         val requestedKeys = requestedTranslations.map(::computeCanonicalKey).toSet()
         val duplicate = activeConcepts.any { other ->
-            contentRepository.find(other.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey &&
+            contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).any { it.conceptId == other.id } &&
                 contentRepository.findAll(other.id, command.targetLanguage).any { computeCanonicalKey(it.text) in requestedKeys }
         }
         if (duplicate) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
@@ -103,12 +103,14 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
         conceptRepository.update(concept.copy(entryType = command.entryType ?: concept.entryType, categoryId = if (command.preserveCategory) concept.categoryId else command.categoryId, updatedAt = now))
         val source = contentRepository.find(command.conceptId, command.sourceLanguage)
         contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example, translationIndex = source?.translationIndex ?: 0, grammarNote = source?.grammarNote, possibleCorrection = source?.possibleCorrection))
-        val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage)
-        val firstRequested = requestedTranslations.first(); val firstKey = computeCanonicalKey(firstRequested); val firstExisting = existingTranslations.firstOrNull()
-        contentRepository.upsert(Content(firstExisting?.id ?: UUID.randomUUID(), command.conceptId, command.targetLanguage, firstRequested, firstKey, translationIndex = firstExisting?.translationIndex ?: 0, grammarNote = firstExisting?.grammarNote, possibleCorrection = firstExisting?.possibleCorrection))
-        val existingKeysAfterFirst = existingTranslations.drop(1).map { computeCanonicalKey(it.text) }.toMutableSet()
-        var nextIndex = maxOf(existingTranslations.maxOfOrNull { it.translationIndex } ?: 0, firstExisting?.translationIndex ?: 0) + 1
-        requestedTranslations.drop(1).forEach { text -> val key = computeCanonicalKey(text); if (existingKeysAfterFirst.add(key) && key != firstKey) contentRepository.insertTranslation(Content(UUID.randomUUID(), command.conceptId, command.targetLanguage, text, key, translationIndex = nextIndex++)) }
+        val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage).sortedBy { it.translationIndex }
+        requestedTranslations.forEachIndexed { index, text ->
+            val key = computeCanonicalKey(text)
+            val existing = existingTranslations.getOrNull(index)
+            if (existing == null) contentRepository.insertTranslation(Content(UUID.randomUUID(), command.conceptId, command.targetLanguage, text, key, translationIndex = index))
+            else contentRepository.upsert(existing.copy(text = text, canonicalKey = key, translationIndex = index))
+        }
+        existingTranslations.drop(requestedTranslations.size).forEach { contentRepository.deleteById(it.id) }
         command.conceptId
     }
 }
@@ -117,13 +119,15 @@ class DeleteConceptUseCase @Inject constructor(private val conceptRepository: Co
     suspend operator fun invoke(conceptId: UUID) = database.withTransaction { if (conceptRepository.get(conceptId) == null) error("Concept not found: $conceptId"); conceptRepository.softDelete(conceptId, Instant.now()) }
 }
 
-class EnsureStarterDataUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val categoryRepository: CategoryRepository, private val createConcept: CreateConceptUseCase, private val database: FlashLearnDatabase) {
+class EnsureStarterDataUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val categoryRepository: CategoryRepository, private val createConcept: CreateConceptUseCase, private val database: FlashLearnDatabase, private val settingsRepository: SettingsRepository) {
+    companion object { const val STARTER_DATA_CREATED = "starter_data_created" }
     suspend operator fun invoke(): Int = database.withTransaction {
-        if (conceptRepository.getAllActive().isNotEmpty()) return@withTransaction 0
+        if (settingsRepository.getString(STARTER_DATA_CREATED, "false") == "true") return@withTransaction 0
+        if (conceptRepository.getAllActive().isNotEmpty()) { settingsRepository.setString(STARTER_DATA_CREATED, "true"); return@withTransaction 0 }
         val categoryNames = listOf("مکالمه روزمره", "سفر", "غذا", "افعال پایه")
         val categories = categoryNames.associateWith { name -> categoryRepository.findByName(name) ?: run { val category = Category(UUID.randomUUID(), name); categoryRepository.insert(category); category } }
         val starter = listOf(Triple("hola", "سلام", "مکالمه روزمره"), Triple("gracias", "ممنون / متشکرم", "مکالمه روزمره"), Triple("por favor", "لطفاً", "مکالمه روزمره"), Triple("adiós", "خداحافظ", "مکالمه روزمره"), Triple("buenos días", "صبح بخیر", "مکالمه روزمره"), Triple("¿cómo estás?", "حالت چطور است؟", "مکالمه روزمره"), Triple("agua", "آب", "غذا"), Triple("comida", "غذا", "غذا"), Triple("café", "قهوه", "غذا"), Triple("casa", "خانه", "مکالمه روزمره"), Triple("viaje", "سفر", "سفر"), Triple("hotel", "هتل", "سفر"), Triple("ir", "رفتن", "افعال پایه"), Triple("venir", "آمدن", "افعال پایه"), Triple("comer", "خوردن", "افعال پایه"), Triple("beber", "نوشیدن", "افعال پایه"), Triple("hablar", "صحبت کردن", "افعال پایه"), Triple("aprender", "یاد گرفتن", "افعال پایه"), Triple("entender", "فهمیدن", "افعال پایه"), Triple("ayuda", "کمک", "سفر"))
-        starter.forEach { (source, target, categoryName) -> createConcept(CreateConceptCommand(sourceText = source, targetText = target, categoryId = categories.getValue(categoryName).id, notes = "واژهٔ نمونهٔ اولیه FlashLearn")) }; starter.size
+        starter.forEach { (source, target, categoryName) -> createConcept.createInTransaction(CreateConceptCommand(sourceText = source, targetText = target, categoryId = categories.getValue(categoryName).id, notes = "واژهٔ نمونهٔ اولیه FlashLearn")) }; settingsRepository.setString(STARTER_DATA_CREATED, "true"); starter.size
     }
 }
 
@@ -152,5 +156,20 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         learningStateRepository.upsert(updatedLearning); difficultyStateRepository.upsert(newDifficulty)
         reviewHistoryRepository.insert(ReviewHistory(UUID.randomUUID(), request.sessionId, request.reviewAttemptId, request.conceptId, request.reviewedAt, request.isCorrect, request.reviewType))
         SubmitReviewAnswerResult(updatedLearning, newDifficulty, transition)
+    }
+}
+
+
+class CleanupDeletedConceptsUseCase @Inject constructor(
+    private val repository: com.flashlearn.domain.repository.DeletedConceptCleanupRepository,
+    private val settingsRepository: SettingsRepository
+) {
+    companion object { const val LAST_RUN = "deleted_cleanup.last_run"; const val PERIOD_DAYS = 30L; const val RETENTION_DAYS = 90L }
+    suspend operator fun invoke(now: Instant = Instant.now()): Int {
+        val last = settingsRepository.getString(LAST_RUN, "").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() }
+        if (last != null && last.plusSeconds(PERIOD_DAYS * 86400L).isAfter(now)) return 0
+        val removed = repository.purgeInactiveBefore(now.minusSeconds(RETENTION_DAYS * 86400L))
+        settingsRepository.setString(LAST_RUN, now.toString())
+        return removed
     }
 }

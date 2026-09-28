@@ -39,12 +39,16 @@ class Converters {
     @Query("SELECT * FROM concepts") suspend fun getAll(): List<ConceptEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<ConceptEntity>)
     @Query("UPDATE concepts SET active = 0, updatedAt = :now WHERE id = :id") suspend fun softDelete(id: UUID, now: Instant)
+    @Query("SELECT id FROM concepts WHERE active = 0 AND updatedAt < :cutoff") suspend fun getInactiveIdsBefore(cutoff: Instant): List<UUID>
+    @Query("DELETE FROM concepts WHERE id = :id") suspend fun deleteById(id: UUID)
     @Query("DELETE FROM concepts") suspend fun deleteAll()
 }
 @Dao interface ContentDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(entity: ContentEntity)
     @Update suspend fun update(entity: ContentEntity)
     @Query("SELECT * FROM contents WHERE id = :id LIMIT 1") suspend fun getById(id: UUID): ContentEntity?
+    @Query("DELETE FROM contents WHERE id = :id") suspend fun deleteById(id: UUID)
+    @Query("DELETE FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode") suspend fun deleteByConceptAndLanguage(conceptId: UUID, languageCode: String)
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode ORDER BY translationIndex ASC LIMIT 1") suspend fun getByConceptIdAndLanguage(conceptId: UUID, languageCode: String): ContentEntity?
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId AND languageCode = :languageCode ORDER BY translationIndex ASC") suspend fun getAllByConceptIdAndLanguage(conceptId: UUID, languageCode: String): List<ContentEntity>
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId") suspend fun getAllByConceptId(conceptId: UUID): List<ContentEntity>
@@ -52,6 +56,7 @@ class Converters {
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey = :canonicalKey") suspend fun findByCanonicalKey(languageCode: String, canonicalKey: String): List<ContentEntity>
     @Query("SELECT * FROM contents") suspend fun getAll(): List<ContentEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<ContentEntity>)
+    @Query("DELETE FROM contents WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM contents") suspend fun deleteAll()
 }
 @Dao interface LearningStateDao {
@@ -62,6 +67,7 @@ class Converters {
     @Query("SELECT * FROM learning_states WHERE stage IN ('DAILY','WEEKLY','MONTHLY') AND nextReviewAt IS NOT NULL AND nextReviewAt <= :now ORDER BY nextReviewAt ASC, conceptId ASC") suspend fun getAllDueNonLearned(now: Instant): List<LearningStateEntity>
     @Query("SELECT * FROM learning_states ORDER BY conceptId ASC") suspend fun getAll(): List<LearningStateEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<LearningStateEntity>)
+    @Query("DELETE FROM learning_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM learning_states") suspend fun deleteAll()
 }
 @Dao interface DifficultyStateDao {
@@ -70,6 +76,7 @@ class Converters {
     @Query("DELETE FROM difficulty_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("SELECT * FROM difficulty_states ORDER BY conceptId ASC") suspend fun getAll(): List<DifficultyStateEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<DifficultyStateEntity>)
+    @Query("DELETE FROM difficulty_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM difficulty_states") suspend fun deleteAll()
 }
 @Dao interface TagDao {
@@ -86,7 +93,9 @@ class Converters {
     @Query("SELECT tagId FROM concept_tags WHERE conceptId = :conceptId") suspend fun getTagIdsForConcept(conceptId: UUID): List<UUID>
     @Query("SELECT conceptId FROM concept_tags WHERE tagId = :tagId") suspend fun getConceptIdsForTag(tagId: UUID): List<UUID>
     @Query("SELECT * FROM concept_tags") suspend fun getAll(): List<ConceptTagEntity>
+    @Query("DELETE FROM concept_tags WHERE tagId = :tagId") suspend fun deleteByTagId(tagId: UUID)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertAll(entities: List<ConceptTagEntity>)
+    @Query("DELETE FROM concept_tags WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM concept_tags") suspend fun deleteAll()
 }
 @Dao interface ReviewSessionDao {
@@ -106,6 +115,7 @@ class Converters {
     @Query("SELECT DISTINCT conceptId FROM review_history") suspend fun getDistinctConceptIds(): List<UUID>
     @Query("SELECT * FROM review_history ORDER BY reviewedAt ASC, id ASC") suspend fun getAll(): List<ReviewHistoryEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<ReviewHistoryEntity>)
+    @Query("DELETE FROM review_history WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM review_history") suspend fun deleteAll()
 }
 @Dao interface SettingsDao {
@@ -129,6 +139,7 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(entity: ParserMetadataEntity)
     @Query("SELECT * FROM parser_metadata ORDER BY conceptId ASC") suspend fun getAll(): List<ParserMetadataEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<ParserMetadataEntity>)
+    @Query("DELETE FROM parser_metadata WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM parser_metadata") suspend fun deleteAll()
     @Query("DELETE FROM parser_metadata WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
 }
@@ -143,6 +154,7 @@ class Converters {
     @Update suspend fun update(entity: VocabularyRelationEntity)
     @Query("SELECT * FROM vocabulary_relations WHERE sourceConceptId = :conceptId OR targetConceptId = :conceptId") suspend fun getForConcept(conceptId: UUID): List<VocabularyRelationEntity>
     @Query("SELECT * FROM vocabulary_relations") suspend fun getAll(): List<VocabularyRelationEntity>
+    @Query("DELETE FROM vocabulary_relations WHERE sourceConceptId = :conceptId OR targetConceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM vocabulary_relations") suspend fun deleteAll()
 }
 @Dao interface VocabularyVariantDao {
@@ -150,6 +162,7 @@ class Converters {
     @Update suspend fun update(entity: VocabularyVariantEntity)
     @Query("SELECT * FROM vocabulary_variants WHERE conceptId = :conceptId ORDER BY variantType, text") suspend fun getForConcept(conceptId: UUID): List<VocabularyVariantEntity>
     @Query("SELECT * FROM vocabulary_variants") suspend fun getAll(): List<VocabularyVariantEntity>
+    @Query("DELETE FROM vocabulary_variants WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM vocabulary_variants") suspend fun deleteAll()
 }
 @Dao interface ReviewQueueDao {
@@ -157,6 +170,7 @@ class Converters {
     @Update suspend fun update(entity: ReviewQueueEntity)
     @Query("SELECT * FROM review_queue WHERE status = 'PENDING' ORDER BY confidence ASC, lineNumber ASC, id ASC") suspend fun getPending(): List<ReviewQueueEntity>
     @Query("SELECT * FROM review_queue ORDER BY lineNumber ASC, id ASC") suspend fun getAll(): List<ReviewQueueEntity>
+    @Query("DELETE FROM review_queue WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM review_queue") suspend fun deleteAll()
 }
 @Dao interface LanguageDao {

@@ -113,19 +113,14 @@ class ProgressViewModel @Inject constructor(
                     val today = now.atZone(zoneId).toLocalDate()
                     val weekStart = today.minusDays(6)
                     val monthStart = today.minusDays(29)
-                    val todayEntries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == today }
-                    val weekEntries = history.filter {
-                        val date = it.reviewedAt.atZone(zoneId).toLocalDate()
-                        !date.isBefore(weekStart) && !date.isAfter(today)
-                    }
-                    val monthEntries = history.filter {
-                        val date = it.reviewedAt.atZone(zoneId).toLocalDate()
-                        !date.isBefore(monthStart) && !date.isAfter(today)
-                    }
+                    val historyByDate = history.groupBy { it.reviewedAt.atZone(zoneId).toLocalDate() }
+                    val todayEntries = historyByDate[today].orEmpty()
+                    val weekEntries = historyByDate.filterKeys { !it.isBefore(weekStart) && !it.isAfter(today) }.values.flatten()
+                    val monthEntries = historyByDate.filterKeys { !it.isBefore(monthStart) && !it.isAfter(today) }.values.flatten()
                     val dayNames = listOf("دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه")
                     val daily = (6 downTo 0).map { offset ->
                         val date = today.minusDays(offset.toLong())
-                        val entries = history.filter { it.reviewedAt.atZone(zoneId).toLocalDate() == date }
+                        val entries = historyByDate[date].orEmpty()
                         DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                     }
                     val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)

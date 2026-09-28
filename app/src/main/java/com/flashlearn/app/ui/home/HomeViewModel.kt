@@ -3,6 +3,10 @@ package com.flashlearn.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.domain.model.ProgressSummary
+import com.flashlearn.app.ui.LanguagePair
+import com.flashlearn.domain.usecase.CountReviewQueueUseCase
+import com.flashlearn.domain.usecase.ReviewSelectionFilters
+import com.flashlearn.domain.model.ReviewType
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.statistics.BasicStatistics
 import com.flashlearn.domain.statistics.CalculateStreakUseCase
@@ -43,7 +47,8 @@ class HomeViewModel @Inject constructor(
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
     private val calculateProgressPercentage: CalculateProgressPercentage,
-    private val calculateProgress: CalculateProgressUseCase
+    private val calculateProgress: CalculateProgressUseCase,
+    private val countReviewQueue: CountReviewQueueUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -52,7 +57,7 @@ class HomeViewModel @Inject constructor(
 
     init { refresh() }
 
-    fun refresh() {
+    fun refresh(languagePair: LanguagePair = LanguagePair()) {
         val generation = ++refreshGeneration
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
@@ -70,10 +75,14 @@ class HomeViewModel @Inject constructor(
                 // Denominators are total words currently assigned to each learning stage,
                 // matching the Statistics screen's Learning Stages card.
                 val progress = calculateProgress(now)
+                val zone = ZoneId.systemDefault()
+                val dailyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.DAILY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
+                val weeklyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.WEEKLY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
+                val monthlyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.MONTHLY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
                 val dailyTotal = progress.dailyConcepts
                 val weeklyTotal = progress.weeklyConcepts
                 val monthlyTotal = progress.monthlyConcepts
-                HomeSnapshot(summary, basicStats, streak, progressPercentage, dailyTotal, weeklyTotal, monthlyTotal)
+                HomeSnapshot(summary.copy(dueConceptCount = dailyReady + weeklyReady + monthlyReady, dailyDueConceptCount = dailyReady, weeklyDueConceptCount = weeklyReady, monthlyDueConceptCount = monthlyReady), basicStats, streak, progressPercentage, dailyTotal, weeklyTotal, monthlyTotal)
             }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
                     _state.value = HomeUiState(

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +80,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AppRootScreen() {
         val uiState by appViewModel.state
+        val needsReviewItems by needsReviewViewModel.items.collectAsState()
+        uiState.operationError?.let { Text("خطا: $it", modifier = Modifier.fillMaxWidth().padding(8.dp), color = MaterialTheme.colorScheme.error) }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
             FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
@@ -109,7 +112,9 @@ class MainActivity : ComponentActivity() {
                         onBack = { appViewModel.navigate(AppRoutes.LIBRARY) },
                         onSingleWord = { appViewModel.navigate(AppRoutes.ADD_WORD_FORM) },
                         onBulkWords = { appViewModel.navigate(AppRoutes.BULK_IMPORT) },
-                        onRestoreBackup = { appViewModel.navigate(AppRoutes.BACKUP) },
+                        onRestoreBackup = { appViewModel.openBackup(AppRoutes.ADD_WORD) },
+                        needsReviewCount = needsReviewItems.size,
+                        onNeedsReview = { appViewModel.navigate(AppRoutes.NEEDS_REVIEW) },
                         libraryState = libraryViewModel.state.value,
                         onRefreshLibrary = { libraryViewModel.refresh() },
                         onFindDuplicates = { libraryViewModel.removeExactDuplicates() }
@@ -128,15 +133,16 @@ class MainActivity : ComponentActivity() {
         val uiState by appViewModel.state
         when (route) {
             AppRoutes.HOME -> HomeScreen(homeViewModel, uiState.languagePair, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
-            AppRoutes.REVIEW -> ReviewSessionContent(viewModel = reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onFinished = { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.REVIEW -> ReviewSessionContent(viewModel = reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty, maximumReviewCards = uiState.maximumReviewCards, languagePair = uiState.languagePair, onFinished = { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) })
             AppRoutes.LIBRARY -> LibraryScreenV2(libraryViewModel, uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.navigate(AppRoutes.BACKUP) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onHelp = { appViewModel.navigate(AppRoutes.HELP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.openBackup(AppRoutes.SETTINGS) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onHelp = { appViewModel.navigate(AppRoutes.HELP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 
     @Composable
-    private fun ReviewSessionContent(viewModel: ReviewViewModel, personalDifficulty: com.flashlearn.domain.model.VocabularyDifficulty?, quizDifficulty: com.flashlearn.domain.model.QuizDifficulty, onFinished: () -> Unit) {
+    private fun ReviewSessionContent(viewModel: ReviewViewModel, personalDifficulty: com.flashlearn.domain.model.VocabularyDifficulty?, quizDifficulty: com.flashlearn.domain.model.QuizDifficulty, maximumReviewCards: Int, languagePair: com.flashlearn.app.ui.LanguagePair, onFinished: () -> Unit) {
+        LaunchedEffect(languagePair, maximumReviewCards) { viewModel.setLanguagePair(languagePair); viewModel.setMaximumReviewCards(maximumReviewCards) }
         val reviewState by viewModel.state.collectAsState()
         val sessionActive = !reviewState.isSelectingMode && !reviewState.isFinished
         fun exitToSetup() { viewModel.exitReview { viewModel.prepareReviewType(reviewState.selectedReviewType) } }

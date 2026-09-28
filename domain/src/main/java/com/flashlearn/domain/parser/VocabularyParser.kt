@@ -251,8 +251,8 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
     private fun joinNote(old: String?, new: String): String = listOf(old, new).filterNot { it.isNullOrBlank() }.joinToString("\n").ifBlank { "" }
     private fun joinTranslation(old: String?, new: String): String = listOf(old, new).filterNot { it.isNullOrBlank() }.joinToString(" / ")
 
-    private fun isLikelyEntryHeader(s: String): Boolean = isLikelySpanish(s) && !isSeparator(s)
-    private fun isLikelySpanish(s: String): Boolean = detectLanguage(s) == DetectedLanguage.SPANISH
+    private fun isLikelyEntryHeader(s: String): Boolean = hasLatinScript(s) && !isSeparator(s)
+    private fun isLikelySpanish(s: String): Boolean = hasLatinScript(s)
     private fun isLikelyPersian(s: String): Boolean = detectLanguage(s) == DetectedLanguage.PERSIAN
 
     private fun hasLatinScript(s: String): Boolean = s.any { it in 'a'..'z' || it in 'A'..'Z' }

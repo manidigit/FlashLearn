@@ -32,7 +32,8 @@ class GetThresholdDifficultyUseCase @Inject constructor(
 
 class GetProgressSummaryUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
-    private val learningStateRepository: LearningStateRepository
+    private val learningStateRepository: LearningStateRepository,
+    private val difficultyStateRepository: DifficultyStateRepository
 ) {
     suspend operator fun invoke(now: Instant): ProgressSummary {
         val concepts = conceptRepository.getAllActive()
@@ -49,8 +50,8 @@ class GetProgressSummaryUseCase @Inject constructor(
         var wrong = 0
 
         concepts.forEach { concept ->
-            val state = statesById[concept.id]
-                ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${concept.id}")
+            val state = statesById[concept.id] ?: LearningState(UUID.randomUUID(), concept.id, Stage.DAILY, now, 0, false, 0, 0, null).also { learningStateRepository.upsert(it) }
+            if (difficultyStateRepository.get(concept.id) == null) difficultyStateRepository.upsert(DifficultyState(UUID.randomUUID(), concept.id, VocabularyDifficulty.EASY, 0, 0, false))
 
             if (state.stage == Stage.LEARNED) learned++
 
