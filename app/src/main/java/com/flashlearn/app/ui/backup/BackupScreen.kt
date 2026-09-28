@@ -10,10 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.backup.BackupType
@@ -65,12 +67,12 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     ) {
         item {
             FlashLearnScreenHeader(
-                title = "پشتیبان‌گیری و بازیابی",
-                subtitle = "حفظ واژه‌ها، پیشرفت و تنظیمات",
+                title = stringResource(R.string.backup_title),
+                subtitle = stringResource(R.string.backup_subtitle),
                 onBack = onBack
             )
         }
-        item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = "بازیابی", subtitle = "اطلاعات قبلی را از یک فایل پشتیبان JSON وارد کن.") }
+        item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = stringResource(R.string.backup_restore), subtitle = stringResource(R.string.backup_restore_summary)) }
         item {
             Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.primary.copy(alpha = .08f))) {
                 Column(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.Start) {
@@ -78,22 +80,22 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                         Surface(Modifier.size(tokens.iconLarge.plus(tokens.compactGap)), shape = MaterialTheme.shapes.medium, color = tokens.primary.copy(alpha = .14f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.FileOpen, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge)) } }
                         Spacer(Modifier.width(tokens.contentGap))
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                            Text("بازیابی از فایل پشتیبان", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
-                            Text("یک فایل JSON قبلی را انتخاب کن. نوع پشتیبان از خود فایل تشخیص داده می‌شود.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start)
+                            Text(stringResource(R.string.backup_restore_file), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+                            Text(stringResource(R.string.backup_restore_file_hint), style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start)
                         }
                     }
                     Button(onClick = { open.launch(arrayOf("application/json", "text/plain", "*/*")) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.large, colors = ButtonDefaults.buttonColors(containerColor = tokens.primary)) {
-                        Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text("انتخاب فایل پشتیبان", fontWeight = FontWeight.Bold)
+                        Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_select_file), fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
         item { HorizontalDivider(modifier = Modifier.padding(vertical = tokens.compactGap)) }
-        item { SectionHeader(icon = Icons.Outlined.Backup, title = "پشتیبان‌گیری", subtitle = "یک یا چند نوع اطلاعات را انتخاب کن؛ بازیابی فایل ترکیبی هم پشتیبانی می‌شود.") }
+        item { SectionHeader(icon = Icons.Outlined.Backup, title = stringResource(R.string.backup_create), subtitle = stringResource(R.string.backup_create_summary)) }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 BackupType.entries.forEach { type ->
-                    val label = when (type) { BackupType.VOCABULARY -> "واژگان"; BackupType.PROGRESS -> "پیشرفت و تنظیمات"; BackupType.FULL -> "پشتیبان کامل" }
+                    val label = when (type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> stringResource(R.string.backup_full) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = type in state.selectedTypes,
@@ -111,10 +113,10 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 ) {
                     Icon(Icons.Outlined.Backup, null)
                     Spacer(Modifier.width(tokens.compactGap))
-                    Text("ساخت پشتیبان انتخاب‌شده", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.backup_create_selected), fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    if (state.selectedTypes.isEmpty()) "حداقل یک نوع پشتیبان انتخاب کن." else "انتخاب فعلی: " + state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> "واژگان"; BackupType.PROGRESS -> "پیشرفت و تنظیمات"; BackupType.FULL -> "کامل" } },
+                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else "انتخاب فعلی: " + state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> "کامل" } },
                     Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start
                 )
             }
@@ -127,8 +129,8 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 }
             }
         }
-        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedLabel} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
-        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
+        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedLabel} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_json)) } } } }
+        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_file)) } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
     }
