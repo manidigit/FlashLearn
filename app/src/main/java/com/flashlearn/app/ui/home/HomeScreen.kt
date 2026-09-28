@@ -159,7 +159,7 @@ fun HomeScreen(
         }
 
         BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val compact = maxWidth < tokens.dp(tokens.design.metric("adaptiveMediumBreakpoint"))
+            val compact = maxWidth < tokens.design.metric("adaptiveMediumBreakpoint").dp
             if (compact) {
                 Column(
                     Modifier.fillMaxWidth(),
