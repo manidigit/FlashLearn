@@ -37,7 +37,7 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
         Text(stringResource(R.string.category_available), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
         Spacer(Modifier.height(tokens.compactGap))
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.itemGap), contentPadding = PaddingValues(bottom = 12.dp)) {
-            items(categories, key = { it.id }) { category -> CategoryRow(category.name, "${toFaDigits(counts[category.id] ?: 0)} لغت", category.id in selected) { selected = if (category.id in selected) selected - category.id else selected + category.id } }
+            items(categories, key = { it.id }) { category -> CategoryRow(category.name, stringResource(R.string.category_words, toFaDigits(counts[category.id] ?: 0)), category.id in selected) { selected = if (category.id in selected) selected - category.id else selected + category.id } }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
             OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.category_clear_all), color = MaterialTheme.colorScheme.primary) }
@@ -59,6 +59,7 @@ private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onCli
     }
 }
 
+@Composable
 private fun categoryIcon(title: String) = when (title.trim().lowercase()) {
     stringResource(R.string.category_all) -> Icons.Outlined.Folder
     "عمومی" -> Icons.Outlined.Book
