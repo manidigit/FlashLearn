@@ -27,5 +27,12 @@ Audit item 1 from `docs/AUDIT_REMAINING_WORK_CHECKLIST.md`: extract user-visible
 - Remaining Persian literals are limited to category classification rules in `CategorySelectionScreen.kt` and non-UI ViewModel status/error strings, which are tracked separately because their extraction requires a resource/context boundary rather than direct Compose string replacement.
 - CI must be green before this item is considered release-verified.
 
+## Final CI verification
+- Final green workflow run: `36481473544`.
+- Build + Unit Test: GREEN.
+- Instrumentation + Upgrade Gate: GREEN.
+- Release APK verification and previous-version upgrade path completed successfully.
+- During verification, stale release-version test/CI expectations were aligned with the repository's actual v6.63/663 build metadata; no application downgrade was introduced.
+
 ## Next
 Proceed to the next checklist item only after the final CI result is GREEN.
