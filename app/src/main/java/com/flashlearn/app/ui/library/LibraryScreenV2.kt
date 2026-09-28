@@ -49,7 +49,7 @@ fun LibraryScreenV2(
             placeholder = {
                 Text(stringResource(R.string.library_search), Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.onSurfaceVariant)
             },
-            trailingIcon = { Icon(Icons.Outlined.Search, "جستجو", tint = tokens.primary) },
+            trailingIcon = { Icon(Icons.Outlined.Search, stringResource(R.string.library_search), tint = tokens.primary) },
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
@@ -88,7 +88,7 @@ fun LibraryScreenV2(
                 Column(horizontalAlignment = Alignment.Start) {
                     Text(stringResource(R.string.library_categories), color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else stringResource(R.string.library_selected_categories, toFaDigits(state.selectedCategoryIds.size)),
+                        if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.library_selected_categories, toFaDigits(state.selectedCategoryIds.size)),
                         color = tokens.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
