@@ -37,7 +37,7 @@
     <string name="home_ready_reviews">Ready reviews</string>
     <string name="home_word_count">%1$d words</string>
     <string name="home_daily">Daily</string>
-    <string name="home_daily_subtitle">Today's review</string>
+    <string name="home_daily_subtitle">Today\'s review</string>
     <string name="home_weekly">Weekly</string>
     <string name="home_weekly_subtitle">Retention practice</string>
     <string name="home_monthly">Monthly</string>
