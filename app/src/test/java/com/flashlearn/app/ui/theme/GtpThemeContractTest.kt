@@ -7,9 +7,9 @@ import org.junit.Test
 class GtpThemeContractTest {
 
     @Test
-    fun gtpIsTheFifthBuiltInTheme() {
-        assertEquals(5, FlashLearnThemeSpec.BUILT_IN.size)
-        assertEquals("gtp", FlashLearnThemeSpec.BUILT_IN[4].id)
+    fun gtpIsTheFourthBuiltInTheme() {
+        assertEquals(4, FlashLearnThemeSpec.BUILT_IN.size)
+        assertEquals("gtp", FlashLearnThemeSpec.BUILT_IN[3].id)
         assertEquals("GTP", FlashLearnThemeSpec.GTP.name)
     }
 
