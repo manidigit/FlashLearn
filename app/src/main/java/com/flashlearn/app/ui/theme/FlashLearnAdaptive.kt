@@ -11,8 +11,8 @@ fun rememberFlashLearnWidthClass(): FlashLearnWidthClass {
     val width = LocalConfiguration.current.screenWidthDp.dp
     val tokens = LocalFlashLearnThemeTokens.current
     return when {
-        width >= tokens.dp(tokens.design.metric("adaptiveExpandedBreakpoint")) -> FlashLearnWidthClass.EXPANDED
-        width >= tokens.dp(tokens.design.metric("adaptiveMediumBreakpoint")) -> FlashLearnWidthClass.MEDIUM
+        width >= tokens.design.metric("adaptiveExpandedBreakpoint").dp -> FlashLearnWidthClass.EXPANDED
+        width >= tokens.design.metric("adaptiveMediumBreakpoint").dp -> FlashLearnWidthClass.MEDIUM
         else -> FlashLearnWidthClass.COMPACT
     }
 }
