@@ -1,3 +1,14 @@
+## v6.61.1 — Audit hardening and CI fixes
+- Fixed theme color compositing to use Compose alpha compositing instead of the previous no-op helper.
+- Applied the selected accent color to Material primary/tertiary theme colors.
+- Removed the global LocalDensity override; theme scaling no longer changes system/gesture-area density.
+- Added validation for theme design metrics.
+- Serialized review-card advancement with a Mutex to prevent concurrent advances.
+- Persisted app route/concept navigation state with SavedStateHandle.
+- Extracted Review header strings into Android resources (Persian/English).
+- Replaced Review header hardcoded padding with theme tokens.
+- Fixed CI compilation by restoring the required dp import in MainActivity.
+
 ## v6.61 — Review hints, bulk-import categories, and multi-type backup restore
 - Review hints are now data-driven: a word's category is shown first; when no category exists, the first character of the translation is shown instead of the previous generic sentence.
 - Bulk vocabulary import now lets the user choose a category for the imported batch; existing uncategorized concepts may receive the selected category without overwriting an existing category.
