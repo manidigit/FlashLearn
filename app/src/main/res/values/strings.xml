@@ -18,4 +18,7 @@
     <string name="help_tts_title">پخش صوتی سؤال</string>
     <string name="help_tts_body">پخش مجدد صوت فقط سؤال فعلی را تکرار می‌کند و سؤال جدید یا تغییر در پاسخ صحیح ایجاد نمی‌کند. در دسترس بودن صدای اسپانیایی به موتور گفتار دستگاه وابسته است.</string>
     <string name="help_boundary">این راهنما یک لایه آموزشی و نمایشی است و مالک داده‌های یادگیری، سختی، سابقه مرور یا زمان‌بندی نیست.</string>
+    <string name="review_title">مرور کلمات</string>
+    <string name="review_close">بستن مرور</string>
+    <string name="review_remaining">%1$d کارت باقی‌مانده از %2$d</string>
 </resources>
