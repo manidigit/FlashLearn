@@ -60,7 +60,7 @@ class DataExportRepositoryImpl @Inject constructor(
         return file
     }
 
-    private fun escapeCsv(value: String?): String { val v = value ?: ""; val safe = if (v.firstOrNull() in charArrayOf('=','+','-','@')) "'$v" else v; return "\"${safe.replace("\"", "\"\"")}\"" }
+    private fun escapeCsv(value: String?): String { val v = value ?: ""; val safe = if (v.firstOrNull()?.let { it in charArrayOf('=','+','-','@') } == true) "'$v" else v; return "\"${safe.replace("\"", "\"\"")}\"" }
 
     private suspend fun json(): File {
         val target = File(context.cacheDir, "flashlearn-vocabulary.json.gz")
