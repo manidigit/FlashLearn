@@ -1,3 +1,9 @@
+## v6.58 — Startup migration integrity hardening
+- Fixed Room migration 5→6 so the contents(languageCode, canonicalKey) index is recreated with the canonical Room name after the temporary table is renamed.
+- Added a migration regression assertion for the canonical index name.
+- Aligned release identity to 6.58 / versionCode 658; previous-version upgrade gate is 6.57 / 657.
+- GitHub Actions remains the authoritative verification gate; this checkpoint is not verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.57 — Manual Needs-Review approval flow
 - Changed تأیید in the manual-review queue to open the normal Add Word form prefilled with the queued source and translation.
 - The user can edit the source, translation and optional Add Word fields before saving.
