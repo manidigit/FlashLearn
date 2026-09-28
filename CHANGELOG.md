@@ -1,3 +1,13 @@
+## v6.55 — Grok icon system + theme-owned visual profile
+- Advanced application identity to **6.55 / versionCode 655**; previous-version gate is **6.54 / 654**.
+- Grok action icons now use a theme-owned outlined icon profile while active navigation uses a separate theme-owned filled profile.
+- Added theme-owned icon size scaling and navigation indicator alpha.
+- Shared shell/header icon rendering now consumes the active/inactive icon profile from ThemeDesign.
+- Preserved the five-theme catalog and custom-theme JSON compatibility.
+
+### Verification gate
+GitHub Actions is authoritative. v6.55 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.54 — Review-ready counts vs stage totals
 - Advanced application identity to **6.54 / versionCode 654**; previous-version gate is **6.53 / 653**.
 - Fixed Home review cards so the large number shows **currently review-ready words**, while **«از X» shows the total words assigned to that Learning stage**.

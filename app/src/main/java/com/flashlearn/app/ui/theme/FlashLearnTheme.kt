@@ -139,7 +139,11 @@ fun FlashLearnTheme(
         gradientEnd = if (isDark) Color(spec.darkSecondary) else Color(spec.gradientEnd),
         
         // --- Layout & Appearance ---
-        iconStyle = if (spec.iconStyle.equals("filled", true)) IconStyle.FILLED else IconStyle.OUTLINED,
+        iconStyle = spec.design.iconStyle,
+        activeIconStyle = spec.design.activeIconStyle,
+        iconSizeScale = spec.design.iconSizeScale,
+        activeIconSizeScale = spec.design.activeIconSizeScale,
+        navIndicatorAlpha = spec.design.navIndicatorAlpha,
         elevationScale = spec.elevationScale,
         densityScale = spec.densityScale,
         typographyScale = spec.typographyScale,

@@ -22,7 +22,12 @@ data class ThemeDesign(
     val lightError: Long = 0xFFD92D48,
     val darkError: Long = 0xFFFF8A9A,
     val lightInfo: Long = 0xFF536DFE,
-    val darkInfo: Long = 0xFF7C8CFF
+    val darkInfo: Long = 0xFF7C8CFF,
+    val iconStyle: IconStyle = IconStyle.OUTLINED,
+    val activeIconStyle: IconStyle = IconStyle.FILLED,
+    val iconSizeScale: Float = 1f,
+    val activeIconSizeScale: Float = 1.08f,
+    val navIndicatorAlpha: Float = .16f
 ) {
     fun metric(name: String): Float = metrics[name] ?: error("Theme design metric missing: $name")
     companion object {
@@ -52,7 +57,7 @@ data class ThemeDesign(
         fun grok() = ThemeDesign(metrics(1.03f,mapOf("screenPadding" to 22f,"contentGap" to 14f,"sectionGap" to 20f,"statCardHeight" to 138f,"navHeight" to 80f,"reviewHeaderHeight" to 96f,"cardElevationBase" to 5f,"dividerAlpha" to .72f,"reviewSelectedAlpha" to .16f,"cardBorderAlpha" to .55f,"cardBorderStrongAlpha" to .85f,"accentSurfaceAlpha" to .16f,"hierarchyBoost" to 1.08f)),ButtonStyle.FILLED,NavigationStyle.PILL,StatsLayoutStrategy.GRID_4_COLUMNS,ReviewsLayoutStrategy.HORIZONTAL_CARDS,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.SWIPE_STACK,true,0xFF1A140A,0xFF0F1419)
         fun claud() = ThemeDesign(metrics(1.05f,mapOf("screenPadding" to 24f,"contentGap" to 16f,"sectionGap" to 24f,"statCardHeight" to 112f,"navHeight" to 78f,"reviewHeaderHeight" to 100f,"cardElevationBase" to 2f,"dividerAlpha" to .45f,"reviewSelectedAlpha" to .08f,"cardBorderAlpha" to .25f,"cardBorderStrongAlpha" to .45f,"accentSurfaceAlpha" to .08f)),ButtonStyle.OUTLINED,NavigationStyle.STANDARD,StatsLayoutStrategy.VERTICAL_LIST,ReviewsLayoutStrategy.VERTICAL_ROWS,LibraryLayoutStrategy.EXPANDED_LIST,ReviewPresentation.FLIP_FULLSCREEN,false)
         fun spark() = ThemeDesign(metrics(0.96f,mapOf("sectionGap" to 18f,"statCardHeight" to 126f,"navHeight" to 74f,"cardElevationBase" to 3f,"accentSurfaceAlpha" to .12f,"hierarchyBoost" to 1.06f)),ButtonStyle.FILLED,NavigationStyle.STANDARD,StatsLayoutStrategy.GRID_2X2,ReviewsLayoutStrategy.VERTICAL_ROWS,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.STANDARD,true)
-        fun gtp() = ThemeDesign(metrics(.88f,mapOf("screenPadding" to 16f,"contentGap" to 10f,"sectionGap" to 14f,"statCardHeight" to 118f,"navHeight" to 70f,"cardElevationBase" to 5f,"cardBorderAlpha" to .70f,"cardBorderStrongAlpha" to .95f,"accentSurfaceAlpha" to .18f,"hierarchyBoost" to 1.12f)),ButtonStyle.FILLED,NavigationStyle.COMPACT,StatsLayoutStrategy.GRID_4_COLUMNS,ReviewsLayoutStrategy.COMPACT_LIST,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.SWIPE_STACK,true)
+        fun gtp() = ThemeDesign(metrics(.88f,mapOf("screenPadding" to 16f,"contentGap" to 10f,"sectionGap" to 14f,"statCardHeight" to 118f,"navHeight" to 70f,"cardElevationBase" to 5f,"cardBorderAlpha" to .70f,"cardBorderStrongAlpha" to .95f,"accentSurfaceAlpha" to .18f,"hierarchyBoost" to 1.12f)),ButtonStyle.FILLED,NavigationStyle.COMPACT,StatsLayoutStrategy.GRID_4_COLUMNS,ReviewsLayoutStrategy.COMPACT_LIST,LibraryLayoutStrategy.GRID_2_COLUMNS,ReviewPresentation.SWIPE_STACK,true, iconStyle=IconStyle.FILLED, activeIconStyle=IconStyle.FILLED, iconSizeScale=.98f, activeIconSizeScale=1.04f, navIndicatorAlpha=.18f)
         fun default() = ThemeDesign(metrics(1f))
     }
 }
@@ -119,7 +124,7 @@ data class FlashLearnThemeSpec(
             lightCard = 0xFFFFFBF2, darkCard = 0xFF121B24,
             lightOutline = 0xFFD8C08A, darkOutline = 0xFF6A5833,
             gradientStart = 0xFFC79B32, gradientEnd = 0xFFE0B44C,
-            iconStyle = "filled", elevationScale = 1.35f,
+            iconStyle = "outlined", elevationScale = 1.35f,
             cornerSmall = 14f, cornerMedium = 20f, cornerLarge = 28f,
             typographyScale = 1.04f, densityScale = 0.97f, spacingScale = 1f
         )

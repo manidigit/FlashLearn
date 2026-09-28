@@ -13,16 +13,16 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 654
-        versionName = "6.54"
+        versionCode = 655
+        versionName = "6.55"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         buildConfigField("String", "VERSION_CODE_NAME", "\"654\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
-        buildConfigField("String", "BUILD_DATE", "\"2026-09-27\"")
-        buildConfigField("String", "THEME_VERSION", "\"3.1-GROK\"")
-        buildConfigField("String", "THEME_STATUS", "\"Grok visual reconstruction; all built-in themes own full design profiles\"")
+        buildConfigField("String", "BUILD_DATE", "\"2026-09-28\"")
+        buildConfigField("String", "THEME_VERSION", "\"3.2-GROK\"")
+        buildConfigField("String", "THEME_STATUS", "\"Grok visual reconstruction; theme-owned icon, navigation and layout profiles\"")
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
         buildConfigField("String", "APP_AUTHOR", "\"Mani\"")
         buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")

@@ -17,6 +17,8 @@ class GtpThemeContractTest {
     fun gtpHasDistinctDesignTokens() {
         val gtp = FlashLearnThemeSpec.GTP
         assertEquals("filled", gtp.iconStyle)
+        assertEquals(IconStyle.FILLED, gtp.design.iconStyle)
+        assertEquals(IconStyle.FILLED, gtp.design.activeIconStyle)
         assertEquals(6f, gtp.cornerSmall, 0.001f)
         assertEquals(12f, gtp.cornerMedium, 0.001f)
         assertEquals(18f, gtp.cornerLarge, 0.001f)
@@ -40,6 +42,9 @@ class GtpThemeContractTest {
         assertEquals(22f, grok.design.metric("screenPadding"), 0.001f)
         assertEquals(20f, grok.design.metric("sectionGap"), 0.001f)
         assertTrue(grok.design.metric("cardBorderAlpha") > 0.5f)
+        assertEquals("outlined", grok.iconStyle)
+        assertEquals(IconStyle.OUTLINED, grok.design.iconStyle)
+        assertEquals(IconStyle.FILLED, grok.design.activeIconStyle)
     }
 
 }

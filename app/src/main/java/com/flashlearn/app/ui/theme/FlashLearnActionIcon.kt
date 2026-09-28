@@ -50,13 +50,15 @@ enum class FlashLearnAction {
 fun FlashLearnActionIcon(
     action: FlashLearnAction,
     contentDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tint: androidx.compose.ui.graphics.Color = LocalFlashLearnThemeTokens.current.onSurface
 ) {
     val filled = LocalFlashLearnThemeTokens.current.iconStyle == IconStyle.FILLED
     Icon(
         imageVector = action.icon(filled),
         contentDescription = contentDescription,
-        modifier = modifier
+        modifier = modifier,
+        tint = tint
     )
 }
 

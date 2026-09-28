@@ -61,13 +61,13 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
         icon = {
             Box(
                 Modifier
-                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = if (tokens.navStyle == NavigationStyle.PILL) .16f else .10f), MaterialTheme.shapes.medium) else Modifier)
+                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = if (tokens.navStyle == NavigationStyle.PILL) tokens.navIndicatorAlpha else tokens.navIndicatorAlpha * .65f), MaterialTheme.shapes.medium) else Modifier)
                     .padding(horizontal = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(8f) else tokens.dp(13f), vertical = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(4f) else tokens.dp(6f))
             ) {
                 Icon(
-                    imageVector = if (selected && tokens.iconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                    imageVector = if (selected && tokens.activeIconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
                     contentDescription = label,
-                    modifier = Modifier.size(tokens.iconMedium)
+                    modifier = Modifier.size(tokens.iconMedium * if (selected) tokens.activeIconSizeScale else tokens.iconSizeScale)
                 )
             }
         },

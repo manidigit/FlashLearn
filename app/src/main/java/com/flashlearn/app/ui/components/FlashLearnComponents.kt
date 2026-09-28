@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.ButtonStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
+import com.flashlearn.app.ui.theme.FlashLearnAction
+import com.flashlearn.app.ui.theme.FlashLearnActionIcon
 
 @Composable
 fun FlashLearnIcon(
@@ -80,7 +82,7 @@ fun FlashLearnScreenHeader(
                     horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)
                 ) {
                     Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
-                    FlashLearnIcon(Icons.Outlined.AutoAwesome, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewOrnamentIcon))
+                    FlashLearnActionIcon(FlashLearnAction.Check, null, modifier = Modifier.size(tokens.reviewOrnamentIcon), tint = tokens.reviewAccent)
                     Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.reviewAccent))
                 }
             }
@@ -93,7 +95,7 @@ fun FlashLearnScreenHeader(
                 shadowElevation = tokens.reviewBackElevation
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    FlashLearnIcon(Icons.AutoMirrored.Outlined.ArrowBack, "بازگشت", tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewBackIcon))
+                    FlashLearnActionIcon(FlashLearnAction.Back, "بازگشت", modifier = Modifier.size(tokens.reviewBackIcon), tint = tokens.reviewAccent)
                 }
             }
         }
@@ -107,7 +109,7 @@ fun FlashLearnScreenHeader(
                 if (subtitle != null || tokens.design.showReviewOrnaments) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewTinyGap)) {
                         Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)))
-                        FlashLearnIcon(Icons.Outlined.AutoAwesome, null, tint = tokens.primary, modifier = Modifier.size(tokens.reviewOrnamentIcon))
+                        FlashLearnActionIcon(FlashLearnAction.Check, null, modifier = Modifier.size(tokens.reviewOrnamentIcon), tint = tokens.primary)
                         Box(Modifier.width(tokens.reviewOrnamentLine).height(tokens.reviewOrnamentHeight).background(tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)))
                     }
                 }
