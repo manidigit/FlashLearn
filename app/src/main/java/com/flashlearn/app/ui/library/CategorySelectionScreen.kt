@@ -6,9 +6,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,21 +27,21 @@ fun CategorySelectionScreen(categories: List<Category>, selectedIds: Set<UUID>, 
     val allSelected = selected.isEmpty()
     Column(Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.screenVerticalPadding)) {
         FlashLearnScreenHeader(
-            title = "دسته‌بندی‌ها",
-            subtitle = if (allSelected) "همه دسته‌ها" else "${toFaDigits(selected.size)} دسته انتخاب شده",
+            title = stringResource(R.string.category_title),
+            subtitle = if (allSelected) stringResource(R.string.category_all) else stringResource(R.string.category_selected_count, toFaDigits(selected.size)),
             onBack = onBack
         )
         Spacer(Modifier.height(tokens.compactGap))
-        CategoryRow("همه دسته‌ها", "${toFaDigits(allCount)} لغت", allSelected) { selected = emptySet() }
+        CategoryRow(stringResource(R.string.category_all), stringResource(R.string.category_words, toFaDigits(allCount)), allSelected) { selected = emptySet() }
         Spacer(Modifier.height(tokens.sectionGap))
-        Text("دسته‌های موجود", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
+        Text(stringResource(R.string.category_available), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Start)
         Spacer(Modifier.height(tokens.compactGap))
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.itemGap), contentPadding = PaddingValues(bottom = 12.dp)) {
             items(categories, key = { it.id }) { category -> CategoryRow(category.name, "${toFaDigits(counts[category.id] ?: 0)} لغت", category.id in selected) { selected = if (category.id in selected) selected - category.id else selected + category.id } }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("پاک کردن همه", color = MaterialTheme.colorScheme.primary) }
-            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text("اعمال ✓") }
+            OutlinedButton(onClick = { selected = emptySet() }, Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.category_clear_all), color = MaterialTheme.colorScheme.primary) }
+            Button(onClick = { onApply(selected) }, Modifier.weight(1.2f).height(tokens.controlHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.category_apply)) }
         }
     }
 }
@@ -58,7 +60,7 @@ private fun CategoryRow(title: String, subtitle: String, checked: Boolean, onCli
 }
 
 private fun categoryIcon(title: String) = when (title.trim().lowercase()) {
-    "همه دسته‌ها" -> Icons.Outlined.Folder
+    stringResource(R.string.category_all) -> Icons.Outlined.Folder
     "عمومی" -> Icons.Outlined.Book
     "روزمره", "خانه و زندگی", "زندگی روزمره" -> Icons.Outlined.Home
     "کار و کسب", "کسب‌وکار", "کار" -> Icons.Outlined.BusinessCenter
