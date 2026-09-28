@@ -1,4 +1,4 @@
-| **6.61** | **661** | 2026-09-28 | Review hints use category/translation initial; bulk-import category selection; combined multi-type backup restore | Pending CI |
+| **6.61** | **661** | 2026-09-28 | Review hints use category/translation initial; bulk-import category selection; combined multi-type backup restore | GREEN — GitHub Actions run 36406917581 |
 
 ## v6.61 release alignment
 - app/build.gradle.kts: versionName 6.61 / versionCode 661.
