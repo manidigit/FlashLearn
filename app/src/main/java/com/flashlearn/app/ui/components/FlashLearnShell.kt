@@ -34,16 +34,61 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
     val navigationBackground = if (reviewRoute) tokens.reviewNav else tokens.cardColor
     Column(Modifier.fillMaxSize().background(shellBackground)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
-        NavigationBar(
-            modifier = Modifier.fillMaxWidth().height(if (reviewRoute) tokens.reviewNavHeight else tokens.navHeight),
-            containerColor = navigationBackground,
-            tonalElevation = tokens.cardElevation
-        ) {
-            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+        if (tokens.navStyle == NavigationStyle.PILL && !reviewRoute) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(tokens.navHeight)
+                    .background(navigationBackground),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GrokNavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            }
+        } else {
+            NavigationBar(
+                modifier = Modifier.fillMaxWidth().height(if (reviewRoute) tokens.reviewNavHeight else tokens.navHeight),
+                containerColor = navigationBackground,
+                tonalElevation = tokens.cardElevation
+            ) {
+                NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.GrokNavItem(
+    route: String,
+    label: String,
+    outlinedIcon: ImageVector,
+    filledIcon: ImageVector,
+    selectedRoute: String,
+    onNavigate: (String) -> Unit
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    val selected = selectedRoute == route
+    val iconColor = if (selected) tokens.onPrimary else tokens.onSurfaceVariant
+    Box(
+        modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = tokens.dp(4f), vertical = tokens.dp(8f))
+            .background(if (selected) tokens.primary else Color.Transparent, MaterialTheme.shapes.large)
+            .clickable { onNavigate(route) },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(
+                imageVector = if (selected && tokens.activeIconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                contentDescription = label,
+                tint = iconColor,
+                modifier = Modifier.size(tokens.iconMedium * if (selected) tokens.activeIconSizeScale else tokens.iconSizeScale)
+            )
+            Spacer(Modifier.height(tokens.dp(2f)))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = iconColor, maxLines = 1)
         }
     }
 }
