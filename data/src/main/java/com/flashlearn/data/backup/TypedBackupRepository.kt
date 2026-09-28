@@ -17,6 +17,22 @@ class TypedBackupRepository @Inject constructor(
     private val fullBackupRepository: RoomBackupRepository,
     private val vocabularyBackupRepository: VocabularyBackupRepository
 ) {
+    suspend fun exportBundle(types: Set<BackupType>): String {
+        require(types.isNotEmpty()) { "حداقل یک نوع پشتیبان انتخاب شود" }
+        require(BackupType.FULL !in types || types.size == 1) { "پشتیبان کامل به‌تنهایی انتخاب شود" }
+        val root = JSONObject()
+            .put("schemaVersion", 3)
+            .put("exportedAt", Instant.now().toString())
+            .put("backupType", "BUNDLE")
+            .put("backupTypes", JSONArray(types.map { it.name }))
+        val payloads = JSONObject()
+        types.forEach { selectedType ->
+            payloads.put(selectedType.name, JSONObject(export(selectedType)))
+        }
+        root.put("payloads", payloads)
+        return root.toString()
+    }
+
     suspend fun export(type: BackupType): String {
         val root = JSONObject().put("schemaVersion", 2).put("exportedAt", Instant.now().toString()).put("backupType", type.name)
         when (type) {
@@ -51,6 +67,37 @@ class TypedBackupRepository @Inject constructor(
             BackupType.PROGRESS -> restoreProgress(root)
             BackupType.FULL -> fullBackupRepository.restoreFull(json)
         }
+    } catch (_: Exception) {
+        RestoreResult(0, 0, listOf("INVALID_JSON"))
+    }
+
+    suspend fun restoreBundle(json: String): RestoreResult = try {
+        val root = JSONObject(json)
+        if (root.optInt("schemaVersion", -1) != 3 || root.optString("backupType") != "BUNDLE") {
+            return RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP_BUNDLE"))
+        }
+        val types = root.optJSONArray("backupTypes") ?: return RestoreResult(0, 0, listOf("MISSING_BACKUP_TYPES"))
+        val payloads = root.optJSONObject("payloads") ?: return RestoreResult(0, 0, listOf("MISSING_BACKUP_PAYLOADS"))
+        val requested = buildList {
+            for (i in 0 until types.length()) {
+                runCatching { BackupType.valueOf(types.getString(i)) }.getOrNull()?.let { add(it) }
+            }
+        }.distinct()
+        if (requested.isEmpty() || (BackupType.FULL in requested && requested.size > 1)) {
+            return RestoreResult(0, 0, listOf("INVALID_BACKUP_TYPES"))
+        }
+        var newCount = 0
+        var mergedCount = 0
+        val issues = mutableListOf<String>()
+        requested.forEach { selectedType ->
+            val payload = payloads.optJSONObject(selectedType.name)
+                ?: return@forEach
+            val result = restore(selectedType, payload.toString())
+            newCount += result.newCount
+            mergedCount += result.mergedCount
+            issues += result.issues.map { "${selectedType.name}:$it" }
+        }
+        RestoreResult(newCount, mergedCount, issues)
     } catch (_: Exception) {
         RestoreResult(0, 0, listOf("INVALID_JSON"))
     }
