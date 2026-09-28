@@ -247,7 +247,7 @@ data class FlashLearnThemeSpec(
                 }
             }
             fun <T : Enum<T>> enumOr(name: String, values: Array<T>, fallbackValue: T): T =
-                runCatching { java.lang.Enum.valueOf(values.first().declaringClass, d.optString(name)) }.getOrDefault(fallbackValue)
+                values.firstOrNull { it.name.equals(d.optString(name), ignoreCase = true) } ?: fallbackValue
             fun color(name: String, fallbackColor: Long): Long =
                 d.optString(name, "").takeIf { it.isNotBlank() }?.let { runCatching { parseColor(it) }.getOrNull() } ?: fallbackColor
             return ThemeDesign(
