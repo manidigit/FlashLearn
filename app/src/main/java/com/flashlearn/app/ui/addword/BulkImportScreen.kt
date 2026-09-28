@@ -42,9 +42,9 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, languagePair: LanguagePair 
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use {
                         BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText()
-                    } ?: error("فایل قابل خواندن نیست")
+                    } ?: error(stringResource(R.string.bulk_file_unreadable))
                 }
-            }.getOrElse { viewModel.showError(it.message ?: "خطا در خواندن فایل"); return@launch }
+            }.getOrElse { viewModel.showError(it.message ?: stringResource(R.string.bulk_file_read_error)); return@launch }
             viewModel.onTextChange(text)
         }
     }
@@ -106,7 +106,7 @@ private fun BulkImportEditor(
                 onValueChange = onTextChange,
                 modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(230f), max = tokens.dp(360f)),
                 label = { Text(stringResource(R.string.bulk_text)) },
-                placeholder = { Text("la piedra\nسنگ\n\nel nivel\nسطح، درجه", color = tokens.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.bulk_placeholder), color = tokens.onSurfaceVariant) },
                 minLines = 8,
                 maxLines = 16,
                 shape = MaterialTheme.shapes.medium,
