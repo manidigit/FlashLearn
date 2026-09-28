@@ -51,6 +51,13 @@ fun FlashLearnTheme(
     // is retained for settings/JSON compatibility but cannot override a selected theme.
     val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
     val onPrimaryColor = Color(if (isDark) spec.design.darkOnPrimary else spec.design.lightOnPrimary)
+    val accent = when (accentColor) {
+        AccentColor.PURPLE -> if (isDark) Color(0xFFB794F6) else Color(0xFF6D28D9)
+        AccentColor.BLUE -> if (isDark) Color(0xFF93C5FD) else Color(0xFF2563EB)
+        AccentColor.GREEN -> if (isDark) Color(0xFF86EFAC) else Color(0xFF16A34A)
+        AccentColor.ORANGE -> if (isDark) Color(0xFFFDBA74) else Color(0xFFEA580C)
+        AccentColor.PINK -> if (isDark) Color(0xFFF9A8D4) else Color(0xFFDB2777)
+    }
     
     // =========== Material Color Scheme ===========
     // This is what screens use for all colors
