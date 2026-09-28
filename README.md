@@ -35,7 +35,7 @@ Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compo
 ./gradlew assembleRelease
 ```
 
-GitHub Actions is the authoritative CI gate for debug build, unit tests, instrumentation tests and the previous-version upgrade path.
+GitHub Actions is the authoritative CI gate for debug build, unit tests, instrumentation tests and the previous-version upgrade path. Database migration tests cover the legacy v1→v7 path, including the v5→v6 contents-index contract.
 
 ## Review rules
 
