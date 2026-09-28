@@ -74,13 +74,13 @@ class DataExportRepositoryImpl @Inject constructor(
             "example", "translationIndex"
         )
         GZIPOutputStream(temp.outputStream().buffered()).bufferedWriter(Charsets.UTF_8).use { writer ->
-            writer.append("{"format":"FlashLearn JSON","version":2,"contents":[")
+            writer.append("""{"format":"FlashLearn JSON","version":2,"contents":[""")
             values.forEachIndexed { index, row ->
                 if (index > 0) writer.append(',')
                 writer.append('{')
                 names.forEachIndexed { fieldIndex, name ->
                     if (fieldIndex > 0) writer.append(',')
-                    writer.append('"').append(name).append("":")
+                    writer.append('"').append(name).append("""":""")
                     writer.append(jsonString(row[fieldIndex]))
                 }
                 writer.append('}')
