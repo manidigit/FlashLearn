@@ -52,9 +52,9 @@ class CreateConceptUseCase @Inject constructor(
         require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
         val activeConcepts = conceptRepository.getAllActive()
         if (command.mergeExistingSource) {
-            val existing = activeConcepts.firstOrNull { concept ->
-                contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).any { it.conceptId == concept.id }
-            }
+            val indexedIds = contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).map { it.conceptId }.toSet()
+            val existing = activeConcepts.firstOrNull { it.id in indexedIds }
+                ?: if (indexedIds.isEmpty()) contentRepository.getAll().firstOrNull { it.conceptId in activeConcepts.map(Concept::id) && it.languageCode == command.sourceLanguage && computeCanonicalKey(it.text) == sourceKey }?.let { activeConcepts.first { c -> c.id == it.conceptId } } else null
             if (existing != null) {
                 val translations = contentRepository.findAll(existing.id, command.targetLanguage)
                 if (translations.any { computeCanonicalKey(it.text) == targetKey }) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")

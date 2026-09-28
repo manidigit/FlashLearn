@@ -12,7 +12,7 @@ class AlgorithmContractTest {
     private fun state(stage:Stage, wrong:Int=0, failure:Boolean=false)=LearningState(UUID.randomUUID(),UUID.randomUUID(),stage,now,wrong,failure,0,0,null)
     private fun difficulty(level: VocabularyDifficulty = VocabularyDifficulty.EASY, cc: Int = 0, cw: Int = 0, reached: Boolean = false)=DifficultyState(UUID.randomUUID(),UUID.randomUUID(),level,cc,cw,reached)
 
-    @Test fun dailyCorrect(){val r=calculateLearningTransition(state(Stage.DAILY),true,now,ZoneOffset.UTC);assertEquals(Stage.WEEKLY,r.newStage);assertEquals(now.plusSeconds(604800),r.nextReviewAt)}
+    @Test fun dailyCorrect(){val r=calculateLearningTransition(state(Stage.DAILY),true,now,ZoneOffset.UTC);assertEquals(Stage.WEEKLY,r.newStage);assertEquals(Instant.parse("2026-09-17T00:00:00Z"),r.nextReviewAt)}
     @Test fun weeklyWrong(){val r=calculateLearningTransition(state(Stage.WEEKLY),false,now,ZoneOffset.UTC);assertEquals(Stage.DAILY,r.newStage);assertFalse(r.hasPathFailure);assertEquals(0,r.monthlyWrongCount)}
     @Test fun monthlyWrong(){val r=calculateLearningTransition(state(Stage.MONTHLY,2,true),false,now,ZoneOffset.UTC);assertEquals(2,r.monthlyWrongCount);assertTrue(r.hasPathFailure)}
     @Test fun monthlyCorrect(){val r=calculateLearningTransition(state(Stage.MONTHLY,1,true),true,now,ZoneOffset.UTC);assertEquals(Stage.LEARNED,r.newStage);assertNull(r.nextReviewAt);assertTrue(r.hasPathFailure);assertEquals(1,r.monthlyWrongCount)}

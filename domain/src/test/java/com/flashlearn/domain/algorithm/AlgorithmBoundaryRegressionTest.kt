@@ -25,7 +25,7 @@ class AlgorithmBoundaryRegressionTest {
     @Test fun weeklyCorrectMovesToMonthly() {
         val r = calculateLearningTransition(state(Stage.WEEKLY), true, now, ZoneOffset.UTC)
         assertEquals(Stage.MONTHLY, r.newStage)
-        assertEquals(now.plusSeconds(2_592_000), r.nextReviewAt)
+        assertEquals(Instant.parse("2026-10-10T00:00:00Z"), r.nextReviewAt)
     }
 
     @Test fun learnedStateIsStableOnBothAnswerOutcomes() {

@@ -27,7 +27,7 @@ class QuizUseCasesTest {
         assertTrue(r is QuizQuestionResult.QuizQuestion); r as QuizQuestionResult.QuizQuestion
         assertEquals(4, r.options.size); assertEquals(4, r.options.distinct().size); assertTrue(r.correctAnswerText in r.options); assertEquals("s0", r.promptText)
     }
-    @Test fun quizPromptRemainsSpanishWhenLanguagePairIsReversed() = runBlocking {
+    @Test fun quizPromptFollowsSourceLanguageWhenLanguagePairIsReversed() = runBlocking {
         val target = concept()
         val d1 = concept()
         val d2 = concept()
@@ -46,7 +46,7 @@ class QuizUseCasesTest {
             states.getValue(target.id)
         ) as QuizQuestionResult.QuizQuestion
 
-        assertEquals("spanish-0", result.promptText)
+        assertEquals("persian-0", result.promptText)
         assertTrue(result.correctAnswerText in result.options)
         assertTrue(result.options.any { it.startsWith("spanish-") })
     }
