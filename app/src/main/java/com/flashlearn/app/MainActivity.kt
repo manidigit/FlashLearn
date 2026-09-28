@@ -66,6 +66,11 @@ class MainActivity : ComponentActivity() {
         super.attachBaseContext(FlashLearnLocaleContext.wrap(newBase, language))
     }
 
+    private fun currentUiLanguage(): String =
+        getSharedPreferences(FlashLearnLocaleContext.PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(FlashLearnLocaleContext.KEY_LANGUAGE, FlashLearnLocales.PERSIAN)
+            ?: FlashLearnLocales.PERSIAN
+
     private fun setUiLanguage(language: String) {
         getSharedPreferences(FlashLearnLocaleContext.PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
@@ -159,7 +164,7 @@ class MainActivity : ComponentActivity() {
             AppRoutes.REVIEW -> ReviewSessionContent(viewModel = reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty, maximumReviewCards = uiState.maximumReviewCards, languagePair = uiState.languagePair, onFinished = { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) })
             AppRoutes.LIBRARY -> LibraryScreenV2(libraryViewModel, uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
-            AppRoutes.SETTINGS -> SettingsScreen(uiLanguage = FlashLearnLocaleContext.PERSIAN, onUiLanguageChange = ::setUiLanguage, appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.openBackup(AppRoutes.SETTINGS) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onHelp = { appViewModel.navigate(AppRoutes.HELP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
+            AppRoutes.SETTINGS -> SettingsScreen(uiLanguage = currentUiLanguage(), onUiLanguageChange = ::setUiLanguage, appearance = uiState.appearance, onAppearanceChange = appViewModel::setAppearance, themeId = uiState.themeId, themes = appViewModel.availableThemes(), onThemeChange = appViewModel::setTheme, onImportTheme = appViewModel::importTheme, accentColor = uiState.accentColor, onAccentColorChange = appViewModel::setAccentColor, layoutDirection = uiState.layoutDirection, onLayoutDirectionChange = appViewModel::setLayoutDirection, languagePair = uiState.languagePair, onLanguagePairChange = appViewModel::setLanguagePair, personalWordDifficulty = uiState.personalWordDifficulty, onPersonalWordDifficultyChange = appViewModel::setPersonalWordDifficulty, quizDifficulty = uiState.quizDifficulty, onQuizDifficultyChange = appViewModel::setQuizDifficulty, difficultyThreshold = uiState.difficultyThreshold, onDifficultyThresholdChange = appViewModel::setDifficultyThreshold, maximumReviewCards = uiState.maximumReviewCards, onMaximumReviewCardsChange = appViewModel::setMaximumReviewCards, onBackup = { appViewModel.openBackup(AppRoutes.SETTINGS) }, onAbout = { appViewModel.navigate(AppRoutes.ABOUT) }, onHelp = { appViewModel.navigate(AppRoutes.HELP) }, onBack = { appViewModel.navigate(AppRoutes.HOME) })
         }
     }
 
