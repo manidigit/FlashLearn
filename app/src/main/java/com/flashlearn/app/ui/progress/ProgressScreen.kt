@@ -78,7 +78,7 @@ private fun SummaryTiles(state: ProgressUiState) {
     Row(horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), modifier = Modifier.fillMaxWidth()) {
         SummaryTile(stringResource(R.string.progress_total_words), fa(summary?.activeConceptCount ?: 0), Icons.Outlined.MenuBook, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
         SummaryTile(stringResource(R.string.progress_learned), fa(summary?.learnedConceptCount ?: 0), Icons.Outlined.School, tokens.success, Modifier.weight(1f))
-        SummaryTile(stringResource(R.string.progress_accuracy), "${fa(stats?.accuracyPercent ?: 0)}٪", Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
+        SummaryTile(stringResource(R.string.progress_accuracy), stringResource(R.string.progress_percent, fa(stats?.accuracyPercent ?: 0)), Icons.Outlined.CheckCircle, tokens.warning, Modifier.weight(1f))
     }
 }
 
@@ -117,7 +117,7 @@ private fun RetentionCard(state: ProgressUiState) {
                 )
                 Spacer(Modifier.width(tokens.compactGap))
                 Text(
-                    "${fa(accuracy)}٪",
+                    stringResource(R.string.progress_percent, fa(accuracy)),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
@@ -131,7 +131,7 @@ private fun RetentionCard(state: ProgressUiState) {
                 trackColor = MaterialTheme.colorScheme.surface
             )
             Spacer(Modifier.height(tokens.dp(7f)))
-            Text("${fa(stats?.totalCorrect ?: 0)} پاسخ درست از ${fa(stats?.totalReviews ?: 0)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.progress_correct_out_of, fa(stats?.totalCorrect ?: 0), fa(stats?.totalReviews ?: 0)), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -162,7 +162,7 @@ private fun LearningMotivationCard(state: ProgressUiState) {
                 )
                 Spacer(Modifier.width(tokens.compactGap))
                 Text(
-                    "${percentage.toInt()}٪",
+                    stringResource(R.string.progress_percent, percentage.toInt().toString()),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
@@ -366,7 +366,7 @@ private fun AccuracyRow(label: String, total: Int, correct: Int, color: Color) {
     val tokens = LocalFlashLearnThemeTokens.current
     val percent = if (total == 0) 0 else (correct * 100) / total
     Row(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(color.copy(alpha = .07f)).padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
-        Text("${fa(percent)}٪", color = color, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.progress_percent, fa(percent)), color = color, fontWeight = FontWeight.Bold)
         Spacer(Modifier.weight(1f))
         Text("${fa(correct)}/${fa(total)}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.width(tokens.contentGap))
