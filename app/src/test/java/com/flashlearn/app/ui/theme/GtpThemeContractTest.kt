@@ -48,4 +48,19 @@ class GtpThemeContractTest {
     }
 
 
+    @Test
+    fun runtimeVisualOwnershipIsSingleSourcedInThemeDesign() {
+        FlashLearnThemeSpec.BUILT_IN.forEach { spec ->
+            assertEquals(spec.elevationScale, spec.design.metric("elevationScale"), 0.001f)
+            assertEquals(spec.typographyScale, spec.design.metric("typographyScale"), 0.001f)
+            assertEquals(spec.densityScale, spec.design.metric("densityScale"), 0.001f)
+            assertEquals(spec.spacingScale, spec.design.metric("spacingScale"), 0.001f)
+            assertEquals(spec.cornerSmall, spec.design.metric("cornerSmall"), 0.001f)
+            assertEquals(spec.cornerMedium, spec.design.metric("cornerMedium"), 0.001f)
+            assertEquals(spec.cornerLarge, spec.design.metric("cornerLarge"), 0.001f)
+            assertTrue(spec.design.metric("adaptiveMediumBreakpoint") > 0f)
+            assertTrue(spec.design.metric("adaptiveExpandedBreakpoint") > spec.design.metric("adaptiveMediumBreakpoint"))
+        }
+    }
+
 }
