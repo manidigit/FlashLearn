@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.components.FlashLearnCard
 import com.flashlearn.app.ui.components.FlashLearnIconTile
@@ -70,7 +72,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "سلام!",
+                stringResource(R.string.home_greeting),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = tokens.onBackground
@@ -114,13 +116,13 @@ fun HomeScreen(
                 Spacer(Modifier.width(tokens.contentGap))
                 Column(horizontalAlignment = Alignment.Start) {
                     Text(
-                        "$streakDays روز پیوسته",
+                        stringResource(R.string.home_streak_days, streakDays),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = tokens.primary
                     )
                     Text(
-                        "استریک یادگیری",
+                        stringResource(R.string.home_learning_streak),
                         style = MaterialTheme.typography.bodySmall,
                         color = tokens.onSurfaceVariant
                     )
@@ -132,14 +134,14 @@ fun HomeScreen(
         Column(verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "پیشرفت یادگیری",
+                    stringResource(R.string.home_learning_progress),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = tokens.onSurface
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    "$progress٪",
+                    stringResource(R.string.home_percent, progress),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = tokens.primary
@@ -156,56 +158,73 @@ fun HomeScreen(
             )
         }
 
-        when (tokens.statsLayout) {
-            com.flashlearn.app.ui.theme.StatsLayoutStrategy.GRID_4_COLUMNS ->
-                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.itemGap)){
-                    FlashLearnStatTile("کل",total.toString(),Modifier.weight(1f))
-                    FlashLearnStatTile("تمرین", (stats?.practicedWords ?: 0).toString(),Modifier.weight(1f))
-                    FlashLearnStatTile("باقی", (stats?.unpracticedWords ?: total).toString(),Modifier.weight(1f))
-                    FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.weight(1f))
-                }
-            com.flashlearn.app.ui.theme.StatsLayoutStrategy.VERTICAL_LIST ->
-                Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(tokens.itemGap)){
-                    FlashLearnStatTile("کل واژه‌ها",total.toString(),Modifier.fillMaxWidth())
-                    FlashLearnStatTile("تمرین‌شده",(stats?.practicedWords ?: 0).toString(),Modifier.fillMaxWidth())
-                    FlashLearnStatTile("تمرین‌نشده",(stats?.unpracticedWords ?: total).toString(),Modifier.fillMaxWidth())
-                    FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.fillMaxWidth())
-                }
-            else ->
-                FlashLearnCard(modifier=Modifier.fillMaxWidth()){
-                    Column(Modifier.fillMaxWidth().padding(tokens.cardPadding),verticalArrangement=Arrangement.spacedBy(tokens.contentGap)){
-                        Text("خلاصه آمار",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=tokens.onSurface)
-                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.compactGap)){
-                            FlashLearnStatTile("کل واژه‌ها",total.toString(),Modifier.weight(1f))
-                            FlashLearnStatTile("تمرین‌شده",(stats?.practicedWords ?: 0).toString(),Modifier.weight(1f))
-                        }
-                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(tokens.compactGap)){
-                            FlashLearnStatTile("تمرین‌نشده",(stats?.unpracticedWords ?: total).toString(),Modifier.weight(1f))
-                            FlashLearnStatTile("یادگرفته",(stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(),Modifier.weight(1f))
-                        }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < tokens.dp(tokens.design.metric("adaptiveMediumBreakpoint"))
+            if (compact) {
+                Column(
+                    Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(tokens.itemGap)
+                ) {
+                    FlashLearnStatTile(stringResource(R.string.home_stat_total_words), total.toString(), Modifier.fillMaxWidth())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
+                        FlashLearnStatTile(stringResource(R.string.home_stat_practiced_words), (stats?.practicedWords ?: 0).toString(), Modifier.weight(1f))
+                        FlashLearnStatTile(stringResource(R.string.home_stat_unpracticed_words), (stats?.unpracticedWords ?: total).toString(), Modifier.weight(1f))
                     }
+                    FlashLearnStatTile(stringResource(R.string.home_stat_learned), (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(), Modifier.fillMaxWidth())
                 }
+            } else {
+                when (tokens.statsLayout) {
+                    com.flashlearn.app.ui.theme.StatsLayoutStrategy.GRID_4_COLUMNS ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
+                            FlashLearnStatTile(stringResource(R.string.home_stat_total), total.toString(), Modifier.weight(1f))
+                            FlashLearnStatTile(stringResource(R.string.home_stat_practiced), (stats?.practicedWords ?: 0).toString(), Modifier.weight(1f))
+                            FlashLearnStatTile(stringResource(R.string.home_stat_remaining), (stats?.unpracticedWords ?: total).toString(), Modifier.weight(1f))
+                            FlashLearnStatTile(stringResource(R.string.home_stat_learned), (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(), Modifier.weight(1f))
+                        }
+                    com.flashlearn.app.ui.theme.StatsLayoutStrategy.VERTICAL_LIST ->
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
+                            FlashLearnStatTile(stringResource(R.string.home_stat_total_words), total.toString(), Modifier.fillMaxWidth())
+                            FlashLearnStatTile(stringResource(R.string.home_stat_practiced_words), (stats?.practicedWords ?: 0).toString(), Modifier.fillMaxWidth())
+                            FlashLearnStatTile(stringResource(R.string.home_stat_unpracticed_words), (stats?.unpracticedWords ?: total).toString(), Modifier.fillMaxWidth())
+                            FlashLearnStatTile(stringResource(R.string.home_stat_learned), (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(), Modifier.fillMaxWidth())
+                        }
+                    else ->
+                        FlashLearnCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
+                                Text(stringResource(R.string.home_stats_summary), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = tokens.onSurface)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
+                                    FlashLearnStatTile(stringResource(R.string.home_stat_total_words), total.toString(), Modifier.weight(1f))
+                                    FlashLearnStatTile(stringResource(R.string.home_stat_practiced_words), (stats?.practicedWords ?: 0).toString(), Modifier.weight(1f))
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
+                                    FlashLearnStatTile(stringResource(R.string.home_stat_unpracticed_words), (stats?.unpracticedWords ?: total).toString(), Modifier.weight(1f))
+                                    FlashLearnStatTile(stringResource(R.string.home_stat_learned), (stats?.learnedWords ?: (summary?.learnedConceptCount ?: 0)).toString(), Modifier.weight(1f))
+                                }
+                            }
+                        }
+                }
+            }
         }
 
         // ── Ready reviews ──────────────────────────────────────
         FlashLearnSectionTitle(
-            text = "مرورهای آماده",
+            text = stringResource(R.string.home_ready_reviews),
             trailing = {
                 Text(
-                    "$due کلمه",
+                    stringResource(R.string.home_word_count, due),
                     style = MaterialTheme.typography.labelLarge,
                     color = tokens.onSurfaceVariant
                 )
             }
         )
 
-        ReviewReadyCard("روزانه", "مرور امروز", daily, state.dailyTotal) {
+        ReviewReadyCard(stringResource(R.string.home_daily), stringResource(R.string.home_daily_subtitle), daily, state.dailyTotal) {
             onStartReview(ReviewType.DAILY)
         }
-        ReviewReadyCard("هفتگی", "تقویت ماندگاری", weekly, state.weeklyTotal) {
+        ReviewReadyCard(stringResource(R.string.home_weekly), stringResource(R.string.home_weekly_subtitle), weekly, state.weeklyTotal) {
             onStartReview(ReviewType.WEEKLY)
         }
-        ReviewReadyCard("ماهانه", "حافظه بلندمدت", monthly, state.monthlyTotal) {
+        ReviewReadyCard(stringResource(R.string.home_monthly), stringResource(R.string.home_monthly_subtitle), monthly, state.monthlyTotal) {
             onStartReview(ReviewType.MONTHLY)
         }
 
@@ -213,7 +232,7 @@ fun HomeScreen(
         FlashLearnPrimaryButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth().height(tokens.homeCtaHeight)) {
             Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
-            Text("افزودن واژه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.home_add_word), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(Modifier.height(tokens.homeBottomGap))
@@ -253,7 +272,7 @@ private fun ReviewReadyCard(
                 color = tokens.primary
             )
             Text(
-                "آماده از $totalCount کلمه",
+                stringResource(R.string.home_ready_of_total, readyCount, totalCount),
                 style = MaterialTheme.typography.labelMedium,
                 color = tokens.onSurfaceVariant
             )
