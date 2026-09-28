@@ -37,16 +37,29 @@ class GetBasicStatistics @Inject constructor(
     suspend operator fun invoke(): BasicStatistics {
         val active = conceptRepository.getAllActive()
         val activeIds = active.map { it.id }.toSet()
-        val history = reviewHistoryRepository.getAll().filter { it.conceptId in activeIds }
-        val learnedIds = learningStateRepository.getAll()
-            .filter { it.conceptId in activeIds && it.stage == com.flashlearn.domain.model.Stage.LEARNED }
+        val learningStates = learningStateRepository.getAll()
+            .filter { it.conceptId in activeIds }
+
+        val learnedIds = learningStates
+            .filter { it.stage == com.flashlearn.domain.model.Stage.LEARNED }
             .map { it.conceptId }
             .toSet()
-        val practiced = history.map { it.conceptId }.toSet().size
+
+        val practicedIds = learningStates
+            .filter {
+                it.stage != com.flashlearn.domain.model.Stage.LEARNED &&
+                    it.lastReviewedAt != null
+            }
+            .map { it.conceptId }
+            .toSet()
+
+        val practiced = practicedIds.size
+        val unpracticed = maxOf(0, active.size - practiced - learnedIds.size)
+
         return BasicStatistics(
             totalActiveWords = active.size,
             practicedWords = practiced,
-            unpracticedWords = maxOf(0, active.size - practiced),
+            unpracticedWords = unpracticed,
             learnedWords = learnedIds.size
         )
     }
