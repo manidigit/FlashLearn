@@ -7,10 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.AccentColor
 import com.flashlearn.app.ui.AppearanceMode
@@ -49,9 +48,17 @@ fun FlashLearnTheme(
     }
     
     // =========== Primary Color Selection ===========
-    // Personality themes own their primary palette; legacy accent overrides remain for the neutral theme.
-    val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
-    val onPrimaryColor = if (isDark) Color(spec.design.darkOnPrimary) else Color(spec.design.lightOnPrimary)
+    // The explicit accent setting is applied to Material primary so the user-visible
+    // accent control has a deterministic visual effect across all themes.
+    val accent = when (accentColor) {
+        AccentColor.PURPLE -> if (isDark) Color(0xFFB39DDB) else Color(0xFF6750A4)
+        AccentColor.BLUE -> if (isDark) Color(0xFF90CAF9) else Color(0xFF1565C0)
+        AccentColor.GREEN -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF2E7D32)
+        AccentColor.ORANGE -> if (isDark) Color(0xFFFFCC80) else Color(0xFFEF6C00)
+        AccentColor.PINK -> if (isDark) Color(0xFFF48FB1) else Color(0xFFC2185B)
+    }
+    val primary = accent
+    val onPrimaryColor = if (isDark) Color(0xFF161218) else Color.White
     
     // =========== Material Color Scheme ===========
     // This is what screens use for all colors
@@ -60,7 +67,7 @@ fun FlashLearnTheme(
             primary = primary,
             onPrimary = onPrimaryColor,
             secondary = Color(spec.darkSecondary),
-            tertiary = Color(spec.darkSecondary),
+            tertiary = accent,
             background = Color(spec.darkBackground),
             surface = Color(spec.darkSurface),
             surfaceVariant = Color(spec.darkSurfaceVariant),
@@ -75,7 +82,7 @@ fun FlashLearnTheme(
             primary = primary,
             onPrimary = onPrimaryColor,
             secondary = Color(spec.lightSecondary),
-            tertiary = Color(spec.lightSecondary),
+            tertiary = accent,
             background = Color(spec.lightBackground),
             surface = Color(spec.lightSurface),
             surfaceVariant = Color(spec.lightSurfaceVariant),
@@ -136,7 +143,7 @@ fun FlashLearnTheme(
         error = colorScheme.error,
         
         // --- Gradients ---
-        gradientStart = if (isDark) Color(spec.darkPrimary) else Color(spec.gradientStart),
+        gradientStart = accent,
         gradientEnd = if (isDark) Color(spec.darkSecondary) else Color(spec.gradientEnd),
         
         // --- Layout & Appearance ---
@@ -175,17 +182,10 @@ fun FlashLearnTheme(
         design = spec.design
     )
     
-    // =========== Density Adjustment ===========
-    val baseDensity = LocalDensity.current
-    val themedDensity = Density(
-        density = baseDensity.density * spec.densityScale,
-        fontScale = baseDensity.fontScale
-    )
-    
     // =========== Provide All Theme Data ===========
+    // Density must remain system-owned; theme scaling is handled by spacing/typography tokens.
     CompositionLocalProvider(
-        LocalFlashLearnThemeTokens provides tokens,
-        LocalDensity provides themedDensity
+        LocalFlashLearnThemeTokens provides tokens
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -201,9 +201,4 @@ fun FlashLearnTheme(
     }
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-private fun Color.compositeOver(background: Color): Color = this.copy(alpha = 1f)
 
