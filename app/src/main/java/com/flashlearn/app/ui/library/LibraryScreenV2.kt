@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ fun LibraryScreenV2(
     onAddWord: () -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     var duplicateMessage by remember { mutableStateOf<String?>(null) }
 
@@ -123,7 +125,7 @@ fun LibraryScreenV2(
                 onClick = {
                     duplicateMessage = null
                     viewModel.removeExactDuplicates { count ->
-                        duplicateMessage = if (count == 0) stringResource(R.string.library_find_duplicates) else stringResource(R.string.library_merged_duplicates, toFaDigits(count))
+                        duplicateMessage = if (count == 0) context.getString(R.string.library_find_duplicates) else context.getString(R.string.library_merged_duplicates, toFaDigits(count))
                     }
                 },
                 enabled = !state.isLoading && !state.isDuplicateCleanupBusy,
