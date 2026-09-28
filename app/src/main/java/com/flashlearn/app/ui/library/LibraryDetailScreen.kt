@@ -1,3 +1,4 @@
+import android.content.Context
 package com.flashlearn.app.ui.library
 
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import com.flashlearn.domain.usecase.ToggleFavoriteUseCase
 import com.flashlearn.domain.usecase.UpdateConceptCommand
 import com.flashlearn.domain.usecase.UpdateConceptUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +47,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LibraryDetailViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val concepts: ConceptRepository,
     private val contents: ContentRepository,
     private val categoryRepository: CategoryRepository,
@@ -68,7 +71,7 @@ class LibraryDetailViewModel @Inject constructor(
     fun load(id: UUID, sourceLanguage: String = "es", targetLanguage: String = "fa") = viewModelScope.launch {
         activeSourceLanguage = sourceLanguage; activeTargetLanguage = targetLanguage; _item.value = null; _message.value = null
         runCatching {
-            val c = concepts.get(id) ?: error("لغت پیدا نشد")
+            val c = concepts.get(id) ?: error(context.getString(R.string.detail_not_found))
             val cc = contents.getAll().filter { it.conceptId == id }
             val category = c.categoryId?.let { categoryId -> categoryRepository.getAll().firstOrNull { it.id == categoryId } }
             LibraryItem(c, cc.firstOrNull { it.languageCode == sourceLanguage }, cc.filter { it.languageCode == targetLanguage }.sortedBy { it.translationIndex }, category)
@@ -86,12 +89,12 @@ class LibraryDetailViewModel @Inject constructor(
     fun save(source: String, target: String, notes: String?, pronunciation: String?, example: String?, entryType: EntryType, categoryId: UUID?, createCategoryName: String?, sourceLanguage: String, targetLanguage: String, onSuccess: () -> Unit = {}) = viewModelScope.launch {
         if (_isBusy.value) return@launch
         val current = _item.value?.concept ?: return@launch
-        if (source.isBlank() || target.isBlank()) { _message.value = "متن واژه و معنی الزامی است"; return@launch }
+        if (source.isBlank() || target.isBlank()) { _message.value = context.getString(R.string.detail_required); return@launch }
         _isBusy.value = true
         runCatching {
             val resolvedCategoryId = createCategoryName?.trim()?.takeIf { it.isNotEmpty() }?.let { getOrCreateCategory(it) }
             updateConcept(UpdateConceptCommand(current.id, source.trim(), target.trim(), notes?.trim()?.ifBlank { null }, pronunciation?.trim()?.ifBlank { null }, example?.trim()?.ifBlank { null }, entryType = entryType, categoryId = resolvedCategoryId ?: categoryId, preserveCategory = resolvedCategoryId == null && categoryId == current.categoryId, sourceLanguage = sourceLanguage, targetLanguage = targetLanguage))
-        }.onSuccess { _message.value = "ذخیره شد"; load(current.id, sourceLanguage, targetLanguage); onSuccess() }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
+        }.onSuccess { _message.value = context.getString(R.string.detail_saved); load(current.id, sourceLanguage, targetLanguage); onSuccess() }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
     fun delete(onDeleted: () -> Unit) = viewModelScope.launch {
