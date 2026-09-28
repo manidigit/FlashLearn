@@ -87,7 +87,7 @@ data class FlashLearnThemeSpec(
     val cornerSmall: Float = 12f, val cornerMedium: Float = 16f, val cornerLarge: Float = 24f,
     val typographyScale: Float = 1f, val densityScale: Float = 1f,
     val spacingScale: Float = 1f,
-    val design: ThemeDesign = when (id.lowercase()) { "grok" -> ThemeDesign.grok(); "claud","claude" -> ThemeDesign.claud(); "spark" -> ThemeDesign.spark(); "gtp" -> ThemeDesign.gtp(); else -> ThemeDesign.default() }
+    val design: ThemeDesign = when (id.lowercase()) { "grok" -> ThemeDesign.grok(); "claud","claude" -> ThemeDesign.claud();  "gtp" -> ThemeDesign.gtp(); else -> ThemeDesign.default() }
 ) {
     fun toJson(): String = JSONObject().apply {
         put("formatVersion", FORMAT_VERSION); put("id", id); put("name", name)
@@ -171,22 +171,7 @@ data class FlashLearnThemeSpec(
             typographyScale = 1f, densityScale = 1f, spacingScale = 1f
         )
 
-        val SPARK = FlashLearnThemeSpec(
-            id = "spark", name = "جرقه",
-            lightPrimary = 0xFF58CC02, darkPrimary = 0xFF78E633,
-            lightSecondary = 0xFF7C4DFF, darkSecondary = 0xFFA98BFF,
-            lightBackground = 0xFFF7F9F5, darkBackground = 0xFF111713,
-            lightSurface = 0xFFFFFFFF, darkSurface = 0xFF19221C,
-            lightSurfaceVariant = 0xFFEFF6EC, darkSurfaceVariant = 0xFF223026,
-            lightOnSurface = 0xFF24302A, darkOnSurface = 0xFFF2F7F3,
-            lightOnSurfaceVariant = 0xFF6B756E, darkOnSurfaceVariant = 0xFFB8C4BB,
-            lightCard = 0xFFFFFFFF, darkCard = 0xFF19221C,
-            lightOutline = 0xFFD7E3D2, darkOutline = 0xFF344338,
-            gradientStart = 0xFF58CC02, gradientEnd = 0xFF7C4DFF,
-            iconStyle = "filled", elevationScale = 0.92f,
-            cornerSmall = 14f, cornerMedium = 20f, cornerLarge = 24f,
-            typographyScale = 1.02f, densityScale = 1f, spacingScale = 1f
-        )
+        val 
 
         /**
          * GTP is deliberately a fifth, visibly distinct design language:
@@ -210,7 +195,7 @@ data class FlashLearnThemeSpec(
             typographyScale = 1.07f, densityScale = 0.94f, spacingScale = 0.88f
         )
 
-        val BUILT_IN = listOf(GROK, CLAUD, MODERN_MINIMAL, SPARK, GTP)
+        val BUILT_IN = listOf(GROK, CLAUD, MODERN_MINIMAL, GTP)
 
         fun fromJson(raw:String):FlashLearnThemeSpec {
             val j=JSONObject(raw); require(j.optInt("formatVersion") in 2..FORMAT_VERSION)
