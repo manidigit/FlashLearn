@@ -9,12 +9,12 @@ class SchemaContractTest {
     private fun exportedSchema(): String {
         val schemaRoot = File("schemas")
         assertTrue("Room schema directory was not generated", schemaRoot.isDirectory)
-        val schemaFile = schemaRoot.walkTopDown().filter { it.isFile && it.extension == "json" }.firstOrNull { it.name == "6.json" }
-        assertTrue("Room schema version 6 was not generated", schemaFile != null)
+        val schemaFile = schemaRoot.walkTopDown().filter { it.isFile && it.extension == "json" }.firstOrNull { it.name == "7.json" }
+        assertTrue("Room schema version 7 was not generated", schemaFile != null)
         return schemaFile!!.readText()
     }
     @Test fun expectedEntityCountIsSeventeen() { assertEquals(17, Regex("\"tableName\":").findAll(exportedSchema()).count()) }
-    @Test fun schemaVersionIsSixAfterVocabularyNormalization() { assertTrue(Regex("\"version\":\\s*6").containsMatchIn(exportedSchema())) }
+    @Test fun schemaVersionIsSevenAfterDatabaseOptimization() { assertTrue(Regex("\"version\":\\s*7").containsMatchIn(exportedSchema())) }
     @Test fun contentSupportsMultipleTranslationsAndReviewMetadata() {
         val schema=exportedSchema(); assertTrue(schema.contains("\"tableName\": \"contents\"")); assertTrue(schema.contains("\"fieldPath\": \"translationIndex\"")); assertTrue(schema.contains("\"fieldPath\": \"grammarNote\"")); assertTrue(schema.contains("\"fieldPath\": \"possibleCorrection\""))
     }
