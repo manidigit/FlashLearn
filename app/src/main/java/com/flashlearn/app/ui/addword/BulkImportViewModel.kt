@@ -10,6 +10,7 @@ import com.flashlearn.domain.usecase.DuplicateConceptException
 import com.flashlearn.domain.usecase.ImportParsedEntryUseCase
 import com.flashlearn.domain.usecase.computeCanonicalKey
 import com.flashlearn.domain.model.Category
+import com.flashlearn.domain.repository.CategoryRepository
 import java.util.UUID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
