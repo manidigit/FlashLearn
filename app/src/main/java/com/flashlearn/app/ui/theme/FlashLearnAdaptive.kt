@@ -9,9 +9,10 @@ enum class FlashLearnWidthClass { COMPACT, MEDIUM, EXPANDED }
 @Composable
 fun rememberFlashLearnWidthClass(): FlashLearnWidthClass {
     val width = LocalConfiguration.current.screenWidthDp.dp
+    val tokens = LocalFlashLearnThemeTokens.current
     return when {
-        width >= 840.dp -> FlashLearnWidthClass.EXPANDED
-        width >= 600.dp -> FlashLearnWidthClass.MEDIUM
+        width >= tokens.dp(tokens.design.metric("adaptiveExpandedBreakpoint")) -> FlashLearnWidthClass.EXPANDED
+        width >= tokens.dp(tokens.design.metric("adaptiveMediumBreakpoint")) -> FlashLearnWidthClass.MEDIUM
         else -> FlashLearnWidthClass.COMPACT
     }
 }
