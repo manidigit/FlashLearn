@@ -91,5 +91,11 @@
 - Kept Persian category-name matching in `CategorySelectionScreen` because those literals are classification data used by icon-selection logic, not rendered UI copy.
 - Final CI verification: GREEN on workflow run `36481473544` (Build + Unit Test and Instrumentation + Upgrade Gate).
 
+## UI language application fix
+- The Settings screen previously displayed “Persian” but did not actually apply an app locale; Android therefore used the device locale and could render the English `values-en` resources.
+- Added persisted app-language selection, locale-wrapped Activity resources, and a functional Settings language toggle.
+- Default remains Persian.
+- CI run `36484231210` is GREEN.
+
 ## Workflow
 هر بار فقط یک مورد انتخاب شود: کد فعلی بررسی شود، فقط همان مورد اصلاح شود، تست‌ها اجرا شوند، CI تا GREEN دنبال شود، و همین فایل با نتیجه و CI به‌روزرسانی شود.
