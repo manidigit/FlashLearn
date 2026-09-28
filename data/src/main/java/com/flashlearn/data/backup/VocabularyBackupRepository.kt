@@ -84,7 +84,20 @@ class VocabularyBackupRepository @Inject constructor(
                 val createdAt = item.optString("createdAt").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
                 val updatedAt = item.optString("updatedAt").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
                 val concept = ConceptEntity(id, entryType, null, item.optBoolean("favorite", false), item.optBoolean("active", true), createdAt, updatedAt)
-                val contents = byLanguage.flatMap { (language, values) -> values.mapIndexed { index, o -> val value=o.optString("text").trim(); ContentEntity(UUID.randomUUID(), id, language, value, computeCanonicalKey(value), o.optString("notes").takeIf{it.isNotBlank()&&it!="null"}?:note, o.optString("pronunciation").takeIf{it.isNotBlank()&&it!="null"}, o.optString("example").takeIf{it.isNotBlank()&&it!="null"}, o.optInt("translationIndex",index), o.optString("grammarNote").takeIf{it.isNotBlank()&&it!="null"}, o.optString("possibleCorrection").takeIf{it.isNotBlank()&&it!="null")) } }
+                val contents = byLanguage.flatMap { (language, values) ->
+                    values.mapIndexed { index, o ->
+                        val value = o.optString("text").trim()
+                        ContentEntity(
+                            UUID.randomUUID(), id, language, value, computeCanonicalKey(value),
+                            o.optString("notes").takeIf { it.isNotBlank() && it != "null" } ?: note,
+                            o.optString("pronunciation").takeIf { it.isNotBlank() && it != "null" },
+                            o.optString("example").takeIf { it.isNotBlank() && it != "null" },
+                            o.optInt("translationIndex", index),
+                            o.optString("grammarNote").takeIf { it.isNotBlank() && it != "null" },
+                            o.optString("possibleCorrection").takeIf { it.isNotBlank() && it != "null" }
+                        )
+                    }
+                }
                 incoming += Incoming(concept, contents, categoryName)
             }
 

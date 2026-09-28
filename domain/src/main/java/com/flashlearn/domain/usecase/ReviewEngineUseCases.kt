@@ -65,7 +65,8 @@ class SelectReviewQueueUseCase @Inject constructor(
         learningStateRepository,
         difficultyStateRepository,
         conceptTagRepository,
-        EmptyReviewHistoryRepository
+        EmptyReviewHistoryRepository,
+        EmptyContentRepository
     )
 
     suspend operator fun invoke(filters: ReviewSelectionFilters): List<ReviewCandidate> {
@@ -100,8 +101,7 @@ class SelectReviewQueueUseCase @Inject constructor(
             else if (filters.difficulty != null && difficulty.current != filters.difficulty) continue
             if (filters.categoryIds.isNotEmpty() && concept.categoryId !in filters.categoryIds) continue
             else if (filters.categoryId != null && concept.categoryId != filters.categoryId) continue
-            if (filters.difficulty != null && && difficulty.current != filters.difficulty) continue
-            if (filters.tagId != null && filters.tagId !in tags) continue
+                        if (filters.tagId != null && filters.tagId !in tags) continue
             candidates += ReviewCandidate(concept, learning, difficulty, tags)
         }
 
