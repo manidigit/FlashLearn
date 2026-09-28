@@ -134,7 +134,7 @@ data class FlashLearnThemeSpec(
             lightOnSurface=0xFF111827, darkOnSurface=0xFFF3F4F6, lightOnSurfaceVariant=0xFF64748B, darkOnSurfaceVariant=0xFFB8C1CE,
             lightCard=0xFFFFFFFF, darkCard=0xFF171D26, lightOutline=0xFFD8E0EA, darkOutline=0xFF344152,
             gradientStart=0xFF2563EB, gradientEnd=0xFF475569, iconStyle="outlined", elevationScale=0.9f,
-            cornerSmall=10f, cornerMedium=14f, cornerLarge=20f, typographyScale=1f, densityScale=1f, spacingScale=1f, design=ThemeDesign.default()
+            cornerSmall=10f, cornerMedium=14f, cornerLarge=20f, typographyScale=1f, densityScale=1f, spacingScale=1f, design=ThemeDesign.default().copy(metrics = ThemeDesign.default().metrics + mapOf("elevationScale" to .9f,"typographyScale" to 1f,"densityScale" to 1f,"spacingScale" to 1f,"cornerSmall" to 10f,"cornerMedium" to 14f,"cornerLarge" to 20f))
         )
 
         val GROK = FlashLearnThemeSpec(
