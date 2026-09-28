@@ -36,3 +36,11 @@ Audit item 1 from `docs/AUDIT_REMAINING_WORK_CHECKLIST.md`: extract user-visible
 
 ## Next
 Proceed to the next checklist item only after the final CI result is GREEN.
+
+
+## Follow-up: functional UI language
+- Root cause: Settings displayed Persian as a label, but the app had no resource-locale application mechanism. The active Android locale could therefore select `values-en` even while Settings showed Persian.
+- Added persisted UI language preference and an Activity `ContextWrapper` that applies the selected locale to Android resources.
+- Settings language row is now actionable and toggles Persian/English; Activity recreation applies the choice immediately.
+- Default language is Persian.
+- CI run: 36484231210 — GREEN (Build + Unit Test; Instrumentation + Upgrade Gate).
