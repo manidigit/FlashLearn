@@ -2,7 +2,7 @@
 
 Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
-**Current version:** 6.61 (versionCode 661)
+**Current version:** 6.62 (versionCode 662)
 
 ## Core features
 
@@ -14,7 +14,7 @@ Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compo
 - Progress, statistics and achievements\n- Home review-ready counts separated from total words in each Learning stage
 - Review session language-pair routing, explicit flashcard next-card/quiz-skip controls, and same-day eligibility aligned with the active review queue
 - Offline-first Room database
-- Multiple built-in themes with theme-owned layout, navigation, icon and spacing profiles; custom theme JSON compatibility is preserved, including ThemeDesign metrics and navigation/icon profiles
+- Multiple built-in themes with a single ThemeDesign runtime source for layout, navigation, icons, spacing, shapes, typography, density, elevation and adaptive breakpoints; custom theme JSON compatibility is preserved
 - Backup/restore with legacy-format compatibility and combined multi-type backup bundles
 
 ## Architecture
@@ -24,9 +24,9 @@ Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compo
 - `data` — Room-backed repository implementations and backup/restore
 - `database` — Room entities, DAOs and migrations
 - `core` — Hilt dependency-injection bindings
-- Theme system — FlashLearnThemeSpec owns visual parameters; screens consume FlashLearnThemeTokens rather than defining theme-specific geometry
+- Theme system — FlashLearnThemeSpec → ThemeDesign → FlashLearnThemeTokens is the single runtime visual path; legacy top-level visual fields are compatibility-only
 
-## Build and test
+## Localization and adaptive UI\n\n- User-facing UI text belongs in Android string resources; Room stores user-created vocabulary/content, not static UI copy.\n- The active ThemeDesign owns adaptive breakpoints. Screens reflow from available width rather than targeting a specific phone model.\n- Material dynamic color is intentionally disabled so wallpaper colors cannot silently override a selected FlashLearn theme; every visual decision remains theme-owned.\n\n## Build and test
 
 ```bash
 ./gradlew assembleDebug
