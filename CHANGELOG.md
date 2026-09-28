@@ -1,3 +1,9 @@
+## v6.61.2 — Hardcoded UI string extraction
+
+- Extracted user-visible Compose UI strings into Android resources with Persian and English variants across navigation, About, Add Word, Bulk Import, Backup/Restore, Library, Review, Needs Review, Progress, Settings, and related surfaces.
+- Added formatted resources for dynamic counts, errors, labels, and accessibility text.
+- Documented the work in `docs/PROCESS_LOG_V6.61.2.md` and updated the remaining-work checklist.
+
 ## v6.63 — Remove Spark theme
 - Removed the Spark (جرقه) built-in theme from the theme registry and runtime selection.
 - Kept the remaining themes unchanged.
