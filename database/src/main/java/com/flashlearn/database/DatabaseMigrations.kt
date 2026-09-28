@@ -43,4 +43,14 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `language_pairs` (`sourceLanguageCode` TEXT NOT NULL, `targetLanguageCode` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`sourceLanguageCode`, `targetLanguageCode`))")
     }
 }
-
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_concepts_active_categoryId` ON `concepts` (`active`, `categoryId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_concepts_active_favorite` ON `concepts` (`active`, `favorite`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_review_history_conceptId_reviewedAt` ON `review_history` (`conceptId`, `reviewedAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_review_sessions_startedAt` ON `review_sessions` (`startedAt`)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_name` ON `tags` (`name`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_languages_active_code` ON `languages` (`active`, `code`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_language_pairs_active_source_target` ON `language_pairs` (`active`, `sourceLanguageCode`, `targetLanguageCode`)")
+    }
+}
