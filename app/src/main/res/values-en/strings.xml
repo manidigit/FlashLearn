@@ -18,4 +18,7 @@
     <string name="help_tts_title">Question audio</string>
     <string name="help_tts_body">Replay repeats only the current question and does not create a new question or change the correct answer. Spanish voice availability depends on the device speech engine.</string>
     <string name="help_boundary">Help is a presentation and educational layer; it does not own learning state, difficulty, review history, or scheduling.</string>
+    <string name="review_title">Word review</string>
+    <string name="review_close">Close review</string>
+    <string name="review_remaining">%1$d cards remaining of %2$d</string>
 </resources>
