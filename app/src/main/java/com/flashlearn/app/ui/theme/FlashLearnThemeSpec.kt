@@ -97,6 +97,24 @@ data class FlashLearnThemeSpec(
         put("iconStyle", iconStyle); put("elevationScale", elevationScale)
         put("cornerSmall", cornerSmall); put("cornerMedium", cornerMedium); put("cornerLarge", cornerLarge)
         put("typographyScale", typographyScale); put("densityScale", densityScale); put("spacingScale", spacingScale)
+        put("design", JSONObject().apply {
+            put("buttonStyle", design.buttonStyle.name)
+            put("navStyle", design.navStyle.name)
+            put("statsLayout", design.statsLayout.name)
+            put("reviewsLayout", design.reviewsLayout.name)
+            put("libraryLayout", design.libraryLayout.name)
+            put("reviewPresentation", design.reviewPresentation.name)
+            put("showReviewOrnaments", design.showReviewOrnaments)
+            put("lightOnPrimary", hex(design.lightOnPrimary)); put("darkOnPrimary", hex(design.darkOnPrimary))
+            put("lightSuccess", hex(design.lightSuccess)); put("darkSuccess", hex(design.darkSuccess))
+            put("lightWarning", hex(design.lightWarning)); put("darkWarning", hex(design.darkWarning))
+            put("lightError", hex(design.lightError)); put("darkError", hex(design.darkError))
+            put("lightInfo", hex(design.lightInfo)); put("darkInfo", hex(design.darkInfo))
+            put("iconStyle", design.iconStyle.name); put("activeIconStyle", design.activeIconStyle.name)
+            put("iconSizeScale", design.iconSizeScale); put("activeIconSizeScale", design.activeIconSizeScale)
+            put("navIndicatorAlpha", design.navIndicatorAlpha)
+            put("metrics", JSONObject().apply { design.metrics.forEach { (k,v) -> put(k,v) } })
+        })
     }.toString(2)
 
     companion object {
@@ -209,7 +227,8 @@ data class FlashLearnThemeSpec(
                 j.optDouble("cornerLarge",24.0).toFloat().coerceIn(0f,56f),
                 j.optDouble("typographyScale",1.0).toFloat().coerceIn(.85f,1.25f),
                 j.optDouble("densityScale",1.0).toFloat().coerceIn(.85f,1.15f),
-                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f)
+                j.optDouble("spacingScale",1.0).toFloat().coerceIn(.75f,1.25f),
+                design = parseDesign(j, j.getString("id").take(80))
             )
         }
 
@@ -217,6 +236,46 @@ data class FlashLearnThemeSpec(
             context.getSharedPreferences("flashlearn_themes",0)
                 .getStringSet("custom",emptySet()).orEmpty()
                 .mapNotNull{runCatching{fromJson(it)}.getOrNull()}
+
+        private fun parseDesign(j: JSONObject, id: String): ThemeDesign {
+            val fallback = BUILT_IN.firstOrNull { it.id == id }?.design ?: ThemeDesign.default()
+            val d = j.optJSONObject("design") ?: return fallback
+            val metrics = fallback.metrics.toMutableMap()
+            d.optJSONObject("metrics")?.let { m ->
+                metrics.keys.toList().forEach { key ->
+                    if (m.has(key)) metrics[key] = m.optDouble(key, metrics.getValue(key)).toFloat()
+                }
+            }
+            fun <T : Enum<T>> enumOr(name: String, values: Array<T>, fallbackValue: T): T =
+                runCatching { java.lang.Enum.valueOf(values.first().declaringClass, d.optString(name)) }.getOrDefault(fallbackValue)
+            fun color(name: String, fallbackColor: Long): Long =
+                d.optString(name, "").takeIf { it.isNotBlank() }?.let { runCatching { parseColor(it) }.getOrNull() } ?: fallbackColor
+            return ThemeDesign(
+                metrics = metrics,
+                buttonStyle = enumOr("buttonStyle", ButtonStyle.values(), fallback.buttonStyle),
+                navStyle = enumOr("navStyle", NavigationStyle.values(), fallback.navStyle),
+                statsLayout = enumOr("statsLayout", StatsLayoutStrategy.values(), fallback.statsLayout),
+                reviewsLayout = enumOr("reviewsLayout", ReviewsLayoutStrategy.values(), fallback.reviewsLayout),
+                libraryLayout = enumOr("libraryLayout", LibraryLayoutStrategy.values(), fallback.libraryLayout),
+                reviewPresentation = enumOr("reviewPresentation", ReviewPresentation.values(), fallback.reviewPresentation),
+                showReviewOrnaments = d.optBoolean("showReviewOrnaments", fallback.showReviewOrnaments),
+                lightOnPrimary = color("lightOnPrimary", fallback.lightOnPrimary),
+                darkOnPrimary = color("darkOnPrimary", fallback.darkOnPrimary),
+                lightSuccess = color("lightSuccess", fallback.lightSuccess),
+                darkSuccess = color("darkSuccess", fallback.darkSuccess),
+                lightWarning = color("lightWarning", fallback.lightWarning),
+                darkWarning = color("darkWarning", fallback.darkWarning),
+                lightError = color("lightError", fallback.lightError),
+                darkError = color("darkError", fallback.darkError),
+                lightInfo = color("lightInfo", fallback.lightInfo),
+                darkInfo = color("darkInfo", fallback.darkInfo),
+                iconStyle = runCatching { IconStyle.valueOf(d.optString("iconStyle")) }.getOrDefault(fallback.iconStyle),
+                activeIconStyle = runCatching { IconStyle.valueOf(d.optString("activeIconStyle")) }.getOrDefault(fallback.activeIconStyle),
+                iconSizeScale = d.optDouble("iconSizeScale", fallback.iconSizeScale).toFloat().coerceIn(.75f, 1.35f),
+                activeIconSizeScale = d.optDouble("activeIconSizeScale", fallback.activeIconSizeScale).toFloat().coerceIn(.75f, 1.35f),
+                navIndicatorAlpha = d.optDouble("navIndicatorAlpha", fallback.navIndicatorAlpha).toFloat().coerceIn(0f, 1f)
+            )
+        }
 
         fun saveCustom(context:Context,spec:FlashLearnThemeSpec){
             val p=context.getSharedPreferences("flashlearn_themes",0)
