@@ -15,8 +15,9 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val database: FlashLearnDatabase,
     private val learningRepository: com.flashlearn.domain.repository.LearningStateRepository,
     private val difficultyRepository: com.flashlearn.domain.repository.DifficultyStateRepository,
-    private val conceptTagRepository: com.flashlearn.domain.repository.ConceptTagRepository
+    private val conceptTagRepository: com.flashlearn.domain.repository.ConceptTagRepository = EmptyConceptTagRepository
 ) {
+    constructor(conceptRepository: ConceptRepository, contentRepository: ContentRepository, database: FlashLearnDatabase) : this(conceptRepository, contentRepository, database, EmptyLearningStateRepository, EmptyDifficultyStateRepository, EmptyConceptTagRepository) {
     suspend operator fun invoke(sourceLanguage: String = "es", targetLanguage: String = "fa"): Int = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
         val activeConcepts = conceptRepository.getAllActive()
@@ -58,3 +59,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
         removed
     }
 }
+
+private object EmptyLearningStateRepository : LearningStateRepository { override suspend fun get(conceptId:UUID):LearningState?=null; override suspend fun upsert(state:LearningState)=Unit; override suspend fun getAllByStage(stage:Stage)=emptyList<LearningState>(); override suspend fun getDueNonLearned(now:Instant)=emptyList<LearningState>(); override suspend fun getAll()=emptyList<LearningState>() }
+private object EmptyDifficultyStateRepository : DifficultyStateRepository { override suspend fun get(conceptId:UUID):DifficultyState?=null; override suspend fun upsert(state:DifficultyState)=Unit; override suspend fun delete(conceptId:UUID)=Unit; override suspend fun getAll()=emptyList<DifficultyState>() }
+private object EmptyConceptTagRepository : ConceptTagRepository { override suspend fun insert(conceptTag:ConceptTag)=Unit; override suspend fun getTagsForConcept(conceptId:UUID)=emptyList<UUID>(); override suspend fun getConceptsForTag(tagId:UUID)=emptyList<UUID>(); override suspend fun getAll()=emptyList<ConceptTag>() }

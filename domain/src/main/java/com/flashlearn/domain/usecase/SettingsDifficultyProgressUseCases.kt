@@ -33,8 +33,9 @@ class GetThresholdDifficultyUseCase @Inject constructor(
 class GetProgressSummaryUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository,
-    private val difficultyStateRepository: DifficultyStateRepository
+    private val difficultyStateRepository: DifficultyStateRepository = EmptyProgressDifficultyRepository
 ) {
+    constructor(conceptRepository: ConceptRepository, learningStateRepository: LearningStateRepository) : this(conceptRepository, learningStateRepository, EmptyProgressDifficultyRepository)
     suspend operator fun invoke(now: Instant): ProgressSummary {
         val concepts = conceptRepository.getAllActive()
         val statesById = learningStateRepository.getAll().associateBy { it.conceptId }
@@ -86,3 +87,5 @@ class GetProgressSummaryUseCase @Inject constructor(
         )
     }
 }
+
+private object EmptyProgressDifficultyRepository : DifficultyStateRepository { override suspend fun get(conceptId:UUID):DifficultyState?=null; override suspend fun upsert(state:DifficultyState)=Unit; override suspend fun delete(conceptId:UUID)=Unit; override suspend fun getAll()=emptyList<DifficultyState>() }
