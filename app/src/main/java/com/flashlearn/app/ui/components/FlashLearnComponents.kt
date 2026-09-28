@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,7 +37,7 @@ fun FlashLearnIcon(
 @Composable
 fun FlashLearnBackButton(
     onClick: () -> Unit,
-    contentDescription: String = "بازگشت",
+    contentDescription: String = stringResource(R.string.action_back),
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -95,7 +97,7 @@ fun FlashLearnScreenHeader(
                 shadowElevation = tokens.reviewBackElevation
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    FlashLearnActionIcon(FlashLearnAction.Back, "بازگشت", modifier = Modifier.size(tokens.reviewBackIcon), tint = tokens.reviewAccent)
+                    FlashLearnActionIcon(FlashLearnAction.Back, stringResource(R.string.action_back), modifier = Modifier.size(tokens.reviewBackIcon), tint = tokens.reviewAccent)
                 }
             }
         }
