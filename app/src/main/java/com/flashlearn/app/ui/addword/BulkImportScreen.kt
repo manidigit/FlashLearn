@@ -14,10 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.components.FlashLearnPrimaryButton
@@ -74,36 +76,36 @@ private fun BulkImportEditor(
         verticalArrangement = Arrangement.spacedBy(tokens.itemGap)
     ) {
         item {
-            FlashLearnScreenHeader(title = "لغات گروهی", onBack = onBack)
+            FlashLearnScreenHeader(title = stringResource(R.string.bulk_title), onBack = onBack)
         }
         item {
             Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = tokens.primary, textAlign = TextAlign.Start)
         }
         item {
-            Text("دسته‌بندی واژه‌های واردشده", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+            Text(stringResource(R.string.bulk_category), Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
             Box(Modifier.fillMaxWidth()) {
                 OutlinedButton(onClick = { categoryMenuExpanded = true }, enabled = state.categories.isNotEmpty(), modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
-                    Text(selectedCategoryName ?: "بدون دسته‌بندی", modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+                    Text(selectedCategoryName ?: stringResource(R.string.bulk_no_category), modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
                     Text("⌄")
                 }
                 DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
-                    DropdownMenuItem(text = { Text("بدون دسته‌بندی") }, onClick = { onCategoryChange(null); categoryMenuExpanded = false })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.bulk_no_category)) }, onClick = { onCategoryChange(null); categoryMenuExpanded = false })
                     state.categories.forEach { category ->
                         DropdownMenuItem(text = { Text(category.name) }, onClick = { onCategoryChange(category.id); categoryMenuExpanded = false })
                     }
                 }
             }
-            Text(if (state.categories.isEmpty()) "هنوز دسته‌بندی‌ای ساخته نشده است." else "این دسته‌بندی برای واژه‌های جدید این ورود اعمال می‌شود.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start)
+            Text(if (state.categories.isEmpty()) stringResource(R.string.bulk_no_categories) else stringResource(R.string.bulk_category_applied), Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start)
         }
         item {
-            Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
+            Text(stringResource(R.string.bulk_format_hint), Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
         }
         item {
             OutlinedTextField(
                 value = state.rawText,
                 onValueChange = onTextChange,
                 modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(230f), max = tokens.dp(360f)),
-                label = { Text("متن واژگان") },
+                label = { Text(stringResource(R.string.bulk_text)) },
                 placeholder = { Text("la piedra\nسنگ\n\nel nivel\nسطح، درجه", color = tokens.onSurfaceVariant) },
                 minLines = 8,
                 maxLines = 16,
@@ -122,7 +124,7 @@ private fun BulkImportEditor(
                 enabled = state.rawText.isNotBlank() && !state.isImporting && !state.isPreviewing,
                 modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
                 shape = MaterialTheme.shapes.medium
-            ) { Text(if (state.isPreviewing) "در حال پردازش..." else "پیش‌نمایش", fontWeight = FontWeight.Bold) }
+            ) { Text(if (state.isPreviewing) stringResource(R.string.bulk_processing) else stringResource(R.string.bulk_preview), fontWeight = FontWeight.Bold) }
         }
         state.error?.let { item { ErrorText(it) } }
     }
@@ -142,15 +144,15 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
         Surface(color = tokens.surface, tonalElevation = tokens.dp(1f)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(16f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 FlashLearnScreenHeader(
-                    title = "لغات گروهی",
-                    subtitle = "پیش‌نمایش (${results.size} مورد)",
+                    title = stringResource(R.string.bulk_title),
+                    subtitle = stringResource(R.string.bulk_preview_count, results.size),
                     onBack = onBack
                 )
-                Text("موارد تشخیص‌داده‌شده را بررسی کن و سپس همه موارد را وارد کن.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Start)
+                Text(stringResource(R.string.bulk_preview_hint), Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Start)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    FilterChip(selected = !duplicateOnly, onClick = { duplicateOnly = false }, label = { Text("همه کلمات") })
+                    FilterChip(selected = !duplicateOnly, onClick = { duplicateOnly = false }, label = { Text(stringResource(R.string.bulk_all)) })
                     Spacer(Modifier.width(tokens.compactGap))
-                    FilterChip(selected = duplicateOnly, onClick = { duplicateOnly = true }, enabled = state.done, label = { Text("کلمات تکراری (${state.skippedDuplicateCount})") })
+                    FilterChip(selected = duplicateOnly, onClick = { duplicateOnly = true }, enabled = state.done, label = { Text(stringResource(R.string.bulk_duplicates, state.skippedDuplicateCount)) })
                 }
             }
         }
@@ -158,21 +160,21 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
         if (state.warnings.isNotEmpty()) {
             Card(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(10f)), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.error.copy(alpha = .10f)), border = BorderStroke(tokens.dp(1f), tokens.error.copy(alpha = .25f))) {
                 Column(Modifier.fillMaxWidth().padding(tokens.dp(16f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.Start) {
-                    Text("گزارش هشدارها و موارد حل‌نشده (${state.warnings.size})", Modifier.fillMaxWidth(), color = tokens.error, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
-                    state.warnings.forEach { warning -> Text("خط ${warning.lineNumber} • ${warning.warningType} • ${warning.message}\n${warning.rawText}", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start) }
+                    Text(stringResource(R.string.bulk_warning_report, state.warnings.size), Modifier.fillMaxWidth(), color = tokens.error, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+                    state.warnings.forEach { warning -> Text(stringResource(R.string.bulk_line_warning, warning.lineNumber, warning.warningType, warning.message, warning.rawText), Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start) }
                 }
             }
         }
 
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = tokens.screenPadding, vertical = tokens.dp(4f)), verticalArrangement = Arrangement.spacedBy(tokens.itemGap)) {
             items(visibleResults) { result -> PreviewEntryCard(result, state.lineNumbers[result.entry.rawLines.firstOrNull()?.trim()]) }
-            if (visibleResults.isEmpty() && duplicateOnly) item { Text("هنوز مورد تکراری ثبت‌شده‌ای وجود ندارد.", Modifier.fillMaxWidth().padding(tokens.dp(24f)), color = tokens.onSurfaceVariant, textAlign = TextAlign.Center) }
+            if (visibleResults.isEmpty() && duplicateOnly) item { Text(stringResource(R.string.bulk_no_duplicates), Modifier.fillMaxWidth().padding(tokens.dp(24f)), color = tokens.onSurfaceVariant, textAlign = TextAlign.Center) }
         }
 
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = tokens.dp(4f), shadowElevation = tokens.dp(4f), color = tokens.surface) {
             Column(Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(12f)), verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                if (!state.done) Text("قابل ورود: $validCount  •  ناقص: ${results.size - validCount}", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.Start, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                else Text("نتیجه: ${state.importedCount} جدید  •  ${state.skippedDuplicateCount} تکراری  •  ${state.invalidCount} ناقص  •  ${state.needsReviewCount} نیازمند بررسی  •  ${state.failedCount} خطادار", Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.Start, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                if (!state.done) Text(stringResource(R.string.bulk_importable, validCount, results.size - validCount), Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.Start, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                else Text(stringResource(R.string.bulk_result, state.importedCount, state.skippedDuplicateCount, state.invalidCount, state.needsReviewCount, state.failedCount), Modifier.fillMaxWidth(), color = tokens.onSurface, textAlign = TextAlign.Start, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 FlashLearnPrimaryButton(
                     onClick = onImport,
                     enabled = !state.isImporting && !state.isPreviewing && !state.done && !duplicateOnly,
@@ -180,7 +182,7 @@ private fun BulkImportPreview(state: BulkImportUiState, onBack: () -> Unit, onRe
                 ) {
                     Icon(Icons.Outlined.Upload, null)
                     Spacer(Modifier.width(tokens.compactGap))
-                    Text(if (state.isImporting) "در حال وارد کردن..." else "Import همه (${results.size})", fontWeight = FontWeight.Bold)
+                    Text(if (state.isImporting) stringResource(R.string.bulk_importing) else stringResource(R.string.bulk_import_all, results.size), fontWeight = FontWeight.Bold)
                 }
                 state.error?.let { ErrorText(it) }
             }
@@ -207,7 +209,7 @@ private fun PreviewEntryCard(result: BulkImportItemResult, lineNumber: Int?) {
             }
             Spacer(Modifier.width(tokens.compactGap))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.Start) {
-                lineNumber?.let { Text("خط $it", Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = tokens.primary, textAlign = TextAlign.Start) }
+                lineNumber?.let { Text(stringResource(R.string.bulk_line, it), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = tokens.primary, textAlign = TextAlign.Start) }
                 OutlinedTextField(value = result.entry.sourceText, onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.titleMedium, shape = MaterialTheme.shapes.small, singleLine = true, colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = tokens.surface, focusedContainerColor = tokens.surface, unfocusedBorderColor = tokens.outlineColor, focusedBorderColor = tokens.primary))
                 OutlinedTextField(value = result.entry.translationText.orEmpty(), onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.small, minLines = 1, maxLines = 2, colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = tokens.surface, focusedContainerColor = tokens.surface, unfocusedBorderColor = tokens.outlineColor, focusedBorderColor = tokens.primary))
                 result.message?.let { Text(it, Modifier.fillMaxWidth(), color = if (result.status == BulkImportItemStatus.FAILED || result.status == BulkImportItemStatus.DUPLICATE) tokens.error else tokens.onSurfaceVariant, textAlign = TextAlign.Start, style = MaterialTheme.typography.labelSmall) }
