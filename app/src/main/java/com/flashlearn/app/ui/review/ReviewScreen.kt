@@ -155,11 +155,11 @@ private fun ReviewSetup(
             }
         }
         personalDifficulty?.let {
-            Text("سطح شخصی فعلی: " + difficultyLabel(it), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
+            Text(stringResource(R.string.review_personal_level, difficultyLabel(it)), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
         }
         val filterSummary = buildList {
             add(if (state.selectedDifficulties.isEmpty()) stringResource(R.string.review_all_levels) else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) })
-            add(if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else state.selectedCategoryIds.size.toString() + " دسته")
+            add(if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.review_categories_count, state.selectedCategoryIds.size))
             add(reviewTypeLabel(state.selectedReviewType))
             add(if (state.selectedMode == ReviewMode.QUIZ) stringResource(R.string.review_test) else stringResource(R.string.review_flashcard_mode))
         }.joinToString("  •  ")
@@ -167,7 +167,7 @@ private fun ReviewSetup(
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.reviewCardPadding, vertical = tokens.reviewCompactPadding), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Tune, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
                 Column(Modifier.weight(1f).padding(horizontal = tokens.reviewItemGap), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(minOf(state.maximumReviewCards, state.availableReviewCount).toString() + " کلمه مرور از " + state.availableReviewCount + " کلمه آماده فیلتر شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.review_available, minOf(state.maximumReviewCards, state.availableReviewCount), state.availableReviewCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Center)
                     Text(filterSummary, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Center)
                 }
             }
@@ -229,7 +229,7 @@ private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth().height(tokens.reviewCategoryHeight), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) tokens.reviewSurfaceSelected else tokens.reviewSurface), border = BorderStroke(if (selectedCount > 0) tokens.borderStrong else tokens.borderThin, if (selectedCount > 0) tokens.reviewAccent else tokens.reviewBorder), elevation = CardDefaults.cardElevation(defaultElevation = tokens.reviewCardElevation)) {
         Row(Modifier.fillMaxSize().padding(horizontal = tokens.reviewCardPadding), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                Text(if (selectedCount == 0) stringResource(R.string.category_all) else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Start)
+                Text(if (selectedCount == 0) stringResource(R.string.category_all) else stringResource(R.string.review_categories_selected, selectedCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Start)
                 Text(if (selectedCount == 0) stringResource(R.string.review_choose_categories) else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, maxLines = 2, textAlign = TextAlign.Start)
             }
             Surface(Modifier.size(tokens.reviewCategoryIconTile), shape = MaterialTheme.shapes.medium, color = tokens.reviewSurfaceSelected) {
@@ -358,7 +358,7 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
         if (!card?.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, enabled = !answered, modifier = Modifier.weight(1f)) { Text(if (card?.noteVisible == true) stringResource(R.string.review_hide_note) else stringResource(R.string.review_show_note)) }
-        OutlinedButton(onClick = vm::revealHint, enabled = !answered && card != null && !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("💡 راهنما") }
+        OutlinedButton(onClick = vm::revealHint, enabled = !answered && card != null && !card.hintRevealed, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_hint)) }
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
         quiz.options.forEach { option ->
@@ -396,7 +396,7 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) stringResource(R.string.review_feedback_correct) else stringResource(R.string.review_feedback_incorrect), style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text(stringResource(R.string.review_stage, f.stageLabel)); Text(stringResource(R.string.review_difficulty, f.difficultyLabel)); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text(stringResource(R.string.review_correct_answer, f.correctAnswerText)); Text(stringResource(R.string.review_result, state.correct, state.wrong)); Button(onClick = vm::nextCard, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_next_card)) } } } }
 @Composable private fun FinishCard(state: ReviewUiState, onFinished: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(stringResource(R.string.review_finished), style = MaterialTheme.typography.headlineSmall); Text(stringResource(R.string.review_answered, state.answered)); Text("صحیح: ${state.correct} • غلط: ${state.wrong}"); Text(stringResource(R.string.review_accuracy_session, if (state.answered == 0) 0 else state.correct * 100 / state.answered)); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_back_home)) } } } }
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(stringResource(R.string.review_finished), style = MaterialTheme.typography.headlineSmall); Text(stringResource(R.string.review_answered, state.answered)); Text(stringResource(R.string.review_result, state.correct, state.wrong)); Text(stringResource(R.string.review_accuracy_session, if (state.answered == 0) 0 else state.correct * 100 / state.answered)); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_back_home)) } } } }
 @Composable
 private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> stringResource(R.string.review_easy); VocabularyDifficulty.MEDIUM -> stringResource(R.string.review_medium); VocabularyDifficulty.HARD -> stringResource(R.string.review_hard); VocabularyDifficulty.VERY_HARD -> stringResource(R.string.review_very_hard) }
 @Composable
