@@ -18,7 +18,7 @@ android {
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "VERSION_CODE_NAME", "\"653\"")
+        buildConfigField("String", "VERSION_CODE_NAME", "\"654\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
         buildConfigField("String", "BUILD_DATE", "\"2026-09-27\"")
         buildConfigField("String", "THEME_VERSION", "\"3.1-GROK\"")
