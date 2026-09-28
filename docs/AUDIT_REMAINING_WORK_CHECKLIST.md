@@ -85,5 +85,11 @@
 - ✅ CI regression fix
 - ✅ CI verification on green run
 
+## Item 1 completion note
+- Extracted user-visible Compose strings from About, Add Word, Bulk Import, Backup/Restore, Library, Category Selection, Review, Needs Review, Progress, Settings, navigation shell/components, and MainActivity.
+- Added Persian and English Android string resources, including formatted/dynamic strings and accessibility labels.
+- Kept Persian category-name matching in `CategorySelectionScreen` because those literals are classification data used by icon-selection logic, not rendered UI copy.
+- CI verification is required before treating this item as release-green.
+
 ## Workflow
 هر بار فقط یک مورد انتخاب شود: کد فعلی بررسی شود، فقط همان مورد اصلاح شود، تست‌ها اجرا شوند، CI تا GREEN دنبال شود، و همین فایل با نتیجه و CI به‌روزرسانی شود.
