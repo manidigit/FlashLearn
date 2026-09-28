@@ -38,7 +38,7 @@ class CountReviewQueueUseCase @Inject constructor(
             .mapValues { (_, tags) -> tags.map(ConceptTag::tagId) }
 
         return states.asSequence()
-            .filterNot { wasReviewedToday(it.lastReviewedAt, filters.now) }
+            .filterNot { wasReviewedToday(it.lastReviewedAt, filters.now, filters.zoneId) }
             .mapNotNull { learning ->
                 val concept = conceptsById[learning.conceptId] ?: return@mapNotNull null
                 val difficulty = difficultiesById[learning.conceptId] ?: return@mapNotNull null
