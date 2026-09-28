@@ -157,12 +157,19 @@ private fun ReviewSetup(
         personalDifficulty?.let {
             Text(stringResource(R.string.review_personal_level, difficultyLabel(it)), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
         }
-        val filterSummary = buildList {
-            add(if (state.selectedDifficulties.isEmpty()) stringResource(R.string.review_all_levels) else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) })
-            add(if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.review_categories_count, state.selectedCategoryIds.size))
-            add(reviewTypeLabel(state.selectedReviewType))
-            add(if (state.selectedMode == ReviewMode.QUIZ) stringResource(R.string.review_test) else stringResource(R.string.review_flashcard_mode))
-        }.joinToString("  •  ")
+        val difficultyLabels = mapOf(
+            VocabularyDifficulty.EASY to stringResource(R.string.review_easy),
+            VocabularyDifficulty.MEDIUM to stringResource(R.string.review_medium),
+            VocabularyDifficulty.HARD to stringResource(R.string.review_hard),
+            VocabularyDifficulty.VERY_HARD to stringResource(R.string.review_very_hard)
+        )
+        val reviewTypeText = reviewTypeLabel(state.selectedReviewType)
+        val filterSummary = listOf(
+            if (state.selectedDifficulties.isEmpty()) stringResource(R.string.review_all_levels) else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabels[it].orEmpty() },
+            if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.review_categories_count, state.selectedCategoryIds.size),
+            reviewTypeText,
+            if (state.selectedMode == ReviewMode.QUIZ) stringResource(R.string.review_test) else stringResource(R.string.review_flashcard_mode)
+        ).joinToString("  •  ")
         Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = tokens.reviewSurface, border = BorderStroke(tokens.borderThin, tokens.reviewBorder)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.reviewCardPadding, vertical = tokens.reviewCompactPadding), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Tune, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
