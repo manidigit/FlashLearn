@@ -234,36 +234,29 @@ private fun ReviewReadyCard(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = tokens.cardPadding, vertical = tokens.contentPadding),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)
         ) {
             FlashLearnIconTile(icon = Icons.Outlined.CalendarMonth)
-            Spacer(Modifier.width(tokens.contentGap))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = tokens.onSurface
-                )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = tokens.onSurfaceVariant
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    readyCount.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = tokens.primary
-                )
-                Text(
-                    "از $totalCount",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = tokens.onSurfaceVariant
-                )
-            }
+            Spacer(Modifier.width(tokens.compactGap))
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = tokens.onSurface
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                readyCount.toString(),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = tokens.primary
+            )
+            Text(
+                "آماده از $totalCount کلمه",
+                style = MaterialTheme.typography.labelMedium,
+                color = tokens.onSurfaceVariant
+            )
         }
     }
 }
