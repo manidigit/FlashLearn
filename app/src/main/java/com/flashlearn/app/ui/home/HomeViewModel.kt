@@ -9,6 +9,7 @@ import com.flashlearn.domain.statistics.CalculateStreakUseCase
 import com.flashlearn.domain.statistics.GetBasicStatistics
 import com.flashlearn.domain.statistics.StreakSnapshot
 import com.flashlearn.domain.progress.CalculateProgressPercentage
+import com.flashlearn.domain.progress.CalculateProgressUseCase
 import com.flashlearn.domain.usecase.EnsureStarterDataUseCase
 import com.flashlearn.domain.usecase.GetProgressSummaryUseCase
 import java.time.Instant
@@ -41,7 +42,8 @@ class HomeViewModel @Inject constructor(
     private val ensureStarterData: EnsureStarterDataUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
-    private val calculateProgressPercentage: CalculateProgressPercentage
+    private val calculateProgressPercentage: CalculateProgressPercentage,
+    private val calculateProgress: CalculateProgressUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -64,10 +66,13 @@ class HomeViewModel @Inject constructor(
                     calculateStreak.calculate(history, now, ZoneId.systemDefault())
                 }
                 val progressPercentage = calculateProgressPercentage()
-                // Home uses the same review-eligible counts as the Review engine.
-                val dailyTotal = summary.dailyDueConceptCount
-                val weeklyTotal = summary.weeklyDueConceptCount
-                val monthlyTotal = summary.monthlyDueConceptCount
+                // Ready counts come from the same due/eligibility summary used by review.
+                // Denominators are total words currently assigned to each learning stage,
+                // matching the Statistics screen's Learning Stages card.
+                val progress = calculateProgress(now)
+                val dailyTotal = progress.dailyConcepts
+                val weeklyTotal = progress.weeklyConcepts
+                val monthlyTotal = progress.monthlyConcepts
                 HomeSnapshot(summary, basicStats, streak, progressPercentage, dailyTotal, weeklyTotal, monthlyTotal)
             }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
