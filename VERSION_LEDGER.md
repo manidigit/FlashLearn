@@ -1,3 +1,13 @@
+| **6.61** | **661** | 2026-09-28 | Review hints use category/translation initial; bulk-import category selection; combined multi-type backup restore | Pending CI |
+
+## v6.61 release alignment
+- app/build.gradle.kts: versionName 6.61 / versionCode 661.
+- CI: current gate 6.61/661; previous-version upgrade gate 6.60/660.
+- Review hint priority: category name, otherwise first non-whitespace character of the translation.
+- Bulk import applies an explicitly selected category to newly created concepts and fills only missing category on existing concepts.
+- Backup bundle schema v3 can contain Vocabulary and/or Progress, while Full remains standalone; restore accepts legacy v1, typed v2 and bundle v3.
+- Verification remains pending until both authoritative GitHub Actions jobs are green.
+
 | **6.60** | **660** | 2026-09-28 | Grok visual refinement: dashboard geometry, full-width navigation pill, complete ThemeDesign persistence | GREEN — GitHub Actions run 36400464908 |
 
 ## v6.60 release alignment
