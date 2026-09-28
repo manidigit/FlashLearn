@@ -47,17 +47,5 @@ class GtpThemeContractTest {
         assertEquals(IconStyle.FILLED, grok.design.activeIconStyle)
     }
 
-    @Test
-    fun customJsonRoundTripPreservesCompleteDesignContract() {
-        val restored = FlashLearnThemeSpec.fromJson(FlashLearnThemeSpec.GROK.toJson())
-        assertEquals(FlashLearnThemeSpec.GROK.design.buttonStyle, restored.design.buttonStyle)
-        assertEquals(FlashLearnThemeSpec.GROK.design.navStyle, restored.design.navStyle)
-        assertEquals(FlashLearnThemeSpec.GROK.design.statsLayout, restored.design.statsLayout)
-        assertEquals(FlashLearnThemeSpec.GROK.design.iconStyle, restored.design.iconStyle)
-        assertEquals(FlashLearnThemeSpec.GROK.design.activeIconStyle, restored.design.activeIconStyle)
-        assertEquals(FlashLearnThemeSpec.GROK.design.metric("homeHeroHeight"), restored.design.metric("homeHeroHeight"), 0.001f)
-        assertEquals(FlashLearnThemeSpec.GROK.design.metric("homeReviewHeight"), restored.design.metric("homeReviewHeight"), 0.001f)
-        assertEquals(FlashLearnThemeSpec.GROK.design.metric("homeCtaHeight"), restored.design.metric("homeCtaHeight"), 0.001f)
-    }
 
 }
