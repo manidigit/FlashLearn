@@ -49,7 +49,7 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, languagePair: LanguagePair 
     if (state.preview.isNotEmpty() || state.done) {
         BulkImportPreview(state, onBack = { viewModel.resetForEntry(languagePair); onBack() }, onRefresh = viewModel::preview, onImport = viewModel::importAll)
     } else {
-        BulkImportEditor(state, languagePair, onBack, viewModel::onTextChange, viewModel::preview) {
+        BulkImportEditor(state, languagePair, onBack, viewModel::onTextChange, viewModel::preview, viewModel::setCategory) {
             openTextFile.launch(arrayOf("text/plain", "text/csv", "text/*", "application/json", "*/*"))
         }
     }
@@ -62,9 +62,12 @@ private fun BulkImportEditor(
     onBack: () -> Unit,
     onTextChange: (String) -> Unit,
     onPreview: () -> Unit,
+    onCategoryChange: (java.util.UUID?) -> Unit,
     onPickFile: () -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
+    val selectedCategoryName = state.selectedCategoryId?.let { id -> state.categories.firstOrNull { it.id == id }?.name }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(tokens.screenPadding, tokens.dp(20f), tokens.screenPadding, tokens.dp(32f)),
@@ -75,6 +78,22 @@ private fun BulkImportEditor(
         }
         item {
             Text("${languagePair.source.flag} ${languagePair.source.labelFa}  →  ${languagePair.target.flag} ${languagePair.target.labelFa}", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = tokens.primary, textAlign = TextAlign.Start)
+        }
+        item {
+            Text("دسته‌بندی واژه‌های واردشده", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+            Box(Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { categoryMenuExpanded = true }, enabled = state.categories.isNotEmpty(), modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                    Text(selectedCategoryName ?: "بدون دسته‌بندی", modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+                    Text("⌄")
+                }
+                DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
+                    DropdownMenuItem(text = { Text("بدون دسته‌بندی") }, onClick = { onCategoryChange(null); categoryMenuExpanded = false })
+                    state.categories.forEach { category ->
+                        DropdownMenuItem(text = { Text(category.name) }, onClick = { onCategoryChange(category.id); categoryMenuExpanded = false })
+                    }
+                }
+            }
+            Text(if (state.categories.isEmpty()) "هنوز دسته‌بندی‌ای ساخته نشده است." else "این دسته‌بندی برای واژه‌های جدید این ورود اعمال می‌شود.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start)
         }
         item {
             Text("چند کلمه را با فرمت: متن مبدأ / ترجمه / (اختیاری) دسته، هر مورد در یک بلوک جدا با خط خالی، Paste کنید.", Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
