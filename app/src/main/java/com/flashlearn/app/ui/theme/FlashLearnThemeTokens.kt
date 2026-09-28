@@ -20,7 +20,7 @@ data class FlashLearnThemeTokens(
     val reviewButton: Color,val reviewButtonContent: Color,val info: Color,val critical: Color,
     val design: ThemeDesign
 ) {
-    fun dp(value: Float): Dp = (value * spacingScale).dp
+    fun dp(value: Float): Dp = (value * design.metric("spacingScale")).dp
     private fun m(name:String)=design.metric(name)
     val screenPadding get()=dp(m("screenPadding")); val screenVerticalPadding get()=dp(m("screenVerticalPadding"))
     val contentPadding get()=dp(m("contentPadding")); val cardPadding get()=dp(m("cardPadding")); val compactPadding get()=dp(m("compactPadding"))
@@ -32,13 +32,13 @@ data class FlashLearnThemeTokens(
     val chartHeight get()=dp(m("chartHeight")); val progressTrackHeight get()=dp(m("progressTrackHeight")); val borderThin get()=dp(m("borderThin"))
     val borderStrong get()=dp(m("borderStrong")); val borderEmphasis get()=dp(m("borderEmphasis")); val iconTileSize get()=dp(m("iconTileSize"))
     val choiceIconSize get()=dp(m("choiceIconSize")); val iconSmall get()=dp(m("iconSmall")); val iconMedium get()=dp(m("iconMedium")); val iconLarge get()=dp(m("iconLarge"))
-    val cardElevation get()=dp(m("cardElevationBase")*elevationScale); val navHeight get()=dp(m("navHeight"))
+    val cardElevation get()=dp(m("cardElevationBase")*design.metric("elevationScale")); val navHeight get()=dp(m("navHeight"))
     val libraryHeaderHeight get()=dp(m("libraryHeaderHeight")); val librarySearchHeight get()=dp(m("librarySearchHeight")); val libraryStatHeight get()=statCardHeight
     val libraryStatIconSize get()=dp(m("libraryStatIconSize")); val libraryCardCorner get()=largeCorner; val librarySearchCorner get()=mediumCorner
     val libraryCategoryCorner get()=largeCorner; val libraryIconTileSize get()=iconTileSize; val libraryIconTileCorner get()=smallCorner
     val libraryWordIconSize get()=dp(m("libraryWordIconSize")); val libraryFavoriteIconSize get()=dp(m("libraryFavoriteIconSize"))
     val libraryDifficultyHorizontalPadding get()=dp(m("libraryDifficultyHorizontalPadding")); val libraryDifficultyVerticalPadding get()=dp(m("libraryDifficultyVerticalPadding"))
-    val smallCorner get()=cornerSmall; val mediumCorner get()=cornerMedium; val largeCorner get()=cornerLarge
+    val smallCorner get()=design.metric("cornerSmall").dp; val mediumCorner get()=design.metric("cornerMedium").dp; val largeCorner get()=design.metric("cornerLarge").dp
     val reviewHeaderHeight get()=dp(m("reviewHeaderHeight")); val reviewHeaderGap get()=dp(m("reviewHeaderGap")); val reviewBackButtonSize get()=dp(m("reviewBackButtonSize"))
     val reviewBackIcon get()=dp(m("reviewBackIcon")); val reviewBackElevation get()=dp(m("reviewBackElevation")); val reviewOrnamentLine get()=dp(m("reviewOrnamentLine"))
     val reviewOrnamentHeight get()=dp(m("reviewOrnamentHeight")); val reviewOrnamentIcon get()=dp(m("reviewOrnamentIcon")); val reviewTinyGap get()=dp(m("reviewTinyGap"))
