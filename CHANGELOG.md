@@ -1,3 +1,16 @@
+## v6.62 — Theme ownership, adaptive layout and localization hardening
+- Made ThemeDesign the runtime source of spacing scale, typography scale, density scale, elevation scale and corner geometry; legacy ThemeSpec fields remain only for custom-theme JSON compatibility.
+- Added theme-owned adaptive window breakpoints and compact-width reflow for the Home statistics grid.
+- Removed the accent preference from overriding the active theme's primary color.
+- Centralized Home and Add Word user-facing strings into Android resources with English translations.
+- Added a ThemeDesign ownership regression contract covering all built-in themes.
+- Documented the localization boundary: static UI text in resources, user-created learning content in Room.
+- Documented that Material dynamic color is intentionally disabled to preserve explicit theme ownership.
+- Advanced release identity to 6.62 / versionCode 662; previous-version gate is 6.61 / 661.
+
+### Verification
+GitHub Actions is authoritative. v6.62 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.61.1 — Audit hardening and CI fixes
 - Fixed theme color compositing to use Compose alpha compositing instead of the previous no-op helper.
 - Applied the selected accent color to Material primary/tertiary theme colors.
