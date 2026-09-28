@@ -42,9 +42,9 @@ fun BulkImportScreen(viewModel: BulkImportViewModel, languagePair: LanguagePair 
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use {
                         BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText()
-                    } ?: error(stringResource(R.string.bulk_file_unreadable))
+                    } ?: error(context.getString(R.string.bulk_file_unreadable))
                 }
-            }.getOrElse { viewModel.showError(it.message ?: stringResource(R.string.bulk_file_read_error)); return@launch }
+            }.getOrElse { viewModel.showError(it.message ?: context.getString(R.string.bulk_file_read_error)); return@launch }
             viewModel.onTextChange(text)
         }
     }
