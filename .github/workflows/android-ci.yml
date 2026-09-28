@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.58"
-  FL_VERSION_CODE: "658"
-  FL_PREVIOUS_VERSION_NAME: "6.57"
-  FL_PREVIOUS_VERSION_CODE: "657"
+  FL_VERSION_NAME: "6.59"
+  FL_VERSION_CODE: "659"
+  FL_PREVIOUS_VERSION_NAME: "6.58"
+  FL_PREVIOUS_VERSION_CODE: "658"
 
 jobs:
   build-and-unit-test:
@@ -175,6 +175,12 @@ jobs:
           adb devices
       - name: Run instrumentation tests
         run: gradle --no-daemon connectedDebugAndroidTest
+      - name: Dump emulator crash log
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          adb logcat -d -v time | tail -n 1200
       - name: Verify previous-version upgrade path
         shell: bash
         run: |
