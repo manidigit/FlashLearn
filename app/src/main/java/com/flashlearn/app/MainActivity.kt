@@ -15,7 +15,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.toComposeLayoutDirection
@@ -45,9 +44,12 @@ import com.flashlearn.app.ui.review.ReviewScreen
 import com.flashlearn.app.ui.review.ReviewViewModel
 import com.flashlearn.app.ui.settings.SettingsScreen
 import com.flashlearn.app.ui.theme.FlashLearnAction
+import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.app.ui.theme.FlashLearnActionIcon
 import com.flashlearn.app.ui.theme.FlashLearnTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -147,15 +149,16 @@ class MainActivity : ComponentActivity() {
         val sessionActive = !reviewState.isSelectingMode && !reviewState.isFinished
         fun exitToSetup() { viewModel.exitReview { viewModel.prepareReviewType(reviewState.selectedReviewType) } }
         BackHandler(enabled = sessionActive) { exitToSetup() }
+        val tokens = LocalFlashLearnThemeTokens.current
         Column(Modifier.fillMaxSize()) {
             if (sessionActive) {
-                Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .45f)) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { exitToSetup() }) { FlashLearnActionIcon(FlashLearnAction.Close, contentDescription = "بستن مرور") }
+                Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = tokens.screenPadding, vertical = tokens.microGap), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .45f)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = tokens.compactPadding, vertical = tokens.tinyGap / 2), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { exitToSetup() }) { FlashLearnActionIcon(FlashLearnAction.Close, contentDescription = stringResource(R.string.review_close)) }
                         Spacer(Modifier.weight(1f))
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("مرور کلمات", style = MaterialTheme.typography.titleMedium)
-                            Text("${reviewState.remaining} کارت باقی‌مانده از ${reviewState.total}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.review_title), style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.review_remaining, reviewState.remaining, reviewState.total), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
