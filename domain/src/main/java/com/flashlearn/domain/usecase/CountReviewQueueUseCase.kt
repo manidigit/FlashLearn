@@ -6,7 +6,6 @@ import com.flashlearn.domain.repository.ConceptTagRepository
 import com.flashlearn.domain.repository.DifficultyStateRepository
 import com.flashlearn.domain.repository.LearningStateRepository
 import com.flashlearn.domain.repository.ReviewHistoryRepository
-import com.flashlearn.domain.repository.ContentRepository
 import javax.inject.Inject
 
 /**

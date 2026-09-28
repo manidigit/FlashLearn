@@ -14,7 +14,6 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
-import kotlinx.coroutines.sync.withLock
 
 private fun normalizeQuizText(text: String): String =
     Normalizer.normalize(text.trim().replace(Regex("\\s+"), " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)

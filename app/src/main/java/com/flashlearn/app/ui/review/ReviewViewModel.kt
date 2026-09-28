@@ -240,7 +240,7 @@ class ReviewViewModel @Inject constructor(
         val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
         val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
         val results = mutableListOf<ReviewCandidate>()
-        results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulties = difficultyOptions.filterNotNull().toSet(), categoryIds = categories, sourceLanguage = activeLanguagePair.source.code, targetLanguage = activeLanguagePair.target.code, now = now, maxCards = SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT))
+        results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulties = difficultyOptions, categoryIds = categories, sourceLanguage = activeLanguagePair.source.code, targetLanguage = activeLanguagePair.target.code, now = now, maxCards = SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT))
         val unique = results.distinctBy { it.concept.id }
         return if (reviewType == ReviewType.RANDOM || reviewType == ReviewType.LEARNED) unique.shuffled().take(maxCards) else unique.take(maxCards)
     }

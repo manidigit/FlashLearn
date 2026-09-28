@@ -1,7 +1,6 @@
 package com.flashlearn.domain.usecase
 
-import com.flashlearn.domain.model.Content
-import com.flashlearn.domain.model.Concept
+import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.ContentRepository
 import com.flashlearn.domain.repository.FlashLearnDatabase
@@ -18,6 +17,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
     private val conceptTagRepository: com.flashlearn.domain.repository.ConceptTagRepository = EmptyConceptTagRepository
 ) {
     constructor(conceptRepository: ConceptRepository, contentRepository: ContentRepository, database: FlashLearnDatabase) : this(conceptRepository, contentRepository, database, EmptyLearningStateRepository, EmptyDifficultyStateRepository, EmptyConceptTagRepository) {
+    }
     suspend operator fun invoke(sourceLanguage: String = "es", targetLanguage: String = "fa"): Int = database.withTransaction {
         require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
         val activeConcepts = conceptRepository.getAllActive()
