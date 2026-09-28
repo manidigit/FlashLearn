@@ -1,3 +1,12 @@
+## v6.60 — Grok 95% visual refinement pass
+- Refined the Grok home dashboard geometry with theme-owned hero, review-card, CTA and bottom-spacing metrics.
+- Rebuilt the Grok bottom navigation as a full-width selected pill with theme-owned active/inactive icon profiles and scales.
+- Extended custom-theme JSON persistence so ThemeDesign metrics, layout strategies, button/navigation styles, status colors and icon profile are preserved instead of falling back to defaults.
+- Kept Learning/Review/Library data behavior unchanged; this checkpoint is visual/theme infrastructure only.
+
+### Verification
+GitHub Actions is authoritative. v6.60 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.59 — Startup crash fix: Needs-Review state initialization
 - Fixed an immediate startup crash in `NeedsReviewViewModel`: the `init { refresh() }` block previously ran before the backing `_items` StateFlow was initialized, causing a NullPointerException on the first `setValue`.
 - Kept the Needs-Review approval flow unchanged; this is an initialization-order correction only.
