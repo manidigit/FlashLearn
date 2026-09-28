@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 
 enum class ReviewMode { FLASHCARD, QUIZ }
 data class QuizCardUiState(val promptText: String, val options: List<String>, val selectedOption: String? = null, val correctAnswerText: String)
-data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val hintText: String? = null, val noteVisible: Boolean = false)
+data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val categoryName: String? = null, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val hintText: String? = null, val noteVisible: Boolean = false)
 data class ReviewAnswerFeedbackUiState(val isCorrect: Boolean, val stageLabel: String, val difficultyLabel: String, val correctAnswerText: String? = null, val answered: Int, val correct: Int, val wrong: Int)
 
 data class ReviewUiState(
@@ -253,7 +253,8 @@ class ReviewViewModel @Inject constructor(
         val target = cc.firstOrNull { it.languageCode == pair.target.code }
         if (source == null || target == null) { if (generation == sessionGeneration) advanceToNext(generation); return }
         if (generation != sessionGeneration || sessionId == null) return
-        val baseCard = ReviewCardUiState(source.text, source.notes, target.text)
+        val categoryName = conceptRepository.get(conceptId)?.categoryId?.let { categoryId -> _state.value.categories.firstOrNull { it.id == categoryId }?.name }
+        val baseCard = ReviewCardUiState(source.text, source.notes, target.text, categoryName = categoryName)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
             when (val result = withContext(Dispatchers.Default) {
@@ -279,7 +280,7 @@ class ReviewViewModel @Inject constructor(
     fun selectQuizOption(option: String) { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return; _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option), error = null) }
     fun submitQuizAnswer() { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null) return; val selected = quiz.selectedOption ?: return; if (selected !in quiz.options) return; submitAnswer(selected == quiz.correctAnswerText) }
     fun flipCard() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(isFlipped = true)) } }
-    fun revealHint() { val card = _state.value.card ?: return; _state.value = _state.value.copy(card = card.copy(hintRevealed = true, hintText = reviewHelp.hintFor(card.sourceText))) }
+    fun revealHint() { val card = _state.value.card ?: return; _state.value = _state.value.copy(card = card.copy(hintRevealed = true, hintText = reviewHelp.hintFor(card.sourceText, card.targetText, card.categoryName))) }
     fun toggleNote() { val card = _state.value.card ?: return; if (reviewHelp.noteFor(card.sourceNotes) == null) return; _state.value = _state.value.copy(card = card.copy(noteVisible = !card.noteVisible)) }
 
     fun submitAnswer(isCorrect: Boolean) {
