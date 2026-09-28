@@ -37,7 +37,7 @@ fun FlashLearnIcon(
 @Composable
 fun FlashLearnBackButton(
     onClick: () -> Unit,
-    contentDescription: String = stringResource(R.string.action_back),
+    contentDescription: String? = null,
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -48,7 +48,7 @@ fun FlashLearnBackButton(
         Icons.AutoMirrored.Outlined.ArrowBack
     }
     IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
-        FlashLearnIcon(icon, contentDescription, tint = tokens.onSurface)
+        FlashLearnIcon(icon, contentDescription ?: stringResource(R.string.action_back), tint = tokens.onSurface)
     }
 }
 
