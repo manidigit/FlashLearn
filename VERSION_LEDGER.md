@@ -1,4 +1,4 @@
-| **6.60** | **660** | 2026-09-28 | Grok visual refinement: dashboard geometry, full-width navigation pill, complete ThemeDesign persistence | Pending CI |
+| **6.60** | **660** | 2026-09-28 | Grok visual refinement: dashboard geometry, full-width navigation pill, complete ThemeDesign persistence | GREEN — GitHub Actions run 36400464908 |
 
 ## v6.60 release alignment
 - app/build.gradle.kts: versionName 6.60 / versionCode 660.
@@ -6,7 +6,7 @@
 - Grok home geometry is theme-owned through ThemeDesign metrics.
 - Grok selected navigation uses a full-width pill with theme-owned icon profile.
 - Custom theme JSON now persists the complete ThemeDesign contract.
-- Verification is pending the authoritative GitHub Actions run.
+- Verification: GREEN — GitHub Actions run 36400464908.
 
 | **6.59** | **659** | 2026-09-28 | Startup crash fix: initialize NeedsReview StateFlow before refresh; startup smoke-test hardening | GREEN — GitHub Actions run 36393654803 |
 

@@ -5,7 +5,7 @@
 - Kept Learning/Review/Library data behavior unchanged; this checkpoint is visual/theme infrastructure only.
 
 ### Verification
-GitHub Actions is authoritative. v6.60 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+GitHub Actions verification: GREEN — run 36400464908 (Build + Unit Test, Instrumentation + Upgrade Gate, release APK and previous-version upgrade gate).
 
 ## v6.59 — Startup crash fix: Needs-Review state initialization
 - Fixed an immediate startup crash in `NeedsReviewViewModel`: the `init { refresh() }` block previously ran before the backing `_items` StateFlow was initialized, causing a NullPointerException on the first `setValue`.

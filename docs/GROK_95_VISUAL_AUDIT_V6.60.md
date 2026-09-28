@@ -21,7 +21,7 @@ The supplied Grok reference establishes the visual target for the primary dashbo
 - Custom theme JSON now persists the complete ThemeDesign contract, including metrics and visual strategy values.
 
 ## Acceptance gate
-This checkpoint is not declared 95% complete from code inspection alone. Final acceptance requires:
+Code and CI acceptance for this checkpoint are complete; visual acceptance remains screenshot-based. Final acceptance requires:
 1. Build + Unit Test green.
 2. Instrumentation + upgrade gate green.
 3. Runtime screenshot of the Grok Home screen at the reference device dimensions.
@@ -29,4 +29,4 @@ This checkpoint is not declared 95% complete from code inspection alone. Final a
 5. If the visual comparison remains below the requested 95% similarity, another refinement pass is required.
 
 ## Non-negotiable rule
-Do not treat CI green as proof of pixel-level visual similarity.
+CI is green, but CI alone is not proof of pixel-level visual similarity.
