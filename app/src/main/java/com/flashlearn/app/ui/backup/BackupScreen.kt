@@ -89,15 +89,34 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
             }
         }
         item { HorizontalDivider(modifier = Modifier.padding(vertical = tokens.compactGap)) }
-        item { SectionHeader(icon = Icons.Outlined.Backup, title = "پشتیبان‌گیری", subtitle = "نوع اطلاعاتی را که می‌خواهی ذخیره شود انتخاب کن.") }
+        item { SectionHeader(icon = Icons.Outlined.Backup, title = "پشتیبان‌گیری", subtitle = "یک یا چند نوع اطلاعات را انتخاب کن؛ بازیابی فایل ترکیبی هم پشتیبانی می‌شود.") }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 BackupType.entries.forEach { type ->
                     val label = when (type) { BackupType.VOCABULARY -> "واژگان"; BackupType.PROGRESS -> "پیشرفت و تنظیمات"; BackupType.FULL -> "پشتیبان کامل" }
-                    OutlinedButton(onClick = { viewModel.export(type) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
-                        Icon(if (type == BackupType.VOCABULARY) Icons.Outlined.MenuBook else Icons.Outlined.SettingsBackupRestore, null); Spacer(Modifier.width(tokens.compactGap)); Text(label, fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = type in state.selectedTypes,
+                            onCheckedChange = { viewModel.toggleBackupType(type) },
+                            enabled = !state.busy
+                        )
+                        Text(label, Modifier.weight(1f), fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
                     }
                 }
+                Button(
+                    onClick = viewModel::exportSelected,
+                    enabled = !state.busy && state.selectedTypes.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Outlined.Backup, null)
+                    Spacer(Modifier.width(tokens.compactGap))
+                    Text("ساخت پشتیبان انتخاب‌شده", fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    if (state.selectedTypes.isEmpty()) "حداقل یک نوع پشتیبان انتخاب کن." else "انتخاب فعلی: " + state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> "واژگان"; BackupType.PROGRESS -> "پیشرفت و تنظیمات"; BackupType.FULL -> "کامل" } },
+                    Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start
+                )
             }
         }
         item { SectionHeader(icon = Icons.Outlined.FileDownload, title = "خروجی داده", subtitle = "خروجی قابل استفاده در قالب‌های مختلف دریافت کن.") }
@@ -108,7 +127,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 }
             }
         }
-        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedType.name} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
+        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedLabel} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
         state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
