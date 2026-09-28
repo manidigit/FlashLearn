@@ -6,7 +6,7 @@
 - Added regression coverage for the new review-help behavior and kept the Learning/Difficulty algorithms unchanged.
 
 ### Verification
-GitHub Actions is authoritative. v6.61 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+GitHub Actions verification: GREEN — run 36406917581 (Build + Unit Test and Instrumentation + Upgrade Gate).
 
 ## v6.60 — Grok 95% visual refinement pass
 - Refined the Grok home dashboard geometry with theme-owned hero, review-card, CTA and bottom-spacing metrics.
