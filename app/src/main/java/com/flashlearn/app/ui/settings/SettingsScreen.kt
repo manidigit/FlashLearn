@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import com.flashlearn.app.R
 import com.flashlearn.app.ui.*
 import com.flashlearn.app.ui.theme.FlashLearnThemeSpec
+import com.flashlearn.app.ui.localization.FlashLearnLocales
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.components.FlashLearnBackButton
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -31,6 +32,8 @@ import com.flashlearn.domain.settings.SettingsKeys
 
 @Composable
 fun SettingsScreen(
+    uiLanguage: String = FlashLearnLocales.PERSIAN,
+    onUiLanguageChange: (String) -> Unit = {},
     appearance: AppearanceMode,
     onAppearanceChange: (AppearanceMode) -> Unit,
     themeId: String = "modern_purple",
@@ -57,6 +60,7 @@ fun SettingsScreen(
     onBack: () -> Unit = {}
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
+    val currentUiLanguage = FlashLearnLocales.normalize(uiLanguage)
     var sourceMenu by remember { mutableStateOf(false) }
     var targetMenu by remember { mutableStateOf(false) }
     var importError by remember { mutableStateOf(false) }
@@ -103,7 +107,13 @@ fun SettingsScreen(
         Spacer(Modifier.height(tokens.sectionGap))
         Section(stringResource(R.string.settings_language))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            SettingsRow(Icons.Outlined.Language, stringResource(R.string.settings_ui_language), stringResource(R.string.settings_persian), null, Modifier.weight(1f))
+            SettingsRow(
+                Icons.Outlined.Language,
+                stringResource(R.string.settings_ui_language),
+                if (currentUiLanguage == FlashLearnLocales.PERSIAN) stringResource(R.string.settings_persian) else stringResource(R.string.settings_english),
+                { onUiLanguageChange(if (currentUiLanguage == FlashLearnLocales.PERSIAN) FlashLearnLocales.ENGLISH else FlashLearnLocales.PERSIAN) },
+                Modifier.weight(1f)
+            )
             SettingsRow(Icons.Outlined.Translate, stringResource(R.string.settings_direction), if (layoutDirection == AppLayoutDirection.RTL) stringResource(R.string.settings_rtl) else stringResource(R.string.settings_ltr), { onLayoutDirectionChange(if (layoutDirection == AppLayoutDirection.RTL) AppLayoutDirection.LTR else AppLayoutDirection.RTL) }, Modifier.weight(1f))
         }
         Spacer(Modifier.height(tokens.sectionGap)); Section(stringResource(R.string.settings_learning_language))
