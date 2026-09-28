@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.components.FlashLearnCard
 import com.flashlearn.app.ui.components.FlashLearnIconTile
@@ -85,7 +84,7 @@ fun HomeScreen(
 
         // ── Streak hero (mockup: gold fire pill / card) ─────────
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(tokens.homeHeroHeight),
             shape = MaterialTheme.shapes.large,
             color = tokens.primary.copy(alpha = tokens.accentSurfaceAlpha),
             border = BorderStroke(tokens.borderThin, tokens.primary.copy(alpha = tokens.cardBorderStrongAlpha)),
@@ -150,7 +149,7 @@ fun HomeScreen(
                 progress = { (progress / 100f).coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(tokens.progressTrackHeight + tokens.borderStrong)
+                    .height(tokens.progressTrackHeight)
                     .clip(RoundedCornerShape(tokens.cornerSmall)),
                 color = tokens.primary,
                 trackColor = tokens.surfaceVariant
@@ -211,13 +210,13 @@ fun HomeScreen(
         }
 
         // ── CTA ────────────────────────────────────────────────
-        FlashLearnPrimaryButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth()) {
+        FlashLearnPrimaryButton(onClick = onAddWord, modifier = Modifier.fillMaxWidth().height(tokens.homeCtaHeight)) {
             Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
             Text("افزودن واژه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
 
-        Spacer(Modifier.height(tokens.sectionGap))
+        Spacer(Modifier.height(tokens.homeBottomGap))
     }
 }
 
@@ -230,7 +229,7 @@ private fun ReviewReadyCard(
     onClick: () -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
-    FlashLearnCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+    FlashLearnCard(modifier = Modifier.fillMaxWidth().height(tokens.homeReviewHeight), onClick = onClick) {
         Row(
             Modifier
                 .fillMaxWidth()
