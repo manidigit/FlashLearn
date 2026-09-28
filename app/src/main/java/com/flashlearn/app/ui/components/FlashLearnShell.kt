@@ -17,6 +17,8 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -41,11 +43,11 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
                     .background(navigationBackground),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                GrokNavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-                GrokNavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-                GrokNavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-                GrokNavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-                GrokNavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.HOME, stringResource(R.string.nav_home), Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.REVIEW, stringResource(R.string.nav_review), Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.LIBRARY, stringResource(R.string.nav_library), Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.PROGRESS, stringResource(R.string.nav_progress), Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.SETTINGS, stringResource(R.string.nav_settings), Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
             }
         } else {
             NavigationBar(
@@ -53,11 +55,11 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
                 containerColor = navigationBackground,
                 tonalElevation = tokens.cardElevation
             ) {
-                NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-                NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-                NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-                NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-                NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+                NavItem(AppRoutes.HOME, stringResource(R.string.nav_home), Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                NavItem(AppRoutes.REVIEW, stringResource(R.string.nav_review), Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                NavItem(AppRoutes.LIBRARY, stringResource(R.string.nav_library), Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                NavItem(AppRoutes.PROGRESS, stringResource(R.string.nav_progress), Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                NavItem(AppRoutes.SETTINGS, stringResource(R.string.nav_settings), Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
             }
         }
     }
