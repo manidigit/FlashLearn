@@ -18,7 +18,7 @@ android {
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "VERSION_CODE_NAME", "\"654\"")
+        buildConfigField("String", "VERSION_CODE_NAME", "\"655\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
         buildConfigField("String", "BUILD_DATE", "\"2026-09-28\"")
         buildConfigField("String", "THEME_VERSION", "\"3.2-GROK\"")
@@ -28,7 +28,7 @@ android {
         buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"ChatGPT\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-27\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-28\"")
     }
 
     signingConfigs {
