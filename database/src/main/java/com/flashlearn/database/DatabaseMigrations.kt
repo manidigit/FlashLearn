@@ -43,3 +43,4 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `language_pairs` (`sourceLanguageCode` TEXT NOT NULL, `targetLanguageCode` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`sourceLanguageCode`, `targetLanguageCode`))")
     }
 }
+
