@@ -1,3 +1,12 @@
+| **6.58** | **658** | 2026-09-28 | Room 5→6 contents-index migration hardening; startup schema validation fix | Pending CI |
+
+## v6.58 release alignment
+- app/build.gradle.kts: versionName 6.58 / versionCode 658.
+- CI: current gate 6.58/658; previous-version upgrade gate 6.57/657.
+- Migration 5→6 now removes the temporary index_contents_new_languageCode_canonicalKey and recreates index_contents_languageCode_canonicalKey after renaming contents_new to contents.
+- Migration instrumentation explicitly asserts the canonical index name.
+- Verification remains pending until both authoritative GitHub Actions jobs are green.
+
 | **6.57** | **657** | 2026-09-28 | Manual Needs-Review approval opens editable Add Word flow; Concept creation + queue approval are atomic | Pending CI |
 
 ## v6.57 release alignment
