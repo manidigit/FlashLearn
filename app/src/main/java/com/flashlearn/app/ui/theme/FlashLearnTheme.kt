@@ -47,16 +47,8 @@ fun FlashLearnTheme(
         AppearanceMode.DARK -> true
     }
     
-    // =========== Primary Color Selection ===========
-    // The explicit accent setting is applied to Material primary so the user-visible
-    // accent control has a deterministic visual effect across all themes.
-    val accent = when (accentColor) {
-        AccentColor.PURPLE -> if (isDark) Color(0xFFB39DDB) else Color(0xFF6750A4)
-        AccentColor.BLUE -> if (isDark) Color(0xFF90CAF9) else Color(0xFF1565C0)
-        AccentColor.GREEN -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF2E7D32)
-        AccentColor.ORANGE -> if (isDark) Color(0xFFFFCC80) else Color(0xFFEF6C00)
-        AccentColor.PINK -> if (isDark) Color(0xFFF48FB1) else Color(0xFFC2185B)
-    }
+    // ThemeDesign/ThemeSpec owns the visual identity. The legacy accent preference
+    // is retained for settings/JSON compatibility but cannot override a selected theme.
     val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
     val onPrimaryColor = Color(if (isDark) spec.design.darkOnPrimary else spec.design.lightOnPrimary)
     
@@ -143,7 +135,7 @@ fun FlashLearnTheme(
         error = colorScheme.error,
         
         // --- Gradients ---
-        gradientStart = accent,
+        gradientStart = if (isDark) Color(spec.darkPrimary) else Color(spec.gradientStart),
         gradientEnd = if (isDark) Color(spec.darkSecondary) else Color(spec.gradientEnd),
         
         // --- Layout & Appearance ---
