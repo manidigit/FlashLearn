@@ -1,9 +1,7 @@
 package com.flashlearn.domain.usecase
 
 import com.flashlearn.domain.model.*
-import com.flashlearn.domain.repository.ConceptRepository
-import com.flashlearn.domain.repository.ContentRepository
-import com.flashlearn.domain.repository.FlashLearnDatabase
+import com.flashlearn.domain.repository.*
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
