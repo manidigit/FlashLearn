@@ -1,3 +1,13 @@
+| **6.54** | **654** | 2026-09-28 | Room database optimization: 6→7 safe migration, query indexes, atomic GZIP JSON export | Pending CI |
+
+## v6.54 release alignment
+- app/build.gradle.kts: versionName 6.54 / versionCode 654.
+- Database: Room schema version 7 with non-destructive migration from version 6.
+- Added indexes for active/category, active/favorite, review-history lookup, session chronology, tag names, active languages and active language pairs.
+- JSON data export is now GZIP-compressed and written atomically through a temporary file before replacement.
+- Existing backup schema/field names remain compatible; no destructive migration is enabled.
+- Verification is pending the authoritative GitHub Actions run.
+
 # FlashLearn Version Ledger
 
 | Version | Code | Date | Checkpoint | Verification |
