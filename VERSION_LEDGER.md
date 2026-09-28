@@ -1,3 +1,5 @@
+| **6.63** | **663** | 2026-09-28 | Remove Spark theme | Pending CI |
+
 | **6.62** | **662** | 2026-09-28 | ThemeDesign single-source ownership, adaptive breakpoints, Home/Add Word localization, accent isolation | Pending CI |
 
 ## v6.62 release alignment
