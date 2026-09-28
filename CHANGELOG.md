@@ -1,3 +1,13 @@
+## v6.59 — Startup crash fix: Needs-Review state initialization
+- Fixed an immediate startup crash in `NeedsReviewViewModel`: the `init { refresh() }` block previously ran before the backing `_items` StateFlow was initialized, causing a NullPointerException on the first `setValue`.
+- Kept the Needs-Review approval flow unchanged; this is an initialization-order correction only.
+- Added a CI failure diagnostic step to dump recent emulator logcat when instrumentation fails.
+- Advanced release identity to 6.59 / versionCode 659; previous-version upgrade gate is 6.58 / 658.
+- The startup smoke test is now the authoritative regression check for MainActivity launch.
+
+## Verification
+GitHub Actions is authoritative. v6.59 is not verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+
 ## v6.58 — Startup migration integrity hardening
 - Fixed Room migration 5→6 so the contents(languageCode, canonicalKey) index is recreated with the canonical Room name after the temporary table is renamed.
 - Added a migration regression assertion for the canonical index name.
