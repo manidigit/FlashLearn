@@ -34,6 +34,11 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     var pendingFile by remember { mutableStateOf<File?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val backupTypeLabels = mapOf(
+        BackupType.VOCABULARY to stringResource(R.string.backup_vocabulary),
+        BackupType.PROGRESS to stringResource(R.string.backup_progress),
+        BackupType.FULL to stringResource(R.string.backup_complete)
+    )
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val json = pendingJson
@@ -116,7 +121,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                     Text(stringResource(R.string.backup_create_selected), fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else stringResource(R.string.backup_current_selection, state.selectedTypes.joinToString("، ") { type -> when(type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> stringResource(R.string.backup_complete) } }),
+                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else stringResource(R.string.backup_current_selection, state.selectedTypes.joinToString("، ") { backupTypeLabels[it].orEmpty() }),
                     Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start
                 )
             }
