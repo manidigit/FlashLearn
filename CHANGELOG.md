@@ -1,3 +1,7 @@
+## v6.63 — Remove Spark theme
+- Removed the Spark (جرقه) built-in theme from the theme registry and runtime selection.
+- Kept the remaining themes unchanged.
+
 ## v6.62 — Theme ownership, adaptive layout and localization hardening
 - Made ThemeDesign the runtime source of spacing scale, typography scale, density scale, elevation scale and corner geometry; legacy ThemeSpec fields remain only for custom-theme JSON compatibility.
 - Added theme-owned adaptive window breakpoints and compact-width reflow for the Home statistics grid.
