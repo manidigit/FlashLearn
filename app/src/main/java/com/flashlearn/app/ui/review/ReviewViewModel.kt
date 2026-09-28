@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 
 enum class ReviewMode { FLASHCARD, QUIZ }
 data class QuizCardUiState(val promptText: String, val options: List<String>, val selectedOption: String? = null, val correctAnswerText: String)
@@ -94,7 +95,7 @@ class ReviewViewModel @Inject constructor(
     private var queue: List<UUID> = emptyList()
     private var index = 0
     private var sessionGeneration = 0L
-    private var isAdvancing = false
+    private val advanceMutex = Mutex()
     private var activeLanguagePair = LanguagePair()
     private var quizDifficulty = QuizDifficulty.MEDIUM
     private var maximumReviewCards = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
@@ -305,9 +306,23 @@ class ReviewViewModel @Inject constructor(
         }
     }
 
-    fun skipCurrentCard() { if (isAdvancing || _state.value.isSubmitting || _state.value.isFinished) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
+    fun skipCurrentCard() {
+        if (_state.value.isSubmitting || _state.value.isFinished || !advanceMutex.tryLock()) return
+        val generation = sessionGeneration
+        viewModelScope.launch {
+            try { if (generation == sessionGeneration) advanceToNext(generation) }
+            finally { advanceMutex.unlock() }
+        }
+    }
 
-    fun nextCard() { if (_state.value.isSubmitting || _state.value.answerFeedback == null || isAdvancing) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
+    fun nextCard() {
+        if (_state.value.isSubmitting || _state.value.answerFeedback == null || !advanceMutex.tryLock()) return
+        val generation = sessionGeneration
+        viewModelScope.launch {
+            try { if (generation == sessionGeneration) advanceToNext(generation) }
+            finally { advanceMutex.unlock() }
+        }
+    }
     fun resetAfterFinished() {
         refreshAvailableReviewCount()
         sessionGeneration++
@@ -317,7 +332,6 @@ class ReviewViewModel @Inject constructor(
         sessionContents = emptyMap()
         sessionDifficulties = emptyMap()
         usedQuizDistractorTexts.clear()
-        isAdvancing = false
         _state.value = _state.value.copy(
             isSelectingMode = true,
             isFinished = false,
