@@ -29,7 +29,11 @@ data class ThemeDesign(
     val activeIconSizeScale: Float = 1.08f,
     val navIndicatorAlpha: Float = .16f
 ) {
-    fun metric(name: String): Float = metrics[name] ?: error("Theme design metric missing: $name")
+    fun metric(name: String): Float {
+        val value = metrics[name] ?: error("Theme design metric missing: $name")
+        require(value.isFinite() && value >= 0f) { "Theme design metric must be finite and non-negative: $name=$value" }
+        return value
+    }
     companion object {
         private val BASE = mapOf(
             "screenPadding" to 20f,"screenVerticalPadding" to 12f,"contentPadding" to 16f,"cardPadding" to 16f,
