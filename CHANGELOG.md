@@ -1,3 +1,14 @@
+## v6.54 — Review-ready counts vs stage totals
+- Advanced application identity to **6.54 / versionCode 654**; previous-version gate is **6.53 / 653**.
+- Fixed Home review cards so the large number shows **currently review-ready words**, while **«از X» shows the total words assigned to that Learning stage**.
+- Daily, Weekly and Monthly totals now align with the Learning-stage totals used by Statistics instead of reusing the ready-review counts as their denominators.
+- A word that remains in its current stage but was already reviewed today is excluded from the ready-review number while remaining included in the stage total.
+- Aligned review queue counting with the same local-timezone same-day eligibility rule used by review selection.
+- Fixed the instrumentation release-version gate to expect **6.54 / 654**.
+
+### Verification gate
+GitHub Actions is authoritative. v6.54 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.53 — Independent Learning + Difficulty systems
 - Advanced application identity to **6.53 / versionCode 653**; previous-version gate is **6.52 / 652**.
 - Learning is now only: **Daily → Weekly → Monthly → Learned**.
