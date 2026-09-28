@@ -1,11 +1,11 @@
-| **6.59** | **659** | 2026-09-28 | Startup crash fix: initialize NeedsReview StateFlow before refresh; startup smoke-test hardening | Pending CI |
+| **6.59** | **659** | 2026-09-28 | Startup crash fix: initialize NeedsReview StateFlow before refresh; startup smoke-test hardening | GREEN — GitHub Actions run 36393654803 |
 
 ## v6.59 release alignment
 - app/build.gradle.kts: versionName 6.59 / versionCode 659.
 - CI: current gate 6.59/659; previous-version upgrade gate 6.58/658.
 - `NeedsReviewViewModel` now initializes its backing StateFlow before its startup refresh call.
 - The regression was confirmed by the Android emulator smoke test as a NullPointerException at the previous initialization order.
-- Verification remains pending until both authoritative GitHub Actions jobs are green.
+- Verification: GREEN — GitHub Actions run 36393654803 passed Build + Unit Test, Instrumentation + Upgrade Gate, and the 6.58→6.59 upgrade path.
 
 | **6.58** | **658** | 2026-09-28 | Room 5→6 contents-index migration hardening; startup schema validation fix | Pending CI |
 
