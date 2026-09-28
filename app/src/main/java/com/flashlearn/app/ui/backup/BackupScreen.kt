@@ -39,7 +39,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         val json = pendingJson
         if (uri != null && !json.isNullOrBlank()) scope.launch(Dispatchers.IO) {
             runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } }
-                .onFailure { viewModel.showMessage(stringResource(R.string.backup_save_file_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_save_file_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
         pendingJson = null
     }
@@ -47,16 +47,16 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         val file = pendingFile
         if (uri != null && file != null) scope.launch(Dispatchers.IO) {
             runCatching { file.inputStream().use { input -> context.contentResolver.openOutputStream(uri)?.use { output -> input.copyTo(output) } } }
-                .onFailure { viewModel.showMessage(stringResource(R.string.backup_save_output_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_save_output_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
         pendingFile = null
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch(Dispatchers.IO) {
-            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error(stringResource(R.string.backup_too_large)) ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
+            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error(context.getString(R.string.backup_too_large)) ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error(context.getString(R.string.bulk_file_unreadable)) }
                 .map { it.removePrefix("\uFEFF").trimStart() }
-                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage(stringResource(R.string.backup_invalid_json)) }
-                .onFailure { viewModel.showMessage(stringResource(R.string.backup_read_failed, it.message ?: stringResource(R.string.ui_error_generic))) }
+                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage(context.getString(R.string.backup_invalid_json)) }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_read_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
     }
 
