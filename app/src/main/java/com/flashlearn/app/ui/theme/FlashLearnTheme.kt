@@ -57,8 +57,8 @@ fun FlashLearnTheme(
         AccentColor.ORANGE -> if (isDark) Color(0xFFFFCC80) else Color(0xFFEF6C00)
         AccentColor.PINK -> if (isDark) Color(0xFFF48FB1) else Color(0xFFC2185B)
     }
-    val primary = accent
-    val onPrimaryColor = if (isDark) Color(0xFF161218) else Color.White
+    val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
+    val onPrimaryColor = Color(if (isDark) spec.design.darkOnPrimary else spec.design.lightOnPrimary)
     
     // =========== Material Color Scheme ===========
     // This is what screens use for all colors
@@ -97,7 +97,7 @@ fun FlashLearnTheme(
     // =========== Material Typography ===========
     // This is what screens use for all text styles
     val baseTypography = Typography()
-    val scale = spec.typographyScale
+    val scale = spec.design.metric("typographyScale")
     fun androidx.compose.ui.text.TextStyle.scaled(weight: FontWeight? = null) =
         copy(fontSize = fontSize * scale, fontWeight = weight ?: fontWeight)
     
@@ -152,15 +152,15 @@ fun FlashLearnTheme(
         iconSizeScale = spec.design.iconSizeScale,
         activeIconSizeScale = spec.design.activeIconSizeScale,
         navIndicatorAlpha = spec.design.navIndicatorAlpha,
-        elevationScale = spec.elevationScale,
-        densityScale = spec.densityScale,
-        typographyScale = spec.typographyScale,
-        spacingScale = spec.spacingScale,
+        elevationScale = spec.design.metric("elevationScale"),
+        densityScale = spec.design.metric("densityScale"),
+        typographyScale = spec.design.metric("typographyScale"),
+        spacingScale = spec.design.metric("spacingScale"),
         
         // --- Shapes (Corners) ---
-        cornerSmall = spec.cornerSmall.dp,
-        cornerMedium = spec.cornerMedium.dp,
-        cornerLarge = spec.cornerLarge.dp,
+        cornerSmall = spec.design.metric("cornerSmall").dp,
+        cornerMedium = spec.design.metric("cornerMedium").dp,
+        cornerLarge = spec.design.metric("cornerLarge").dp,
         
         // --- Review Screen Colors ---
         reviewBackground = colorScheme.background,
