@@ -1,3 +1,14 @@
+| **6.62** | **662** | 2026-09-28 | ThemeDesign single-source ownership, adaptive breakpoints, Home/Add Word localization, accent isolation | Pending CI |
+
+## v6.62 release alignment
+- app/build.gradle.kts: versionName 6.62 / versionCode 662.
+- CI: current gate 6.62/662; previous-version upgrade gate 6.61/661.
+- Runtime visual parameters are sourced from ThemeDesign; legacy ThemeSpec visual fields remain compatibility-only.
+- Adaptive breakpoints are ThemeDesign metrics and Home statistics reflow below the theme-owned medium breakpoint.
+- User-facing Home/Add Word strings are resource-backed in Persian and English.
+- Material dynamic color remains intentionally disabled so the selected FlashLearn theme owns the visual system.
+- Verification is pending the authoritative GitHub Actions run.
+
 | **6.61** | **661** | 2026-09-28 | Review hints use category/translation initial; bulk-import category selection; combined multi-type backup restore | GREEN — GitHub Actions run 36406917581 |
 
 ## v6.61 release alignment
