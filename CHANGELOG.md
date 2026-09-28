@@ -1,3 +1,13 @@
+## v6.61 — Review hints, bulk-import categories, and multi-type backup restore
+- Review hints are now data-driven: a word's category is shown first; when no category exists, the first character of the translation is shown instead of the previous generic sentence.
+- Bulk vocabulary import now lets the user choose a category for the imported batch; existing uncategorized concepts may receive the selected category without overwriting an existing category.
+- Backup creation now supports selecting multiple backup types in one combined bundle.
+- Restore now recognizes bundle schema v3 and restores each selected supported type, while retaining legacy v1 and typed v2 compatibility.
+- Added regression coverage for the new review-help behavior and kept the Learning/Difficulty algorithms unchanged.
+
+### Verification
+GitHub Actions is authoritative. v6.61 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are both green.
+
 ## v6.60 — Grok 95% visual refinement pass
 - Refined the Grok home dashboard geometry with theme-owned hero, review-card, CTA and bottom-spacing metrics.
 - Rebuilt the Grok bottom navigation as a full-width selected pill with theme-owned active/inactive icon profiles and scales.
