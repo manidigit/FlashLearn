@@ -76,7 +76,6 @@ class Converters {
     @Query("DELETE FROM difficulty_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("SELECT * FROM difficulty_states ORDER BY conceptId ASC") suspend fun getAll(): List<DifficultyStateEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<DifficultyStateEntity>)
-    @Query("DELETE FROM difficulty_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM difficulty_states") suspend fun deleteAll()
 }
 @Dao interface TagDao {
@@ -141,7 +140,6 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<ParserMetadataEntity>)
     @Query("DELETE FROM parser_metadata WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM parser_metadata") suspend fun deleteAll()
-    @Query("DELETE FROM parser_metadata WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
 }
 @Dao interface AchievementDao {
     @Query("SELECT * FROM achievements ORDER BY achievementId ASC") suspend fun getAll(): List<AchievementEntity>
