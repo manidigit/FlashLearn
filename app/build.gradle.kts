@@ -13,8 +13,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 653
-        versionName = "6.53"
+        versionCode = 654
+        versionName = "6.54"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
