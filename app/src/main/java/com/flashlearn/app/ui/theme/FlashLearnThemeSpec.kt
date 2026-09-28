@@ -243,7 +243,7 @@ data class FlashLearnThemeSpec(
             val metrics = fallback.metrics.toMutableMap()
             d.optJSONObject("metrics")?.let { m ->
                 metrics.keys.toList().forEach { key ->
-                    if (m.has(key)) metrics[key] = m.optDouble(key, metrics.getValue(key)).toFloat()
+                    if (m.has(key)) metrics[key] = m.optDouble(key, metrics.getValue(key).toDouble()).toFloat()
                 }
             }
             fun <T : Enum<T>> enumOr(name: String, values: Array<T>, fallbackValue: T): T =
@@ -271,9 +271,9 @@ data class FlashLearnThemeSpec(
                 darkInfo = color("darkInfo", fallback.darkInfo),
                 iconStyle = runCatching { IconStyle.valueOf(d.optString("iconStyle")) }.getOrDefault(fallback.iconStyle),
                 activeIconStyle = runCatching { IconStyle.valueOf(d.optString("activeIconStyle")) }.getOrDefault(fallback.activeIconStyle),
-                iconSizeScale = d.optDouble("iconSizeScale", fallback.iconSizeScale).toFloat().coerceIn(.75f, 1.35f),
-                activeIconSizeScale = d.optDouble("activeIconSizeScale", fallback.activeIconSizeScale).toFloat().coerceIn(.75f, 1.35f),
-                navIndicatorAlpha = d.optDouble("navIndicatorAlpha", fallback.navIndicatorAlpha).toFloat().coerceIn(0f, 1f)
+                iconSizeScale = d.optDouble("iconSizeScale", fallback.iconSizeScale.toDouble()).toFloat().coerceIn(.75f, 1.35f),
+                activeIconSizeScale = d.optDouble("activeIconSizeScale", fallback.activeIconSizeScale.toDouble()).toFloat().coerceIn(.75f, 1.35f),
+                navIndicatorAlpha = d.optDouble("navIndicatorAlpha", fallback.navIndicatorAlpha.toDouble()).toFloat().coerceIn(0f, 1f)
             )
         }
 
