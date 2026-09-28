@@ -31,6 +31,9 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("INSERT INTO `contents_new` (`id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`pronunciation`,`example`,`translationIndex`,`grammarNote`,`possibleCorrection`) SELECT `id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`pronunciation`,`example`,0,NULL,NULL FROM `contents`")
         db.execSQL("DROP TABLE `contents`")
         db.execSQL("ALTER TABLE `contents_new` RENAME TO `contents`")
+        // Room keeps SQLite index names across table renames; recreate the canonical Room name after rename.
+        db.execSQL("DROP INDEX IF EXISTS `index_contents_new_languageCode_canonicalKey`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode_canonicalKey` ON `contents` (`languageCode`, `canonicalKey`)")
         db.execSQL("CREATE UNIQUE INDEX `index_contents_conceptId_languageCode_translationIndex` ON `contents` (`conceptId`, `languageCode`, `translationIndex`)")
         db.execSQL("CREATE TABLE IF NOT EXISTS `vocabulary_relations` (`id` TEXT NOT NULL, `sourceConceptId` TEXT NOT NULL, `targetConceptId` TEXT, `relationType` TEXT NOT NULL, `unresolvedText` TEXT, PRIMARY KEY(`id`))")
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_vocabulary_relations_sourceConceptId_targetConceptId_relationType` ON `vocabulary_relations` (`sourceConceptId`, `targetConceptId`, `relationType`)")
