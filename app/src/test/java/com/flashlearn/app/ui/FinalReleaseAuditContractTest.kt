@@ -7,14 +7,14 @@ import java.io.File
 class FinalReleaseAuditContractTest {
     @Test
     fun releaseVersionIs658() {
-        val buildFile = File("app/build.gradle.kts").readText()
+        val buildFile = File("build.gradle.kts").readText()
         assertTrue(buildFile.contains("versionCode = 658"))
         assertTrue(buildFile.contains("versionName = \"6.58\""))
     }
 
     @Test
     fun defaultAndEnglishStringCatalogsExist() {
-        assertTrue(File("app/src/main/res/values/strings.xml").exists())
-        assertTrue(File("app/src/main/res/values-en/strings.xml").exists())
+        assertTrue(File("src/main/res/values/strings.xml").exists())
+        assertTrue(File("src/main/res/values-en/strings.xml").exists())
     }
 }
