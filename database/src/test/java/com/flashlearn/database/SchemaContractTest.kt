@@ -9,8 +9,8 @@ class SchemaContractTest {
     private val database: Database
         get() = RoomFlashLearnDatabase::class.java.getAnnotation(Database::class.java)
 
-    private fun entityNames(): Set<String> = database.entities.map { it.simpleName }.toSet()
-    private fun fieldNames(entity: Class<*>): Set<String> = entity.declaredFields.map { it.name }.toSet()
+    private fun entityNames(): Set<String> = database.entities.mapNotNull { it.simpleName }.toSet()
+    private fun fieldNames(entity: Class<*>): Set<String> = entity.declaredFields.mapNotNull { it.name }.toSet()
 
     @Test fun expectedEntityCountIsSeventeen() {
         assertEquals(17, database.entities.size)
