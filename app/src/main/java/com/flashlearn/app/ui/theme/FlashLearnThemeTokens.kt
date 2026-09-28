@@ -52,7 +52,8 @@ data class FlashLearnThemeTokens(
     val reviewPlayIcon get()=dp(m("reviewPlayIcon")); val reviewNavHeight get()=dp(m("reviewNavHeight"))
     val statsLayout get()=design.statsLayout; val reviewsLayout get()=design.reviewsLayout; val libraryLayout get()=design.libraryLayout
     val reviewPresentation get()=design.reviewPresentation; val buttonStyle get()=design.buttonStyle; val navStyle get()=design.navStyle
-    val homeHeroHeight get()=dp(m("homeHeroHeight")); val homeReviewHeight get()=dp(m("homeReviewHeight")); val homeCtaHeight get()=dp(m("homeCtaHeight")); val homeBottomGap get()=dp(m("homeBottomGap"))\n    val cardBorderAlpha get()=m("cardBorderAlpha"); val cardBorderStrongAlpha get()=m("cardBorderStrongAlpha")
+    val homeHeroHeight get()=dp(m("homeHeroHeight")); val homeReviewHeight get()=dp(m("homeReviewHeight")); val homeCtaHeight get()=dp(m("homeCtaHeight")); val homeBottomGap get()=dp(m("homeBottomGap"))
+    val cardBorderAlpha get()=m("cardBorderAlpha"); val cardBorderStrongAlpha get()=m("cardBorderStrongAlpha")
     val accentSurfaceAlpha get()=m("accentSurfaceAlpha"); val hierarchyBoost get()=m("hierarchyBoost"); val preferFilledButtons get()=design.buttonStyle==ButtonStyle.FILLED
 }
 
