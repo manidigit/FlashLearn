@@ -9,6 +9,8 @@ import com.flashlearn.domain.parser.VocabularyParser
 import com.flashlearn.domain.usecase.DuplicateConceptException
 import com.flashlearn.domain.usecase.ImportParsedEntryUseCase
 import com.flashlearn.domain.usecase.computeCanonicalKey
+import com.flashlearn.domain.model.Category
+import java.util.UUID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,18 +44,31 @@ data class BulkImportUiState(
     val isImporting: Boolean = false, val isPreviewing: Boolean = false,
     val importedCount: Int = 0, val skippedDuplicateCount: Int = 0, val invalidCount: Int = 0, val needsReviewCount: Int = 0,
     val failedCount: Int = 0, val error: String? = null, val done: Boolean = false,
-    val sourceLanguage: String = "es", val targetLanguage: String = "fa"
+    val sourceLanguage: String = "es", val targetLanguage: String = "fa",
+    val categories: List<Category> = emptyList(), val selectedCategoryId: UUID? = null
 )
 
 @HiltViewModel
-class BulkImportViewModel @Inject constructor(private val importParsedEntry: ImportParsedEntryUseCase) : ViewModel() {
+class BulkImportViewModel @Inject constructor(
+    private val importParsedEntry: ImportParsedEntryUseCase,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
     companion object { const val PREVIEW_LIMIT = 30 }
     private val parser = VocabularyParser()
     private val _state = MutableStateFlow(BulkImportUiState())
     val state: StateFlow<BulkImportUiState> = _state.asStateFlow()
 
     fun setLanguagePair(pair: LanguagePair) { _state.value = _state.value.copy(sourceLanguage = pair.source.code, targetLanguage = pair.target.code) }
-    fun resetForEntry(pair: LanguagePair) { _state.value = BulkImportUiState(sourceLanguage = pair.source.code, targetLanguage = pair.target.code) }
+    fun resetForEntry(pair: LanguagePair) {
+        _state.value = BulkImportUiState(sourceLanguage = pair.source.code, targetLanguage = pair.target.code)
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { categoryRepository.getAll().sortedBy { it.name } }
+                .onSuccess { categories -> _state.value = _state.value.copy(categories = categories) }
+                .onFailure { e -> _state.value = _state.value.copy(error = "دسته‌بندی‌ها بارگذاری نشد: ${e.message ?: "خطا"}") }
+        }
+    }
+
+    fun setCategory(categoryId: UUID?) { _state.value = _state.value.copy(selectedCategoryId = categoryId) }
     fun showError(message: String) { _state.value = _state.value.copy(error = message, isPreviewing = false, isImporting = false) }
     fun onTextChange(value: String) { _state.value = _state.value.copy(rawText = value, preview = emptyList(), results = emptyList(), warnings = emptyList(), lineNumbers = emptyMap(), importedCount = 0, skippedDuplicateCount = 0, invalidCount = 0, needsReviewCount = 0, failedCount = 0, error = null, done = false) }
 
@@ -133,7 +148,7 @@ class BulkImportViewModel @Inject constructor(private val importParsedEntry: Imp
                                 results += BulkImportItemResult(entry, BulkImportItemStatus.DUPLICATE, "تکراری در همین دسته")
                             } else {
                                 try {
-                                    val id = importParsedEntry(entry, sourceLanguage, targetLanguage, lineNumber = lineNumber)
+                                    val id = importParsedEntry(entry, sourceLanguage, targetLanguage, lineNumber = lineNumber, categoryId = _state.value.selectedCategoryId)
                                     if (id == ImportParsedEntryUseCase.REVIEW_SENTINEL) {
                                         review++
                                         results += BulkImportItemResult(entry, BulkImportItemStatus.NEEDS_REVIEW, "به صف بررسی منتقل شد")
