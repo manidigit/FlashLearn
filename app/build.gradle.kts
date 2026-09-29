@@ -13,14 +13,14 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 663
-        versionName = "6.63"
+        versionCode = 664
+        versionName = "6.64"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "VERSION_CODE_NAME", "\"661\"")
+        buildConfigField("String", "VERSION_CODE_NAME", "\"664\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
-        buildConfigField("String", "BUILD_DATE", "\"2026-09-28\"")
+        buildConfigField("String", "BUILD_DATE", "\"2026-09-29\"")
         buildConfigField("String", "THEME_VERSION", "\"3.3-ADAPTIVE\"")
         buildConfigField("String", "THEME_STATUS", "\"ThemeDesign-owned adaptive layout, localization and visual tokens\"")
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
@@ -28,7 +28,7 @@ android {
         buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
         buildConfigField("String", "APP_AI_ASSISTANT", "\"ChatGPT\"")
-        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-28\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"2026-09-29\"")
     }
 
     signingConfigs {
