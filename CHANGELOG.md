@@ -1,3 +1,12 @@
+## v6.64 — Home ready-review count clarity
+
+- Fixed the Home ready-review cards so the large ready count is shown once and the secondary label shows only the stage total.
+- Advanced release identity to 6.64 / versionCode 664.
+- CI previous-version upgrade gate is now 6.63 / 663.
+
+### Verification
+GitHub Actions is authoritative. v6.64 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.61.2 — Hardcoded UI string extraction
 
 - Extracted user-visible Compose UI strings into Android resources with Persian and English variants across navigation, About, Add Word, Bulk Import, Backup/Restore, Library, Review, Needs Review, Progress, Settings, and related surfaces.
