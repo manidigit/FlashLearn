@@ -1,3 +1,11 @@
+| **6.64** | **664** | 2026-09-29 | Home ready-review cards: remove duplicated ready count and align release gate | Pending CI |
+
+## v6.64 release alignment
+- app/build.gradle.kts: versionName 6.64 / versionCode 664.
+- CI: current gate 6.64/664; previous-version upgrade gate is 6.63/663.
+- Home ready-review cards display the ready count once; the secondary label displays only the total stage count.
+- Verification remains pending until both authoritative GitHub Actions jobs are green.
+
 | **6.63** | **663** | 2026-09-28 | Remove Spark theme | Pending CI |
 
 | **6.62** | **662** | 2026-09-28 | ThemeDesign single-source ownership, adaptive breakpoints, Home/Add Word localization, accent isolation | Pending CI |
