@@ -273,7 +273,7 @@ private fun ReviewReadyCard(
                 color = tokens.primary
             )
             Text(
-                stringResource(R.string.home_ready_of_total, readyCount, totalCount),
+                stringResource(R.string.home_ready_of_total, totalCount),
                 style = MaterialTheme.typography.labelMedium,
                 color = tokens.onSurfaceVariant
             )
