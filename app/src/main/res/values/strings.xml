@@ -43,7 +43,7 @@
     <string name="home_monthly">ماهانه</string>
     <string name="home_monthly_subtitle">حافظه بلندمدت</string>
     <string name="home_add_word">افزودن واژه</string>
-    <string name="home_ready_of_total">%1$d آماده از %2$d کلمه</string>
+    <string name="home_ready_of_total">آماده از %1$d کلمه</string>
     <string name="addword_edit_approval">ویرایش و تأیید واژه</string>
     <string name="addword_title">افزودن واژه</string>
     <string name="addword_learning_languages">زبان‌های یادگیری</string>
