@@ -1,3 +1,9 @@
+## v6.65 — Add Word action labels
+
+- Clarified that the duplicate action removes exact duplicates rather than merely finding them.
+- Clarified that Refresh refreshes the displayed word count/library state.
+- No action behavior was changed.
+
 ## v6.64 — Home ready-review count clarity
 
 - Fixed the Home ready-review cards so the large ready count is shown once and the secondary label shows only the stage total.
