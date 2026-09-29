@@ -18,4 +18,10 @@ Single requested fix: Home ready-review cards were visually duplicating the read
 - Previous-version upgrade gate: 6.63 / 663
 
 ## Verification
-CI must pass both Build + Unit Test and Instrumentation + Upgrade Gate before this checkpoint is considered complete.
+## CI verification history
+- Run 36607134237: FAILED — existing FinalReleaseAuditContractTest still asserted 6.63.
+- Run 36607763210: FAILED — release contract test still contained the old 6.63 version-name assertion.
+- Run 36608192960: FAILED — runtime instrumentation gate still asserted 6.63/663.
+- Run 36610449658: GREEN — Build + Unit Test and Instrumentation + Upgrade Gate both passed, including the previous-version upgrade path 6.63 → 6.64.
+
+Checkpoint status: GREEN.
