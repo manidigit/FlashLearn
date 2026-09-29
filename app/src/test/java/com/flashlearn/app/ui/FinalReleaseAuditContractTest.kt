@@ -1,8 +1,8 @@
 package com.flashlearn.app.ui
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 class FinalReleaseAuditContractTest {
     @Test
