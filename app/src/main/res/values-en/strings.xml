@@ -43,7 +43,7 @@
     <string name="home_monthly">Monthly</string>
     <string name="home_monthly_subtitle">Long-term memory</string>
     <string name="home_add_word">Add word</string>
-    <string name="home_ready_of_total">%1$d ready of %2$d words</string>
+    <string name="home_ready_of_total">ready of %1$d words</string>
     <string name="addword_edit_approval">Edit and approve word</string>
     <string name="addword_title">Add word</string>
     <string name="addword_learning_languages">Learning languages</string>
