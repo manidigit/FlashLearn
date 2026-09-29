@@ -1,3 +1,5 @@
+| **6.65** | **665** | 2026-09-29 | Clarify Add Word duplicate-removal and refresh actions | Pending CI |
+
 | **6.64** | **664** | 2026-09-29 | Home ready-review cards: remove duplicated ready count and align release gate | Pending CI |
 
 ## v6.64 release alignment
