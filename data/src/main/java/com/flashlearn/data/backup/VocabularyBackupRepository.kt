@@ -90,8 +90,6 @@ class VocabularyBackupRepository @Inject constructor(
                         ContentEntity(
                             UUID.randomUUID(), id, language, value, computeCanonicalKey(value),
                             o.optString("notes").takeIf { it.isNotBlank() && it != "null" } ?: note,
-                            o.optString("pronunciation").takeIf { it.isNotBlank() && it != "null" },
-                            o.optString("example").takeIf { it.isNotBlank() && it != "null" },
                             o.optInt("translationIndex", index),
                             o.optString("grammarNote").takeIf { it.isNotBlank() && it != "null" },
                             o.optString("possibleCorrection").takeIf { it.isNotBlank() && it != "null" }
