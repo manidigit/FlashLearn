@@ -42,8 +42,6 @@ class DataExportRepositoryImpl @Inject constructor(
                 content.notes,
                 content.grammarNote,
                 content.possibleCorrection,
-                content.pronunciation,
-                content.example,
                 content.translationIndex.toString()
             )
         }
@@ -52,7 +50,7 @@ class DataExportRepositoryImpl @Inject constructor(
     private suspend fun csv(): File {
         val file = File(context.cacheDir, "flashlearn-vocabulary.csv")
         file.bufferedWriter().use { writer ->
-            writer.appendLine("conceptId,entryType,languageCode,text,canonicalKey,notes,grammarNote,possibleCorrection,pronunciation,example,translationIndex")
+            writer.appendLine("conceptId,entryType,languageCode,text,canonicalKey,notes,grammarNote,possibleCorrection,translationIndex")
             rows().forEach { row ->
                 writer.appendLine(row.joinToString(",") { value -> escapeCsv(value) })
             }
@@ -68,8 +66,7 @@ class DataExportRepositoryImpl @Inject constructor(
         val values = rows()
         val names = listOf(
             "conceptId", "entryType", "languageCode", "text", "canonicalKey",
-            "notes", "grammarNote", "possibleCorrection", "pronunciation",
-            "example", "translationIndex"
+            "notes", "grammarNote", "possibleCorrection", "translationIndex"
         )
         GZIPOutputStream(temp.outputStream().buffered()).bufferedWriter(Charsets.UTF_8).use { writer ->
             writer.append("""{"format":"FlashLearn JSON","version":2,"contents":[""")
