@@ -184,7 +184,7 @@ class LegacyFullBackupRepository @Inject constructor(
                         val old = oldByLanguage[content.languageCode]
                         if (old == null) { db.contentDao().insert(content); newCount++ }
                         else {
-                            db.contentDao().update(content.copy(id = old.id, notes = content.notes ?: old.notes, pronunciation = old.pronunciation, example = old.example))
+                            db.contentDao().update(content.copy(id = old.id, notes = content.notes ?: old.notes))
                             mergedCount++
                         }
                     }
