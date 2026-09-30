@@ -15,7 +15,6 @@ data class CreateConceptCommand(
     val sourceText: String, val targetText: String,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa",
     val categoryId: UUID? = null, val notes: String? = null,
-    val pronunciation: String? = null, val example: String? = null,
     val entryType: EntryType = EntryType.WORD, val tags: List<UUID> = emptyList(),
     val mergeExistingSource: Boolean = true
 )
@@ -65,7 +64,7 @@ class CreateConceptUseCase @Inject constructor(
         }
         val id = UUID.randomUUID(); val now = Instant.now()
         conceptRepository.insert(Concept(id, command.entryType, command.categoryId, false, true, now, now))
-        contentRepository.upsert(Content(UUID.randomUUID(), id, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example))
+        contentRepository.upsert(Content(UUID.randomUUID(), id, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes))
         contentRepository.upsert(Content(UUID.randomUUID(), id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = 0))
         learningStateRepository.upsert(LearningState(UUID.randomUUID(), id, Stage.DAILY, now, 0, false, 0, 0, null))
         difficultyStateRepository.upsert(DifficultyState(UUID.randomUUID(), id, VocabularyDifficulty.EASY, 0, 0, false))
@@ -79,7 +78,7 @@ class ApproveReviewQueueItemUseCase @Inject constructor(
     private val reviewQueueRepository: ReviewQueueRepository,
     private val database: FlashLearnDatabase
 ) {
-    suspend operator fun invoke(item: ReviewQueueItem, sourceText: String, targetText: String, sourceLanguage: String, targetLanguage: String, categoryId: UUID? = null, notes: String? = null, pronunciation: String? = null, example: String? = null, entryType: EntryType = EntryType.WORD): UUID = database.withTransaction {
+    suspend operator fun invoke(item: ReviewQueueItem, sourceText: String, targetText: String, sourceLanguage: String, targetLanguage: String, categoryId: UUID? = null, notes: String? = null, entryType: EntryType = EntryType.WORD): UUID = database.withTransaction {
         require(item.status == ReviewQueueStatus.PENDING) { "این مورد دیگر در صف انتظار نیست" }
         require(sourceText.isNotBlank() && targetText.isNotBlank()) { "متن واژه و ترجمه نمی‌توانند خالی باشند" }
         val conceptId = createConcept.createInTransaction(CreateConceptCommand(sourceText.trim(), targetText.trim(), sourceLanguage, targetLanguage, categoryId, notes, pronunciation, example, entryType, mergeExistingSource = true))
@@ -90,7 +89,7 @@ class ApproveReviewQueueItemUseCase @Inject constructor(
 
 data class UpdateConceptCommand(
     val conceptId: UUID, val sourceText: String, val targetText: String,
-    val notes: String? = null, val pronunciation: String? = null, val example: String? = null,
+    val notes: String? = null,
     val entryType: EntryType? = null, val categoryId: UUID? = null, val preserveCategory: Boolean = true,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa"
 )
@@ -117,7 +116,7 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
         val now = Instant.now()
         conceptRepository.update(concept.copy(entryType = command.entryType ?: concept.entryType, categoryId = if (command.preserveCategory) concept.categoryId else command.categoryId, updatedAt = now))
         val source = contentRepository.find(command.conceptId, command.sourceLanguage)
-        contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example, translationIndex = source?.translationIndex ?: 0, grammarNote = source?.grammarNote, possibleCorrection = source?.possibleCorrection))
+        contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, translationIndex = source?.translationIndex ?: 0, grammarNote = source?.grammarNote, possibleCorrection = source?.possibleCorrection))
         val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage).sortedBy { it.translationIndex }
         requestedTranslations.forEachIndexed { index, text ->
             val key = computeCanonicalKey(text)
