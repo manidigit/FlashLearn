@@ -54,10 +54,10 @@ class AddWordViewModel @Inject constructor(private val createConcept: CreateConc
                     approveReviewQueueItem(pendingReview, current.sourceText.trim(), current.targetText.trim(), current.sourceLanguage, current.targetLanguage, categoryId, current.notes.trim().ifBlank { null }, current.entryType)
                     _state.value = _state.value.copy(isSaving = false, lastSavedText = current.sourceText.trim(), reviewApprovalCompleted = true)
                 } else {
-                    createConcept(CreateConceptCommand(sourceText = current.sourceText.trim(), targetText = current.targetText.trim(), sourceLanguage = current.sourceLanguage, targetLanguage = current.targetLanguage, categoryId = categoryId, notes = current.notes.trim().ifBlank { null }, pronunciation = current.pronunciation.trim().ifBlank { null }, example = current.example.trim().ifBlank { null }, entryType = current.entryType))
+                    createConcept(CreateConceptCommand(sourceText = current.sourceText.trim(), targetText = current.targetText.trim(), sourceLanguage = current.sourceLanguage, targetLanguage = current.targetLanguage, categoryId = categoryId, notes = current.notes.trim().ifBlank { null }, entryType = current.entryType))
                     val latest = _state.value
                     val unchanged = latest.sourceText == current.sourceText && latest.targetText == current.targetText && latest.notes == current.notes && latest.categoryName == current.categoryName && latest.entryType == current.entryType
-                    _state.value = if (unchanged) latest.copy(sourceText = "", targetText = "", notes = "", pronunciation = "", example = "", isSaving = false, lastSavedText = current.sourceText.trim()) else latest.copy(isSaving = false, lastSavedText = current.sourceText.trim())
+                    _state.value = if (unchanged) latest.copy(sourceText = "", targetText = "", notes = "", isSaving = false, lastSavedText = current.sourceText.trim()) else latest.copy(isSaving = false, lastSavedText = current.sourceText.trim())
                 }
                 loadCategories()
             } catch (e: Exception) { _state.value = _state.value.copy(isSaving = false, error = e.message ?: "خطا در ذخیره‌سازی") }
