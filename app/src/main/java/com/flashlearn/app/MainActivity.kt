@@ -109,6 +109,7 @@ class MainActivity : ComponentActivity() {
     private fun AppRootScreen() {
         val uiState by appViewModel.state
         val needsReviewItems by needsReviewViewModel.items.collectAsState()
+        val libraryState by libraryViewModel.state.collectAsState()
         uiState.operationError?.let { Text(stringResource(R.string.ui_error_prefix, it), modifier = Modifier.fillMaxWidth().padding(8.dp), color = MaterialTheme.colorScheme.error) }
         val topLevel = uiState.selectedRoute in setOf(AppRoutes.HOME, AppRoutes.REVIEW, AppRoutes.LIBRARY, AppRoutes.PROGRESS, AppRoutes.SETTINGS)
         if (topLevel) {
@@ -143,9 +144,12 @@ class MainActivity : ComponentActivity() {
                         onRestoreBackup = { appViewModel.openBackup(AppRoutes.ADD_WORD) },
                         needsReviewCount = needsReviewItems.size,
                         onNeedsReview = { appViewModel.navigate(AppRoutes.NEEDS_REVIEW) },
-                        libraryState = libraryViewModel.state.value,
+                        libraryState = libraryState,
                         onRefreshLibrary = { libraryViewModel.refresh() },
-                        onFindDuplicates = { libraryViewModel.removeExactDuplicates() }
+                        onFindDuplicates = { libraryViewModel.findDuplicates() },
+                        isFindingDuplicates = libraryState.isFindingDuplicates,
+                        duplicateGroups = libraryState.duplicateGroups,
+                        onDismissDuplicateResults = { libraryViewModel.clearDuplicateResults() }
                     )
                 }
                 AppRoutes.ADD_WORD_FORM -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair, onBack = { if (addWordViewModel.state.value.pendingReviewItem != null) { addWordViewModel.cancelReviewApproval(); appViewModel.navigate(AppRoutes.NEEDS_REVIEW) } else appViewModel.navigate(AppRoutes.ADD_WORD) }, onReviewApprovalSaved = { homeViewModel.refresh(); libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
