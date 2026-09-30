@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class AddWordUiState(
-    val sourceText: String = "", val targetText: String = "", val notes: String = "", val pronunciation: String = "", val example: String = "", val categoryName: String = "", val entryType: EntryType = EntryType.WORD,
+    val sourceText: String = "", val targetText: String = "", val notes: String = "", val categoryName: String = "", val entryType: EntryType = EntryType.WORD,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa", val categories: List<Category> = emptyList(), val isSaving: Boolean = false, val lastSavedText: String? = null, val error: String? = null, val pendingReviewItem: ReviewQueueItem? = null, val reviewApprovalCompleted: Boolean = false
 ) { val canSave: Boolean get() = sourceText.trim().isNotEmpty() && targetText.trim().isNotEmpty() && !isSaving }
 
@@ -34,14 +34,12 @@ class AddWordViewModel @Inject constructor(private val createConcept: CreateConc
     }
     fun refreshCategories() { loadCategories() }
     fun beginReviewApproval(item: ReviewQueueItem) { _state.value = _state.value.copy(sourceText = item.sourceText, targetText = item.targetText.orEmpty(), notes = item.warning.orEmpty(), pendingReviewItem = item, reviewApprovalCompleted = false, error = null, lastSavedText = null) }
-    fun cancelReviewApproval() { _state.value = _state.value.copy(sourceText = "", targetText = "", notes = "", pronunciation = "", example = "", pendingReviewItem = null, reviewApprovalCompleted = false, error = null, lastSavedText = null) }
+    fun cancelReviewApproval() { _state.value = _state.value.copy(sourceText = "", targetText = "", notes = "", pendingReviewItem = null, reviewApprovalCompleted = false, error = null, lastSavedText = null) }
     fun consumeReviewApprovalCompletion() { _state.value = _state.value.copy(reviewApprovalCompleted = false, pendingReviewItem = null) }
     fun setLanguagePair(source: String, target: String) { _state.value = _state.value.copy(sourceLanguage = source, targetLanguage = target) }
     fun onSourceTextChange(value: String) { _state.value = _state.value.copy(sourceText = value, error = null) }
     fun onTargetTextChange(value: String) { _state.value = _state.value.copy(targetText = value, error = null) }
     fun onNotesChange(value: String) { _state.value = _state.value.copy(notes = value) }
-    fun onPronunciationChange(value: String) { _state.value = _state.value.copy(pronunciation = value) }
-    fun onExampleChange(value: String) { _state.value = _state.value.copy(example = value) }
     fun onCategoryNameChange(value: String) { _state.value = _state.value.copy(categoryName = value) }
     fun onEntryTypeChange(value: EntryType) { _state.value = _state.value.copy(entryType = value) }
     fun save() {
@@ -53,12 +51,12 @@ class AddWordViewModel @Inject constructor(private val createConcept: CreateConc
                 val categoryId = current.categoryName.trim().takeIf { it.isNotEmpty() }?.let { getOrCreateCategory(it) }
                 val pendingReview = current.pendingReviewItem
                 if (pendingReview != null) {
-                    approveReviewQueueItem(pendingReview, current.sourceText.trim(), current.targetText.trim(), current.sourceLanguage, current.targetLanguage, categoryId, current.notes.trim().ifBlank { null }, current.pronunciation.trim().ifBlank { null }, current.example.trim().ifBlank { null }, current.entryType)
+                    approveReviewQueueItem(pendingReview, current.sourceText.trim(), current.targetText.trim(), current.sourceLanguage, current.targetLanguage, categoryId, current.notes.trim().ifBlank { null }, current.entryType)
                     _state.value = _state.value.copy(isSaving = false, lastSavedText = current.sourceText.trim(), reviewApprovalCompleted = true)
                 } else {
                     createConcept(CreateConceptCommand(sourceText = current.sourceText.trim(), targetText = current.targetText.trim(), sourceLanguage = current.sourceLanguage, targetLanguage = current.targetLanguage, categoryId = categoryId, notes = current.notes.trim().ifBlank { null }, pronunciation = current.pronunciation.trim().ifBlank { null }, example = current.example.trim().ifBlank { null }, entryType = current.entryType))
                     val latest = _state.value
-                    val unchanged = latest.sourceText == current.sourceText && latest.targetText == current.targetText && latest.notes == current.notes && latest.pronunciation == current.pronunciation && latest.example == current.example && latest.categoryName == current.categoryName && latest.entryType == current.entryType
+                    val unchanged = latest.sourceText == current.sourceText && latest.targetText == current.targetText && latest.notes == current.notes && latest.categoryName == current.categoryName && latest.entryType == current.entryType
                     _state.value = if (unchanged) latest.copy(sourceText = "", targetText = "", notes = "", pronunciation = "", example = "", isSaving = false, lastSavedText = current.sourceText.trim()) else latest.copy(isSaving = false, lastSavedText = current.sourceText.trim())
                 }
                 loadCategories()
