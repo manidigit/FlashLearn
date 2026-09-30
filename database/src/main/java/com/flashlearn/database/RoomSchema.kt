@@ -182,7 +182,7 @@ class Converters {
     @Query("SELECT * FROM language_pairs") suspend fun getAll(): List<LanguagePairEntity>
 }
 
-@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class, AchievementEntity::class, VocabularyRelationEntity::class, VocabularyVariantEntity::class, ReviewQueueEntity::class, LanguageEntity::class, LanguagePairEntity::class], version = 7, exportSchema = true)
+@Database(entities = [ConceptEntity::class, ContentEntity::class, LearningStateEntity::class, DifficultyStateEntity::class, TagEntity::class, ConceptTagEntity::class, ReviewSessionEntity::class, ReviewHistoryEntity::class, SettingsEntity::class, CategoryEntity::class, ParserMetadataEntity::class, AchievementEntity::class, VocabularyRelationEntity::class, VocabularyVariantEntity::class, ReviewQueueEntity::class, LanguageEntity::class, LanguagePairEntity::class], version = 8, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class RoomFlashLearnDatabase : RoomDatabase() {
     abstract fun conceptDao(): ConceptDao
