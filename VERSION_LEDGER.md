@@ -1,3 +1,12 @@
+| **6.66** | **666** | 2026-09-30 | Non-destructive Add Word duplicate finding; reactive Library count refresh | Pending CI |
+
+## v6.66 release alignment
+- app/build.gradle.kts: versionName 6.66 / versionCode 666.
+- CI: current gate 6.66/666; previous-version upgrade gate is 6.65/665.
+- Find duplicates is read-only and reports exact duplicate groups without mutating data.
+- Add Word observes Library state so Refresh updates the visible total count.
+- Verification remains pending until both authoritative GitHub Actions jobs are green.
+
 | **6.65** | **665** | 2026-09-29 | Clarify Add Word duplicate-removal and refresh actions | Pending CI |
 
 | **6.64** | **664** | 2026-09-29 | Home ready-review cards: remove duplicated ready count and align release gate | Pending CI |
