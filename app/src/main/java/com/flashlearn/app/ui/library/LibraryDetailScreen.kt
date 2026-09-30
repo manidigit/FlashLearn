@@ -87,7 +87,7 @@ class LibraryDetailViewModel @Inject constructor(
         runCatching { toggleFavorite(id) }.onSuccess { load(id, activeSourceLanguage, activeTargetLanguage) }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
-    fun save(source: String, target: String, notes: String?, pronunciation: String?, example: String?, entryType: EntryType, categoryId: UUID?, createCategoryName: String?, sourceLanguage: String, targetLanguage: String, onSuccess: () -> Unit = {}) = viewModelScope.launch {
+    fun save(source: String, target: String, notes: String?, entryType: EntryType, categoryId: UUID?, createCategoryName: String?, sourceLanguage: String, targetLanguage: String, onSuccess: () -> Unit = {}) = viewModelScope.launch {
         if (_isBusy.value) return@launch
         val current = _item.value?.concept ?: return@launch
         if (source.isBlank() || target.isBlank()) { _message.value = context.getString(R.string.detail_required); return@launch }
@@ -118,9 +118,7 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
     var source by remember { mutableStateOf("") }
     var target by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
-    var pronunciation by remember { mutableStateOf("") }
-    var example by remember { mutableStateOf("") }
-    var entryType by remember { mutableStateOf(EntryType.WORD) }
+        var entryType by remember { mutableStateOf(EntryType.WORD) }
     var selectedCategoryId by remember { mutableStateOf<UUID?>(null) }
     var categoryName by remember { mutableStateOf("") }
     var addingNewCategory by remember { mutableStateOf(false) }
@@ -133,8 +131,6 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             source = it.source?.text.orEmpty()
             target = it.targets.joinToString(" / ") { c -> c.text }
             notes = it.source?.notes.orEmpty()
-            pronunciation = it.source?.pronunciation.orEmpty()
-            example = it.source?.example.orEmpty()
             entryType = it.concept.entryType
             selectedCategoryId = it.concept.categoryId
             categoryName = it.category?.name.orEmpty()
@@ -165,8 +161,6 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(source, { source = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.detail_word_or_phrase)) }, singleLine = true)
             OutlinedTextField(target, { target = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.detail_translation)) }, singleLine = true)
-            OutlinedTextField(pronunciation, { pronunciation = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.detail_pronunciation)) }, singleLine = true)
-            OutlinedTextField(example, { example = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.detail_example)) }, minLines = 2, maxLines = 3)
             Box(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = if (addingNewCategory) categoryName else categories.firstOrNull { it.id == selectedCategoryId }?.name ?: categoryName.ifBlank { stringResource(R.string.detail_choose_category) },
@@ -195,7 +189,7 @@ fun LibraryDetailScreen(viewModel: LibraryDetailViewModel, conceptId: UUID, lang
             }
             OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.detail_notes)) }, minLines = 2, maxLines = 3)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                Button(onClick = { viewModel.save(source, target, notes, pronunciation, example, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (isBusy) stringResource(R.string.detail_saving) else stringResource(R.string.detail_save)) }
+                Button(onClick = { viewModel.save(source, target, notes, entryType, selectedCategoryId, if (addingNewCategory) categoryName else null, languagePair.source.code, languagePair.target.code) }, enabled = !isBusy && source.isNotBlank() && target.isNotBlank(), modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Icon(Icons.Outlined.Save, null); Spacer(Modifier.width(tokens.compactGap)); Text(if (isBusy) stringResource(R.string.detail_saving) else stringResource(R.string.detail_save)) }
                 OutlinedButton(onClick = onBack, enabled = !isBusy, modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text(stringResource(R.string.detail_cancel)) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
