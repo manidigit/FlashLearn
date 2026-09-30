@@ -14,8 +14,8 @@ class SchemaContractTest {
         assertEquals(17, entities.size)
     }
 
-    @Test fun schemaVersionIsSevenAfterDatabaseOptimization() {
-        assertTrue(Regex("version\\s*=\\s*7").containsMatchIn(source))
+    @Test fun schemaVersionIsEightAfterVocabularyFieldCleanup() {
+        assertTrue(Regex("version\\s*=\\s*8").containsMatchIn(source))
     }
 
     @Test fun contentSupportsMultipleTranslationsAndReviewMetadata() {
