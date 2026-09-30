@@ -43,7 +43,7 @@ class RoomBackupRepository @Inject constructor(
             put("exportedAt", Instant.now().toString())
             put("backupType", "FULL")
             put("concepts", db.conceptDao().getAll().json { JSONObject().put("id", it.id).put("entryType", it.entryType).put("categoryId", it.categoryId).put("favorite", it.favorite).put("active", it.active).put("createdAt", it.createdAt).put("updatedAt", it.updatedAt) })
-            put("contents", db.contentDao().getAll().json { JSONObject().put("id", it.id).put("conceptId", it.conceptId).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("pronunciation", it.pronunciation).put("example", it.example).put("translationIndex", it.translationIndex).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection) })
+            put("contents", db.contentDao().getAll().json { JSONObject().put("id", it.id).put("conceptId", it.conceptId).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("translationIndex", it.translationIndex).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection) })
             put("learningStates", db.learningStateDao().getAll().json { JSONObject().put("id", it.id).put("conceptId", it.conceptId).put("stage", it.stage).put("nextReviewAt", it.nextReviewAt).put("monthlyWrongCount", it.monthlyWrongCount).put("hasPathFailure", it.hasPathFailure).put("totalCorrect", it.totalCorrect).put("totalWrong", it.totalWrong).put("lastReviewedAt", it.lastReviewedAt) })
             put("difficultyStates", db.difficultyStateDao().getAll().json { JSONObject().put("id", it.id).put("conceptId", it.conceptId).put("current", it.current).put("consecutiveCorrect", it.consecutiveCorrect).put("consecutiveWrong", it.consecutiveWrong).put("hasReachedVeryHard", it.hasReachedVeryHard) })
             put("tags", db.tagDao().getAll().json { JSONObject().put("id", it.id).put("name", it.name) })
@@ -127,7 +127,7 @@ class RoomBackupRepository @Inject constructor(
                 val existingContentsByIdentity = existingContents.associateBy { "${it.conceptId}|${it.languageCode}|${it.translationIndex}" }
                 root.arr("contents").filter { uuid(it, "conceptId") in conceptIds }.forEach { o ->
                     val conceptId = uuid(o, "conceptId"); val lang = o.getString("languageCode"); val index = o.optInt("translationIndex", 0); val incomingId = uuid(o, "id")
-                    val entity = ContentEntity(incomingId, conceptId, lang, o.getString("text"), computeCanonicalKey(o.getString("text")), text(o, "notes"), text(o, "pronunciation"), text(o, "example"), index, text(o, "grammarNote"), text(o, "possibleCorrection"))
+                    val entity = ContentEntity(incomingId, conceptId, lang, o.getString("text"), computeCanonicalKey(o.getString("text")), text(o, "notes"), index, text(o, "grammarNote"), text(o, "possibleCorrection"))
                     val byId = existingContentsById[incomingId]
                     val byIdentity = existingContentsByIdentity["${conceptId}|${lang}|${index}"]
                     when { byIdentity != null -> { db.contentDao().update(entity.copy(id = byIdentity.id)); merged++ }; byId != null -> { db.contentDao().update(entity); merged++ }; else -> { db.contentDao().insert(entity); added++ } }
