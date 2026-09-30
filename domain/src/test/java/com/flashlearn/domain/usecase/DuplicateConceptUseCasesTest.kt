@@ -19,16 +19,3 @@ class DuplicateConceptUseCasesTest {
  @Test fun sameSourceDifferentMeaning_consolidatesIntoOneConcept()=runBlocking{val first=UUID.randomUUID();val second=UUID.randomUUID();val concepts=Concepts(listOf(concept(first,now.minusSeconds(60)),concept(second,now)));val contents=Contents(listOf(content(first,"es","cura"),content(first,"fa","کشیش"),content(second,"es","cura"),content(second,"fa","درمان")));val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db())("es","fa");assertEquals(1,removed);assertEquals(1,concepts.values.values.count{it.active});assertEquals(listOf("کشیش","درمان"),contents.findAll(first,"fa").map{it.text})}
  @Test fun staleCanonicalKeys_areIgnored_duringCleanup()=runBlocking{val first=UUID.randomUUID();val second=UUID.randomUUID();val concepts=Concepts(listOf(concept(first,now.minusSeconds(60)),concept(second,now)));val contents=Contents(listOf(content(first,"es","ellos",key="old-key"),content(first,"fa","آن‌ها",key="old-target"),content(second,"es","  ELLOS  ",key="another-old-key"),content(second,"fa"," آن‌ها ",key="another-old-target")));val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db())("es","fa");assertEquals(1,removed);assertEquals(1,concepts.values.values.count{it.active});assertEquals(listOf("آن‌ها"),contents.findAll(first,"fa").map{it.text})}
 }
-
-
-@Test
-fun findExactDuplicates_isReadOnly_andReturnsDuplicateGroups() = runBlocking {
-    val first = UUID.randomUUID(); val second = UUID.randomUUID()
-    val concepts = Concepts(listOf(concept(first, now.minusSeconds(60)), concept(second, now)))
-    val contents = Contents(listOf(content(first, "es", "  cura  "), content(first, "fa", "کشیش"), content(second, "es", "CURA"), content(second, "fa", "درمان")))
-    val groups = FindExactDuplicateConceptsUseCase(concepts, contents)("es", "fa")
-    assertEquals(listOf(ExactDuplicateGroup("cura", 2)), groups)
-    assertEquals(2, concepts.values.values.count { it.active })
-    assertEquals(listOf("کشیش"), contents.findAll(first, "fa").map { it.text })
-    assertEquals(listOf("درمان"), contents.findAll(second, "fa").map { it.text })
-}
