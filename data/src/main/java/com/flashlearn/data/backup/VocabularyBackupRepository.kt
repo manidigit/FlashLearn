@@ -138,8 +138,6 @@ class VocabularyBackupRepository @Inject constructor(
                             contentEntities += content.copy(
                                 id = old.id,
                                 notes = content.notes ?: old.notes,
-                                pronunciation = content.pronunciation ?: old.pronunciation,
-                                example = content.example ?: old.example,
                                 grammarNote = content.grammarNote ?: old.grammarNote,
                                 possibleCorrection = content.possibleCorrection ?: old.possibleCorrection
                             )
