@@ -6,7 +6,7 @@
 - Refresh now observes Library StateFlow so refreshed totals are reflected in the Add Word method screen.
 
 ### Verification
-GitHub Actions is authoritative. v6.66 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+GitHub Actions GREEN — run 36679020997 (Build + Unit Test and Instrumentation + Upgrade Gate).
 
 ## v6.65 — Add Word action labels
 
