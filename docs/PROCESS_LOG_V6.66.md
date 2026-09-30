@@ -20,4 +20,4 @@ v6.65 only renamed the actions. Find still invoked the destructive removeExactDu
 6.66 / 666; previous-version gate 6.65 / 665.
 
 ## CI
-Pending until Build + Unit Test and Instrumentation + Upgrade Gate both pass.
+GREEN — GitHub Actions run 36679020997 passed Build + Unit Test and Instrumentation + Upgrade Gate, including the 6.65→6.66 upgrade path.
