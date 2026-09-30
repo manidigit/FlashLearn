@@ -13,6 +13,8 @@ import com.flashlearn.domain.repository.*
 import com.flashlearn.domain.usecase.CreateTagUseCase
 import com.flashlearn.domain.usecase.DeleteTagUseCase
 import com.flashlearn.domain.usecase.RemoveExactDuplicateConceptsUseCase
+import com.flashlearn.domain.usecase.ExactDuplicateGroup
+import com.flashlearn.domain.usecase.FindExactDuplicateConceptsUseCase
 import com.flashlearn.domain.usecase.UpdateTagUseCase
 import com.flashlearn.domain.usecase.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,6 +57,8 @@ data class LibraryUiState(
     val isLoading: Boolean = true,
     val isTagBusy: Boolean = false,
     val isDuplicateCleanupBusy: Boolean = false,
+    val isFindingDuplicates: Boolean = false,
+    val duplicateGroups: List<ExactDuplicateGroup>? = null,
     val error: String? = null,
     val sourceLanguage: String = "es",
     val targetLanguage: String = "fa"
@@ -76,6 +80,7 @@ class LibraryViewModel @Inject constructor(
     private val updateTagUseCase: UpdateTagUseCase,
     private val deleteTagUseCase: DeleteTagUseCase,
     private val removeExactDuplicates: RemoveExactDuplicateConceptsUseCase,
+    private val findExactDuplicateConcepts: FindExactDuplicateConceptsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(LibraryUiState())
@@ -106,6 +111,21 @@ class LibraryViewModel @Inject constructor(
     private fun runTagMutation(onDone: (String?) -> Unit, block: suspend () -> Unit) { if (_state.value.isTagBusy) return; viewModelScope.launch { _state.value = _state.value.copy(isTagBusy = true, error = null); runCatching { block(); refresh() }.onSuccess { onDone(null) }.onFailure { onDone(it.message ?: "خطا در مدیریت Tag") }; _state.value = _state.value.copy(isTagBusy = false) } }
 
     fun toggleFavorite(id: UUID) { viewModelScope.launch { runCatching { toggleFavoriteUseCase(id); refresh() }.onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در علاقه‌مندی") } } }
+
+    fun findDuplicates() {
+        if (_state.value.isFindingDuplicates) return
+        val sourceLanguage = _state.value.sourceLanguage
+        val targetLanguage = _state.value.targetLanguage
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isFindingDuplicates = true, error = null)
+            runCatching { findExactDuplicateConcepts(sourceLanguage, targetLanguage) }
+                .onSuccess { groups -> _state.value = _state.value.copy(duplicateGroups = groups) }
+                .onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در پیدا کردن واژه‌های تکراری") }
+            _state.value = _state.value.copy(isFindingDuplicates = false)
+        }
+    }
+
+    fun clearDuplicateResults() { _state.value = _state.value.copy(duplicateGroups = null) }
 
     fun removeExactDuplicates(onDone: (Int) -> Unit = {}) { if (_state.value.isDuplicateCleanupBusy) return; viewModelScope.launch { _state.value = _state.value.copy(isDuplicateCleanupBusy = true, error = null); runCatching { removeExactDuplicates(_state.value.sourceLanguage, _state.value.targetLanguage) }.onSuccess { count -> refresh(); onDone(count) }.onFailure { _state.value = _state.value.copy(error = it.message ?: "خطا در پاکسازی تکراری‌ها") }; _state.value = _state.value.copy(isDuplicateCleanupBusy = false) } }
 
