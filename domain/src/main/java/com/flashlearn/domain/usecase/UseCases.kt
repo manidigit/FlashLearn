@@ -81,7 +81,7 @@ class ApproveReviewQueueItemUseCase @Inject constructor(
     suspend operator fun invoke(item: ReviewQueueItem, sourceText: String, targetText: String, sourceLanguage: String, targetLanguage: String, categoryId: UUID? = null, notes: String? = null, entryType: EntryType = EntryType.WORD): UUID = database.withTransaction {
         require(item.status == ReviewQueueStatus.PENDING) { "این مورد دیگر در صف انتظار نیست" }
         require(sourceText.isNotBlank() && targetText.isNotBlank()) { "متن واژه و ترجمه نمی‌توانند خالی باشند" }
-        val conceptId = createConcept.createInTransaction(CreateConceptCommand(sourceText.trim(), targetText.trim(), sourceLanguage, targetLanguage, categoryId, notes, pronunciation, example, entryType, mergeExistingSource = true))
+        val conceptId = createConcept.createInTransaction(CreateConceptCommand(sourceText.trim(), targetText.trim(), sourceLanguage, targetLanguage, categoryId, notes, entryType = entryType, mergeExistingSource = true))
         reviewQueueRepository.update(item.copy(status = ReviewQueueStatus.APPROVED))
         conceptId
     }
