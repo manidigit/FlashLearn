@@ -1,3 +1,13 @@
+| **6.67** | **667** | 2026-09-30 | Remove obsolete Pronunciation/Example fields; DB migration 7→8; backup compatibility | Pending CI |
+
+## v6.67 release alignment
+- app/build.gradle.kts: versionName 6.67 / versionCode 667.
+- CI: current gate 6.67/667; previous-version upgrade gate is 6.66/666.
+- Room schema: version 8 with migration 7→8 removing pronunciation and example from contents.
+- Vocabulary Edit and Add Word now share the supported field contract.
+- Legacy backup payloads may still contain the removed keys; restore ignores them rather than persisting them.
+- Verification remains pending until both authoritative GitHub Actions jobs are green.
+
 | **6.66** | **666** | 2026-09-30 | Non-destructive Add Word duplicate finding; reactive Library count refresh | GREEN — GitHub Actions run 36679020997 |
 
 ## v6.66 release alignment
