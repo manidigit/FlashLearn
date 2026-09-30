@@ -1,3 +1,14 @@
+## v6.67 — Vocabulary Edit field cleanup
+
+- Removed Pronunciation and Example from the Content domain model and Room contents schema.
+- Updated Add Word and Vocabulary Edit so both expose the same supported editable vocabulary fields.
+- Added Room migration 7→8 that removes obsolete columns while preserving supported vocabulary data.
+- Updated JSON/CSV/XLSX/typed/full backup and restore paths to omit obsolete fields while tolerating legacy backup payloads.
+- Added migration and UI field-contract regression tests.
+
+### Verification
+GitHub Actions is authoritative. v6.67 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.66 — Non-destructive duplicate finding
 
 - Changed Add Word → Find duplicates from a destructive cleanup action into a read-only duplicate scan.
