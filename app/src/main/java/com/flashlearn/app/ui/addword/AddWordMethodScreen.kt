@@ -23,6 +23,7 @@ import com.flashlearn.app.R
 import com.flashlearn.app.ui.library.LibraryUiState
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
+import com.flashlearn.domain.usecase.ExactDuplicateGroup
 
 @Composable
 fun AddWordMethodScreen(
@@ -33,6 +34,9 @@ fun AddWordMethodScreen(
     libraryState: LibraryUiState = LibraryUiState(),
     onRefreshLibrary: () -> Unit = {},
     onFindDuplicates: () -> Unit = {},
+    isFindingDuplicates: Boolean = false,
+    duplicateGroups: List<ExactDuplicateGroup>? = null,
+    onDismissDuplicateResults: () -> Unit = {},
     needsReviewCount: Int = 0,
     onNeedsReview: () -> Unit = {}
 ) {
@@ -48,7 +52,7 @@ fun AddWordMethodScreen(
         Spacer(Modifier.height(tokens.sectionGap))
         Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(tokens.dp(1f), MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
             Row(Modifier.fillMaxWidth().padding(tokens.contentGap), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap), verticalAlignment = Alignment.CenterVertically) {
-                StatAction(Icons.Outlined.Search, stringResource(R.string.addword_find_duplicates), onFindDuplicates, Modifier.weight(1f))
+                StatAction(Icons.Outlined.Search, if (isFindingDuplicates) stringResource(R.string.addword_finding_duplicates) else stringResource(R.string.addword_find_duplicates), onFindDuplicates, Modifier.weight(1f), enabled = !isFindingDuplicates)
                 StatAction(Icons.Outlined.Search, stringResource(R.string.addword_needs_review, needsReviewCount), onNeedsReview, Modifier.weight(1f))
                 StatAction(Icons.Outlined.Refresh, stringResource(R.string.addword_refresh), onRefreshLibrary, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -58,6 +62,19 @@ fun AddWordMethodScreen(
             }
         }
         Spacer(Modifier.weight(1f))
+    }
+    if (duplicateGroups != null) {
+        AlertDialog(onDismissRequest = onDismissDuplicateResults, title = { Text(stringResource(R.string.addword_duplicates_found_title)) }, text = {
+            if (duplicateGroups.isEmpty()) Text(stringResource(R.string.addword_no_duplicates_found)) else {
+                val extraCount = duplicateGroups.sumOf { it.count - 1 }
+                Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.addword_duplicates_found_summary, duplicateGroups.size, extraCount))
+                    Spacer(Modifier.height(tokens.compactGap))
+                    duplicateGroups.take(20).forEach { group -> Text("• ${group.sourceText} (${group.count})") }
+                    if (duplicateGroups.size > 20) { Spacer(Modifier.height(tokens.compactGap)); Text(stringResource(R.string.addword_duplicates_more, duplicateGroups.size - 20)) }
+                }
+            }
+        }, confirmButton = { TextButton(onClick = onDismissDuplicateResults) { Text(stringResource(R.string.addword_close)) } })
     }
 }
 
@@ -80,9 +97,9 @@ private fun MethodCard(title: String, subtitle: String, color: Color, background
 }
 
 @Composable
-private fun StatAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit, modifier: Modifier) {
+private fun StatAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean = true) {
     val tokens = LocalFlashLearnThemeTokens.current
-    FilledTonalButton(onClick = onClick, modifier = modifier.height(tokens.largeChoiceHeight), shape = MaterialTheme.shapes.medium) {
+    FilledTonalButton(onClick = onClick, enabled = enabled, modifier = modifier.height(tokens.largeChoiceHeight), shape = MaterialTheme.shapes.medium) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(tokens.iconLarge))
             Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
