@@ -38,7 +38,7 @@ class TypedBackupRepository @Inject constructor(
         when (type) {
             BackupType.VOCABULARY -> {
                 root.put("concepts", JSONArray(db.conceptDao().getAll().map { JSONObject().put("id", it.id.toString()).put("entryType", it.entryType).put("categoryId", it.categoryId?.toString()).put("favorite", it.favorite).put("active", it.active).put("createdAt", it.createdAt.toString()).put("updatedAt", it.updatedAt.toString()) }))
-                root.put("contents", JSONArray(db.contentDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection).put("translationIndex", it.translationIndex).put("pronunciation", it.pronunciation).put("example", it.example) }))
+                root.put("contents", JSONArray(db.contentDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection).put("translationIndex", it.translationIndex) }))
                 root.put("tags", JSONArray(db.tagDao().getAll().map { JSONObject().put("id", it.id.toString()).put("name", it.name) }))
                 root.put("categories", JSONArray(db.categoryDao().getAll().map { JSONObject().put("id", it.id.toString()).put("name", it.name) }))
                 root.put("relations", JSONArray(db.vocabularyRelationDao().getAll().map { JSONObject().put("id", it.id.toString()).put("sourceConceptId", it.sourceConceptId.toString()).put("targetConceptId", it.targetConceptId?.toString()).put("relationType", it.relationType).put("unresolvedText", it.unresolvedText) }))
@@ -135,7 +135,7 @@ class TypedBackupRepository @Inject constructor(
             val conceptId = o.optString("conceptId")
             if (runCatching { UUID.fromString(conceptId) }.isFailure) return RestoreResult(0, 0, listOf("INVALID_UUID:contents"))
             if (o.optString("languageCode").isBlank() || o.optString("text").isBlank()) return RestoreResult(0, 0, listOf("INVALID_VALUE:contents"))
-            contentByConcept.getOrPut(conceptId) { mutableListOf() }.add(JSONObject().put("languageCode", o.optString("languageCode")).put("text", o.optString("text")).put("notes", o.optString("notes")).put("pronunciation", o.optString("pronunciation")).put("example", o.optString("example")).put("grammarNote", o.optString("grammarNote")).put("possibleCorrection", o.optString("possibleCorrection")).put("translationIndex", o.optInt("translationIndex",0)))
+            contentByConcept.getOrPut(conceptId) { mutableListOf() }.add(JSONObject().put("languageCode", o.optString("languageCode")).put("text", o.optString("text")).put("notes", o.optString("notes")).put("grammarNote", o.optString("grammarNote")).put("possibleCorrection", o.optString("possibleCorrection")).put("translationIndex", o.optInt("translationIndex",0)))
         }
         val nestedConcepts = JSONArray()
         val seenConceptIds = mutableSetOf<String>()
