@@ -103,8 +103,7 @@ class DataExportRepositoryImpl @Inject constructor(
         val file = File(context.cacheDir, "flashlearn-vocabulary.xlsx")
         val names = listOf(
             "conceptId", "entryType", "languageCode", "text", "canonicalKey",
-            "notes", "grammarNote", "possibleCorrection", "pronunciation",
-            "example", "translationIndex"
+            "notes", "grammarNote", "possibleCorrection", "translationIndex"
         )
         ZipOutputStream(file.outputStream()).use { zip ->
             putZipEntry(
