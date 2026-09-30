@@ -1,3 +1,13 @@
+## v6.66 — Non-destructive duplicate finding
+
+- Changed Add Word → Find duplicates from a destructive cleanup action into a read-only duplicate scan.
+- Duplicate detection uses a dedicated domain use case and canonical source-language keys without mutating vocabulary or learning state.
+- The Add Word method screen reports duplicate groups and extra duplicate concepts without deleting anything.
+- Refresh now observes Library StateFlow so refreshed totals are reflected in the Add Word method screen.
+
+### Verification
+GitHub Actions is authoritative. v6.66 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## v6.65 — Add Word action labels
 
 - Clarified that the duplicate action removes exact duplicates rather than merely finding them.
