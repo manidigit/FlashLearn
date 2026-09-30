@@ -61,3 +61,23 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
 private object EmptyLearningStateRepository : LearningStateRepository { override suspend fun get(conceptId:UUID):LearningState?=null; override suspend fun upsert(state:LearningState)=Unit; override suspend fun getAllByStage(stage:Stage)=emptyList<LearningState>(); override suspend fun getDueNonLearned(now:Instant)=emptyList<LearningState>(); override suspend fun getAll()=emptyList<LearningState>() }
 private object EmptyDifficultyStateRepository : DifficultyStateRepository { override suspend fun get(conceptId:UUID):DifficultyState?=null; override suspend fun upsert(state:DifficultyState)=Unit; override suspend fun delete(conceptId:UUID)=Unit; override suspend fun getAll()=emptyList<DifficultyState>() }
 private object EmptyConceptTagRepository : ConceptTagRepository { override suspend fun insert(conceptTag:ConceptTag)=Unit; override suspend fun getTagsForConcept(conceptId:UUID)=emptyList<UUID>(); override suspend fun getConceptsForTag(tagId:UUID)=emptyList<UUID>(); override suspend fun getAll()=emptyList<ConceptTag>() }
+
+
+data class ExactDuplicateGroup(val sourceText: String, val count: Int)
+
+class FindExactDuplicateConceptsUseCase @Inject constructor(
+    private val conceptRepository: ConceptRepository,
+    private val contentRepository: ContentRepository
+) {
+    suspend operator fun invoke(sourceLanguage: String = "es", targetLanguage: String = "fa"): List<ExactDuplicateGroup> {
+        require(sourceLanguage.isNotBlank() && targetLanguage.isNotBlank() && sourceLanguage != targetLanguage) { "زبان‌های مبدأ و مقصد باید متفاوت باشند" }
+        val activeConcepts = conceptRepository.getAllActive()
+        if (activeConcepts.size < 2) return emptyList()
+        val contentsByConcept = contentRepository.getAll().groupBy(Content::conceptId)
+        return activeConcepts.mapNotNull { concept ->
+            contentsByConcept[concept.id].orEmpty().firstOrNull { it.languageCode == sourceLanguage && it.text.isNotBlank() }
+                ?.let { computeCanonicalKey(it.text) to it.text.trim() }
+        }.filter { it.first.isNotBlank() }.groupBy({ it.first }, { it.second }).values.filter { it.size > 1 }
+            .map { texts -> ExactDuplicateGroup(texts.first(), texts.size) }.sortedBy { it.sourceText.lowercase() }
+    }
+}
