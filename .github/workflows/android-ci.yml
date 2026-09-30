@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.66"
-  FL_VERSION_CODE: "666"
-  FL_PREVIOUS_VERSION_NAME: "6.65"
-  FL_PREVIOUS_VERSION_CODE: "665"
+  FL_VERSION_NAME: "6.67"
+  FL_VERSION_CODE: "667"
+  FL_PREVIOUS_VERSION_NAME: "6.66"
+  FL_PREVIOUS_VERSION_CODE: "666"
 
 jobs:
   build-and-unit-test:
