@@ -57,3 +57,14 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_language_pairs_active_source_target` ON `language_pairs` (`active`, `sourceLanguageCode`, `targetLanguageCode`)")
     }
 }
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""CREATE TABLE `contents_new` (`id` TEXT NOT NULL, `conceptId` TEXT NOT NULL, `languageCode` TEXT NOT NULL, `text` TEXT NOT NULL, `canonicalKey` TEXT NOT NULL, `notes` TEXT, `translationIndex` INTEGER NOT NULL, `grammarNote` TEXT, `possibleCorrection` TEXT, PRIMARY KEY(`id`))""")
+        db.execSQL("""INSERT INTO `contents_new` (`id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`translationIndex`,`grammarNote`,`possibleCorrection`) SELECT `id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`translationIndex`,`grammarNote`,`possibleCorrection` FROM `contents`""")
+        db.execSQL("DROP TABLE `contents`")
+        db.execSQL("ALTER TABLE `contents_new` RENAME TO `contents`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode_canonicalKey` ON `contents` (`languageCode`, `canonicalKey`)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_contents_conceptId_languageCode_translationIndex` ON `contents` (`conceptId`, `languageCode`, `translationIndex`)")
+    }
+}
