@@ -1,0 +1,920 @@
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>راهنمای اجرایی رفع مشکلات فلش‌لرن</title>
+<style>body{font-family:Tahoma,sans-serif;line-height:1.9;max-width:860px;margin:auto;padding:16px;color:#1a1a1a;background:#fff}
+h1,h2,h3{line-height:1.5}h3{border-right:4px solid #6d28d9;padding-right:8px;margin-top:28px}
+code,pre{direction:ltr;text-align:left;font-family:monospace;background:#f3f3f6;border-radius:6px}
+code{padding:1px 5px}pre{padding:10px;overflow-x:auto;white-space:pre}hr{margin:28px 0}
+@media(prefers-color-scheme:dark){body{background:#121212;color:#eee}code,pre{background:#222}}</style></head><body><h1 id="راهنمای-اجرایی-رفع-مشکلات-فلشلرن-نسخه-۶.۶۵">راهنمای اجرایی رفع
+مشکلات فلش‌لرن (نسخهٔ ۶.۶۵)</h1>
+<p>این فایل برای دادن به هوش مصنوعی دیگر نوشته شده. هر مورد شمارهٔ همان
+گزارش ممیزی را دارد. هیچ فایلی از پروژه تغییر نکرده.</p>
+<h2 id="دستور-شروع-اول-از-همه-بدهید">دستور شروع (اول از همه بدهید)</h2>
+<ol type="1">
+<li>زبان کد فقط Kotlin است.</li>
+<li>هر بار فقط یک مورد را انجام بده. سراغ موارد دیگر نرو.</li>
+<li>قبل از تغییر فایل دیتابیس یا مدل داده، اول توضیح بده چه چیزی عوض
+می‌شود و منتظر تأیید بمان.</li>
+<li>خروجی را به‌صورت فایل کامل بده، نه تکه‌تکه و نه فقط تفاوت‌ها.</li>
+<li>اگر تابعی به رابط مخزن اضافه می‌کنی، پیاده‌سازی Room و همهٔ Fakeهای تست
+را هم به‌روز کن (هر ماژول جدا کامپایل می‌شود).</li>
+<li>الگوریتم‌های اصلی (انتقال مرحله، محاسبهٔ دشواری، زمان‌بندی مرور) باید
+از هم مستقل بمانند.</li>
+<li>برای هر مورد یک تست واحد بنویس و فایل پیگیری پیشرفت را به‌روز
+کن.</li>
+<li>تا فاز ۶ اسکیمای دیتابیس (نسخهٔ ۷) را تغییر نده.</li>
+</ol>
+<h2 id="ترتیب-اجرا-و-وابستگیها">ترتیب اجرا و وابستگی‌ها</h2>
+<ol type="1">
+<li>ابتدا پیش‌نیازهای مشترک (بخش پ) را انجام بدهید: تابع لغو‌پذیر، تبدیل
+امن enum، کوئری‌های جدید.</li>
+<li>سپس فاز ۱ تا ۷ به ترتیب گزارش.</li>
+<li>مورد الف-۴ بعد از ب-۱۰ اجرا شود.</li>
+<li>ب-۴ و ب-۵ بعد از کوئری‌های جدید پ-۳ اجرا شوند.</li>
+</ol>
+<hr />
+<h2 id="پ.-پیشنیازهای-مشترک">پ. پیش‌نیازهای مشترک</h2>
+<h3 id="پ-۱-تابع-کمکی-لغوپذیر">پ-۱ · تابع کمکی لغو‌پذیر</h3>
+<p><strong>فایل جدید</strong></p>
+<p><code>core/src/main/java/com/flashlearn/core/util/Coroutines.kt</code></p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>package com.flashlearn.core.util
+
+import kotlin.coroutines.cancellation.CancellationException
+
+inline fun &lt;T&gt; runCatchingCancellable(block: () -&gt; T): Result&lt;T&gt; =
+    try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
+    }</code></pre>
+<p><strong>کار</strong></p>
+<p>هر جا <code>runCatching { ... }</code> یا
+<code>catch (e: Exception)</code> داخل کورتین هست، یکی از این دو را
+انجام بده:</p>
+<ol type="1">
+<li><code>runCatching</code> را با <code>runCatchingCancellable</code>
+عوض کن.</li>
+<li>قبل از <code>catch (e: Exception)</code> یک
+<code>catch (e: CancellationException) { throw e }</code> اضافه کن.</li>
+</ol>
+<h3 id="پ-۲-تبدیل-امن-enum">پ-۲ · تبدیل امن enum</h3>
+<p><strong>فایل</strong></p>
+<p><code>data/src/main/java/com/flashlearn/data/repository/RoomRepositories.kt</code></p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>private const val TAG = &quot;Mappers&quot;
+
+private inline fun &lt;reified T : Enum&lt;T&gt;&gt; safeEnum(value: String, fallback: T): T =
+    enumValues&lt;T&gt;().firstOrNull { it.name == value }
+        ?: fallback.also { android.util.Log.w(TAG, &quot;unknown ${T::class.simpleName}=$value&quot;) }</code></pre>
+<p><strong>کار</strong></p>
+<p>در <code>Mappers</code> همهٔ <code>valueOf(...)</code> را با
+<code>safeEnum(مقدار, پیش‌فرض)</code> عوض کن:</p>
+<ol type="1">
+<li><code>EntryType</code> با پیش‌فرض <code>WORD</code></li>
+<li><code>Stage</code> با پیش‌فرض <code>DAILY</code></li>
+<li><code>ReviewType</code> با پیش‌فرض <code>DAILY</code></li>
+<li><code>VocabularyDifficulty</code> با پیش‌فرض همان مقدار میانی</li>
+<li><code>VocabularyRelationType</code>،
+<code>VocabularyVariantType</code>، <code>ReviewQueueStatus</code> با
+پیش‌فرض اولین مقدار تعریف‌شده</li>
+</ol>
+<h3 id="پ-۳-کوئریهای-جدید-بدون-تغییر-ساختار-جدول">پ-۳ · کوئری‌های جدید
+(بدون تغییر ساختار جدول)</h3>
+<p><strong>فایل</strong></p>
+<p><code>database/src/main/java/com/flashlearn/database/RoomSchema.kt</code></p>
+<p><strong>کد در ConceptDao</strong></p>
+<pre class="kotlin"><code>@Query(
+    &quot;SELECT c.* FROM concepts c JOIN contents x ON x.conceptId = c.id &quot; +
+    &quot;WHERE x.languageCode = :lang AND x.canonicalKey = :key AND c.active = 1 &quot; +
+    &quot;ORDER BY c.createdAt ASC, c.id ASC LIMIT 1&quot;
+)
+suspend fun findActiveByKey(lang: String, key: String): ConceptEntity?
+
+@Query(
+    &quot;SELECT c.* FROM concepts c JOIN contents x ON x.conceptId = c.id &quot; +
+    &quot;WHERE x.languageCode = :lang AND x.canonicalKey = :key AND c.active = 1 AND c.id != :excludeId&quot;
+)
+suspend fun findActiveByKeyExcluding(lang: String, key: String, excludeId: UUID): List&lt;ConceptEntity&gt;
+
+@Query(&quot;SELECT categoryId, COUNT(*) AS count FROM concepts WHERE active = 1 GROUP BY categoryId&quot;)
+suspend fun countByCategory(): List&lt;CategoryCount&gt;</code></pre>
+<p><strong>کد در LearningStateDao</strong></p>
+<pre class="kotlin"><code>@Query(
+    &quot;SELECT l.stage AS stage, COUNT(*) AS count FROM learning_states l &quot; +
+    &quot;JOIN concepts c ON c.id = l.conceptId WHERE c.active = 1 GROUP BY l.stage&quot;
+)
+suspend fun countByStage(): List&lt;StageCount&gt;
+
+@Query(
+    &quot;SELECT COUNT(*) FROM learning_states l JOIN concepts c ON c.id = l.conceptId &quot; +
+    &quot;WHERE c.active = 1 AND l.stage = :stage AND l.nextReviewAt IS NOT NULL AND l.nextReviewAt &lt;= :now&quot;
+)
+suspend fun countDue(stage: String, now: Instant): Int</code></pre>
+<p><strong>کد در DifficultyStateDao</strong></p>
+<pre class="kotlin"><code>@Query(
+    &quot;SELECT d.`current` AS difficulty, COUNT(*) AS count FROM difficulty_states d &quot; +
+    &quot;JOIN concepts c ON c.id = d.conceptId WHERE c.active = 1 GROUP BY d.`current`&quot;
+)
+suspend fun countByDifficulty(): List&lt;DifficultyCount&gt;</code></pre>
+<p><strong>کلاس‌های نتیجه (بالای فایل)</strong></p>
+<pre class="kotlin"><code>data class CategoryCount(val categoryId: UUID?, val count: Int)
+data class StageCount(val stage: String, val count: Int)
+data class DifficultyCount(val difficulty: String, val count: Int)</code></pre>
+<p><strong>کار</strong></p>
+<ol type="1">
+<li>اگر نوع <code>categoryId</code> در <code>ConceptEntity</code>
+قابل‌تهی نیست، همان نوع را بگذار.</li>
+<li>رابط‌های دامنه (<code>ConceptRepository</code> و …) و پیاده‌سازی Room
+و Fakeها را به‌روز کن.</li>
+<li>نام ستون‌ها را با <code>ConceptEntity</code> و
+<code>LearningStateEntity</code> تطبیق بده.</li>
+</ol>
+<hr />
+<h2 id="فاز-۱-باگهای-داده">فاز ۱ · باگ‌های داده</h2>
+<h3 id="الف-۱-ادغام-تکراریها-وضعیت-را-پاک-میکند">الف-۱ · ادغام تکراری‌ها
+وضعیت را پاک می‌کند</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/src/main/java/com/flashlearn/domain/usecase/DuplicateConceptUseCases.kt</code></p>
+<p><strong>علت</strong></p>
+<p>در <code>copy(id = survivorLearning.id, ...)</code> فقط
+<code>id</code> عوض می‌شود. <code>conceptId</code> همان واژهٔ تکراری
+می‌ماند. چون <code>conceptId</code> یکتاست، <code>REPLACE</code> ردیف
+واژهٔ تکراری را می‌گیرد و ردیف واژهٔ اصلی حذف می‌شود.</p>
+<p><strong>راه‌حل</strong></p>
+<p>در هر دو <code>copy</code> مقدار <code>conceptId = survivor.id</code>
+را اضافه کن.</p>
+<pre class="kotlin"><code>val merged = preferred.copy(
+    id = sl.id,
+    conceptId = survivor.id,
+    totalCorrect = sl.totalCorrect + dl.totalCorrect,
+    totalWrong = sl.totalWrong + dl.totalWrong,
+    lastReviewedAt = listOfNotNull(sl.lastReviewedAt, dl.lastReviewedAt).maxOrNull()
+)</code></pre>
+<pre class="kotlin"><code>difficultyRepository.upsert(duplicateDifficulty.copy(id = sd.id, conceptId = survivor.id))</code></pre>
+<p><strong>تست</strong></p>
+<p>سه واژه بساز. تکراری مرحلهٔ WEEKLY و اصلی DAILY. بعد از ادغام:
+<code>learningRepository.get(survivor.id)</code> باید null نباشد و مرحله
+WEEKLY باشد. تعداد کل ردیف‌های <code>learning_states</code> برای آن واژه
+دقیقاً یکی باشد.</p>
+<h3 id="الف-۲-ادغام-بیش-از-دو-تکراری">الف-۲ · ادغام بیش از دو
+تکراری</h3>
+<p><strong>فایل</strong></p>
+<p><code>DuplicateConceptUseCases.kt</code></p>
+<p><strong>علت</strong></p>
+<p><code>survivorLearning</code>، <code>survivorDifficulty</code> و
+<code>survivor</code> قبل از حلقه یک بار خوانده می‌شوند و در هر دور از
+همان مقدار قدیمی استفاده می‌شود.</p>
+<p><strong>راه‌حل</strong></p>
+<p>سه متغیر قابل‌تغییر بساز و بعد از هر ادغام به‌روزشان کن.</p>
+<pre class="kotlin"><code>var currentSurvivor = survivor
+var currentLearning = survivorLearning
+var currentDifficulty = survivorDifficulty</code></pre>
+<pre class="kotlin"><code>learningRepository.get(duplicate.id)?.let { dl -&gt;
+    val sl = currentLearning
+    val merged = if (sl == null) {
+        dl.copy(id = UUID.randomUUID(), conceptId = survivor.id)
+    } else {
+        val preferred = if (rank.getValue(dl.stage) &gt; rank.getValue(sl.stage)) dl else sl
+        preferred.copy(
+            id = sl.id,
+            conceptId = survivor.id,
+            totalCorrect = sl.totalCorrect + dl.totalCorrect,
+            totalWrong = sl.totalWrong + dl.totalWrong,
+            lastReviewedAt = listOfNotNull(sl.lastReviewedAt, dl.lastReviewedAt).maxOrNull()
+        )
+    }
+    learningRepository.upsert(merged)
+    currentLearning = merged
+}</code></pre>
+<pre class="kotlin"><code>difficultyRepository.get(duplicate.id)?.let { dd -&gt;
+    val sd = currentDifficulty
+    val merged = when {
+        sd == null -&gt; dd.copy(id = UUID.randomUUID(), conceptId = survivor.id)
+        dd.current.ordinal &gt; sd.current.ordinal -&gt; dd.copy(id = sd.id, conceptId = survivor.id)
+        else -&gt; sd
+    }
+    if (merged !== sd) difficultyRepository.upsert(merged)
+    currentDifficulty = merged
+}</code></pre>
+<pre class="kotlin"><code>currentSurvivor = currentSurvivor.copy(
+    favorite = currentSurvivor.favorite || duplicate.favorite,
+    updatedAt = Instant.now()
+)
+conceptRepository.update(currentSurvivor)</code></pre>
+<p><strong>تست</strong></p>
+<p>سه واژهٔ یکسان، شمارنده‌های ۱ و ۲ و ۳. بعد از ادغام،
+<code>totalCorrect</code> باید ۶ باشد. اگر فقط واژهٔ دوم علاقه‌مندی داشته،
+واژهٔ باقی‌مانده هم علاقه‌مندی باشد.</p>
+<h3 id="الف-۳-نشانگرهای-بدون-دونقطه-در-پارسر">الف-۳ · نشانگرهای بدون
+دو‌نقطه در پارسر</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>domain/.../parser/ParserMarkers.kt</code></p>
+<p><code>domain/.../parser/VocabularyParser.kt</code></p>
+<p><strong>علت</strong></p>
+<p>مجموعهٔ <code>notes</code> شامل «نکته»، «توضیحات»، «احتمال اشتباه»،
+«توجه»، «مثال» بدون دو‌نقطه است. ترجمهٔ فارسی که با این کلمه‌ها شروع شود
+یادداشت حساب می‌شود.</p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>از مجموعهٔ <code>notes</code> پنج مدخل بدون دو‌نقطه را حذف کن.</li>
+<li>همین را برای بقیهٔ مجموعه‌ها بررسی کن (مثل تجزیه، مشتق شده از،
+Breakdown). فقط اگر مشخصات پارسر (الگوریتم ۱) صریحاً اجازه می‌دهد نگه
+دار.</li>
+<li>در <code>explicitMarkerType</code> بعد از تطبیق ابتدای خط، فقط وقتی
+مارکر بپذیر که یا خودش با دو‌نقطه تمام شود، یا تمام خط مساوی مارکر
+باشد.</li>
+</ol>
+<p><strong>تست</strong></p>
+<pre class="kotlin"><code>// ورودی: خط اول &quot;hola&quot;، خط دوم &quot;مثال&quot; -&gt; ترجمه، نه یادداشت
+// ورودی: خط اول &quot;hola&quot;، خط دوم &quot;مثال: hola amigo&quot; -&gt; یادداشت</code></pre>
+<p>برای هر پنج کلمه یک تست.</p>
+<h3 id="الف-۴-دستاوردها-هیچوقت-باز-نمیشوند">الف-۴ · دستاوردها هیچ‌وقت باز
+نمی‌شوند</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/progress/ProgressViewModel.kt</code></p>
+<p><code>domain/.../gamification/Achievement.kt</code></p>
+<p><strong>علت</strong></p>
+<p>ویومدل <code>AchievementContext</code> را دستی می‌سازد و چهار فیلد را
+صفر می‌گذارد. کلاس <code>CheckAndUnlockAchievements</code> همین را درست
+حساب می‌کند ولی هیچ‌جا صدا زده نمی‌شود.</p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>اول ب-۱۰ را انجام بده.</li>
+<li><code>CheckAndUnlockAchievements</code> را در سازندهٔ
+<code>ProgressViewModel</code> تزریق کن.</li>
+<li>ساخت دستی <code>AchievementContext</code> را حذف کن و به‌جایش:</li>
+</ol>
+<pre class="kotlin"><code>val states = checkAndUnlockAchievements(Instant.now(), ZoneId.systemDefault())</code></pre>
+<ol start="4" type="1">
+<li>از <code>states</code> همان کاری را بکن که قبلاً با نتیجهٔ ارزیابی
+می‌کرد.</li>
+<li>فقط بعد از پایان مرور و ایمپورت این را صدا بزن، نه با هر تغییر
+بازه.</li>
+</ol>
+<p><strong>تست</strong></p>
+<p>۱۰ واژهٔ تمرین‌شده: دستاورد «اولین ده واژه» باید باز شود.</p>
+<h3 id="الف-۵-شمارش-آماده-مرور-با-فهرست-واقعی-نمیخواند">الف-۵ · شمارش
+آمادهٔ مرور با فهرست واقعی نمی‌خواند</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/review/ReviewViewModel.kt</code></p>
+<p><code>app/.../MainActivity.kt</code></p>
+<p><code>app/.../ui/home/HomeViewModel.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>در <code>refreshAvailableReviewCount</code> همان
+<code>languagePair</code> که در انتخاب واقعی به
+<code>ReviewSelectionFilters</code> داده می‌شود را به شمارش هم بده.</li>
+<li><code>HomeViewModel.refresh</code> را طوری بنویس که جفت‌زبان را از
+تنظیمات بخواند. پارامتر پیش‌فرض اسپانیایی-فارسی را حذف کن.</li>
+<li>سه فراخوانی <code>homeViewModel.refresh()</code> در
+<code>MainActivity</code> را حذف کن (جزئیات در ب-۴).</li>
+</ol>
+<p><strong>تست</strong></p>
+<p>دو جفت‌زبان ذخیره کن. شمارش صفحهٔ تنظیم مرور باید با <code>size</code>
+نتیجهٔ انتخاب واقعی برابر باشد.</p>
+<h3 id="الف-۶-ریستور-برچسب-همنام">الف-۶ · ریستور برچسب هم‌نام</h3>
+<p><strong>فایل</strong></p>
+<p><code>data/.../backup/RoomBackupRepository.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<p>قبل از درج برچسب‌ها یک نقشهٔ تبدیل شناسه بساز و اتصال‌ها را با آن
+بنویس.</p>
+<pre class="kotlin"><code>val existingByName = db.tagDao().getAll().associateBy { it.name }.toMutableMap()
+val tagIdMap = HashMap&lt;UUID, UUID&gt;()
+for (tag in backupTags) {
+    val hit = existingByName[tag.name]
+    if (hit != null) {
+        tagIdMap[tag.id] = hit.id
+    } else {
+        db.tagDao().insert(tag)
+        existingByName[tag.name] = tag
+        tagIdMap[tag.id] = tag.id
+    }
+}
+val links = backupConceptTags.mapNotNull { link -&gt;
+    tagIdMap[link.tagId]?.let { link.copy(tagId = it) }
+}
+db.conceptTagDao().insertAll(links)</code></pre>
+<p>نام متغیرها را با کد فعلی تطبیق بده. دسته‌بندی‌ها را هم به همین شکل
+بررسی کن.</p>
+<p><strong>تست</strong></p>
+<p>بک‌آپ با برچسب «سفر» و شناسهٔ A روی دیتابیسی که برچسب «سفر» با شناسهٔ B
+دارد. ریستور باید موفق شود و اتصال‌ها به B بروند.</p>
+<h3 id="الف-۷-تنظیمات-در-ریستور-پیشرفت">الف-۷ · تنظیمات در ریستور
+پیشرفت</h3>
+<p><strong>فایل</strong></p>
+<p><code>data/.../backup/TypedBackupRepository.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>تصمیم بگیر: اگر تنظیمات باید بازیابی شود،
+<code>settingsDao().putAll(...)</code> را با همان لیست بخوان و
+بنویس.</li>
+<li>اگر نه، خواندن آن را حذف کن.</li>
+<li><code>catch (_: Exception)</code> کلی را دو تکه کن: خطای تجزیهٔ جیسون
+با پیام «فایل نامعتبر»، خطای بقیه با پیام واقعی و لاگ.</li>
+</ol>
+<h3 id="الف-۸-حالت-رد-تکراری">الف-۸ · حالت رد تکراری</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/.../usecase/ImportParsedEntryUseCase.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<p>در ابتدای تابع، بعد از یافتن <code>existingSource</code>:</p>
+<pre class="kotlin"><code>if (existingSource != null &amp;&amp; mode == ImportMode.SKIP_DUPLICATE) return</code></pre>
+<p>نام مقدار enum را از تعریف واقعی <code>ImportMode</code> بردار. رفتار
+را با مشخصات تطبیق بده.</p>
+<h3 id="الف-۹-نوع-رابطه-در-ریستور">الف-۹ · نوع رابطه در ریستور</h3>
+<p><strong>فایل</strong></p>
+<p><code>RoomBackupRepository.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<pre class="kotlin"><code>private val validRelationTypes = VocabularyRelationType.values().map { it.name }.toSet()</code></pre>
+<p>و این را جایگزین
+<code>setOf("DERIVED_FROM","USED_IN","SYNONYM")</code> کن.</p>
+<h3 id="الف-۱۰-مهاجرت-دادههای-راهاندازی">الف-۱۰ · مهاجرت داده‌های
+راه‌اندازی</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>domain/.../usecase/RefreshDataUseCase.kt</code></p>
+<p><code>app/.../FlashLearnApplication.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li><code>require(concept.createdAt &lt;= now)</code> را حذف کن. به‌جایش
+اگر <code>createdAt &gt; now</code> بود، <code>Log.w</code> بزن و ادامه
+بده.</li>
+<li>در <code>FlashLearnApplication</code> داخل <code>catch</code>
+مهاجرت، حتماً <code>Log.e</code> بزن (و لغو را دوباره پرتاب کن).</li>
+</ol>
+<h3 id="الف-۱۱-واژههای-غیرفعال-در-بررسی-صحت">الف-۱۱ · واژه‌های غیرفعال در
+بررسی صحت</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/.../usecase/DataIntegrityUseCases.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<p>مجموعهٔ <code>activeIds</code> بساز و فقط وضعیت‌هایی را یتیم بشمار که
+<code>conceptId</code> آن‌ها در <code>getAll()</code> واژه‌ها اصلاً وجود
+ندارد (نه صرفاً غیرفعال است).</p>
+<h3 id="الف-۱۲-فیلدهای-مرده-و-دشواری-آسان">الف-۱۲ · فیلدهای مرده و
+دشواری آسان</h3>
+<ol type="1">
+<li><code>monthlyWrongCount</code> و <code>hasPathFailure</code> را یا
+در الگوریتم انتقال به‌روز کن (طبق مشخصات الگوریتم)، یا از رابط آمار حذف
+کن. بدون مشخصات تصمیم نگیر.</li>
+<li>در <code>QuizUseCases.kt</code> رفتار EASY و MEDIUM را با مشخصات
+آزمون تطبیق بده. تصمیم ثبت‌شده: MEDIUM یعنی بدون رتبه‌بندی مجدد.</li>
+</ol>
+<hr />
+<h2 id="فاز-۲-لایه-کوئری-سریع">فاز ۲ · لایهٔ کوئری سریع</h2>
+<h3 id="ب-۱-افزودن-تکواژه">ب-۱ · افزودن تک‌واژه</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/.../usecase/UseCases.kt</code> (تابع
+<code>createInTransaction</code>)</p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>پ-۳ را انجام بده.</li>
+<li><code>val activeConcepts = conceptRepository.getAllActive()</code>
+را حذف کن.</li>
+<li>مسیر ادغام:</li>
+</ol>
+<pre class="kotlin"><code>if (command.mergeExistingSource) {
+    val existing = conceptRepository.findActiveByKey(command.sourceLanguage, sourceKey)
+    if (existing != null) {
+        // همان منطق فعلی ترجمه‌ها
+    }
+}</code></pre>
+<ol start="4" type="1">
+<li>مسیر پشتیبان
+<code>contentRepository.getAll().firstOrNull {...}</code> را کامل حذف
+کن.</li>
+<li>هر جای دیگر که از <code>activeConcepts</code> برای بررسی تکراری
+استفاده شده، با همین کوئری عوض کن.</li>
+</ol>
+<p><strong>تست</strong></p>
+<p>۲۰۰۰ واژه بساز. افزودن واژهٔ ۲۰۰۱ نباید <code>getAll</code> یا
+<code>getAllActive</code> را صدا بزند (Fake را طوری بنویس که صدا زدنش
+شکست بدهد).</p>
+<h3 id="ب-۲-ایمپورت-انبوه-رابطهها">ب-۲ · ایمپورت انبوه: رابطه‌ها</h3>
+<p><strong>فایل</strong></p>
+<p><code>ImportParsedEntryUseCase.kt</code> (حلقهٔ
+<code>entry.relationships</code>)</p>
+<p><strong>راه‌حل</strong></p>
+<pre class="kotlin"><code>val target = conceptRepository.findActiveByKey(sourceLanguage, computeCanonicalKey(relationship.text))</code></pre>
+<p>و <code>contentRepository.getAll().firstOrNull {...}</code> را حذف
+کن.</p>
+<h3 id="ب-۳-ایمپورت-انبوه-دستهای-پیشرفت-لغو">ب-۳ · ایمپورت انبوه:
+دسته‌ای، پیشرفت، لغو</h3>
+<p><strong>فایل</strong></p>
+<p><code>app/.../ui/addword/BulkImportViewModel.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<pre class="kotlin"><code>private var importJob: Job? = null
+private val _progress = MutableStateFlow(0 to 0)
+val progress: StateFlow&lt;Pair&lt;Int, Int&gt;&gt; = _progress
+
+fun startImport(entries: List&lt;ParsedEntry&gt;) {
+    importJob?.cancel()
+    importJob = viewModelScope.launch {
+        var done = 0
+        entries.chunked(100).forEach { chunk -&gt;
+            ensureActive()
+            database.withTransaction {
+                chunk.forEach { entry -&gt;
+                    try {
+                        importParsedEntry(entry /* پارامترهای فعلی */)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        failures += entry to (e.message ?: &quot;&quot;)
+                    }
+                }
+            }
+            done += chunk.size
+            _progress.value = done to entries.size
+        }
+    }
+}
+
+fun cancelImport() { importJob?.cancel() }</code></pre>
+<p><strong>نکته‌ها</strong></p>
+<ol type="1">
+<li>هر خطای یک ردیف نباید کل دسته را شکست بدهد.</li>
+<li>در صفحه یک نوار پیشرفت و دکمهٔ لغو اضافه کن.</li>
+<li><code>database</code> باید به ویومدل تزریق شود یا این دسته‌بندی داخل
+یک use case انجام شود (ترجیحاً use case).</li>
+</ol>
+<h3 id="ب-۴-صفحه-خانه">ب-۴ · صفحهٔ خانه</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/home/HomeViewModel.kt</code></p>
+<p><code>domain/.../usecase/SettingsDifficultyProgressUseCases.kt</code></p>
+<p><code>app/.../MainActivity.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>آمار مراحل: از <code>learningStateDao.countByStage()</code>
+بگیر.</li>
+<li>آمار دشواری: از <code>countByDifficulty()</code>.</li>
+<li>تعداد آمادهٔ مرور روزانه/هفتگی/ماهانه: از
+<code>countDue(stage, now)</code>.</li>
+<li>در خلاصهٔ پیشرفت، به‌جای
+<code>difficultyStateRepository.get(concept.id)</code> در حلقه:</li>
+</ol>
+<pre class="kotlin"><code>val difficultyByConcept = difficultyStateRepository.getAll().associateBy { it.conceptId }</code></pre>
+<ol start="5" type="1">
+<li>ساخت وضعیت گمشده را از مسیر خواندن بیرون ببر: یک use case جدا به نام
+<code>EnsureStatesUseCase</code> که فقط هنگام شروع برنامه و بعد از
+ایمپورت و ریستور صدا زده شود.</li>
+<li>رفع صدا زدن‌های تکراری:</li>
+</ol>
+<pre class="kotlin"><code>private var refreshJob: Job? = null
+fun refresh() {
+    refreshJob?.cancel()
+    refreshJob = viewModelScope.launch { /* بارگذاری */ }
+}</code></pre>
+<ol start="7" type="1">
+<li>سه فراخوانی <code>refresh()</code> در <code>MainActivity</code> را
+حذف کن. فقط <code>init</code> و بعد از عملیاتی که داده را عوض می‌کند
+(پایان مرور، ایمپورت، افزودن، ریستور) صدا بزن.</li>
+<li>تاریخچه را فقط یک بار بخوان و به همهٔ محاسبه‌ها بده.</li>
+</ol>
+<p><strong>تست</strong></p>
+<p>با Fake که تعداد صدا زدن <code>getAll</code> را می‌شمارد: یک
+<code>refresh</code> بیش از یک خواندن تاریخچه نداشته باشد.</p>
+<h3 id="ب-۵-انتخاب-و-شمارش-صف-مرور">ب-۵ · انتخاب و شمارش صف مرور</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>domain/.../usecase/ReviewEngineUseCases.kt</code></p>
+<p><code>domain/.../usecase/CountReviewQueueUseCase.kt</code></p>
+<p><code>app/.../ui/review/ReviewViewModel.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>به‌جای <code>getAllByStage</code> + فیلتر حافظه‌ای، از
+<code>getDueByStage</code> و <code>getAllDueNonLearned</code> (موجودند)
+استفاده کن.</li>
+<li>متن‌ها را فقط برای شناسه‌های نامزد بخوان و دسته‌ای (SQLite حداکثر متغیر
+دارد):</li>
+</ol>
+<pre class="kotlin"><code>val contents = candidateIds.chunked(500).flatMap { contentRepository.getForConcepts(it) }</code></pre>
+<ol start="3" type="1">
+<li>فیلتر برچسب: <code>getConceptIdsForTag</code> برای هر برچسب
+انتخاب‌شده، یک بار و اشتراک مجموعه‌ها.</li>
+<li>منطق فیلتر (دشواری، دسته، برچسب، جفت‌زبان) را در یک تابع خصوصی مشترک
+بگذار و هم انتخاب و هم شمارش صدایش بزنند.</li>
+<li>در <code>ReviewViewModel</code> شمارش را یک بار با مجموعه‌ها بزن و
+کار قبلی را لغو کن:</li>
+</ol>
+<pre class="kotlin"><code>private var countJob: Job? = null
+fun refreshAvailableReviewCount() {
+    countJob?.cancel()
+    countJob = viewModelScope.launch {
+        delay(150)
+        // یک فراخوانی با مجموعهٔ دشواری‌ها و مجموعهٔ دسته‌ها
+    }
+}</code></pre>
+<p><strong>تست</strong></p>
+<p>خروجی <code>count</code> باید همیشه برابر <code>size</code> نتیجهٔ
+انتخاب با همان فیلترها باشد. تستی که چندین ترکیب فیلتر را مقایسه
+کند.</p>
+<h3 id="ب-۷-صفحه-جزئیات-واژه">ب-۷ · صفحهٔ جزئیات واژه</h3>
+<p><strong>فایل</strong></p>
+<p><code>app/.../ui/library/LibraryDetailScreen.kt</code> (ویومدل داخل
+آن)</p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>به <code>ContentRepository</code> تابع
+<code>getAllForConcept(conceptId)</code> اضافه کن که
+<code>contentDao().getAllByConceptId</code> را صدا بزند. (Fakeها
+هم.)</li>
+<li><code>contents.getAll().filter { ... }</code> را با آن عوض کن.</li>
+<li><code>_item.value = null; _message.value = null</code> را از ابتدای
+بارگذاری حذف کن. نمایش قبلی بماند تا داده جدید برسد.</li>
+</ol>
+<h3 id="ب-۸-صفحه-پیشرفت">ب-۸ · صفحهٔ پیشرفت</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/progress/ProgressViewModel.kt</code></p>
+<p><code>domain/.../statistics/Statistics.kt</code></p>
+<p><code>domain/.../progress/Progress.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>تاریخچه را یک بار بخوان و به همهٔ محاسبه‌گرها بده.</li>
+<li>برای نمودار فعالیت، یک‌بار گروه‌بندی روزانه:</li>
+</ol>
+<pre class="kotlin"><code>val byDay = history.groupingBy { it.reviewedAt.atZone(zone).toLocalDate() }.eachCount()
+val points = days.map { day -&gt; byDay[day] ?: 0 }</code></pre>
+<ol start="3" type="1">
+<li>«آیا حداقل یک مرور دارد» را با <code>getDistinctConceptIds()</code>
+(موجود) بگیر.</li>
+<li>تغییر <code>setActivityRange</code> فقط نمودار را دوباره بسازد، نه
+کل صفحه را. دادهٔ گروه‌بندی‌شده در ویومدل بماند.</li>
+<li>ایندکس زمان مرور در فاز ۶.</li>
+</ol>
+<h3 id="ب-۱۰-دستاوردها-پویش-درجهدوم">ب-۱۰ · دستاوردها (پویش
+درجه‌دوم)</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/.../gamification/Achievement.kt</code></p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>val learnedIds = learning.asSequence().filter { it.stage == Stage.LEARNED }.map { it.conceptId }.toSet()
+val veryHardIds = difficulty.asSequence().filter { it.hasReachedVeryHard }.map { it.conceptId }.toSet()
+// در AchievementContext:
+veryHardLearnedConcepts = activeIds.count { it in learnedIds &amp;&amp; it in veryHardIds }</code></pre>
+<h3 id="ب-۱۲-ذخیره-ویرایش-واژه">ب-۱۲ · ذخیرهٔ ویرایش واژه</h3>
+<p><strong>فایل</strong></p>
+<p><code>UseCases.kt</code> (ویرایش)</p>
+<p><strong>راه‌حل</strong></p>
+<p>به‌جای حلقهٔ همهٔ واژه‌ها:</p>
+<pre class="kotlin"><code>val clash = conceptRepository.findActiveByKeyExcluding(sourceLanguage, sourceKey, editingId)</code></pre>
+<p>و اگر <code>clash</code> خالی نبود، ترجمه‌ها را فقط برای همان واژه‌ها
+مقایسه کن.</p>
+<h3 id="ب-۱۳-شروع-مرور">ب-۱۳ · شروع مرور</h3>
+<p><strong>فایل</strong></p>
+<p><code>ReviewViewModel.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<p>شمارش دسته‌ها را با <code>conceptDao().countByCategory()</code> بگیر.
+بانک آزمون را فقط هنگام شروع جلسهٔ آزمون بساز، نه هنگام ساخت ویومدل.</p>
+<hr />
+<h2 id="فاز-۳-پایداری">فاز ۳ · پایداری</h2>
+<h3 id="ج-۱-ردیف-خراب">ج-۱ · ردیف خراب</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>RoomRepositories.kt</code></p>
+<p><code>domain/.../model/Models.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>پ-۲ را انجام بده.</li>
+<li>در <code>Mappers.difficulty</code> قبل از ساخت مدل مقدارها را اصلاح
+کن:</li>
+</ol>
+<pre class="kotlin"><code>val correct = e.consecutiveCorrect.coerceAtLeast(0)
+val wrong = e.consecutiveWrong.coerceAtLeast(0)
+val (c, w) = if (correct &gt; 0 &amp;&amp; wrong &gt; 0) correct to 0 else correct to wrong</code></pre>
+<ol start="3" type="1">
+<li>در مخزن‌ها به‌جای <code>map { Mappers.x(it) }</code> از این استفاده کن
+تا یک ردیف خراب همه را نشکند:</li>
+</ol>
+<pre class="kotlin"><code>.mapNotNull { runCatchingCancellable { Mappers.x(it) }.getOrNull() }</code></pre>
+<p><strong>تست</strong></p>
+<p>یک ردیف با <code>stage = "XYZ"</code> در دیتابیس بگذار.
+<code>getAll</code> باید بدون استثنا برگردد.</p>
+<h3 id="ج-۲-ویومدلهای-بدون-محافظ">ج-۲ · ویومدل‌های بدون محافظ</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/review/NeedsReviewViewModel.kt</code></p>
+<p><code>RoomRepositories.kt</code> (تابع
+<code>parserMetadata</code>)</p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>هر <code>launch</code> که به مخزن می‌رود را در
+<code>runCatchingCancellable</code> بگذار و شکست را به یک
+<code>error</code> در state بده.</li>
+<li>در <code>Mappers.parserMetadata</code> هر
+<code>JSONArray(...)</code> را جدا با <code>runCatching</code> بخوان و
+در شکست <code>emptyList()</code> بده.</li>
+</ol>
+<h3 id="ج-۳-بکآپ-بزرگ">ج-۳ · بک‌آپ بزرگ</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>app/.../ui/backup/BackupScreen.kt</code></p>
+<p><code>core</code> (تابع کمکی جدید)</p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>class LimitedInputStream(private val src: java.io.InputStream, private val max: Long) : java.io.InputStream() {
+    private var count = 0L
+    override fun read(): Int {
+        val b = src.read()
+        if (b &gt;= 0 &amp;&amp; ++count &gt; max) throw java.io.IOException(&quot;فایل بیش از حد بزرگ است&quot;)
+        return b
+    }
+    override fun read(buf: ByteArray, off: Int, len: Int): Int {
+        val n = src.read(buf, off, len)
+        if (n &gt; 0) {
+            count += n
+            if (count &gt; max) throw java.io.IOException(&quot;فایل بیش از حد بزرگ است&quot;)
+        }
+        return n
+    }
+    override fun close() = src.close()
+}</code></pre>
+<p><strong>کار</strong></p>
+<ol type="1">
+<li>به‌جای اعتماد به <code>OpenableColumns.SIZE</code>، خواندن را با
+<code>LimitedInputStream</code> انجام بده.</li>
+<li>سقف را از ۲۰ مگابایت به ۲۰۰ مگابایت ببر.</li>
+<li>تشخیص gzip هنگام ریستور:</li>
+</ol>
+<pre class="kotlin"><code>val input = java.io.BufferedInputStream(stream)
+input.mark(2)
+val b0 = input.read(); val b1 = input.read()
+input.reset()
+val source = if (b0 == 0x1f &amp;&amp; b1 == 0x8b) java.util.zip.GZIPInputStream(input) else input</code></pre>
+<ol start="4" type="1">
+<li>ریستور قدیمی (بدون gzip) باید همچنان کار کند.</li>
+</ol>
+<h3 id="ج-۴-ساخت-بکآپ-جریانی">ج-۴ · ساخت بک‌آپ جریانی</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>data/.../backup/RoomBackupRepository.kt</code></p>
+<p><code>BackupScreen.kt</code></p>
+<p><strong>تغییر حساس: قبل از اجرا تأیید بگیر</strong></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>نوشتن با <code>android.util.JsonWriter</code> مستقیم روی
+<code>OutputStream</code>:</li>
+</ol>
+<pre class="kotlin"><code>JsonWriter(java.io.OutputStreamWriter(out, Charsets.UTF_8)).use { w -&gt;
+    w.beginObject()
+    w.name(&quot;reviewHistory&quot;).beginArray()
+    var offset = 0
+    while (true) {
+        val page = db.reviewHistoryDao().getPage(1000, offset)
+        if (page.isEmpty()) break
+        page.forEach { writeHistory(w, it) }
+        offset += page.size
+    }
+    w.endArray()
+    w.endObject()
+}</code></pre>
+<ol start="2" type="1">
+<li>به <code>ReviewHistoryDao</code> اضافه کن:</li>
+</ol>
+<pre class="kotlin"><code>@Query(&quot;SELECT * FROM review_history ORDER BY reviewedAt ASC, id ASC LIMIT :limit OFFSET :offset&quot;)
+suspend fun getPage(limit: Int, offset: Int): List&lt;ReviewHistoryEntity&gt;</code></pre>
+<ol start="3" type="1">
+<li>ساختار جیسون خروجی دقیقاً مثل قبل بماند تا ریستور قدیمی کار کند.</li>
+<li>اول در فایل موقت <code>cacheDir</code> بنویس، بعد به Uri مقصد کپی
+کن.</li>
+<li>برای فایل پیش از ریستور (<code>PRE_RESTORE</code>) هم همین روش.</li>
+<li>در <code>BackupScreen</code> رشتهٔ کامل را در state نگه نداری. فقط
+مسیر یا Uri.</li>
+<li>اختیاری: خروجی را با <code>GZIPOutputStream</code> فشرده کن.</li>
+</ol>
+<h3 id="ج-۵-لغو-کورتین">ج-۵ · لغو کورتین</h3>
+<p><strong>راه‌حل</strong></p>
+<p>پ-۱ را در همهٔ جاهای زیر اعمال کن:</p>
+<p><code>RoomBackupRepository.kt</code> (حدود خط ۱۶۵)</p>
+<p><code>TypedBackupRepository.kt</code> (دو <code>catch</code>)</p>
+<p><code>BulkImportViewModel.kt</code></p>
+<p>هر ویومدلی که <code>runCatching</code> دارد. برای پیدا کردن: جست‌وجوی
+<code>runCatching</code> و <code>catch (e: Exception)</code>.</p>
+<h3 id="ج-۶-پیامهای-فنی">ج-۶ · پیام‌های فنی</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>ReviewViewModel.kt</code></p>
+<p><code>UseCases.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>دو کلاس استثنای مشخص بساز:</li>
+</ol>
+<pre class="kotlin"><code>class AlreadyReviewedTodayException : IllegalStateException()
+class NotDueYetException : IllegalStateException()</code></pre>
+<ol start="2" type="1">
+<li>به‌جای <code>error(...)</code> با متن انگلیسی، این‌ها را پرتاب
+کن.</li>
+<li>در <code>ReviewViewModel</code> این دو را بگیر و با رشتهٔ فارسی از
+منابع نمایش بده. کارت جاری را رد کن تا کاربر گیر نکند.</li>
+</ol>
+<h3 id="ج-۷-مهاجرت-۶-به-۷">ج-۷ · مهاجرت ۶ به ۷</h3>
+<p><strong>فایل</strong></p>
+<p><code>database/.../DatabaseMigrations.kt</code></p>
+<p><strong>تغییر روی مهاجرت: قبل از اجرا تأیید بگیر</strong></p>
+<p><strong>راه‌حل</strong></p>
+<p>قبل از <code>CREATE UNIQUE INDEX ... tags(name)</code> این‌ها را اجرا
+کن:</p>
+<pre class="sql"><code>UPDATE OR IGNORE concept_tags SET tagId = (
+  SELECT MIN(t2.id) FROM tags t2 WHERE t2.name = (
+    SELECT t1.name FROM tags t1 WHERE t1.id = concept_tags.tagId));
+DELETE FROM concept_tags WHERE tagId NOT IN (SELECT MIN(id) FROM tags GROUP BY name);
+DELETE FROM tags WHERE id NOT IN (SELECT MIN(id) FROM tags GROUP BY name);</code></pre>
+<p><strong>تست</strong></p>
+<p>مهاجرت با دیتابیس نسخهٔ ۶ که دو برچسب هم‌نام دارد. مهاجرت باید بدون خطا
+تمام شود و یک برچسب بماند.</p>
+<h3 id="ج-۸-زمانسنج-خودکار-آزمون">ج-۸ · زمان‌سنج خودکار آزمون</h3>
+<p><strong>فایل</strong></p>
+<p><code>ReviewViewModel.kt</code> (حدود خط ۳۰۰)</p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>private var autoAdvanceJob: Job? = null
+
+private fun scheduleAutoAdvance() {
+    autoAdvanceJob?.cancel()
+    autoAdvanceJob = viewModelScope.launch {
+        delay(3_000)
+        goNext()
+    }
+}</code></pre>
+<p><code>autoAdvanceJob?.cancel()</code> را در <code>next</code>،
+<code>skip</code>، <code>exit</code> و <code>reset</code> هم صدا
+بزن.</p>
+<h3 id="ج-۹-مشاهده-state-در-mainactivity">ج-۹ · مشاهدهٔ state در
+MainActivity</h3>
+<p><strong>فایل</strong></p>
+<p><code>app/.../MainActivity.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li><code>libraryViewModel.state.value</code> را با
+<code>val libraryState by libraryViewModel.state.collectAsState()</code>
+در بالای composable عوض کن.</li>
+<li><code>uiState.operationError</code> را در یک <code>Snackbar</code>
+یا نوار پیام بگذار و پس از نمایش با یک تابع
+<code>clearOperationError()</code> پاک کن.</li>
+</ol>
+<h3 id="ج-۱۰-موارد-دیگر">ج-۱۰ · موارد دیگر</h3>
+<ol type="1">
+<li><code>DatabaseModule.kt</code>: برای مهاجرت‌ناموفق (نسخهٔ قدیمی‌تر
+برنامه)، پیام روشن نشان بده. <code>fallbackToDestructiveMigration</code>
+اضافه نکن.</li>
+<li>جلسه‌های ناتمام: هنگام شروع برنامه، جلسه‌هایی که <code>endedAt</code>
+ندارند و از آخرین مرورشان بیش از یک روز گذشته را با زمان آخرین مرور
+ببند.</li>
+<li><code>FlashLearnApplication.kt</code>: <code>Log.e</code> در
+<code>catch</code>.</li>
+<li><code>AppViewModel.kt</code>: نوع پارامتر
+<code>RoomSettingsRepository</code> را به رابط
+<code>SettingsRepository</code> عوض کن و در ماژول تزریق
+<code>@Binds</code> بگذار.</li>
+</ol>
+<hr />
+<h2 id="فاز-۴-پارسر-و-آزمون">فاز ۴ · پارسر و آزمون</h2>
+<h3 id="ب-۶-سرعت-ساخت-سؤال-آزمون">ب-۶ · سرعت ساخت سؤال آزمون</h3>
+<p><strong>فایل</strong></p>
+<p><code>domain/.../usecase/QuizUseCases.kt</code></p>
+<p><strong>راه‌حل</strong></p>
+<ol type="1">
+<li>الگوهای متنی را بالای فایل ثابت کن:</li>
+</ol>
+<pre class="kotlin"><code>private val WHITESPACE = Regex(&quot;\\s+&quot;)
+private val DIACRITICS = Regex(&quot;\\p{Mn}+&quot;)</code></pre>
+<p>و در <code>normalizeQuizText</code> از همین‌ها استفاده کن.</p>
+<ol start="2" type="1">
+<li>در زمان ساخت بانک برای هر مدخل فیلدهای نرمال‌شده را یک بار بساز:</li>
+</ol>
+<pre class="kotlin"><code>private data class BankEntry(
+    val conceptId: UUID,
+    val normalized: String,
+    val tokens: Set&lt;String&gt;,
+    val difficulty: VocabularyDifficulty?,
+    val categoryId: UUID?
+)</code></pre>
+<ol start="3" type="1">
+<li>قبل از هر محاسبهٔ شباهت، نامزدها را کم کن:</li>
+</ol>
+<pre class="kotlin"><code>val pool = candidates.shuffled(random).take(60)</code></pre>
+<p>اول از همان دسته و همان دشواری، اگر کم بود از بقیه پر کن.</p>
+<ol start="4" type="1">
+<li>امتیاز را برای هر نامزد یک بار حساب کن و در
+<code>sortedByDescending { score }</code> از فیلد ذخیره‌شده استفاده کن،
+نه از تابع.</li>
+<li>بانک را در سطح جلسه یک بار بساز و برای همهٔ سؤال‌های همان جلسه استفاده
+کن.</li>
+<li>مرحلهٔ بعد (اختیاری): کلاس <code>@Singleton</code> با شمارندهٔ نسخهٔ
+داده که بعد از ایمپورت، افزودن، ویرایش، حذف و ریستور زیاد شود.</li>
+</ol>
+<p><strong>تست</strong></p>
+<p>۸۰۰۰ واژه، ساخت ۵۰ سؤال پشت‌سرهم زیر یک ثانیه در تست JVM. نتیجه با
+نسخهٔ قبلی از نظر درستی گزینه‌ها یکسان.</p>
+<h3 id="ب-۱۱-الگوهای-متنی-و-پارسر">ب-۱۱ · الگوهای متنی و پارسر</h3>
+<p><strong>فایل‌ها</strong></p>
+<p><code>UseCases.kt</code> (تابع <code>computeCanonicalKey</code>)</p>
+<p><code>VocabularyParser.kt</code></p>
+<p><strong>کد</strong></p>
+<pre class="kotlin"><code>private val WHITESPACE = Regex(&quot;\\s+&quot;)
+
+fun computeCanonicalKey(text: String): String =
+    Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
+        .replace(WHITESPACE, &quot; &quot;)
+        .lowercase(Locale.ROOT)</code></pre>
+<p><strong>کار</strong></p>
+<ol type="1">
+<li>در <code>VocabularyParser</code> همهٔ <code>Regex(...)</code> داخل
+تابع‌ها (<code>stripLeadingNumbering</code>، <code>isSeparator</code> و
+مشابه) را به <code>private val</code> بالای فایل ببر.</li>
+<li>در <code>explicitMarkerType</code> مقدار
+<code>line.lowercase()</code> را یک بار بیرون از حلقه حساب کن.</li>
+<li>خروجی پارسر نباید تغییر کند. تست‌های موجود را اجرا کن.</li>
+</ol>
+<h3 id="ب-۳-تکمیل">ب-۳ (تکمیل)</h3>
+<p>رابط پیشرفت و لغو در این فاز کامل شود (بالا در فاز ۲ کد آمد).</p>
+<hr />
+<h2 id="فاز-۵-بکآپ-جریانی">فاز ۵ · بک‌آپ جریانی</h2>
+<p>ج-۳ و ج-۴ و الف-۹ (کدها بالا). ترتیب: اول خواندن (gzip و سقف)، بعد
+نوشتن جریانی. هر مرحله جدا تست و جدا زیپ شود.</p>
+<hr />
+<h2
+id="فاز-۶-اسکیمای-نسخه-۸-قبل-از-هر-کاری-توضیح-کامل-بده-و-تأیید-بگیر">فاز
+۶ · اسکیمای نسخهٔ ۸ (قبل از هر کاری توضیح کامل بده و تأیید بگیر)</h2>
+<ol type="1">
+<li>ایندکس روی <code>review_history(reviewedAt)</code> و
+<code>review_history(conceptId)</code>.</li>
+<li>ستون <code>searchKey</code> در <code>contents</code> (متن بدون
+تلفظ‌نما و با حروف کوچک) به همراه پر کردن در مهاجرت.</li>
+<li>ادغام برچسب‌های هم‌نام (ج-۷) اگر در نسخهٔ ۷ انجام نشده.</li>
+<li>بررسی کلید خارجی برای جدول‌های وابسته. اگر بخواهی اضافه شود، مهاجرت
+باید جدول را بازسازی کند. حتماً تست مهاجرت با داده.</li>
+<li>پوشهٔ طرح‌واره‌های Room را به مخزن اضافه کن و تست مهاجرت را برای ۷ به ۸
+بنویس.</li>
+</ol>
+<hr />
+<h2 id="فاز-۷-رابط-تم-ساخت">فاز ۷ · رابط، تم، ساخت</h2>
+<h3 id="ب-۹-جستوجو-و-کتابخانه">ب-۹ · جست‌وجو و کتابخانه</h3>
+<p><strong>راه‌حل بدون تغییر اسکیما</strong></p>
+<ol type="1">
+<li>فرار از علامت‌های الگو:</li>
+</ol>
+<pre class="kotlin"><code>fun escapeLike(q: String) = q.replace(&quot;\\&quot;, &quot;\\\\&quot;).replace(&quot;%&quot;, &quot;\\%&quot;).replace(&quot;_&quot;, &quot;\\_&quot;)</code></pre>
+<p>و در کوئری <code>LIKE '%' || :query || '%' ESCAPE '\\'</code>.</p>
+<ol start="2" type="1">
+<li>تأخیر ۲۵۰ میلی‌ثانیه قبل از جست‌وجو و لغو کار قبلی (مثل
+<code>countJob</code> بالا).</li>
+<li>حفظ اسکرول: <code>rememberLazyListState()</code> را بالاتر از
+<code>when</code> ناوبری بگذار و به صفحه بده.</li>
+<li>جست‌وجوی بدون تلفظ‌نما بعد از ستون <code>searchKey</code> (فاز
+۶).</li>
+</ol>
+<h3 id="ب-۱۴-تم-و-رابط">ب-۱۴ · تم و رابط</h3>
+<ol type="1">
+<li><code>remember</code> برای تایپوگرافی:</li>
+</ol>
+<pre class="kotlin"><code>val typography = remember(spec) { Typography(/* همان مقدارهای فعلی */) }</code></pre>
+<ol start="2" type="1">
+<li>وضعیت تم را از وضعیت ناوبری جدا کن:
+<code>themeState: StateFlow</code> جدا در <code>AppViewModel</code> و
+<code>distinctUntilChanged()</code>.</li>
+<li><code>availableThemes()</code> را در ویومدل و پس‌زمینه بخوان:</li>
+</ol>
+<pre class="kotlin"><code>val themes = withContext(Dispatchers.IO) { availableThemes() }</code></pre>
+<ol start="4" type="1">
+<li>سقف اندازه برای وارد کردن تم (یک مگابایت) با
+<code>LimitedInputStream</code> بالا.</li>
+<li>در <code>BulkImportScreen</code> فیلتر نتایج را بپیچ:</li>
+</ol>
+<pre class="kotlin"><code>val visibleResults = remember(results, filter) { results.filter { /* شرط فعلی */ } }</code></pre>
+<h3 id="د-۱-ناوبری">د-۱ · ناوبری</h3>
+<p>فاز جدا و بزرگ. فقط با تأیید. کتابخانهٔ
+<code>navigation-compose</code> را اضافه کن و صفحه‌ها را یکی‌یکی منتقل کن.
+<code>collectAsStateWithLifecycle</code> را با افزودن
+<code>lifecycle-runtime-compose</code> جایگزین
+<code>collectAsState</code> کن.</p>
+<h3 id="د-۲-بومیسازی">د-۲ · بومی‌سازی</h3>
+<ol type="1">
+<li>برچسب‌های ثابت فارسی را از ویومدل‌ها بیرون ببر. ویومدل enum یا شناسه
+بدهد، صفحه با <code>stringResource</code> متن بسازد.</li>
+<li>دو کپی تابع ارقام فارسی را به یک تابع مشترک در <code>core</code>
+تبدیل کن. اگر زبان رابط فارسی نیست، ارقام لاتین.</li>
+</ol>
+<h3 id="د-۳-خروجی">د-۳ · خروجی</h3>
+<ol type="1">
+<li>اول فایل CSV سه بایت BOM بنویس:</li>
+</ol>
+<pre class="kotlin"><code>out.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))</code></pre>
+<ol start="2" type="1">
+<li>خروجی اکسل را خط‌به‌خط در <code>BufferedWriter</code> بنویس، نه
+<code>buildString</code>.</li>
+</ol>
+<h3 id="د-۴-ساخت">د-۴ · ساخت</h3>
+<ol type="1">
+<li><code>gradle.properties</code>:
+<code>org.gradle.jvmargs=-Xmx3g</code></li>
+<li>فایل نسخه‌ها: از <code>androidx.compose:compose-bom</code> استفاده کن
+و نسخهٔ تک‌تک کتابخانه‌های کامپوز را حذف کن.</li>
+<li>در سی‌آی <code>clean</code> و <code>--no-daemon</code> را بردار و یک
+فراخوانی:
+<code>./gradlew assembleDebug testDebugUnitTest lintDebug --build-cache</code>.</li>
+<li>Room را از kapt به KSP ببر (اول Room، بعد Hilt در گام جدا). یادآوری:
+آرگومان‌های <code>room.*</code> فقط با KSP کار می‌کنند.</li>
+<li>پروفایل پایه (Baseline Profile) با ماژول <code>macrobenchmark</code>
+در فاز جدا.</li>
+<li><code>targetSdk</code> را با الزام روز فروشگاه بررسی کن.</li>
+</ol>
+<hr />
+<h2 id="معیار-پایان-هر-مورد">معیار پایان هر مورد</h2>
+<ol type="1">
+<li>کامپایل سی‌آی سبز.</li>
+<li>تست واحد همان مورد نوشته شده و سبز.</li>
+<li>تست‌های قبلی خراب نشده.</li>
+<li>فایل پیگیری پیشرفت به‌روز شده.</li>
+<li>زیپ کامل تجمعی تحویل شده.</li>
+</ol>
+</body></html>
