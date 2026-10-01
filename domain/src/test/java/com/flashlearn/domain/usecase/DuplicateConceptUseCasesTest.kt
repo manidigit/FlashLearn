@@ -75,5 +75,27 @@ class DuplicateConceptUseCasesTest {
   assertFalse(difficulty.values.containsKey(duplicate))
  }
 
+
+ @Test fun threeDuplicateConcepts_preserveFavoriteFromAnyDuplicate()=runBlocking{
+  val first=UUID.randomUUID()
+  val second=UUID.randomUUID()
+  val third=UUID.randomUUID()
+  val concepts=Concepts(listOf(
+   concept(first,now.minusSeconds(120)).copy(favorite=false),
+   concept(second,now.minusSeconds(60)).copy(favorite=true),
+   concept(third,now).copy(favorite=false)
+  ))
+  val contents=Contents(listOf(
+   content(first,"es","cura"),content(first,"fa","کشیش"),
+   content(second,"es","cura"),content(second,"fa","درمان"),
+   content(third,"es","cura"),content(third,"fa","شفا")
+  ))
+  val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db())("es","fa")
+  assertEquals(2,removed)
+  assertEquals(true,concepts.values[first]?.favorite)
+  assertFalse(concepts.values[second]?.active?:true)
+  assertFalse(concepts.values[third]?.active?:true)
+ }
+
  @Test fun staleCanonicalKeys_areIgnored_duringCleanup()=runBlocking{val first=UUID.randomUUID();val second=UUID.randomUUID();val concepts=Concepts(listOf(concept(first,now.minusSeconds(60)),concept(second,now)));val contents=Contents(listOf(content(first,"es","ellos",key="old-key"),content(first,"fa","آن‌ها",key="old-target"),content(second,"es","  ELLOS  ",key="another-old-key"),content(second,"fa"," آن‌ها ",key="another-old-target")));val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db())("es","fa");assertEquals(1,removed);assertEquals(1,concepts.values.values.count{it.active});assertEquals(listOf("آن‌ها"),contents.findAll(first,"fa").map{it.text})}
 }
