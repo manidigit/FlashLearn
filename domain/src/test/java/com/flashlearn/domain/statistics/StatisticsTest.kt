@@ -4,12 +4,24 @@ import com.flashlearn.domain.model.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import com.flashlearn.domain.repository.ReviewHistoryRepository
+import com.flashlearn.domain.repository.ConceptRepository
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 
 class StatisticsTest {
+    private fun conceptRepo(activeIds: Set<UUID>) = object : ConceptRepository {
+        override suspend fun insert(concept: Concept): UUID = concept.id
+        override suspend fun get(conceptId: UUID): Concept? = null
+        override suspend fun getAllActive(): List<Concept> = activeIds.map { id ->
+            Concept(id, EntryType.WORD, null, false, true, Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2026-09-01T00:00:00Z"))
+        }
+        override suspend fun searchActive(query: String): List<Concept> = getAllActive()
+        override suspend fun update(concept: Concept) {}
+        override suspend fun softDelete(conceptId: UUID, now: Instant) {}
+    }
+
     private fun r(day: String, ok: Boolean) = ReviewHistory(
         UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
         Instant.parse("${day}T10:00:00Z"), ok, ReviewType.DAILY
@@ -40,7 +52,7 @@ class StatisticsTest {
             override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
             override suspend fun getAll() = emptyList<ReviewHistory>()
         }
-        val result = CalculateStatisticsUseCase(repository)()
+        val result = CalculateStatisticsUseCase(repository, conceptRepo(emptySet()))()
         assertEquals(0, result.totalReviews)
         assertEquals(0, result.totalCorrect)
         assertEquals(0, result.totalWrong)
@@ -62,11 +74,29 @@ class StatisticsTest {
             override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
             override suspend fun getAll() = records
         }
-        val result = CalculateStatisticsUseCase(repository)()
+        val result = CalculateStatisticsUseCase(repository, conceptRepo(setOf(conceptA, conceptB)))()
         assertEquals(3, result.totalReviews)
         assertEquals(2, result.totalCorrect)
         assertEquals(1, result.totalWrong)
         assertEquals(66, result.accuracyPercent)
         assertEquals(2, result.reviewedConceptCount)
+    }
+
+    @Test
+    fun statistics_reviewedConceptCount_excludesInactiveConcepts() = runBlocking {
+        val active = UUID.randomUUID()
+        val inactive = UUID.randomUUID()
+        val records = listOf(
+            ReviewHistory(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), active, Instant.parse("2026-09-12T10:00:00Z"), true, ReviewType.DAILY),
+            ReviewHistory(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), inactive, Instant.parse("2026-09-12T11:00:00Z"), true, ReviewType.DAILY)
+        )
+        val repository = object : ReviewHistoryRepository {
+            override suspend fun insert(entry: ReviewHistory) {}
+            override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
+            override suspend fun getAll() = records
+        }
+        val result = CalculateStatisticsUseCase(repository, conceptRepo(setOf(active)))()
+        assertEquals(2, result.totalReviews)
+        assertEquals(1, result.reviewedConceptCount)
     }
 }
