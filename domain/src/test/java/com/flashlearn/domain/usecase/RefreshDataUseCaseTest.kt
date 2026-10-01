@@ -13,7 +13,7 @@ class RefreshDataUseCaseTest {
     @Test
     fun contentVersionMigrationRepairsCanonicalKeysAndReachesCurrentVersion() = runBlocking {
         val id = UUID.randomUUID(); val conceptId = UUID.randomUUID()
-        val content = Content(id, conceptId, "es", "  Hola   Mundo ", "stale", null, null, null)
+        val content = Content(id, conceptId, "es", "  Hola   Mundo ", "stale", null, 0, null, null)
         val versions = FakeVersions(concept = 0, content = 0)
         val concepts = emptyConceptRepository()
         val repo = fakeContentRepository(content)
