@@ -116,7 +116,6 @@ class MainActivity : ComponentActivity() {
             FlashLearnShell(selectedRoute = uiState.selectedRoute, onNavigate = { route ->
                 appViewModel.navigate(route)
                 when (route) {
-                    AppRoutes.HOME -> homeViewModel.refresh()
                     AppRoutes.LIBRARY -> { libraryViewModel.setLanguagePair(uiState.languagePair); libraryViewModel.refresh() }
                     AppRoutes.PROGRESS -> progressViewModel.refresh()
                     else -> Unit
@@ -131,7 +130,6 @@ class MainActivity : ComponentActivity() {
                 AppRoutes.ADD_WORD -> FlashLearnShell(selectedRoute = AppRoutes.LIBRARY, onNavigate = { route ->
                     appViewModel.navigate(route)
                     when (route) {
-                        AppRoutes.HOME -> homeViewModel.refresh()
                         AppRoutes.LIBRARY -> { libraryViewModel.setLanguagePair(uiState.languagePair); libraryViewModel.refresh() }
                         AppRoutes.PROGRESS -> progressViewModel.refresh()
                         else -> Unit
@@ -153,8 +151,8 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 AppRoutes.ADD_WORD_FORM -> AddWordScreen(addWordViewModel, languagePair = uiState.languagePair, onBack = { if (addWordViewModel.state.value.pendingReviewItem != null) { addWordViewModel.cancelReviewApproval(); appViewModel.navigate(AppRoutes.NEEDS_REVIEW) } else appViewModel.navigate(AppRoutes.ADD_WORD) }, onReviewApprovalSaved = { homeViewModel.refresh(); libraryViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
-                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { libraryViewModel.refresh(); homeViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) }
-                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onRestored = { homeViewModel.refresh(); libraryViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
+                AppRoutes.BULK_IMPORT -> BulkImportScreen(bulkImportViewModel, languagePair = uiState.languagePair) { libraryViewModel.refresh(); homeViewModel.refresh(repairStates = true); appViewModel.navigate(AppRoutes.LIBRARY) }
+                AppRoutes.BACKUP -> BackupScreen(backupViewModel, onBack = { appViewModel.navigate(AppRoutes.ADD_WORD) }, onRestored = { homeViewModel.refresh(repairStates = true); libraryViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.LIBRARY) })
                 AppRoutes.CATEGORY_SELECTION -> CategorySelectionScreen(categories = libraryViewModel.state.value.categories, selectedIds = libraryViewModel.state.value.selectedCategoryIds, counts = libraryViewModel.state.value.categoryCounts, allCount = libraryViewModel.state.value.categoryTotalCount, onBack = { appViewModel.navigate(AppRoutes.LIBRARY) }, onApply = { ids -> libraryViewModel.onCategoryChange(ids); appViewModel.navigate(AppRoutes.LIBRARY) })
             }
         }
