@@ -42,11 +42,13 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
                 learningRepository.get(duplicate.id)?.let { duplicateLearning ->
                     val mergedLearning = mergeLearningStates(survivorLearning, duplicateLearning, survivor.id)
                     learningRepository.upsert(mergedLearning)
+                    learningRepository.delete(duplicate.id)
                     survivorLearning = mergedLearning
                 }
                 difficultyRepository.get(duplicate.id)?.let { duplicateDifficulty ->
                     val mergedDifficulty = mergeDifficultyStates(survivorDifficulty, duplicateDifficulty, survivor.id)
                     difficultyRepository.upsert(mergedDifficulty)
+                    difficultyRepository.delete(duplicate.id)
                     survivorDifficulty = mergedDifficulty
                 }
                 conceptRepository.update(survivor.copy(favorite = survivor.favorite || duplicate.favorite, updatedAt = Instant.now()))
