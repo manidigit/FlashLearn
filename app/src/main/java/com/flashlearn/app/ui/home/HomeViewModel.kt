@@ -45,7 +45,7 @@ class HomeViewModel @Inject constructor(
     private val getProgressSummary: GetProgressSummaryUseCase,
     private val getBasicStatistics: GetBasicStatistics,
     private val ensureStarterData: EnsureStarterDataUseCase,
-    private val ensureStates: com.flashlearn.domain.usecase.EnsureStatesUseCase,
+    private val ensureStatesUseCase: com.flashlearn.domain.usecase.EnsureStatesUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
     private val calculateProgressPercentage: CalculateProgressPercentage,
@@ -58,16 +58,16 @@ class HomeViewModel @Inject constructor(
     private var refreshGeneration = 0L
     private var refreshJob: Job? = null
 
-    init { refresh(ensureStates = true) }
+    init { refresh(repairStates = true) }
 
-    fun refresh(languagePair: LanguagePair = LanguagePair(), ensureStates: Boolean = false) {
+    fun refresh(languagePair: LanguagePair = LanguagePair(), repairStates: Boolean = false) {
         refreshJob?.cancel()
         val generation = ++refreshGeneration
         refreshJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             runCatching {
                 ensureStarterData()
-                if (ensureStates) ensureStates(Instant.now())
+                if (repairStates) ensureStatesUseCase(Instant.now())
                 val now = Instant.now()
                 val summary = getProgressSummary(now)
                 val basicStats = getBasicStatistics()
