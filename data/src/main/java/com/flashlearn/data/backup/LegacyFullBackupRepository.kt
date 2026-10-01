@@ -117,7 +117,7 @@ class LegacyFullBackupRepository @Inject constructor(
                 val note = item.optString("notes").takeIf { it.isNotBlank() && it != "null" }
                 val contents = byLanguage.map { (language, values) ->
                     val mergedText = values.joinToString(" / ")
-                    ContentEntity(stableId("content", id.toString(), language), id, language, mergedText, computeCanonicalKey(mergedText), note, null, null)
+                    ContentEntity(stableId("content", id.toString(), language), id, language, mergedText, computeCanonicalKey(mergedText), note, 0, null, null)
                 }
                 incoming += IncomingConcept(concept, contents, categoryName)
             }
