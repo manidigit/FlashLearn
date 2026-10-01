@@ -28,8 +28,9 @@ class CalculateProgressUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(now: Instant): ProgressSnapshot {
         val concepts = conceptRepository.getAllActive()
-        val stageCounts = learningRepository.countByStage()
-        val difficultyCounts = difficultyRepository.countByDifficulty()
+        val activeIds = concepts.asSequence().map { it.id }.toSet()
+        val stageCounts = learningRepository.countByStage(activeIds)
+        val difficultyCounts = difficultyRepository.countByDifficulty(activeIds)
         val learningStates = learningRepository.getAll()
         return ProgressSnapshot(
             totalConcepts = concepts.size,
