@@ -1,3 +1,14 @@
+## v6.68 — Duplicate merge state preservation
+
+- Fixed duplicate concept merge so a duplicate's LearningState is transferred to the surviving concept when the survivor has no LearningState.
+- Fixed duplicate concept merge so a duplicate's DifficultyState is transferred when the survivor has no DifficultyState.
+- Preserved survivor concept identity while retaining accumulated correct/wrong counters when both LearningState records exist.
+- Added regression coverage for state transfer and duplicate-state removal from the soft-deleted concept.
+- Aligned remaining v6.67 Content mapper/translation construction with the v8 schema after Pronunciation and Example were removed.
+
+### Verification
+GitHub Actions is authoritative. v6.68 is not considered verified until Build + Unit Test and Instrumentation + Upgrade Gate are green, including the 6.67→6.68 upgrade path.
+
 ## v6.67 — Vocabulary Edit field cleanup
 
 - Removed Pronunciation and Example from the Content domain model and Room contents schema.
