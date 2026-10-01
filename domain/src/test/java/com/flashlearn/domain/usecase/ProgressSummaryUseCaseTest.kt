@@ -106,6 +106,14 @@ class ProgressSummaryUseCaseTest {
         assertEquals(0, result.totalWrong)
         assertEquals(0, result.accuracyPercent)
     }
+    private class RepairableLearning(private val values: MutableList<LearningState>) : LearningStateRepository {
+        override suspend fun get(conceptId: UUID) = values.find { it.conceptId == conceptId }
+        override suspend fun upsert(state: LearningState) { values.removeAll { it.conceptId == state.conceptId }; values += state }
+        override suspend fun getAllByStage(stage: Stage) = values.filter { it.stage == stage }
+        override suspend fun getDueNonLearned(now: Instant) = values
+        override suspend fun getAll() = values.toList()
+    }
+
     private class Difficulty(private val values: MutableList<DifficultyState>) : DifficultyStateRepository {
         override suspend fun get(conceptId: UUID) = values.find { it.conceptId == conceptId }
         override suspend fun upsert(state: DifficultyState) { values.removeAll { it.conceptId == state.conceptId }; values += state }
@@ -118,7 +126,7 @@ class ProgressSummaryUseCaseTest {
         val idWithStates = UUID.randomUUID()
         val missingId = UUID.randomUUID()
         val concepts = Concepts(listOf(concept(idWithStates), concept(missingId)))
-        val learning = Learning(mutableListOf(state(idWithStates, Stage.WEEKLY, null)))
+        val learning = RepairableLearning(mutableListOf(state(idWithStates, Stage.WEEKLY, null)))
         val difficulty = Difficulty(mutableListOf(DifficultyState(UUID.randomUUID(), idWithStates, VocabularyDifficulty.HARD, 0, 0, false)))
 
         EnsureStatesUseCase(concepts, learning, difficulty)(now)
