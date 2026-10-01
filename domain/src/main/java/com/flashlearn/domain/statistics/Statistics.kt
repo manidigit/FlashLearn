@@ -66,18 +66,25 @@ class GetBasicStatistics @Inject constructor(
 }
 
 class CalculateStatisticsUseCase @Inject constructor(
-    private val repository: ReviewHistoryRepository
+    private val repository: ReviewHistoryRepository,
+    private val conceptRepository: ConceptRepository
 ) {
     suspend operator fun invoke(): StatisticsSnapshot {
         val records = repository.getAll()
         val total = records.size
         val correct = records.count { it.isCorrect }
+        val activeConceptIds = conceptRepository.getAllActive().asSequence().map { it.id }.toSet()
+        val reviewedConceptCount = records.asSequence()
+            .map { it.conceptId }
+            .filter { it in activeConceptIds }
+            .toSet()
+            .size
         return StatisticsSnapshot(
             totalReviews = total,
             totalCorrect = correct,
             totalWrong = total - correct,
             accuracyPercent = if (total == 0) 0 else correct * 100 / total,
-            reviewedConceptCount = records.map { it.conceptId }.distinct().size
+            reviewedConceptCount = reviewedConceptCount
         )
     }
 }
