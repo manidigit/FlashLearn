@@ -1,10 +1,11 @@
-| **6.68** | **668** | 2026-10-01 | Duplicate-state merge hardening; Home startup performance/query optimization; v8 content alignment | GREEN — GitHub Actions run 36898411410 |
+| **6.68** | **668** | 2026-10-01 | Duplicate-state merge hardening; Home startup performance/query optimization; v8 content alignment; Total Words semantic alignment | Pending CI |
 
 ## v6.68 release alignment
 - app/build.gradle.kts: versionName 6.68 / versionCode 668.
 - CI: current gate 6.68/668; previous-version upgrade gate is 6.67/667.
 - Duplicate merge transfers LearningState/DifficultyState to the survivor when the survivor has no state and preserves accumulated correct/wrong counters when both states exist.
 - v6.67 schema-cleanup compile references were aligned with the v8 Content model; obsolete Pronunciation/Example data is not reintroduced.
+- Total Words is defined as active Concept records; reviewed-word statistics exclude inactive concepts while total review attempts remain historical.
 - Verification remains pending until both authoritative GitHub Actions jobs are green.
 
 | **6.67** | **667** | 2026-09-30 | Remove obsolete Pronunciation/Example fields; DB migration 7→8; backup compatibility | Pending CI |
