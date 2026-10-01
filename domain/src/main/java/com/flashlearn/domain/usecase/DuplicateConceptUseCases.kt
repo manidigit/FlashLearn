@@ -28,8 +28,8 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
         for (group in groups) {
             val ordered = group.sortedWith(compareBy<Concept> { it.createdAt }.thenBy { it.id.toString() })
             val survivor = ordered.first()
-            val survivorLearning = learningRepository.get(survivor.id)
-            val survivorDifficulty = difficultyRepository.get(survivor.id)
+            var survivorLearning = learningRepository.get(survivor.id)
+            var survivorDifficulty = difficultyRepository.get(survivor.id)
             val survivorTags = conceptTagRepository.getTagsForConcept(survivor.id).toSet()
             val survivorTargets = contentRepository.findAll(survivor.id, targetLanguage).sortedBy { it.translationIndex }
             val existingTargetKeys = survivorTargets.map { computeCanonicalKey(it.text) }.filter(String::isNotBlank).toMutableSet()
@@ -40,14 +40,14 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
                     if (targetKey.isNotBlank() && existingTargetKeys.add(targetKey)) contentRepository.insertTranslation(Content(UUID.randomUUID(), survivor.id, targetLanguage, content.text.trim(), targetKey, notes = content.notes, pronunciation = content.pronunciation, example = content.example, translationIndex = nextIndex++, grammarNote = content.grammarNote, possibleCorrection = content.possibleCorrection))
                 }
                 learningRepository.get(duplicate.id)?.let { duplicateLearning ->
-                    if (survivorLearning != null) {
-                        val rank = mapOf(com.flashlearn.domain.model.Stage.DAILY to 0, com.flashlearn.domain.model.Stage.WEEKLY to 1, com.flashlearn.domain.model.Stage.MONTHLY to 2, com.flashlearn.domain.model.Stage.LEARNED to 3)
-                        val preferred = if (rank.getValue(duplicateLearning.stage) > rank.getValue(survivorLearning.stage)) duplicateLearning else survivorLearning
-                        learningRepository.upsert(preferred.copy(id = survivorLearning.id, totalCorrect = survivorLearning.totalCorrect + duplicateLearning.totalCorrect, totalWrong = survivorLearning.totalWrong + duplicateLearning.totalWrong, lastReviewedAt = listOfNotNull(survivorLearning.lastReviewedAt, duplicateLearning.lastReviewedAt).maxOrNull()))
-                    }
+                    val mergedLearning = mergeLearningStates(survivorLearning, duplicateLearning, survivor.id)
+                    learningRepository.upsert(mergedLearning)
+                    survivorLearning = mergedLearning
                 }
                 difficultyRepository.get(duplicate.id)?.let { duplicateDifficulty ->
-                    if (survivorDifficulty != null && duplicateDifficulty.current.ordinal > survivorDifficulty.current.ordinal) difficultyRepository.upsert(duplicateDifficulty.copy(id = survivorDifficulty.id))
+                    val mergedDifficulty = mergeDifficultyStates(survivorDifficulty, duplicateDifficulty, survivor.id)
+                    difficultyRepository.upsert(mergedDifficulty)
+                    survivorDifficulty = mergedDifficulty
                 }
                 conceptRepository.update(survivor.copy(favorite = survivor.favorite || duplicate.favorite, updatedAt = Instant.now()))
                 conceptTagRepository.getTagsForConcept(duplicate.id).filter { it !in survivorTags }.forEach { conceptTagRepository.insert(com.flashlearn.domain.model.ConceptTag(survivor.id, it)) }
@@ -55,6 +55,58 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
             }
         }
         removed
+    }
+}
+
+private fun mergeLearningStates(
+    survivor: LearningState?,
+    duplicate: LearningState,
+    survivorConceptId: UUID
+): LearningState {
+    if (survivor == null) {
+        return duplicate.copy(conceptId = survivorConceptId)
+    }
+
+    val rank = mapOf(
+        Stage.DAILY to 0,
+        Stage.WEEKLY to 1,
+        Stage.MONTHLY to 2,
+        Stage.LEARNED to 3
+    )
+    val preferred = if (rank.getValue(duplicate.stage) > rank.getValue(survivor.stage)) {
+        duplicate
+    } else {
+        survivor
+    }
+
+    return preferred.copy(
+        id = survivor.id,
+        conceptId = survivorConceptId,
+        totalCorrect = survivor.totalCorrect + duplicate.totalCorrect,
+        totalWrong = survivor.totalWrong + duplicate.totalWrong,
+        lastReviewedAt = listOfNotNull(
+            survivor.lastReviewedAt,
+            duplicate.lastReviewedAt
+        ).maxOrNull()
+    )
+}
+
+private fun mergeDifficultyStates(
+    survivor: DifficultyState?,
+    duplicate: DifficultyState,
+    survivorConceptId: UUID
+): DifficultyState {
+    if (survivor == null) {
+        return duplicate.copy(conceptId = survivorConceptId)
+    }
+
+    return if (duplicate.current.ordinal > survivor.current.ordinal) {
+        duplicate.copy(
+            id = survivor.id,
+            conceptId = survivorConceptId
+        )
+    } else {
+        survivor
     }
 }
 
