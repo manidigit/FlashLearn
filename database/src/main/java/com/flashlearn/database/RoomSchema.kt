@@ -39,6 +39,8 @@ class Converters {
     @Query("SELECT * FROM concepts WHERE id = :id AND active = 1 LIMIT 1") suspend fun getById(id: UUID): ConceptEntity?
     @Query("SELECT * FROM concepts WHERE id = :id LIMIT 1") suspend fun getByIdIncludingInactive(id: UUID): ConceptEntity?
     @Query("SELECT * FROM concepts WHERE active = 1") suspend fun getAllActive(): List<ConceptEntity>
+    @Query("SELECT c.* FROM concepts c JOIN contents x ON x.conceptId = c.id WHERE x.languageCode = :lang AND x.canonicalKey = :key AND c.active = 1 ORDER BY c.createdAt ASC, c.id ASC LIMIT 1") suspend fun findActiveByKey(lang: String, key: String): ConceptEntity?
+    @Query("SELECT c.* FROM concepts c JOIN contents x ON x.conceptId = c.id WHERE x.languageCode = :lang AND x.canonicalKey = :key AND c.active = 1 AND c.id != :excludeId") suspend fun findActiveByKeyExcluding(lang: String, key: String, excludeId: UUID): List<ConceptEntity>
     @Query("SELECT DISTINCT c.* FROM concepts c LEFT JOIN contents x ON x.conceptId = c.id WHERE c.active = 1 AND (x.text LIKE '%' || :query || '%' OR x.canonicalKey LIKE '%' || :query || '%') ORDER BY c.createdAt DESC") suspend fun searchActive(query: String): List<ConceptEntity>
     @Query("SELECT * FROM concepts") suspend fun getAll(): List<ConceptEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertAll(entities: List<ConceptEntity>)
