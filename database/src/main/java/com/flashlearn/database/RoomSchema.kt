@@ -4,6 +4,10 @@ import androidx.room.*
 import java.time.Instant
 import java.util.UUID
 
+data class CategoryCount(val categoryId: UUID?, val count: Int)
+data class StageCount(val stage: String, val count: Int)
+data class DifficultyCount(val difficulty: String, val count: Int)
+
 class Converters {
     @TypeConverter fun fromUuid(value: UUID?): String? = value?.toString()
     @TypeConverter fun toUuid(value: String?): UUID? = value?.let(UUID::fromString)
@@ -41,6 +45,7 @@ class Converters {
     @Query("UPDATE concepts SET active = 0, updatedAt = :now WHERE id = :id") suspend fun softDelete(id: UUID, now: Instant)
     @Query("SELECT id FROM concepts WHERE active = 0 AND updatedAt < :cutoff") suspend fun getInactiveIdsBefore(cutoff: Instant): List<UUID>
     @Query("DELETE FROM concepts WHERE id = :id") suspend fun deleteById(id: UUID)
+    @Query("SELECT categoryId, COUNT(*) AS count FROM concepts WHERE active = 1 GROUP BY categoryId") suspend fun countByCategory(): List<CategoryCount>
     @Query("DELETE FROM concepts") suspend fun deleteAll()
 }
 @Dao interface ContentDao {
@@ -66,6 +71,8 @@ class Converters {
     @Query("SELECT * FROM learning_states WHERE stage = :stage AND nextReviewAt IS NOT NULL AND nextReviewAt <= :now ORDER BY nextReviewAt ASC, conceptId ASC") suspend fun getDueByStage(stage: String, now: Instant): List<LearningStateEntity>
     @Query("SELECT * FROM learning_states WHERE stage IN ('DAILY','WEEKLY','MONTHLY') AND nextReviewAt IS NOT NULL AND nextReviewAt <= :now ORDER BY nextReviewAt ASC, conceptId ASC") suspend fun getAllDueNonLearned(now: Instant): List<LearningStateEntity>
     @Query("SELECT * FROM learning_states ORDER BY conceptId ASC") suspend fun getAll(): List<LearningStateEntity>
+    @Query("SELECT stage, COUNT(*) AS count FROM learning_states l JOIN concepts c ON c.id = l.conceptId WHERE c.active = 1 GROUP BY stage") suspend fun countByStage(): List<StageCount>
+    @Query("SELECT COUNT(*) FROM learning_states l JOIN concepts c ON c.id = l.conceptId WHERE c.active = 1 AND l.stage = :stage AND l.nextReviewAt IS NOT NULL AND l.nextReviewAt <= :now") suspend fun countDue(stage: String, now: Instant): Int
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<LearningStateEntity>)
     @Query("DELETE FROM learning_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("DELETE FROM learning_states") suspend fun deleteAll()
@@ -75,6 +82,7 @@ class Converters {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(entity: DifficultyStateEntity)
     @Query("DELETE FROM difficulty_states WHERE conceptId = :conceptId") suspend fun deleteByConceptId(conceptId: UUID)
     @Query("SELECT * FROM difficulty_states ORDER BY conceptId ASC") suspend fun getAll(): List<DifficultyStateEntity>
+    @Query("SELECT d.`current` AS difficulty, COUNT(*) AS count FROM difficulty_states d JOIN concepts c ON c.id = d.conceptId WHERE c.active = 1 GROUP BY d.`current`") suspend fun countByDifficulty(): List<DifficultyCount>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertAll(entities: List<DifficultyStateEntity>)
     @Query("DELETE FROM difficulty_states") suspend fun deleteAll()
 }
