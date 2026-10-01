@@ -51,5 +51,29 @@ class DuplicateConceptUseCasesTest {
   assertEquals(duplicateDifficulty.copy(conceptId=first),difficulty.values[first])
   assertFalse(difficulty.values.containsKey(duplicate))
  }
+
+ @Test fun duplicateStates_areMergedIntoExistingSurvivorAndDuplicateRowsAreRemoved()=runBlocking{
+  val first=UUID.randomUUID()
+  val duplicate=UUID.randomUUID()
+  val concepts=Concepts(listOf(concept(first,now.minusSeconds(60)),concept(duplicate,now)))
+  val contents=Contents(listOf(content(first,"es","cura"),content(first,"fa","کشیش"),content(duplicate,"es","cura"),content(duplicate,"fa","درمان")))
+  val survivorLearning=LearningState(UUID.randomUUID(),first,Stage.DAILY,now.minusSeconds(10),1,false,2,1,now.minusSeconds(20))
+  val duplicateLearning=LearningState(UUID.randomUUID(),duplicate,Stage.WEEKLY,now.plusSeconds(3600),2,true,7,3,now)
+  val survivorDifficulty=DifficultyState(UUID.randomUUID(),first,VocabularyDifficulty.MEDIUM,2,0,false)
+  val duplicateDifficulty=DifficultyState(UUID.randomUUID(),duplicate,VocabularyDifficulty.HARD,4,0,false)
+  val learning=LearningStates(listOf(survivorLearning,duplicateLearning))
+  val difficulty=DifficultyStates(listOf(survivorDifficulty,duplicateDifficulty))
+  val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db(),learning,difficulty)("es","fa")
+  assertEquals(1,removed)
+  assertEquals(1,learning.values.size)
+  assertEquals(Stage.WEEKLY,learning.values[first]?.stage)
+  assertEquals(9,learning.values[first]?.totalCorrect)
+  assertEquals(4,learning.values[first]?.totalWrong)
+  assertEquals(1,difficulty.values.size)
+  assertEquals(VocabularyDifficulty.HARD,difficulty.values[first]?.current)
+  assertFalse(learning.values.containsKey(duplicate))
+  assertFalse(difficulty.values.containsKey(duplicate))
+ }
+
  @Test fun staleCanonicalKeys_areIgnored_duringCleanup()=runBlocking{val first=UUID.randomUUID();val second=UUID.randomUUID();val concepts=Concepts(listOf(concept(first,now.minusSeconds(60)),concept(second,now)));val contents=Contents(listOf(content(first,"es","ellos",key="old-key"),content(first,"fa","آن‌ها",key="old-target"),content(second,"es","  ELLOS  ",key="another-old-key"),content(second,"fa"," آن‌ها ",key="another-old-target")));val removed=RemoveExactDuplicateConceptsUseCase(concepts,contents,Db())("es","fa");assertEquals(1,removed);assertEquals(1,concepts.values.values.count{it.active});assertEquals(listOf("آن‌ها"),contents.findAll(first,"fa").map{it.text})}
 }
