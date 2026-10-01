@@ -5,6 +5,7 @@ import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.LearningStateRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.util.UUID
@@ -105,4 +106,29 @@ class ProgressSummaryUseCaseTest {
         assertEquals(0, result.totalWrong)
         assertEquals(0, result.accuracyPercent)
     }
+    private class Difficulty(private val values: MutableList<DifficultyState>) : DifficultyStateRepository {
+        override suspend fun get(conceptId: UUID) = values.find { it.conceptId == conceptId }
+        override suspend fun upsert(state: DifficultyState) { values.removeAll { it.conceptId == state.conceptId }; values += state }
+        override suspend fun delete(conceptId: UUID) { values.removeAll { it.conceptId == conceptId } }
+        override suspend fun getAll() = values.toList()
+    }
+
+    @Test
+    fun ensureStates_creates_only_missing_states_outside_summary_read_path() = runBlocking {
+        val idWithStates = UUID.randomUUID()
+        val missingId = UUID.randomUUID()
+        val concepts = Concepts(listOf(concept(idWithStates), concept(missingId)))
+        val learning = Learning(mutableListOf(state(idWithStates, Stage.WEEKLY, null)))
+        val difficulty = Difficulty(mutableListOf(DifficultyState(UUID.randomUUID(), idWithStates, VocabularyDifficulty.HARD, 0, 0, false)))
+
+        EnsureStatesUseCase(concepts, learning, difficulty)(now)
+
+        assertEquals(2, learning.getAll().size)
+        assertEquals(2, difficulty.getAll().size)
+        assertTrue(learning.getAll().any { it.conceptId == missingId })
+        assertTrue(difficulty.getAll().any { it.conceptId == missingId })
+        assertEquals(Stage.WEEKLY, learning.get(idWithStates)?.stage)
+        assertEquals(VocabularyDifficulty.HARD, difficulty.get(idWithStates)?.current)
+    }
+
 }
