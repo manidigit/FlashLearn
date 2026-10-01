@@ -13,7 +13,7 @@ object Mappers {
     fun concept(e: ConceptEntity)=Concept(e.id,EntryType.valueOf(e.entryType),e.categoryId,e.favorite,e.active,e.createdAt,e.updatedAt)
     fun concept(e: Concept)=ConceptEntity(e.id,e.entryType.name,e.categoryId,e.favorite,e.active,e.createdAt,e.updatedAt)
     fun content(e: ContentEntity)=Content(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.translationIndex,e.grammarNote,e.possibleCorrection)
-    fun content(e: Content)=ContentEntity(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.pronunciation,e.example,e.translationIndex,e.grammarNote,e.possibleCorrection)
+    fun content(e: Content)=ContentEntity(e.id,e.conceptId,e.languageCode,e.text,e.canonicalKey,e.notes,e.translationIndex,e.grammarNote,e.possibleCorrection)
     fun learning(e: LearningStateEntity)=LearningState(e.id,e.conceptId,Stage.valueOf(e.stage),e.nextReviewAt,e.monthlyWrongCount,e.hasPathFailure,e.totalCorrect,e.totalWrong,e.lastReviewedAt)
     fun learning(e: LearningState)=LearningStateEntity(e.id,e.conceptId,e.stage.name,e.nextReviewAt,e.monthlyWrongCount,e.hasPathFailure,e.totalCorrect,e.totalWrong,e.lastReviewedAt)
     fun difficulty(e: DifficultyStateEntity)=DifficultyState(e.id,e.conceptId,VocabularyDifficulty.valueOf(e.current),e.consecutiveCorrect,e.consecutiveWrong,e.hasReachedVeryHard)
