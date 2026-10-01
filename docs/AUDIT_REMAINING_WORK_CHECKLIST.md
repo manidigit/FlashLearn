@@ -97,5 +97,13 @@
 - Default remains Persian.
 - CI run `36484231210` is GREEN.
 
+## v6.68 — A1 Duplicate merge state preservation
+- وضعیت: 🔎 نیازمند CI
+- Root cause: duplicate LearningState/DifficultyState was not transferred when the survivor had no corresponding state; the survivor state snapshot could also become stale across duplicate iterations.
+- Fix: merge helpers remap missing state to the survivor concept and refresh the survivor state after each merge; existing accumulated correct/wrong totals remain additive when both states exist.
+- Regression test: duplicateLearningAndDifficulty_areTransferredWhenSurvivorHasNoState.
+- Direct prerequisite fixed in the same release branch: remaining v6.67 Pronunciation/Example references were removed from data mapping and duplicate translation construction so the v8 Content model compiles.
+- CI: pending.
+
 ## Workflow
 هر بار فقط یک مورد انتخاب شود: کد فعلی بررسی شود، فقط همان مورد اصلاح شود، تست‌ها اجرا شوند، CI تا GREEN دنبال شود، و همین فایل با نتیجه و CI به‌روزرسانی شود.
