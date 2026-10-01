@@ -32,6 +32,13 @@ No new Room schema version was introduced by A1. The branch retains the v8 schem
 - VersionCode: 668
 - Previous-version gate: 6.67 / 667
 
+## Issue 5 — Home startup performance hardening
+- Added Room aggregate queries for active progress stage/difficulty counts and due counts without changing schema structure or version.
+- Moved missing LearningState/DifficultyState creation into `EnsureStatesUseCase`; Home summary is now read-only.
+- Batched progress aggregation and reused the single Home history read for progress percentage and streak calculation.
+- Home refresh is cancellable; redundant navigation-triggered refreshes were removed.
+- Added regression coverage for state repair isolation.
+
 ## Verification
 - Local Android/Gradle execution was not available because the environment cannot resolve GitHub/dependency hosts.
 - GitHub Actions is the authoritative build/test verification.
