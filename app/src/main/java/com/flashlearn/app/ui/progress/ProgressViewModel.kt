@@ -10,7 +10,6 @@ import com.flashlearn.domain.statistics.StatisticsSnapshot
 import com.flashlearn.domain.statistics.StreakSnapshot
 import com.flashlearn.domain.model.ProgressSummary
 import com.flashlearn.domain.repository.ReviewHistoryRepository
-import com.flashlearn.domain.repository.ConceptRepository
 import com.flashlearn.domain.repository.AchievementRepository
 import com.flashlearn.domain.gamification.AchievementContext
 import com.flashlearn.domain.gamification.AchievementDefinition
@@ -66,7 +65,6 @@ class ProgressViewModel @Inject constructor(
     private val calculateProgress: CalculateProgressUseCase,
     private val calculateProgressPercentage: CalculateProgressPercentage,
     private val calculateStatistics: CalculateStatisticsUseCase,
-    private val conceptRepository: ConceptRepository,
     private val calculateStreak: CalculateStreakUseCase,
     private val getProgressSummary: com.flashlearn.domain.usecase.GetProgressSummaryUseCase,
     private val historyRepository: ReviewHistoryRepository,
