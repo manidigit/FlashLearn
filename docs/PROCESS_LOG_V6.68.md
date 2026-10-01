@@ -50,3 +50,37 @@ No new Room schema version was introduced by A1. The branch retains the v8 schem
 - Total review attempts remain historical statistics; only the reviewed-word population is constrained to active vocabulary.
 - Added regression coverage proving an inactive concept is excluded from reviewedConceptCount.
 - No Room schema, migration, or database-structure change was required.
+
+
+---
+
+## Issue 6 — Statistics vocabulary-count alignment
+
+### Scope
+Align Total Words, Practiced Words, Unpracticed Words, Learned Words and reviewed-word statistics across Library, Home/Progress and Statistics.
+
+### Contract
+- **Total Words** = active Concepts.
+- **Practiced Words** = active Concepts with a review timestamp that are not LEARNED.
+- **Learned Words** = active Concepts in the LEARNED stage.
+- **Unpracticed Words** = active total minus Practiced Words minus Learned Words.
+- Therefore: **Total Words = Practiced Words + Unpracticed Words + Learned Words**.
+- Review-event totals remain historical.
+- Reviewed Words count distinct Concepts that are present in review history and currently active.
+
+### Implementation
+- Scoped `CalculateStatisticsUseCase.reviewedConceptCount` to active Concepts.
+- Preserved historical total review count, correctness and accuracy after soft deletion.
+- No Room schema/version/migration change was required.
+
+### Regression coverage
+- Empty history reports zero reviewed Concepts.
+- Multiple attempts for one active Concept count as one reviewed word.
+- Inactive reviewed Concepts are excluded from current reviewed-word statistics.
+- Soft deletion changes the current reviewed-word projection without changing historical review-event totals.
+- Active total/practiced/unpracticed/learned counts reconcile exactly.
+
+### Release/documentation
+- v6.68/668 remains the current release identity with 6.67/667 as the previous-version gate.
+- CHANGELOG.md and VERSION_LEDGER.md record the semantic alignment.
+- Verification remains dependent on the authoritative GitHub Actions gates.
