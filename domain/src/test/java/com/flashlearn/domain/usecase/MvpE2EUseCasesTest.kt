@@ -115,7 +115,7 @@ class MvpE2EUseCasesTest {
         assertEquals(10, progress.totalConcepts)
         assertEquals(10, progress.weeklyConcepts + progress.monthlyConcepts + progress.learnedConcepts + progress.dailyConcepts)
 
-        val stats = CalculateStatisticsUseCase(history)()
+        val stats = CalculateStatisticsUseCase(history, concepts)()
         assertEquals(1, stats.totalReviews)
         assertEquals(1, stats.totalCorrect)
         assertEquals(100, stats.accuracyPercent)
@@ -142,7 +142,7 @@ class MvpE2EUseCasesTest {
         assertEquals(2, recovered.learningState.totalCorrect)
         assertEquals(1, recovered.learningState.totalWrong)
 
-        val statsAfterRecovery = CalculateStatisticsUseCase(history)()
+        val statsAfterRecovery = CalculateStatisticsUseCase(history, concepts)()
         assertEquals(3, statsAfterRecovery.totalReviews)
         assertEquals(2, statsAfterRecovery.totalCorrect)
         assertEquals(1, statsAfterRecovery.totalWrong)
@@ -165,12 +165,12 @@ class MvpE2EUseCasesTest {
         assertTrue(queue.none { it.concept.id == ids.first() })
         assertEquals(3, history.values.size)
 
-        val statistics = CalculateStatisticsUseCase(history)()
+        val statistics = CalculateStatisticsUseCase(history, concepts)()
         assertEquals(3, statistics.totalReviews)
         assertEquals(2, statistics.totalCorrect)
         assertEquals(1, statistics.totalWrong)
         assertEquals(66, statistics.accuracyPercent)
-        assertEquals(1, statistics.reviewedConceptCount)
+        assertEquals(0, statistics.reviewedConceptCount)
 
         val streak = CalculateStreakUseCase().calculate(
             history.values, retryAt.plusSeconds(60), ZoneOffset.UTC
