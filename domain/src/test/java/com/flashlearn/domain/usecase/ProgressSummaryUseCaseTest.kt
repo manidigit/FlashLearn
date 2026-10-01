@@ -2,6 +2,7 @@ package com.flashlearn.domain.usecase
 
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.ConceptRepository
+import com.flashlearn.domain.repository.DifficultyStateRepository
 import com.flashlearn.domain.repository.LearningStateRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
