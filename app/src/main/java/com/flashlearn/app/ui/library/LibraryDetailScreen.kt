@@ -94,7 +94,7 @@ class LibraryDetailViewModel @Inject constructor(
         _isBusy.value = true
         runCatching {
             val resolvedCategoryId = createCategoryName?.trim()?.takeIf { it.isNotEmpty() }?.let { getOrCreateCategory(it) }
-            updateConcept(UpdateConceptCommand(current.id, source.trim(), target.trim(), notes?.trim()?.ifBlank { null }, pronunciation?.trim()?.ifBlank { null }, example?.trim()?.ifBlank { null }, entryType = entryType, categoryId = resolvedCategoryId ?: categoryId, preserveCategory = resolvedCategoryId == null && categoryId == current.categoryId, sourceLanguage = sourceLanguage, targetLanguage = targetLanguage))
+            updateConcept(UpdateConceptCommand(current.id, source.trim(), target.trim(), notes?.trim()?.ifBlank { null }, entryType = entryType, categoryId = resolvedCategoryId ?: categoryId, preserveCategory = resolvedCategoryId == null && categoryId == current.categoryId, sourceLanguage = sourceLanguage, targetLanguage = targetLanguage))
         }.onSuccess { _message.value = context.getString(R.string.detail_saved); load(current.id, sourceLanguage, targetLanguage); onSuccess() }.onFailure { _message.value = it.message }.also { _isBusy.value = false }
     }
 
