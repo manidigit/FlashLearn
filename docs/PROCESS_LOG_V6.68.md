@@ -43,3 +43,10 @@ No new Room schema version was introduced by A1. The branch retains the v8 schem
 - Local Android/Gradle execution was not available because the environment cannot resolve GitHub/dependency hosts.
 - GitHub Actions is the authoritative build/test verification.
 - Final status: GREEN — GitHub Actions run 36898411410 passed Build + Unit Test, Instrumentation + Upgrade Gate, and the 6.67→6.68 upgrade path.
+## Issue 6 — Total Words semantic alignment
+- Canonical Total Words population is the set of active Concept records (ConceptRepository.getAllActive()).
+- Library total counts and progress/stage totals already use active concepts; Review queue candidates are also resolved against active concepts.
+- Corrected StatisticsSnapshot.reviewedConceptCount so historical review rows for inactive/soft-deleted concepts do not inflate the current reviewed-word count.
+- Total review attempts remain historical statistics; only the reviewed-word population is constrained to active vocabulary.
+- Added regression coverage proving an inactive concept is excluded from reviewedConceptCount.
+- No Room schema, migration, or database-structure change was required.
