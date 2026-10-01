@@ -42,4 +42,4 @@ No new Room schema version was introduced by A1. The branch retains the v8 schem
 ## Verification
 - Local Android/Gradle execution was not available because the environment cannot resolve GitHub/dependency hosts.
 - GitHub Actions is the authoritative build/test verification.
-- Final status: PENDING until both CI jobs and the 6.67→6.68 upgrade gate are green.
+- Final status: GREEN — GitHub Actions run 36898411410 passed Build + Unit Test, Instrumentation + Upgrade Gate, and the 6.67→6.68 upgrade path.
