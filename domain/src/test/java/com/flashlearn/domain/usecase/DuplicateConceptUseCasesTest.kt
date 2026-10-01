@@ -19,7 +19,7 @@ class DuplicateConceptUseCasesTest {
   override suspend fun get(conceptId:UUID)=values[conceptId]
   override suspend fun upsert(state:LearningState){values[state.conceptId]=state}
   override suspend fun getAllByStage(stage:Stage)=values.values.filter{it.stage==stage}
-  override suspend fun getDueNonLearned(now:Instant)=emptyList()
+  override suspend fun getDueNonLearned(now:Instant)=emptyList<LearningState>()
   override suspend fun getAll()=values.values.toList()
  }
  private class DifficultyStates(initial:List<DifficultyState>):DifficultyStateRepository{
