@@ -1,4 +1,4 @@
-| **6.68** | **668** | 2026-10-01 | Duplicate-state merge hardening; Home startup performance/query optimization; v8 content alignment | Pending CI |
+| **6.68** | **668** | 2026-10-01 | Duplicate-state merge hardening; Home startup performance/query optimization; v8 content alignment | GREEN — GitHub Actions run 36898411410 |
 
 ## v6.68 release alignment
 - app/build.gradle.kts: versionName 6.68 / versionCode 668.
