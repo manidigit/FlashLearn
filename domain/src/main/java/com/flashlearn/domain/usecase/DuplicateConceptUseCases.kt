@@ -28,6 +28,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
         for (group in groups) {
             val ordered = group.sortedWith(compareBy<Concept> { it.createdAt }.thenBy { it.id.toString() })
             val survivor = ordered.first()
+            var survivorFavorite = survivor.favorite
             var survivorLearning = learningRepository.get(survivor.id)
             var survivorDifficulty = difficultyRepository.get(survivor.id)
             val survivorTags = conceptTagRepository.getTagsForConcept(survivor.id).toSet()
@@ -51,7 +52,8 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
                     difficultyRepository.delete(duplicate.id)
                     survivorDifficulty = mergedDifficulty
                 }
-                conceptRepository.update(survivor.copy(favorite = survivor.favorite || duplicate.favorite, updatedAt = Instant.now()))
+                survivorFavorite = survivorFavorite || duplicate.favorite
+                conceptRepository.update(survivor.copy(favorite = survivorFavorite, updatedAt = Instant.now()))
                 conceptTagRepository.getTagsForConcept(duplicate.id).filter { it !in survivorTags }.forEach { conceptTagRepository.insert(com.flashlearn.domain.model.ConceptTag(survivor.id, it)) }
                 conceptRepository.softDelete(duplicate.id, Instant.now()); removed++
             }
