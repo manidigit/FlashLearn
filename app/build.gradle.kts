@@ -13,12 +13,12 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 667
-        versionName = "6.67"
+        versionCode = 668
+        versionName = "6.68"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "VERSION_CODE_NAME", "\"667\"")
+        buildConfigField("String", "VERSION_CODE_NAME", "\"668\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
         buildConfigField("String", "BUILD_DATE", "\"2026-09-29\"")
         buildConfigField("String", "THEME_VERSION", "\"3.3-ADAPTIVE\"")
