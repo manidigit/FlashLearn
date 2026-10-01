@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,6 +45,7 @@ class HomeViewModel @Inject constructor(
     private val getProgressSummary: GetProgressSummaryUseCase,
     private val getBasicStatistics: GetBasicStatistics,
     private val ensureStarterData: EnsureStarterDataUseCase,
+    private val ensureStates: com.flashlearn.domain.usecase.EnsureStatesUseCase,
     private val calculateStreak: CalculateStreakUseCase,
     private val historyRepository: ReviewHistoryRepository,
     private val calculateProgressPercentage: CalculateProgressPercentage,
@@ -54,15 +56,18 @@ class HomeViewModel @Inject constructor(
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
     private var refreshGeneration = 0L
+    private var refreshJob: Job? = null
 
-    init { refresh() }
+    init { refresh(ensureStates = true) }
 
-    fun refresh(languagePair: LanguagePair = LanguagePair()) {
+    fun refresh(languagePair: LanguagePair = LanguagePair(), ensureStates: Boolean = false) {
+        refreshJob?.cancel()
         val generation = ++refreshGeneration
-        viewModelScope.launch {
+        refreshJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             runCatching {
                 ensureStarterData()
+                if (ensureStates) ensureStates(Instant.now())
                 val now = Instant.now()
                 val summary = getProgressSummary(now)
                 val basicStats = getBasicStatistics()
@@ -70,7 +75,7 @@ class HomeViewModel @Inject constructor(
                 val streak = withContext(Dispatchers.Default) {
                     calculateStreak.calculate(history, now, ZoneId.systemDefault())
                 }
-                val progressPercentage = calculateProgressPercentage()
+                val progressPercentage = calculateProgressPercentage(history)
                 // Ready counts come from the same due/eligibility summary used by review.
                 // Denominators are total words currently assigned to each learning stage,
                 // matching the Statistics screen's Learning Stages card.
