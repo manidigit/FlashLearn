@@ -17,7 +17,8 @@ class DuplicateConceptUseCasesTest {
  private class LearningStates(initial:List<LearningState>):LearningStateRepository{
   val values=initial.associateBy{it.conceptId}.toMutableMap()
   override suspend fun get(conceptId:UUID)=values[conceptId]
-  override suspend fun upsert(state:LearningState){values[state.conceptId]=state}
+  override suspend fun upsert(state:LearningState){values.entries.removeIf{it.value.id==state.id};values[state.conceptId]=state}
+  override suspend fun delete(conceptId:UUID){values.remove(conceptId)}
   override suspend fun getAllByStage(stage:Stage)=values.values.filter{it.stage==stage}
   override suspend fun getDueNonLearned(now:Instant)=emptyList<LearningState>()
   override suspend fun getAll()=values.values.toList()
