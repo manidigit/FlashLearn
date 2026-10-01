@@ -37,7 +37,7 @@ class RemoveExactDuplicateConceptsUseCase @Inject constructor(
             ordered.drop(1).forEach { duplicate ->
                 contentsByConcept[duplicate.id].orEmpty().asSequence().filter { it.languageCode == targetLanguage && it.text.isNotBlank() }.sortedBy { it.translationIndex }.forEach { content ->
                     val targetKey = computeCanonicalKey(content.text)
-                    if (targetKey.isNotBlank() && existingTargetKeys.add(targetKey)) contentRepository.insertTranslation(Content(UUID.randomUUID(), survivor.id, targetLanguage, content.text.trim(), targetKey, notes = content.notes, pronunciation = content.pronunciation, example = content.example, translationIndex = nextIndex++, grammarNote = content.grammarNote, possibleCorrection = content.possibleCorrection))
+                    if (targetKey.isNotBlank() && existingTargetKeys.add(targetKey)) contentRepository.insertTranslation(Content(UUID.randomUUID(), survivor.id, targetLanguage, content.text.trim(), targetKey, notes = content.notes, translationIndex = nextIndex++, grammarNote = content.grammarNote, possibleCorrection = content.possibleCorrection))
                 }
                 learningRepository.get(duplicate.id)?.let { duplicateLearning ->
                     val mergedLearning = mergeLearningStates(survivorLearning, duplicateLearning, survivor.id)
