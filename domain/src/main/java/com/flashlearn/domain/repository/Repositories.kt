@@ -2,6 +2,7 @@ package com.flashlearn.domain.repository
 
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.gamification.AchievementState
+import com.flashlearn.domain.statistics.ReviewStatisticsAggregate
 import java.io.File
 import java.util.UUID
 
