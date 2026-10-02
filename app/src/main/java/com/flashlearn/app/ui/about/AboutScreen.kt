@@ -20,6 +20,7 @@ fun AboutScreen(onBack: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val context = LocalContext.current
     val openGithub = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.APP_GITHUB_URL))) }
+    val openWhatsapp = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.APP_CREATOR_WHATSAPP_URL))) }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokens.contentGap * 2), verticalArrangement = Arrangement.spacedBy(tokens.contentGap * 1.5f)) {
             Text(stringResource(R.string.about_title), style = MaterialTheme.typography.headlineSmall)
@@ -36,6 +37,8 @@ fun AboutScreen(onBack: () -> Unit) {
                     InfoRow(stringResource(R.string.about_version), BuildConfig.VERSION_NAME)
                     InfoRow(stringResource(R.string.about_version_code), BuildConfig.VERSION_CODE.toString())
                     InfoRow(stringResource(R.string.about_author), BuildConfig.APP_AUTHOR)
+                    Text(stringResource(R.string.about_whatsapp_number), modifier = Modifier.fillMaxWidth().clickable(onClick = openWhatsapp), color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.about_whatsapp), modifier = Modifier.fillMaxWidth().clickable(onClick = openWhatsapp), color = MaterialTheme.colorScheme.primary)
                     InfoRow(stringResource(R.string.about_language), BuildConfig.APP_LANGUAGE)
                     InfoRow(stringResource(R.string.about_database), BuildConfig.APP_DATABASE)
                     InfoRow(stringResource(R.string.about_ai_assistant), BuildConfig.APP_AI_ASSISTANT)
