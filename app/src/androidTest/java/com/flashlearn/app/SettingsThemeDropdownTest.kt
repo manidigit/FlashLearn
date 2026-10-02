@@ -1,7 +1,7 @@
 package com.flashlearn.app
 
+import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -22,18 +22,20 @@ class SettingsThemeDropdownTest {
     @Test
     fun themeSelectorUsesDropdownAndChangesSelection() {
         composeRule.setContent {
-            FlashLearnTheme(themeId = FlashLearnThemeSpec.GROK.id) {
+            var selectedThemeId by remember { mutableStateOf(FlashLearnThemeSpec.GROK.id) }
+            FlashLearnTheme(themeId = selectedThemeId) {
                 SettingsScreen(
                     appearance = AppearanceMode.SYSTEM,
                     onAppearanceChange = {},
-                    themeId = FlashLearnThemeSpec.GROK.id,
+                    themeId = selectedThemeId,
                     themes = FlashLearnThemeSpec.BUILT_IN,
-                    onThemeChange = {}
+                    onThemeChange = { selectedThemeId = it }
                 )
             }
         }
 
         composeRule.onNodeWithText(FlashLearnThemeSpec.GROK.name).assertIsDisplayed().performClick()
         composeRule.onNodeWithText(FlashLearnThemeSpec.CLAUD.name).assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(FlashLearnThemeSpec.CLAUD.name).assertIsDisplayed()
     }
 }
