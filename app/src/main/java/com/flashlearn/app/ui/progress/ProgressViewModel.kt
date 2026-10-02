@@ -73,12 +73,18 @@ class ProgressViewModel @Inject constructor(
     private val _state = MutableStateFlow(ProgressUiState())
     val state: StateFlow<ProgressUiState> = _state
     private var refreshGeneration = 0L
+    @Volatile private var activityHistorySnapshot: List<com.flashlearn.domain.model.ReviewHistory> = emptyList()
 
     init { refresh() }
 
     fun setActivityRange(range: ActivityRange) {
         _state.value = _state.value.copy(activityRange = range)
-        refresh(evaluateAchievements = false)
+        val snapshot = activityHistorySnapshot
+        val today = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
+        _state.value = _state.value.copy(
+            activityRange = range,
+            activityReviews = buildActivityData(snapshot, today, ZoneId.systemDefault(), range)
+        )
     }
 
     fun refresh(
@@ -92,15 +98,15 @@ class ProgressViewModel @Inject constructor(
             runCatching {
                 val stats = calculateStatistics()
                 val progress = calculateProgress(now)
-                val progressPercentage = calculateProgressPercentage()
+                val reviewedConceptIds = historyRepository.getDistinctConceptIds().toSet()
+                val progressPercentage = calculateProgressPercentage(reviewedConceptIds)
                 val summary = getProgressSummary(now)
-                val history = historyRepository.getAll()
                 if (evaluateAchievements) {
                     checkAndUnlockAchievements(now, zoneId)
                 }
                 val persistedAchievementStates = achievementRepository.getAll()
                 val cpu = withContext(Dispatchers.Default) {
-                    val streak = calculateStreak.calculate(history, now, zoneId)
+                    val streak = calculateStreak.calculateDates(historyRepository.getAllReviewedAt().asSequence(), now, zoneId)
                     val achievements = DefaultAchievements.definitions.map { definition ->
                         definition to (persistedAchievementStates.find { it.achievementId == definition.id }
                             ?: com.flashlearn.domain.gamification.AchievementState(definition.id, false))
@@ -127,13 +133,14 @@ class ProgressViewModel @Inject constructor(
                         ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
                         ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
                         ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect }),
-                        persistedAchievementStates
+                        persistedAchievementStates,
+                        activityHistory
                     )
                 }
                 achievementRepository.upsertAll(cpu.achievementStates)
                 ProgressPayload(
                     progress, progressPercentage, summary, stats, cpu.streak, cpu.achievements, cpu.dailyReviews, cpu.activityReviews,
-                    cpu.todayReviews, cpu.weekReviews, cpu.monthReviews
+                    cpu.todayReviews, cpu.weekReviews, cpu.monthReviews, cpu.activityHistory
                 )
             }.onSuccess { payload ->
                 if (generation == refreshGeneration) {
@@ -153,6 +160,7 @@ class ProgressViewModel @Inject constructor(
                         monthReviews = payload.monthReviews,
                         error = null
                     )
+                    activityHistorySnapshot = payload.activityHistory
                 }
             }.onFailure {
                 if (generation == refreshGeneration) _state.value = _state.value.copy(loading = false, error = it.message ?: "خطا در محاسبه آمار")
@@ -169,7 +177,8 @@ private data class ProgressCpuData(
     val todayReviews: ReviewPeriodStat,
     val weekReviews: ReviewPeriodStat,
     val monthReviews: ReviewPeriodStat,
-    val achievementStates: List<AchievementState>
+    val achievementStates: List<AchievementState>,
+    val activityHistory: List<com.flashlearn.domain.model.ReviewHistory>
 )
 
 private data class ProgressPayload(
@@ -183,7 +192,8 @@ private data class ProgressPayload(
     val activityReviews: List<ActivityReviewStat>,
     val todayReviews: ReviewPeriodStat,
     val weekReviews: ReviewPeriodStat,
-    val monthReviews: ReviewPeriodStat
+    val monthReviews: ReviewPeriodStat,
+    val activityHistory: List<com.flashlearn.domain.model.ReviewHistory>
 )
 
 internal fun buildActivityData(
