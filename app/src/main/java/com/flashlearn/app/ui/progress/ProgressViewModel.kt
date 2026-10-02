@@ -11,11 +11,10 @@ import com.flashlearn.domain.statistics.StreakSnapshot
 import com.flashlearn.domain.model.ProgressSummary
 import com.flashlearn.domain.repository.ReviewHistoryRepository
 import com.flashlearn.domain.repository.AchievementRepository
-import com.flashlearn.domain.gamification.AchievementContext
 import com.flashlearn.domain.gamification.AchievementDefinition
+import com.flashlearn.domain.gamification.CheckAndUnlockAchievements
 import com.flashlearn.domain.gamification.AchievementState
 import com.flashlearn.domain.gamification.DefaultAchievements
-import com.flashlearn.domain.gamification.EvaluateAchievementsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -69,7 +68,7 @@ class ProgressViewModel @Inject constructor(
     private val getProgressSummary: com.flashlearn.domain.usecase.GetProgressSummaryUseCase,
     private val historyRepository: ReviewHistoryRepository,
     private val achievementRepository: AchievementRepository,
-    private val evaluateAchievements: EvaluateAchievementsUseCase
+    private val checkAndUnlockAchievements: CheckAndUnlockAchievements
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProgressUiState())
     val state: StateFlow<ProgressUiState> = _state
@@ -92,23 +91,15 @@ class ProgressViewModel @Inject constructor(
                 val progressPercentage = calculateProgressPercentage()
                 val summary = getProgressSummary(now)
                 val history = historyRepository.getAll()
-                val existingAchievements = achievementRepository.getAll()
+                if (evaluateAchievements) {
+                    checkAndUnlockAchievements(now, zoneId)
+                }
+                val persistedAchievementStates = achievementRepository.getAll()
                 val cpu = withContext(Dispatchers.Default) {
                     val streak = calculateStreak.calculate(history, now, zoneId)
-                    val achievementResult = evaluateAchievements.evaluate(
-                        DefaultAchievements.definitions,
-                        existingAchievements,
-                        AchievementContext(
-                            totalReviews = stats.totalReviews,
-                            totalCorrect = stats.totalCorrect,
-                            totalWrong = stats.totalWrong,
-                            currentStreakDays = streak.currentStreakDays,
-                            longestStreakDays = streak.longestStreakDays,
-                            learnedConcepts = summary.learnedConceptCount
-                        )
-                    )
-                    val achievements = DefaultAchievements.definitions.mapNotNull { definition ->
-                        achievementResult.states.find { it.achievementId == definition.id }?.let { definition to it }
+                    val achievements = DefaultAchievements.definitions.map { definition ->
+                        definition to (persistedAchievementStates.find { it.achievementId == definition.id }
+                            ?: com.flashlearn.domain.gamification.AchievementState(definition.id, false))
                     }
                     val today = now.atZone(zoneId).toLocalDate()
                     val weekStart = today.minusDays(6)
@@ -132,7 +123,7 @@ class ProgressViewModel @Inject constructor(
                         ReviewPeriodStat(todayEntries.size, todayEntries.count { it.isCorrect }),
                         ReviewPeriodStat(weekEntries.size, weekEntries.count { it.isCorrect }),
                         ReviewPeriodStat(monthEntries.size, monthEntries.count { it.isCorrect }),
-                        achievementResult.states
+                        persistedAchievementStates
                     )
                 }
                 achievementRepository.upsertAll(cpu.achievementStates)
