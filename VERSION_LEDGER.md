@@ -1,3 +1,12 @@
+| **6.70** | **670** | 2026-10-02 | Fix Achievement evaluation path; use real persisted context; add integration regression test | Pending CI |
+
+## v6.70 release alignment
+- app/build.gradle.kts: versionName 6.70 / versionCode 670.
+- CI: current gate 6.70/670; previous-version upgrade gate is 6.69/669.
+- Progress/Statistics invokes the domain achievement checker; Activity-range changes do not re-evaluate achievements.
+- No Room schema or migration change.
+- Verification remains pending until all authoritative GitHub Actions release gates are green.
+
 | **6.69** | **669** | 2026-10-02 | Refresh: strip stray symbols (e.g. `*`) from the edges of Spanish words; content data version 3→4 | Pending CI |
 
 ## v6.69 release alignment

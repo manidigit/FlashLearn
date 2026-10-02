@@ -1,3 +1,17 @@
+## v6.70 — Achievements evaluation path
+
+- Progress now invokes the existing CheckAndUnlockAchievements domain use case instead of constructing a partial AchievementContext in the ViewModel.
+- Achievement context now uses the real active vocabulary, review history, LearningState and DifficultyState data, including practiced-word, active-word and VERY_HARD+Learned thresholds.
+- Existing unlocked achievements remain unlocked; newly satisfied achievements are persisted and displayed immediately when Progress/Statistics is opened or refreshed.
+- Changing the Activity chart range does not re-run achievement evaluation.
+- Added a regression test proving ten practiced active Concepts unlock FIRST_TEN_WORDS through the real achievement-checking path.
+- No Room schema or migration change.
+
+### Verification
+GitHub Actions is authoritative. v6.70 is not considered verified until Build + Unit Test, Instrumentation + Upgrade Gate, upgrade-path and release/R8 checks are green.
+
+Previous checkpoint: v6.69 / 669.
+
 ## v6.69 — Refresh cleans Spanish word edges
 
 - Refresh (Add Word → Refresh) now removes stray symbols such as `*` from the start and end of Spanish vocabulary text already stored in the database.

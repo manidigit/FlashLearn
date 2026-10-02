@@ -1,3 +1,11 @@
+## v6.70 — Achievements evaluation path
+- Status: IMPLEMENTED — CI verification pending.
+- Root cause: ProgressViewModel manually built AchievementContext and left the persisted-data-dependent fields at their defaults, while the complete CheckAndUnlockAchievements use case was not invoked.
+- Fix: inject and invoke CheckAndUnlockAchievements when Progress/Statistics is refreshed; read persisted achievement states afterward for the UI. Activity-range changes skip achievement evaluation.
+- Test: check_and_unlock_achievements_uses_real_practice_context proves ten practiced active Concepts unlock FIRST_TEN_WORDS through the real checker and persistence repository contract.
+- No Room schema/migration change.
+- CI: authoritative GitHub Actions verification pending for v6.70.
+
 
 ## v6.13 — Root Theme + Design System centralization
 - Implemented centralized semantic theme tokens and shared UI components.
