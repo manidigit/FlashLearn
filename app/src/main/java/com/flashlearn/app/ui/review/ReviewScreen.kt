@@ -1,5 +1,6 @@
 package com.flashlearn.app.ui.review
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -367,29 +368,37 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
         if (!card?.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, enabled = !answered, modifier = Modifier.weight(1f)) { Text(if (card?.noteVisible == true) stringResource(R.string.review_hide_note) else stringResource(R.string.review_show_note)) }
         OutlinedButton(onClick = vm::revealHint, enabled = !answered && card != null && !card.hintRevealed, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_hint)) }
     }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-        quiz.options.forEach { option ->
-            val isCorrect = option == correct
-            val isWrongSelection = answered && option == selected && !isCorrect
-            val isSelected = !answered && option == selected
-            val container = when { answered && isCorrect -> QuizCorrectContainer; isWrongSelection -> QuizWrongContainer; isSelected -> QuizSelectedContainer; else -> MaterialTheme.colorScheme.surface }
-            val content = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.onSurface }
-            val border = when { answered && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.outline }
-            val emphasized = (answered && (isCorrect || isWrongSelection)) || isSelected
-            OutlinedButton(onClick = { vm.selectQuizOption(option) }, enabled = !answered && !state.isSubmitting, modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(72f)), shape = MaterialTheme.shapes.large, border = BorderStroke(if (emphasized) tokens.dp(3f) else tokens.borderThin, border), colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content), contentPadding = PaddingValues(horizontal = tokens.contentGap + tokens.compactGap, vertical = tokens.compactGap)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    when { answered && isCorrect -> Text("✓", color = QuizCorrect, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isWrongSelection -> Text("✕", color = QuizWrong, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isSelected -> Text("●", color = QuizSelected, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold) }
-                    if ((answered && isCorrect) || isWrongSelection || isSelected) Spacer(Modifier.width(tokens.compactGap))
-                    Text(option, style = MaterialTheme.typography.titleMedium, fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+    Crossfade(
+        targetState = answered,
+        label = "quiz-answer-feedback",
+        modifier = Modifier.fillMaxWidth()
+    ) { showFeedback ->
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
+            quiz.options.forEach { option ->
+                val isCorrect = option == correct
+                val isWrongSelection = showFeedback && option == selected && !isCorrect
+                val isSelected = !showFeedback && option == selected
+                val container = when { showFeedback && isCorrect -> QuizCorrectContainer; isWrongSelection -> QuizWrongContainer; isSelected -> QuizSelectedContainer; else -> MaterialTheme.colorScheme.surface }
+                val content = when { showFeedback && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.onSurface }
+                val border = when { showFeedback && isCorrect -> QuizCorrect; isWrongSelection -> QuizWrong; isSelected -> QuizSelected; else -> MaterialTheme.colorScheme.outline }
+                val emphasized = (showFeedback && (isCorrect || isWrongSelection)) || isSelected
+                OutlinedButton(onClick = { vm.selectQuizOption(option) }, enabled = !showFeedback && !state.isSubmitting, modifier = Modifier.fillMaxWidth().heightIn(min = tokens.dp(72f)), shape = MaterialTheme.shapes.large, border = BorderStroke(if (emphasized) tokens.dp(3f) else tokens.borderThin, border), colors = ButtonDefaults.outlinedButtonColors(containerColor = container, contentColor = content), contentPadding = PaddingValues(horizontal = tokens.contentGap + tokens.compactGap, vertical = tokens.compactGap)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        when { showFeedback && isCorrect -> Text("✓", color = QuizCorrect, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isWrongSelection -> Text("✕", color = QuizWrong, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); isSelected -> Text("●", color = QuizSelected, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold) }
+                        if ((showFeedback && isCorrect) || isWrongSelection || isSelected) Spacer(Modifier.width(tokens.compactGap))
+                        Text(option, style = MaterialTheme.typography.titleMedium, fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                    }
                 }
             }
-        }
-    }
-    if (!answered) {
-        Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(tokens.buttonHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.review_register_answer), style = MaterialTheme.typography.titleMedium) }
-    } else {
-        Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = if (feedback?.isCorrect == true) QuizCorrectContainer else QuizWrongContainer) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(if (feedback?.isCorrect == true) stringResource(R.string.review_feedback_correct) else stringResource(R.string.review_feedback_wrong), color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center);  }
+            if (!showFeedback) {
+                Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(tokens.buttonHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.review_register_answer), style = MaterialTheme.typography.titleMedium) }
+            } else {
+                Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = if (feedback?.isCorrect == true) QuizCorrectContainer else QuizWrongContainer) {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(if (feedback?.isCorrect == true) stringResource(R.string.review_feedback_correct) else stringResource(R.string.review_feedback_wrong), color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    }
+                }
+            }
         }
     }
 }
