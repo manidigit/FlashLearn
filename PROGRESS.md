@@ -1,3 +1,12 @@
+## v6.79 — Backup export format removal
+
+- CSV and SQLite were removed as executable backup/data-export formats.
+- Backup UI exposes JSON and XLSX only.
+- Internal Room/SQLite database remains unchanged.
+- Added BackupExportFormatContractTest.
+- Release identity: 6.79 / 679; previous gate: 6.78 / 678.
+- CI verification is pending.
+
 ## v6.78 — Quiz feedback stability / color-transition hardening
 - Fixed the Quiz 3-second feedback lifecycle by making the delayed transition cancellable and session-scoped.
 - Prevented stale feedback jobs from advancing a replaced/exited/reset review session.
