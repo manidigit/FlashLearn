@@ -151,5 +151,29 @@ class StatisticsTest {
         assertEquals(1, result.totalWrong)
         assertEquals(66, result.accuracyPercent)
         assertEquals(2, result.reviewedConceptCount)
+    }    
+    @Test
+    fun statisticsAggregate_preservesCountsWithoutLoadingHistoryObjects() {
+        val aggregate = ReviewStatisticsAggregate(
+            totalReviews = 1250,
+            totalCorrect = 1000,
+            totalWrong = 250,
+            reviewedConceptCount = 320
+        )
+        val result = CalculateStatisticsUseCase(
+            object : ReviewHistoryRepository {
+                override suspend fun insert(entry: ReviewHistory) {}
+                override suspend fun existsByAttemptId(sessionId: UUID, reviewAttemptId: UUID) = false
+                override suspend fun getAll() = error("full history must not be required for aggregate overload")
+            },
+            Concepts(emptySet())
+        ).invoke(aggregate)
+        assertEquals(1250, result.totalReviews)
+        assertEquals(1000, result.totalCorrect)
+        assertEquals(250, result.totalWrong)
+        assertEquals(80, result.accuracyPercent)
+        assertEquals(320, result.reviewedConceptCount)
     }
+
+
 }
