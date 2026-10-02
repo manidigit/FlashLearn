@@ -24,6 +24,8 @@ class ReviewQuizFeedbackContractTest {
         assertTrue(content.contains("answerFeedback = null"))
         assertTrue(content.contains("card = null"))
         assertTrue(content.contains("quizCard = null"))
-        assertTrue(content.contains("isLoading = true"))
+        assertTrue(content.contains("isLoading = false"))
+        assertTrue(content.contains("prefetchedQuizCards"))
+        assertTrue(content.contains("prefetchNextQuizCard"))
     }
 }
