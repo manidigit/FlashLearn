@@ -1,3 +1,10 @@
+## v6.81 — Quiz prefetch build fix
+
+- Fixed the Quiz prefetch Kotlin compilation error by moving the suspend concept lookup into the background coroutine.
+- Preserved the no-refresh Quiz transition introduced in v6.80.
+- Release identity: 6.81 / 681; previous gate: 6.80 / 680.
+- CI verification pending.
+
 ## v6.80 — Quiz transition prefetch fix
 
 - Next Quiz question is prefetched during feedback.
