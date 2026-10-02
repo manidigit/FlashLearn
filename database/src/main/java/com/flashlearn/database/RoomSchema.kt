@@ -126,7 +126,6 @@ class Converters {
     @Query("SELECT * FROM review_history ORDER BY reviewedAt ASC, id ASC") suspend fun getAll(): List<ReviewHistoryEntity>
     @Query("SELECT COUNT(*) AS totalReviews, COALESCE(SUM(CASE WHEN h.isCorrect = 1 THEN 1 ELSE 0 END), 0) AS totalCorrect, COUNT(DISTINCT CASE WHEN c.active = 1 THEN h.conceptId END) AS reviewedConceptCount FROM review_history h LEFT JOIN concepts c ON c.id = h.conceptId")
     suspend fun getStatisticsRow(): ReviewStatisticsRow
-    @Query("SELECT DISTINCT conceptId FROM review_history") suspend fun getDistinctConceptIds(): List<UUID>
     @Query("SELECT reviewedAt FROM review_history") suspend fun getAllReviewedAt(): List<Instant>
     @Query("SELECT * FROM review_history WHERE reviewedAt >= :from AND reviewedAt < :to ORDER BY reviewedAt ASC, id ASC")
     suspend fun getWindow(from: Instant, to: Instant): List<ReviewHistoryEntity>
