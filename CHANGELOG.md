@@ -1,3 +1,15 @@
+## v6.78 — Quiz feedback stability and release/process hardening
+
+- Stabilized the 3-second Quiz feedback lifecycle with one cancellable coroutine job per active review session.
+- Cancelled stale Quiz feedback timers when a review session is replaced, exited, reset, or advances to another card.
+- Guarded delayed advancement with both session generation and session identity.
+- Hardened the Quiz card transition so the previous answer cannot render for an intermediate frame in neutral colors while the next question is loading.
+- Kept success/error colors semantic and theme-token based; retained the explicit Crossfade feedback transition.
+- Preserved Quiz generation off the main thread and the once-per-session Quiz-bank refresh contract.
+- Added the v6.78 process/release documentation and synchronized release identity to 678 with 6.77/677 as the previous-version gate.
+- Corrected stale BuildConfig VERSION_CODE_NAME metadata from 669 to 678.
+- No Room schema, learning algorithm, review scheduling, backup/import format, or theme JSON change.
+
 ## v6.77 — Creator WhatsApp contact
 - Added the creator WhatsApp contact to the About screen.
 - The displayed number is localized in Persian and English.
