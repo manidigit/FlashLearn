@@ -1,3 +1,12 @@
+## v6.79 — Backup export format removal
+
+- CSV and SQLite were removed as executable backup/data-export formats.
+- Backup UI exposes JSON and XLSX only.
+- Internal Room/SQLite database remains unchanged.
+- Added BackupExportFormatContractTest.
+- Release identity: 6.79 / 679; previous gate: 6.78 / 678.
+- CI verification is pending.
+
 ## v6.78 release alignment
 - app/build.gradle.kts: versionName 6.78 / versionCode 678.
 - CI current gate: 6.78/678; previous-version upgrade gate: 6.77/677.
