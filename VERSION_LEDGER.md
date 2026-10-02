@@ -1,3 +1,11 @@
+## v6.81 — Quiz prefetch build fix
+
+- Root cause: `ConceptRepository.get()` is suspend and was called while constructing the prefetch job, outside a coroutine.
+- Fix: resolve the next concept inside the `Dispatchers.Default` prefetch coroutine, with session-generation/session guards before and after the lookup.
+- Release identity: 6.81 / 681; previous gate: 6.80 / 680.
+- No Room schema, learning algorithm, review scheduling, backup/export format, or theme contract change.
+- CI verification pending.
+
 ## v6.79 — Backup export format removal
 
 - CSV and SQLite were removed as executable backup/data-export formats.
