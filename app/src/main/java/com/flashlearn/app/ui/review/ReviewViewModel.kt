@@ -31,7 +31,9 @@ import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,6 +104,7 @@ class ReviewViewModel @Inject constructor(
     private var sessionContents: Map<UUID, List<Content>> = emptyMap()
     private var sessionDifficulties: Map<UUID, DifficultyState> = emptyMap()
     private val usedQuizDistractorTexts = mutableSetOf<String>()
+    private var feedbackJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -122,7 +125,7 @@ class ReviewViewModel @Inject constructor(
         if (pair == activeLanguagePair) return
         activeLanguagePair = pair
         _state.value = _state.value.copy(sourceLanguage = pair.source.code)
-        if (sessionId != null || queue.isNotEmpty()) { sessionGeneration++; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap() }
+        if (sessionId != null || queue.isNotEmpty()) { feedbackJob?.cancel(); feedbackJob = null; sessionGeneration++; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap() }
     }
 
     fun setQuizDifficulty(value: QuizDifficulty) { quizDifficulty = value; _state.value = _state.value.copy(selectedQuizDifficulty = value) }
@@ -196,6 +199,8 @@ class ReviewViewModel @Inject constructor(
     }
 
     fun startNewSession(reviewType: ReviewType = _state.value.selectedReviewType, difficulty: VocabularyDifficulty? = null, categoryId: UUID? = null) {
+        feedbackJob?.cancel()
+        feedbackJob = null
         val generation = ++sessionGeneration
         val currentState = _state.value
         usedQuizDistractorTexts.clear()
@@ -296,9 +301,12 @@ class ReviewViewModel @Inject constructor(
                     val answered = _state.value.answered + 1; val correct = _state.value.correct + if (isCorrect) 1 else 0; val wrong = _state.value.wrong + if (isCorrect) 0 else 1
                     _state.value = _state.value.copy(isSubmitting = false, answerFeedback = ReviewAnswerFeedbackUiState(isCorrect, stageLabel(result.learningState.stage), difficultyLabel(result.difficultyState.current), if (!isCorrect && currentState.selectedMode == ReviewMode.QUIZ) currentState.quizCard?.correctAnswerText else null, answered, correct, wrong), answered = answered, correct = correct, wrong = wrong)
                     if (currentState.selectedMode == ReviewMode.QUIZ) {
-                        viewModelScope.launch {
+                        feedbackJob?.cancel()
+                        feedbackJob = viewModelScope.launch {
                             delay(3_000)
-                            if (generation == sessionGeneration && sessionId == session) nextCard()
+                            if (generation == sessionGeneration && sessionId == session) {
+                                nextCard()
+                            }
                         }
                     }
                 }
@@ -324,6 +332,8 @@ class ReviewViewModel @Inject constructor(
         }
     }
     fun resetAfterFinished() {
+        feedbackJob?.cancel()
+        feedbackJob = null
         refreshAvailableReviewCount()
         sessionGeneration++
         sessionId = null
@@ -347,19 +357,36 @@ class ReviewViewModel @Inject constructor(
     }
 
     fun exitReview(onCompleted: () -> Unit = {}) {
+        feedbackJob?.cancel()
+        feedbackJob = null
         val exitGeneration = ++sessionGeneration; val activeSessionId = sessionId
         if (activeSessionId == null) { queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); onCompleted(); return }
         viewModelScope.launch { var ended = false; try { endReviewSession(activeSessionId); ended = true } catch (e: Exception) { if (exitGeneration == sessionGeneration) _state.value = _state.value.copy(error = e.message ?: "خطا در پایان مرور") }; if (exitGeneration != sessionGeneration || !ended) return@launch; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); usedQuizDistractorTexts.clear(); _state.value = _state.value.copy(card = null, quizCard = null, isSubmitting = false, isFinished = true, remaining = 0); onCompleted() }
     }
     private suspend fun advanceToNext(generation: Long) {
         if (generation != sessionGeneration) return
+        feedbackJob?.cancel()
+        feedbackJob = null
         index += 1
         if (index >= queue.size) {
             val activeSessionId = sessionId
             try { activeSessionId?.let { endReviewSession(it) } } catch (e: Exception) { if (generation == sessionGeneration) _state.value = _state.value.copy(isLoading = false, isSubmitting = false, error = e.message ?: "خطا در پایان مرور"); return }
             if (generation != sessionGeneration) return
             sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); usedQuizDistractorTexts.clear(); _state.value = _state.value.copy(isLoading = false, card = null, isFinished = true, isSubmitting = false, answerFeedback = null, quizCard = null, remaining = 0)
-        } else { if (generation != sessionGeneration) return; _state.value = _state.value.copy(isSubmitting = false, answerFeedback = null, error = null); loadCurrentCard(generation, activeLanguagePair) }
+        } else {
+            if (generation != sessionGeneration) return
+            // Remove the old quiz card before clearing feedback so Compose never
+            // renders the previous options in their neutral colors for a frame.
+            _state.value = _state.value.copy(
+                isLoading = true,
+                isSubmitting = false,
+                answerFeedback = null,
+                card = null,
+                quizCard = null,
+                error = null
+            )
+            loadCurrentCard(generation, activeLanguagePair)
+        }
     }
 }
 
