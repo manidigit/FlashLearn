@@ -1,3 +1,13 @@
+| **6.76** | **676** | 2026-10-02 | Issue 10: replace horizontal theme cards with accessible dropdown selector | CI pending |
+
+## v6.76 release alignment
+- app/build.gradle.kts: versionName 6.76 / versionCode 676.
+- CI current gate: 6.76/676; previous-version upgrade gate: 6.75/675.
+- Theme persistence remains in AppViewModel/shared preferences.
+- Theme JSON format and Room schema are unchanged.
+- Added SettingsThemeDropdownTest regression coverage.
+
+
 | **6.75** | **675** | 2026-10-02 | Issue 5: faster Home startup — one shared load for the three ready counts, lightweight history reads, parallel loading, O(N²) fix in progress | CI pending |
 
 ## v6.75 release alignment
