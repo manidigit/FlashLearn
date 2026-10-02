@@ -105,6 +105,12 @@ class ProgressViewModel @Inject constructor(
                     checkAndUnlockAchievements(now, zoneId)
                 }
                 val persistedAchievementStates = achievementRepository.getAll()
+                val activityHistory = if (_state.value.activityRange == ActivityRange.ALL) {
+                    historyRepository.getAll()
+                } else {
+                    val from = now.atZone(zoneId).toLocalDate().minusDays(89).atStartOfDay(zoneId).toInstant()
+                    historyRepository.getWindow(from, now.plusSeconds(1))
+                }
                 val cpu = withContext(Dispatchers.Default) {
                     val streak = calculateStreak.calculateDates(historyRepository.getAllReviewedAt().asSequence(), now, zoneId)
                     val achievements = DefaultAchievements.definitions.map { definition ->
@@ -114,7 +120,7 @@ class ProgressViewModel @Inject constructor(
                     val today = now.atZone(zoneId).toLocalDate()
                     val weekStart = today.minusDays(6)
                     val monthStart = today.minusDays(29)
-                    val historyByDate = history.groupBy { it.reviewedAt.atZone(zoneId).toLocalDate() }
+                    val historyByDate = activityHistory.groupBy { it.reviewedAt.atZone(zoneId).toLocalDate() }
                     val todayEntries = historyByDate[today].orEmpty()
                     val weekEntries = historyByDate.filterKeys { !it.isBefore(weekStart) && !it.isAfter(today) }.values.flatten()
                     val monthEntries = historyByDate.filterKeys { !it.isBefore(monthStart) && !it.isAfter(today) }.values.flatten()
@@ -124,7 +130,7 @@ class ProgressViewModel @Inject constructor(
                         val entries = historyByDate[date].orEmpty()
                         DailyReviewStat(dayNames[date.dayOfWeek.value - 1], entries.size, entries.count { it.isCorrect })
                     }
-                    val initialActivity = buildActivityData(history, today, zoneId, _state.value.activityRange)
+                    val initialActivity = buildActivityData(activityHistory, today, zoneId, _state.value.activityRange)
                     ProgressCpuData(
                         streak,
                         achievements,
