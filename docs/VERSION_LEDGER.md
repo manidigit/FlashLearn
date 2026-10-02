@@ -1,3 +1,9 @@
+## v6.77 release alignment
+- app/build.gradle.kts: versionName 6.77 / versionCode 677.
+- CI current gate: 6.77/677; previous-version upgrade gate: 6.76/676.
+- Added creator WhatsApp contact in About with localized labels and a direct WhatsApp URI.
+- No data schema, learning algorithm, review scheduling, backup format, or theme JSON changes.
+
 | **6.76** | **676** | 2026-10-02 | Issue 10: replace horizontal theme cards with accessible dropdown selector | CI pending |
 
 ## v6.76 release alignment
