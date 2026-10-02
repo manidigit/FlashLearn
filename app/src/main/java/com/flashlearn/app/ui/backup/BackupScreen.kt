@@ -129,7 +129,7 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         item { SectionHeader(icon = Icons.Outlined.FileDownload, title = stringResource(R.string.backup_data_export), subtitle = stringResource(R.string.backup_data_export_summary)) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-                ExportFormat.values().forEach { format ->
+                listOf(ExportFormat.JSON, ExportFormat.XLSX).forEach { format ->
                     OutlinedButton(onClick = { viewModel.exportData(format) }, enabled = !state.busy, modifier = Modifier.weight(1f).height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) { Text(format.name, fontWeight = FontWeight.Bold) }
                 }
             }
