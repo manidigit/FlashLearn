@@ -1,3 +1,12 @@
+## v6.75 — Issue 5: Slow Home startup
+
+- Root causes found by reading the Home refresh path: (1) `CountReviewQueueUseCase` was called three times and each call loaded all active concepts, all difficulty states, all concept tags and all content rows; (2) Home loaded every `ReviewHistory` row only to read timestamps and distinct concept ids; (3) `CalculateProgressUseCase` rebuilt a set of all concept ids for every learning state (quadratic work); (4) all loads ran one after another.
+- Fix: new `CountReviewQueueUseCase.countByType` loads the shared tables once for DAILY/WEEKLY/MONTHLY (tags and contents are loaded only when a filter needs them); Home uses `getAllReviewedAt()` and `getDistinctConceptIds()`; independent loads run in parallel; the quadratic loop uses the existing active-id set.
+- Counting rules are unchanged; `invoke(filters)` delegates to the same code.
+- Home's start-up state repair is now kept pending until it actually finishes (it used to be cancelled by the second refresh from HomeScreen).
+- Tests: `CountReviewQueueUseCaseTest`, `ProgressPathFailureTest`.
+- No Room schema or migration change. No timing measurements were taken.
+
 ## v6.74 — Issue 4: Category click crash
 
 - Root cause: `CategorySelectionScreen` (shared by Library and Review) and `LibraryScreenV2` passed Persian-digit text (`toFaDigits(...)`) to string resources declared with `%1$d`. Android formatting then throws `IllegalFormatConversionException` the first time the screen is composed, so the app closed as soon as the category list opened.

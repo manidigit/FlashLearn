@@ -27,6 +27,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -57,6 +59,9 @@ class HomeViewModel @Inject constructor(
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
     private var refreshGeneration = 0L
     private var refreshJob: Job? = null
+    // init() starts a repairing refresh that HomeScreen's own refresh immediately cancels.
+    // Keep the repair pending until it has really finished so it is not silently skipped.
+    private var repairPending = true
 
     init { refresh(repairStates = true) }
 
@@ -67,27 +72,65 @@ class HomeViewModel @Inject constructor(
             _state.value = _state.value.copy(isLoading = true, error = null)
             runCatching {
                 ensureStarterData()
-                if (repairStates) ensureStatesUseCase(Instant.now())
-                val now = Instant.now()
-                val summary = getProgressSummary(now)
-                val basicStats = getBasicStatistics()
-                val history = historyRepository.getAll()
-                val streak = withContext(Dispatchers.Default) {
-                    calculateStreak.calculate(history, now, ZoneId.systemDefault())
+                if (repairStates || repairPending) {
+                    ensureStatesUseCase(Instant.now())
+                    repairPending = false
                 }
-                val progressPercentage = calculateProgressPercentage(history)
-                // Ready counts come from the same due/eligibility summary used by review.
-                // Denominators are total words currently assigned to each learning stage,
-                // matching the Statistics screen's Learning Stages card.
-                val progress = calculateProgress(now)
+                val now = Instant.now()
                 val zone = ZoneId.systemDefault()
-                val dailyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.DAILY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
-                val weeklyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.WEEKLY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
-                val monthlyReady = countReviewQueue(ReviewSelectionFilters(reviewType = ReviewType.MONTHLY, sourceLanguage = languagePair.source.code, targetLanguage = languagePair.target.code, now = now, zoneId = zone))
-                val dailyTotal = progress.dailyConcepts
-                val weeklyTotal = progress.weeklyConcepts
-                val monthlyTotal = progress.monthlyConcepts
-                HomeSnapshot(summary.copy(dueConceptCount = dailyReady + weeklyReady + monthlyReady, dailyDueConceptCount = dailyReady, weeklyDueConceptCount = weeklyReady, monthlyDueConceptCount = monthlyReady), basicStats, streak, progressPercentage, dailyTotal, weeklyTotal, monthlyTotal)
+                val readyFilters = ReviewSelectionFilters(
+                    reviewType = ReviewType.DAILY,
+                    sourceLanguage = languagePair.source.code,
+                    targetLanguage = languagePair.target.code,
+                    now = now,
+                    zoneId = zone
+                )
+                // Independent read-only loads run in parallel instead of one after another.
+                // History is read as lightweight columns (timestamps, distinct concept ids)
+                // instead of materialising every ReviewHistory row.
+                coroutineScope {
+                    val summaryJob = async { getProgressSummary(now) }
+                    val basicStatsJob = async { getBasicStatistics() }
+                    val streakJob = async {
+                        val timestamps = historyRepository.getAllReviewedAt()
+                        withContext(Dispatchers.Default) {
+                            calculateStreak.calculateDates(timestamps.asSequence(), now, zone)
+                        }
+                    }
+                    val percentageJob = async {
+                        calculateProgressPercentage(historyRepository.getDistinctConceptIds().toSet())
+                    }
+                    // Totals are the number of words currently assigned to each learning stage,
+                    // matching the Statistics screen's Learning Stages card.
+                    val progressJob = async { calculateProgress(now) }
+                    // Ready counts use the same eligibility as the review engine, loaded once for all three types.
+                    val readyJob = async {
+                        countReviewQueue.countByType(
+                            readyFilters,
+                            listOf(ReviewType.DAILY, ReviewType.WEEKLY, ReviewType.MONTHLY)
+                        )
+                    }
+                    val summary = summaryJob.await()
+                    val ready = readyJob.await()
+                    val progress = progressJob.await()
+                    val dailyReady = ready.getValue(ReviewType.DAILY)
+                    val weeklyReady = ready.getValue(ReviewType.WEEKLY)
+                    val monthlyReady = ready.getValue(ReviewType.MONTHLY)
+                    HomeSnapshot(
+                        summary.copy(
+                            dueConceptCount = dailyReady + weeklyReady + monthlyReady,
+                            dailyDueConceptCount = dailyReady,
+                            weeklyDueConceptCount = weeklyReady,
+                            monthlyDueConceptCount = monthlyReady
+                        ),
+                        basicStatsJob.await(),
+                        streakJob.await(),
+                        percentageJob.await(),
+                        progress.dailyConcepts,
+                        progress.weeklyConcepts,
+                        progress.monthlyConcepts
+                    )
+                }
             }.onSuccess { snapshot ->
                 if (generation == refreshGeneration) {
                     _state.value = HomeUiState(

@@ -38,7 +38,7 @@ class CalculateProgressUseCase @Inject constructor(
             weeklyConcepts = stageCounts[Stage.WEEKLY] ?: 0,
             monthlyConcepts = stageCounts[Stage.MONTHLY] ?: 0,
             learnedConcepts = stageCounts[Stage.LEARNED] ?: 0,
-            pathFailureConcepts = learningStates.count { it.hasPathFailure && it.conceptId in concepts.map { concept -> concept.id }.toSet() },
+            pathFailureConcepts = learningStates.count { it.hasPathFailure && it.conceptId in activeIds },
             easyConcepts = difficultyCounts[VocabularyDifficulty.EASY] ?: 0,
             mediumConcepts = difficultyCounts[VocabularyDifficulty.MEDIUM] ?: 0,
             hardConcepts = difficultyCounts[VocabularyDifficulty.HARD] ?: 0,

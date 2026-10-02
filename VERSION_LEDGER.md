@@ -1,3 +1,10 @@
+| **6.75** | **675** | 2026-10-02 | Issue 5: faster Home startup — one shared load for the three ready counts, lightweight history reads, parallel loading, O(N²) fix in progress | CI pending |
+
+## v6.75 release alignment
+- app/build.gradle.kts: versionName 6.75 / versionCode 675.
+- CI current gate: 6.75/675; previous-version upgrade gate: 6.74/674.
+- No Room schema, migration or string resource change.
+
 | **6.74** | **674** | 2026-10-02 | Issue 4: fix crash when opening Category selection (Library and Review) — %d resources received text arguments | CI pending |
 
 ## v6.74 release alignment
