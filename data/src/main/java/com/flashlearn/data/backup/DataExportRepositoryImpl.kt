@@ -22,9 +22,7 @@ class DataExportRepositoryImpl @Inject constructor(
 
     override suspend fun export(format: ExportFormat): File = when (format) {
         ExportFormat.JSON -> json()
-        ExportFormat.CSV -> csv()
         ExportFormat.XLSX -> xlsx()
-        ExportFormat.SQLITE -> sqlite()
     }
 
     private suspend fun rows(): List<Array<String?>> {
@@ -46,19 +44,6 @@ class DataExportRepositoryImpl @Inject constructor(
             )
         }
     }
-
-    private suspend fun csv(): File {
-        val file = File(context.cacheDir, "flashlearn-vocabulary.csv")
-        file.bufferedWriter().use { writer ->
-            writer.appendLine("conceptId,entryType,languageCode,text,canonicalKey,notes,grammarNote,possibleCorrection,translationIndex")
-            rows().forEach { row ->
-                writer.appendLine(row.joinToString(",") { value -> escapeCsv(value) })
-            }
-        }
-        return file
-    }
-
-    private fun escapeCsv(value: String?): String { val v = value ?: ""; val safe = if (v.firstOrNull()?.let { it in charArrayOf('=','+','-','@') } == true) "'$v" else v; return "\"${safe.replace("\"", "\"\"")}\"" }
 
     private suspend fun json(): File {
         val target = File(context.cacheDir, "flashlearn-vocabulary.json.gz")
@@ -163,11 +148,4 @@ class DataExportRepositoryImpl @Inject constructor(
             .replace("'", "&apos;")
     }
 
-    private suspend fun sqlite(): File {
-        db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { }
-        val source = context.getDatabasePath("flashlearn.db")
-        val output = File(context.cacheDir, "flashlearn.db")
-        source.copyTo(output, overwrite = true)
-        return output
-    }
 }
