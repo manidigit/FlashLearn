@@ -69,13 +69,14 @@ class CalculateProgressPercentage @Inject constructor(
     private val learningRepository: LearningStateRepository,
     private val reviewHistoryRepository: ReviewHistoryRepository
 ) {
-    suspend operator fun invoke(): Double = invoke(reviewHistoryRepository.getAll())
+    suspend operator fun invoke(): Double = invoke(reviewHistoryRepository.getDistinctConceptIds().toSet())
 
-    suspend operator fun invoke(history: List<ReviewHistory>): Double {
+    suspend operator fun invoke(history: List<ReviewHistory>): Double = invoke(history.asSequence().map { it.conceptId }.toSet())
+
+    suspend operator fun invoke(reviewedIds: Set<java.util.UUID>): Double {
         val concepts = conceptRepository.getAllActive()
         if (concepts.isEmpty()) return 0.0
         val states = learningRepository.getAll().associateBy { it.conceptId }
-        val reviewedIds = history.asSequence().map { it.conceptId }.toSet()
         val totalScore: Int = concepts.sumOf { concept ->
             ProgressScoring.score(states[concept.id]?.stage, concept.id in reviewedIds)
         }
