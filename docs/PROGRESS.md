@@ -1,3 +1,12 @@
+## v6.79 — Backup export format removal
+
+- CSV and SQLite were removed as executable backup/data-export formats.
+- Backup UI exposes JSON and XLSX only.
+- Internal Room/SQLite database remains unchanged.
+- Added BackupExportFormatContractTest.
+- Release identity: 6.79 / 679; previous gate: 6.78 / 678.
+- CI verification is pending.
+
 ## v6.75 — Issue 5: Slow Home startup
 
 - Root causes found by reading the Home refresh path: (1) `CountReviewQueueUseCase` was called three times and each call loaded all active concepts, all difficulty states, all concept tags and all content rows; (2) Home loaded every `ReviewHistory` row only to read timestamps and distinct concept ids; (3) `CalculateProgressUseCase` rebuilt a set of all concept ids for every learning state (quadratic work); (4) all loads ran one after another.
