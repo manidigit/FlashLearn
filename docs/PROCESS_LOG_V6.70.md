@@ -22,7 +22,7 @@ The existing domain checker is the single source of truth for AchievementContext
 ## Tests
 - Domain achievement threshold tests retained.
 - Added check_and_unlock_achievements_uses_real_practice_context.
-- Full GitHub Actions Build + Unit Test, Instrumentation + Upgrade Gate, upgrade-path and release/R8 verification: pending until the v6.70 run completes.
+- Full GitHub Actions verification: GREEN — run 36988213115 (#2032), with Build + Unit Test, release/R8, Instrumentation + Upgrade Gate, and 6.69→6.70 upgrade path passing.
 
 ## CI / completion status
-Not marked complete until the authoritative v6.70 GitHub Actions run is green.
+Issue 8 is complete and verified. Authoritative GitHub Actions run 36988213115 (#2032) is green.

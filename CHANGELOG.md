@@ -8,7 +8,7 @@
 - No Room schema or migration change.
 
 ### Verification
-GitHub Actions is authoritative. v6.70 is not considered verified until Build + Unit Test, Instrumentation + Upgrade Gate, upgrade-path and release/R8 checks are green.
+GitHub Actions verification: GREEN — run 36988213115 (#2032), including Build + Unit Test, release/R8 verification, Instrumentation + Upgrade Gate, and the 6.69→6.70 upgrade path.
 
 Previous checkpoint: v6.69 / 669.
 
