@@ -35,6 +35,6 @@ interface VocabularyRelationRepository { suspend fun insert(value:VocabularyRela
 interface VocabularyVariantRepository { suspend fun insert(value:VocabularyVariant);suspend fun getForConcept(conceptId:UUID):List<VocabularyVariant>;suspend fun getAll():List<VocabularyVariant> }
 interface ReviewQueueRepository { suspend fun upsert(value:ReviewQueueItem);suspend fun getPending():List<ReviewQueueItem>;suspend fun getAll():List<ReviewQueueItem>;suspend fun update(value:ReviewQueueItem) }
 interface LanguageRepository { suspend fun getAll():List<Language>;suspend fun getActive():List<Language>;suspend fun getPairs():List<LanguagePair>;suspend fun getActivePairs():List<LanguagePair>;suspend fun upsert(value:Language);suspend fun upsertPair(value:LanguagePair) }
-enum class ExportFormat { CSV, JSON, XLSX, SQLITE }
+enum class ExportFormat { JSON, XLSX }
 interface DataExportRepository { suspend fun export(format:ExportFormat):File }
 interface DeletedConceptCleanupRepository { suspend fun purgeInactiveBefore(cutoff:java.time.Instant):Int }
