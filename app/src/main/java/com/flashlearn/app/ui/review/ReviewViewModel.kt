@@ -294,8 +294,10 @@ class ReviewViewModel @Inject constructor(
     private fun prefetchNextQuizCard(generation: Long, pair: LanguagePair) {
         val nextConceptId = queue.getOrNull(index + 1) ?: return
         if (generation != sessionGeneration || sessionId == null || prefetchedQuizCards.containsKey(nextConceptId)) return
-        val nextConcept = sessionContents[nextConceptId]?.let { conceptRepository.get(nextConceptId) } ?: return
+        if (sessionContents[nextConceptId].isNullOrEmpty()) return
         viewModelScope.launch(Dispatchers.Default) {
+            if (generation != sessionGeneration || sessionId == null) return@launch
+            val nextConcept = conceptRepository.get(nextConceptId) ?: return@launch
             val result = generateQuizQuestion(
                 nextConcept,
                 QuizLanguagePair(pair.source.code, pair.target.code),
