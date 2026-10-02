@@ -13,8 +13,8 @@ android {
         applicationId = "com.flashlearn.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 676
-        versionName = "6.76"
+        versionCode = 677
+        versionName = "6.77"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -24,6 +24,7 @@ android {
         buildConfigField("String", "THEME_VERSION", "\"3.3-ADAPTIVE\"")
         buildConfigField("String", "THEME_STATUS", "\"ThemeDesign-owned adaptive layout, localization and visual tokens\"")
         buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_CREATOR_WHATSAPP_URL", "\"https://wa.me/34685644444\"")
         buildConfigField("String", "APP_AUTHOR", "\"Mani\"")
         buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
         buildConfigField("String", "APP_DATABASE", "\"Room\"")
