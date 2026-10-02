@@ -1,3 +1,12 @@
+## v6.80 — Quiz transition prefetch fix
+
+- Prefetches the next Quiz question during the 3-second feedback window.
+- Removes the loading/refresh state between Quiz questions.
+- Keeps session-generation guards and cancellable feedback timing.
+- Added regression coverage for the no-refresh transition.
+- Release identity: 6.80 / 680; previous gate: 6.79 / 679.
+- CI verification pending.
+
 ## v6.79 — Remove CSV and SQLite backup export formats
 
 - Removed CSV and SQLite from the executable backup/data-export format contract.
