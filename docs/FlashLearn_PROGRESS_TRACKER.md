@@ -1,3 +1,10 @@
+## v6.79 — Backup export format removal
+- Removed CSV and SQLite from executable backup/data-export formats.
+- Backup UI exposes JSON and XLSX only.
+- Internal Room/SQLite database remains unchanged.
+- Release identity: 6.79 / 679; previous gate: 6.78 / 678.
+- Verification pending authoritative GitHub Actions gates.
+
 ## v6.78 — Quiz feedback stability / release synchronization
 - Advanced application identity to 6.78 / versionCode 678.
 - Previous-version upgrade gate is 6.77 / 677.
