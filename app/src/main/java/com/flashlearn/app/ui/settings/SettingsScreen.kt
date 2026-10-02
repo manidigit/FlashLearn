@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -95,9 +94,11 @@ fun SettingsScreen(
         Section(stringResource(R.string.settings_full_theme))
         Text(stringResource(R.string.settings_theme_summary), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(tokens.compactGap))
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-            themes.forEach { spec -> ThemeChoice(spec, themeId, onThemeChange) }
-        }
+        ThemeDropdown(
+            themes = themes,
+            selectedThemeId = themeId,
+            onThemeChange = onThemeChange
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
             OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.settings_import)) }
             OutlinedButton(onClick = { val spec = themes.firstOrNull { it.id == themeId } ?: FlashLearnThemeSpec.GROK; pendingExport = spec.toJson(); exportLauncher.launch("flashlearn-theme-${spec.id}.json") }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.FileDownload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.settings_export_json)) }
@@ -132,7 +133,97 @@ fun SettingsScreen(
     }
 }
 
-@Composable private fun ThemeChoice(spec: FlashLearnThemeSpec, selected: String, onSelect: (String) -> Unit) { val tokens = LocalFlashLearnThemeTokens.current; val chosen = spec.id == selected; OutlinedCard(onClick = { onSelect(spec.id) }, modifier = Modifier.width(tokens.dp(190f)), border = BorderStroke(if (chosen) tokens.dp(2f) else tokens.dp(1f), if (chosen) tokens.primary else tokens.outlineColor)) { Column(Modifier.fillMaxWidth().padding(tokens.dp(10f))) { Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(spec.name, style = MaterialTheme.typography.titleSmall, maxLines = 1); Text(if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) stringResource(R.string.settings_builtin_theme) else stringResource(R.string.settings_imported_theme), style = MaterialTheme.typography.labelSmall, color = tokens.onSurfaceVariant) }; if (chosen) Icon(Icons.Outlined.CheckCircle, stringResource(R.string.settings_selected), tint = tokens.primary) }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(5f))) { listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground, spec.lightCard, spec.darkBackground).forEach { color -> Surface(color = Color(color), shape = MaterialTheme.shapes.small, border = BorderStroke(tokens.dp(1f), tokens.outlineColor), modifier = Modifier.size(tokens.dp(22f))) {} }; }; Spacer(Modifier.height(tokens.compactGap)); Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(4f))) { AssistChip(onClick = {}, label = { Text(stringResource(R.string.settings_density, spec.densityScale)) }); AssistChip(onClick = {}, label = { Text(if (spec.iconStyle.equals("filled", true)) stringResource(R.string.settings_filled) else stringResource(R.string.settings_outlined)) }) } } } }
+@Composable
+private fun ThemeDropdown(
+    themes: List<FlashLearnThemeSpec>,
+    selectedThemeId: String,
+    onThemeChange: (String) -> Unit
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    var expanded by remember { mutableStateOf(false) }
+    val selected = themes.firstOrNull { it.id == selectedThemeId } ?: themes.firstOrNull()
+
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = tokens.dp(14f), vertical = tokens.dp(10f))
+        ) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(
+                    selected?.name ?: stringResource(R.string.settings_theme_unavailable),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1
+                )
+                Text(
+                    if (selected?.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) {
+                        stringResource(R.string.settings_builtin_theme)
+                    } else {
+                        stringResource(R.string.settings_imported_theme)
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = tokens.onSurfaceVariant
+                )
+            }
+            Icon(
+                if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = stringResource(R.string.settings_theme_toggle)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.92f)
+        ) {
+            themes.forEach { spec ->
+                val chosen = spec.id == selectedThemeId
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(spec.name, maxLines = 1)
+                            Text(
+                                if (spec.id in FlashLearnThemeSpec.BUILT_IN.map { it.id }) {
+                                    stringResource(R.string.settings_builtin_theme)
+                                } else {
+                                    stringResource(R.string.settings_imported_theme)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = tokens.onSurfaceVariant
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(tokens.dp(3f))) {
+                            listOf(spec.lightPrimary, spec.lightSecondary, spec.lightBackground).forEach { color ->
+                                Surface(
+                                    color = Color(color),
+                                    shape = MaterialTheme.shapes.small,
+                                    border = BorderStroke(tokens.dp(1f), tokens.outlineColor),
+                                    modifier = Modifier.size(tokens.dp(18f))
+                                ) {}
+                            }
+                        }
+                    },
+                    trailingIcon = {
+                        if (chosen) {
+                            Icon(
+                                Icons.Outlined.Check,
+                                contentDescription = stringResource(R.string.settings_selected),
+                                tint = tokens.primary
+                            )
+                        }
+                    },
+                    onClick = {
+                        onThemeChange(spec.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable private fun Section(text: String) { val tokens = LocalFlashLearnThemeTokens.current; Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = tokens.compactGap)) }
 @Composable private fun LanguageChoice(language: LearningLanguage, label: String, onClick: () -> Unit, modifier: Modifier) { val tokens = LocalFlashLearnThemeTokens.current; OutlinedCard(onClick = onClick, modifier = modifier) { Row(Modifier.fillMaxWidth().padding(tokens.dp(10f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) { Text(language.flag, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.width(tokens.compactGap)); Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(label, style = MaterialTheme.typography.labelSmall); Text(language.labelFa) } } } }
 @Composable private fun LanguageLabel(language: LearningLanguage) { val tokens = LocalFlashLearnThemeTokens.current; Row(verticalAlignment = Alignment.CenterVertically) { Text(language.flag); Spacer(Modifier.width(tokens.compactGap)); Text(language.labelFa) } }
