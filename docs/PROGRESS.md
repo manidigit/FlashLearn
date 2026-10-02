@@ -1,3 +1,12 @@
+## v6.71 — Statistics performance / persistent activity snapshot
+- Status: IMPLEMENTED — CI intentionally not awaited.
+- Root cause: Statistics loaded all ReviewHistory records into memory; Progress range changes restarted the full refresh and repeated history processing.
+- Fix: DB-level aggregate statistics, distinct reviewed-concept query for progress percentage, bounded 90-day activity query, cached activity snapshot for range-only changes, and timestamp-only input for streak calculation.
+- No ReviewHistory retention/deletion was added.
+- No Room schema/migration change.
+- Test: statisticsAggregate_preservesCountsWithoutLoadingHistoryObjects.
+- Push: implementation and documentation are on main; CI verification remains pending by instruction.
+
 ## v6.70 — Achievements evaluation path
 - Status: IMPLEMENTED — CI VERIFIED GREEN.
 - Root cause: ProgressViewModel manually built AchievementContext and left the persisted-data-dependent fields at their defaults, while the complete CheckAndUnlockAchievements use case was not invoked.
