@@ -1,3 +1,8 @@
+## v6.77 — Creator WhatsApp contact
+- Added the creator WhatsApp contact to the About screen.
+- The displayed number is localized in Persian and English.
+- Tapping the contact opens the WhatsApp wa.me link; no learning, persistence, Room, backup, or review behavior changed.
+
 ## v6.76 — Issue 10: Theme selection dropdown
 
 - Replaced the horizontal, fixed-width theme-card list in Settings with a single Material dropdown selector.
