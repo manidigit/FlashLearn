@@ -1,3 +1,9 @@
+## v6.77 — Final Issue 11 checkpoint
+- Added the creator WhatsApp contact to About: +34 685 644 444.
+- Contact is localized in Persian/English and opens the direct WhatsApp wa.me endpoint.
+- Added a release-contract test for the contact and advanced runtime/CI gates to 6.77/677 with 6.76/676 as the previous-version gate.
+- No learning, review, database, backup, import/export, or theme persistence semantics changed.
+
 ## v6.76 — Issue 10: Theme selection dropdown
 
 - Audited the current v6.75 Settings implementation and confirmed the theme selector was still a horizontally scrollable row of fixed 190dp cards.
