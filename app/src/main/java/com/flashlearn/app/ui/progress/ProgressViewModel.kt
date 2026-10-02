@@ -78,10 +78,14 @@ class ProgressViewModel @Inject constructor(
 
     fun setActivityRange(range: ActivityRange) {
         _state.value = _state.value.copy(activityRange = range)
-        refresh()
+        refresh(evaluateAchievements = false)
     }
 
-    fun refresh(now: Instant = Instant.now(), zoneId: ZoneId = ZoneId.systemDefault()) {
+    fun refresh(
+        now: Instant = Instant.now(),
+        zoneId: ZoneId = ZoneId.systemDefault(),
+        evaluateAchievements: Boolean = true
+    ) {
         val generation = ++refreshGeneration
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, error = null)
