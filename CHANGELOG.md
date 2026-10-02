@@ -1,3 +1,12 @@
+## v6.79 — Remove CSV and SQLite backup export formats
+
+- Removed CSV and SQLite from the executable backup/data-export format contract.
+- Backup UI now exposes only JSON and XLSX data export.
+- Kept Room/SQLite as the internal application database; no database schema or migration change.
+- Added `BackupExportFormatContractTest` to lock the supported export formats.
+- Release identity advanced to 6.79 / 679 with 6.78 / 678 as the previous-version gate.
+- GitHub Actions verification is pending.
+
 ## v6.78 — Quiz feedback stability and release/process hardening
 
 - Stabilized the 3-second Quiz feedback lifecycle with one cancellable coroutine job per active review session.
