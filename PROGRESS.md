@@ -1,3 +1,13 @@
+## v6.78 — Quiz feedback stability / color-transition hardening
+- Fixed the Quiz 3-second feedback lifecycle by making the delayed transition cancellable and session-scoped.
+- Prevented stale feedback jobs from advancing a replaced/exited/reset review session.
+- Hardened the feedback → next-card state transition to avoid a transient neutral-color frame.
+- Retained theme-token success/error colors and Crossfade presentation.
+- Preserved Quiz generation on Dispatchers.Default and once-per-session bank refresh.
+- Advanced runtime/CI release gates to 6.78/678 with 6.77/677 as the previous-version gate.
+- Added docs/PROCESS_LOG_V6.78.md and synchronized release documentation.
+- CI verification remains pending until the authoritative v6.78 GitHub Actions gates complete successfully.
+
 ## v6.77 — Final Issue 11 checkpoint
 - Added the creator WhatsApp contact to About: +34 685 644 444.
 - Contact is localized in Persian/English and opens the direct WhatsApp wa.me endpoint.
