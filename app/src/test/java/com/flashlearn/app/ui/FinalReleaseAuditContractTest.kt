@@ -7,19 +7,23 @@ import java.io.File
 class FinalReleaseAuditContractTest {
     @Test
     fun releaseVersionIs677() {
-        val buildFile = sequenceOf(File("build.gradle.kts"), File("app/build.gradle.kts"))
-            .first { it.exists() && it.readText().contains("versionCode = 676") }
-            .readText()
-        assertTrue(buildFile.contains("versionName = \"6.76\""))
+        val buildFile = File("build.gradle.kts")
+        assertTrue(buildFile.exists())
+        val content = buildFile.readText()
+        assertTrue(content.contains("versionCode = 677"))
+        assertTrue(content.contains("versionName = \"6.77\""))
     }
 
     @Test
     fun creatorWhatsAppContractIsPresent() {
-        val buildFile = File("app/build.gradle.kts").readText()
-        assertTrue(buildFile.contains("APP_CREATOR_WHATSAPP_URL"))
-        assertTrue(buildFile.contains("https://wa.me/34685644444"))
-        assertTrue(File("src/main/res/values/strings.xml").readText().contains("about_whatsapp"))
-        assertTrue(File("src/main/res/values-en/strings.xml").readText().contains("about_whatsapp"))
+        val buildFile = File("build.gradle.kts")
+        assertTrue(buildFile.exists())
+        val values = File("src/main/res/values/strings.xml")
+        val english = File("src/main/res/values-en/strings.xml")
+        assertTrue(buildFile.readText().contains("APP_CREATOR_WHATSAPP_URL"))
+        assertTrue(buildFile.readText().contains("https://wa.me/34685644444"))
+        assertTrue(values.readText().contains("about_whatsapp"))
+        assertTrue(english.readText().contains("about_whatsapp"))
     }
 
     @Test
