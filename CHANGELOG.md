@@ -1,3 +1,18 @@
+## v6.71 — Statistics performance and persistent activity snapshot
+
+- Statistics aggregation now executes in the database/repository instead of loading the full ReviewHistory into the Statistics use case.
+- Progress percentage uses the distinct reviewed Concept IDs query rather than the full ReviewHistory dataset.
+- Activity data is loaded from a bounded 90-day window; selecting Week/Month/Three-months reuses the in-memory activity snapshot instead of triggering a full Progress refresh.
+- Streak calculation reads only review timestamps rather than full ReviewHistory objects; streak semantics remain calendar-day based.
+- No history retention or deletion was introduced.
+- No Room schema/migration change was introduced.
+- Added a regression test for the Statistics aggregate snapshot contract.
+
+### Verification
+Implementation pushed to main. CI verification was intentionally not awaited per the task instruction; the authoritative run must still be checked separately.
+
+Previous checkpoint: v6.70 / 670.
+
 ## v6.70 — Achievements evaluation path
 
 - Progress now invokes the existing CheckAndUnlockAchievements domain use case instead of constructing a partial AchievementContext in the ViewModel.
