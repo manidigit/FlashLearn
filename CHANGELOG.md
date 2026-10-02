@@ -1,3 +1,16 @@
+## v6.76 — Issue 10: Theme selection dropdown
+
+- Replaced the horizontal, fixed-width theme-card list in Settings with a single Material dropdown selector.
+- The selector shows the current theme, distinguishes built-in versus imported themes, and marks the active selection.
+- Dropdown entries retain compact color previews without requiring horizontal scrolling.
+- Theme selection still flows through `AppViewModel.setTheme()`, so persistence and runtime theme ownership are unchanged.
+- Added Persian/English accessibility labels for opening the selector and the unavailable-theme fallback.
+- Added an Android regression test covering opening the selector and changing from GROK to CLAUD.
+- No Room schema, migration, learning algorithm, backup/restore contract, or theme JSON format change.
+
+### Verification
+GitHub Actions is authoritative for v6.76; verification is pending the new release gate.
+
 ## v6.75 — Issue 5: Slow Home startup
 
 - Root causes found by reading the Home refresh path: (1) `CountReviewQueueUseCase` was called three times and each call loaded all active concepts, all difficulty states, all concept tags and all content rows; (2) Home loaded every `ReviewHistory` row only to read timestamps and distinct concept ids; (3) `CalculateProgressUseCase` rebuilt a set of all concept ids for every learning state (quadratic work); (4) all loads ran one after another.
