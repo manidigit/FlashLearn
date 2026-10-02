@@ -15,6 +15,8 @@ data class BasicStatistics(
     val learnedWords: Int
 )
 
+data class ReviewStatisticsAggregate(val totalReviews:Int,val totalCorrect:Int,val totalWrong:Int,val reviewedConceptCount:Int)
+
 data class StatisticsSnapshot(
     val totalReviews: Int,
     val totalCorrect: Int,
@@ -70,32 +72,20 @@ class CalculateStatisticsUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository
 ) {
     suspend operator fun invoke(): StatisticsSnapshot {
-        val records = repository.getAll()
-        val total = records.size
-        val correct = records.count { it.isCorrect }
-        val activeConceptIds = conceptRepository.getAllActive()
-            .asSequence()
-            .map { it.id }
-            .toSet()
-        val reviewedConceptCount = records.asSequence()
-            .map { it.conceptId }
-            .filter { it in activeConceptIds }
-            .toSet()
-            .size
-
-        return StatisticsSnapshot(
-            totalReviews = total,
-            totalCorrect = correct,
-            totalWrong = total - correct,
-            accuracyPercent = if (total == 0) 0 else correct * 100 / total,
-            reviewedConceptCount = reviewedConceptCount
-        )
+        val activeIds = conceptRepository.getAllActive().asSequence().map { it.id }.toSet()
+        return invoke(repository.getStatisticsAggregate(activeIds))
     }
+    suspend operator fun invoke(aggregate: ReviewStatisticsAggregate): StatisticsSnapshot =
+        StatisticsSnapshot(aggregate.totalReviews,aggregate.totalCorrect,aggregate.totalWrong,
+            if (aggregate.totalReviews == 0) 0 else aggregate.totalCorrect * 100 / aggregate.totalReviews,
+            aggregate.reviewedConceptCount)
 }
 
 class CalculateStreakUseCase @Inject constructor() {
-    fun calculate(records: List<ReviewHistory>, now: Instant, zoneId: ZoneId): StreakSnapshot {
-        val dates = records.map { it.reviewedAt.atZone(zoneId).toLocalDate() }.toSet()
+    fun calculate(records: List<ReviewHistory>, now: Instant, zoneId: ZoneId): StreakSnapshot = calculateDates(records.asSequence().map { it.reviewedAt }, now, zoneId)
+
+    fun calculateDates(timestamps: Sequence<Instant>, now: Instant, zoneId: ZoneId): StreakSnapshot {
+        val dates = timestamps.map { it.atZone(zoneId).toLocalDate() }.toSet()
         if (dates.isEmpty()) return StreakSnapshot(0, 0, emptySet())
         val sorted = dates.sortedDescending()
         val today = now.atZone(zoneId).toLocalDate()
