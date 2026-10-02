@@ -1,3 +1,15 @@
+## v6.76 — Issue 10: Theme selection dropdown
+
+- Audited the current v6.75 Settings implementation and confirmed the theme selector was still a horizontally scrollable row of fixed 190dp cards.
+- Replaced that presentation with one full-width dropdown selector.
+- The selected theme remains visible without opening the menu; the menu lists every available built-in/custom theme and marks the current choice.
+- Kept import/export actions unchanged.
+- Preserved AppViewModel theme persistence and FlashLearnThemeSpec → ThemeDesign runtime ownership.
+- Added an Android regression test for opening the dropdown and changing the selected theme.
+- Added localized accessibility strings in Persian and English.
+- No database, learning, backup/restore, or theme JSON contract changes.
+
+
 ## v6.21 — Modern Minimal + CI correction in progress
 - Runtime identity: 6.21 / 121; previous gate: 6.20 / 120.
 - Modern Minimal is now available in the built-in catalog and is the active default theme presentation.
