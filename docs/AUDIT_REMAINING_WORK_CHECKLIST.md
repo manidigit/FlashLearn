@@ -1,3 +1,12 @@
+## Issue 10 — Theme Selection
+
+- Status: **implemented; CI pending**
+- Root cause: Settings still rendered all available themes as fixed-width cards inside a horizontally scrollable row, which is inefficient for a growing/custom theme catalog and is not a compact select control.
+- Fix: replaced the card list with a single dropdown selector while preserving theme IDs, AppViewModel persistence, built-in/custom distinction, and import/export.
+- Accessibility/localization: selector and fallback labels are resource-backed in Persian and English; the active theme is explicitly marked.
+- Regression: `SettingsThemeDropdownTest`.
+- No Room schema/migration or Theme JSON format change.
+
 # FlashLearn — Audit Remaining Work Checklist
 
 این فایل فهرست مواردی است که در ممیزی v6.61 مطرح شدند اما در v6.61.1 به‌طور کامل انجام نشده‌اند. هدف این فایل این است که هر مورد را جداگانه بررسی و پس از تکمیل، با نتیجه و CI سبز علامت‌گذاری کنیم.
