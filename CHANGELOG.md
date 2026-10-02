@@ -1,3 +1,11 @@
+## v6.81 — Quiz prefetch build fix
+
+- Fixed the v6.80 Quiz prefetch compilation error caused by calling the suspend `ConceptRepository.get()` outside a coroutine.
+- The next Quiz concept is now resolved inside the background prefetch coroutine before question generation.
+- Preserved the 3-second feedback, prefetch, and no-refresh transition behavior.
+- Release identity: 6.81 / 681; previous gate: 6.80 / 680.
+- CI verification pending.
+
 ## v6.80 — Quiz transition prefetch fix
 
 - Prefetches the next Quiz question during the 3-second feedback window.
