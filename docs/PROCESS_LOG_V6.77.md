@@ -21,4 +21,4 @@ The About screen exposed the creator name and technical metadata, but no creator
 - No theme JSON or persistence change.
 
 ## Verification
-Build + Unit Test was green for v6.76. The full v6.76 run still had an Instrumentation + Upgrade Gate failure, so that checkpoint is not considered fully green until the instrumentation failure is resolved. v6.77 is now pushed and requires its own authoritative CI verification.
+The first v6.77 CI run failed in `:app:testDebugUnitTest`, not in APK compilation. Root cause: the newly added release-contract test still asserted v6.76 and used repository-root paths even though the test executes with the app module as its working directory. Both assertions were corrected to v6.77/677 and module-relative paths. The corrected commit is now pushed and requires a fresh authoritative CI run.
