@@ -11,7 +11,18 @@ interface ContentRepository { suspend fun findByUuid(uuid:UUID):Content?;suspend
 interface ConceptTagRepository { suspend fun insert(conceptTag:ConceptTag);suspend fun getTagsForConcept(conceptId:UUID):List<UUID>;suspend fun getConceptsForTag(tagId:UUID):List<UUID>;suspend fun getAll():List<ConceptTag> = emptyList();suspend fun deleteByTagId(tagId:UUID) {} }
 interface TagRepository { suspend fun getAll():List<Tag>;suspend fun insert(tag:Tag):UUID;suspend fun update(tag:Tag);suspend fun delete(id:UUID) }
 interface ConceptRepository { suspend fun insert(concept:Concept):UUID;suspend fun get(conceptId:UUID):Concept?;suspend fun getAllActive():List<Concept>;suspend fun searchActive(query:String):List<Concept>;suspend fun update(concept:Concept);suspend fun softDelete(conceptId:UUID,now:java.time.Instant) }
-interface ReviewHistoryRepository { suspend fun insert(entry:ReviewHistory);suspend fun existsByAttemptId(sessionId:UUID,reviewAttemptId:UUID):Boolean;suspend fun getAll():List<ReviewHistory> }
+interface ReviewHistoryRepository {
+    suspend fun insert(entry:ReviewHistory)
+    suspend fun existsByAttemptId(sessionId:UUID,reviewAttemptId:UUID):Boolean
+    suspend fun getAll():List<ReviewHistory>
+    suspend fun getDistinctConceptIds():List<UUID> = getAll().asSequence().map { it.conceptId }.distinct().toList()
+    suspend fun getAllReviewedAt():List<java.time.Instant> = getAll().map { it.reviewedAt }
+    suspend fun getStatisticsAggregate(activeConceptIds:Set<UUID>):ReviewStatisticsAggregate {
+        val records = getAll(); val correct = records.count { it.isCorrect }
+        return ReviewStatisticsAggregate(records.size,correct,records.size-correct,records.asSequence().map { it.conceptId }.filter { it in activeConceptIds }.distinct().count())
+    }
+    suspend fun getWindow(from:java.time.Instant,to:java.time.Instant):List<ReviewHistory> = getAll().filter { !it.reviewedAt.isBefore(from) && it.reviewedAt.isBefore(to) }
+}
 interface SettingsRepository { suspend fun getInt(key:String,default:Int):Int; suspend fun getString(key:String,default:String):String = default;suspend fun setString(key:String,value:String) {} }
 interface CategoryRepository { suspend fun getAll():List<Category>;suspend fun findByName(name:String):Category?;suspend fun insert(category:Category):UUID }
 interface FlashLearnDatabase { suspend fun <T> withTransaction(block:suspend()->T):T }
