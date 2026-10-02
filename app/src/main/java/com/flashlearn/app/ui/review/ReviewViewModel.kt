@@ -104,6 +104,7 @@ class ReviewViewModel @Inject constructor(
     private var sessionDifficulties: Map<UUID, DifficultyState> = emptyMap()
     private val usedQuizDistractorTexts = mutableSetOf<String>()
     private var feedbackJob: Job? = null
+    private var prefetchedQuizCards: MutableMap<UUID, QuizCardUiState> = mutableMapOf()
 
     init {
         viewModelScope.launch {
@@ -203,6 +204,7 @@ class ReviewViewModel @Inject constructor(
         val generation = ++sessionGeneration
         val currentState = _state.value
         usedQuizDistractorTexts.clear()
+        prefetchedQuizCards.clear()
         val normalizedReviewType = normalizeReviewType(reviewType)
         val difficulties = if (difficulty != null) setOf(difficulty) else currentState.selectedDifficulties
         val categories = if (categoryId != null) setOf(categoryId) else currentState.selectedCategoryIds
@@ -261,6 +263,11 @@ class ReviewViewModel @Inject constructor(
         val categoryName = conceptRepository.get(conceptId)?.categoryId?.let { categoryId -> _state.value.categories.firstOrNull { it.id == categoryId }?.name }
         val baseCard = ReviewCardUiState(source.text, source.notes, target.text, categoryName = categoryName)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
+            prefetchedQuizCards.remove(conceptId)?.let { prefetched ->
+                _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = prefetched, remaining = queue.size - index, total = queue.size)
+                prefetchNextQuizCard(generation, pair)
+                return
+            }
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
             when (val result = withContext(Dispatchers.Default) {
                 generateQuizQuestion(
@@ -276,10 +283,30 @@ class ReviewViewModel @Inject constructor(
                         .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
                         .map { it.trim() }
                     _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText), remaining = queue.size - index, total = queue.size)
+                    prefetchNextQuizCard(generation, pair)
                 }
                 QuizQuestionResult.FlashcardFallback -> _state.value = _state.value.copy(isLoading = false, isFinished = false, card = null, quizCard = null, error = "برای این سؤال چهار گزینهٔ معتبر پیدا نشد؛ حالت آزمون حفظ شد.", remaining = queue.size - index, total = queue.size)
             }
         } else _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = null, remaining = queue.size - index, total = queue.size)
+    }
+
+    private fun prefetchNextQuizCard(generation: Long, pair: LanguagePair) {
+        val nextConceptId = queue.getOrNull(index + 1) ?: return
+        if (generation != sessionGeneration || sessionId == null || prefetchedQuizCards.containsKey(nextConceptId)) return
+        val nextConcept = sessionContents[nextConceptId]?.let { conceptRepository.get(nextConceptId) } ?: return
+        viewModelScope.launch(Dispatchers.Default) {
+            val result = generateQuizQuestion(
+                nextConcept,
+                QuizLanguagePair(pair.source.code, pair.target.code),
+                sessionDifficulties[nextConceptId],
+                quizDifficulty,
+                usedQuizDistractorTexts.toSet()
+            )
+            if (generation != sessionGeneration || sessionId == null) return@launch
+            if (result is QuizQuestionResult.QuizQuestion) {
+                prefetchedQuizCards[nextConceptId] = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText)
+            }
+        }
     }
 
     fun selectQuizOption(option: String) { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return; _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option), error = null) }
@@ -341,6 +368,7 @@ class ReviewViewModel @Inject constructor(
         sessionContents = emptyMap()
         sessionDifficulties = emptyMap()
         usedQuizDistractorTexts.clear()
+        prefetchedQuizCards.clear()
         _state.value = _state.value.copy(
             isSelectingMode = true,
             isFinished = false,
@@ -377,7 +405,7 @@ class ReviewViewModel @Inject constructor(
             // Remove the old quiz card before clearing feedback so Compose never
             // renders the previous options in their neutral colors for a frame.
             _state.value = _state.value.copy(
-                isLoading = true,
+                isLoading = false,
                 isSubmitting = false,
                 answerFeedback = null,
                 card = null,
