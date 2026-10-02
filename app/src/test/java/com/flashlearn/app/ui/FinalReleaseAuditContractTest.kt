@@ -6,11 +6,11 @@ import java.io.File
 
 class FinalReleaseAuditContractTest {
     @Test
-    fun releaseVersionIs672() {
+    fun releaseVersionIs673() {
         val buildFile = sequenceOf(File("build.gradle.kts"), File("app/build.gradle.kts"))
-            .first { it.exists() && it.readText().contains("versionCode = 672") }
+            .first { it.exists() && it.readText().contains("versionCode = 673") }
             .readText()
-        assertTrue(buildFile.contains("versionName = \"6.72\""))
+        assertTrue(buildFile.contains("versionName = \"6.73\""))
     }
 
     @Test

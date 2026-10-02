@@ -1,3 +1,10 @@
+| **6.73** | **673** | 2026-10-02 | Issue 7 Activity Chart: verified existing fix (chronological data + LTR chart + test), documentation only | CI pending |
+
+## v6.73 release alignment
+- app/build.gradle.kts: versionName 6.73 / versionCode 673.
+- CI current gate: 6.73/673; previous-version upgrade gate: 6.72/672.
+- Documentation-only; no production code, Room schema or migration change.
+
 | **6.72** | **672** | 2026-10-02 | Fix unit-test compile error in StatisticsTest (suspend call outside coroutine); no production change | CI pending |
 
 ## v6.72 release alignment

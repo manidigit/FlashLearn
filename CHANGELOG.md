@@ -1,3 +1,9 @@
+## v6.73 — Issue 7 Activity Chart (verified, documentation)
+
+- The fix was already in the code but undocumented: `buildActivityData` returns days oldest → today, the chart Row/Canvas is wrapped in `LayoutDirection.Ltr` so bars, labels and the value axis share one direction, and `ActivityChartDataTest` asserts the weekday order.
+- v6.72 CI was green, so that test passed.
+- No production code changed in this version.
+
 ## v6.72 — StatisticsTest compile fix
 
 - Fixed `:domain:compileDebugUnitTestKotlin` failure: `statisticsAggregate_preservesCountsWithoutLoadingHistoryObjects` called suspend `CalculateStatisticsUseCase.invoke` outside a coroutine; the test now runs inside `runBlocking`.
