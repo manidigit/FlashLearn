@@ -1,3 +1,10 @@
+## v6.80 — Quiz transition prefetch fix
+
+- Next Quiz question is prefetched during feedback.
+- Quiz-to-Quiz transition no longer enters the loading/refresh state.
+- Release identity: 6.80 / 680; previous gate: 6.79 / 679.
+- CI verification pending.
+
 ## v6.79 — Backup export format removal
 
 - CSV and SQLite were removed as executable backup/data-export formats.
