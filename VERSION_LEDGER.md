@@ -1,3 +1,10 @@
+| **6.74** | **674** | 2026-10-02 | Issue 4: fix crash when opening Category selection (Library and Review) — %d resources received text arguments | CI pending |
+
+## v6.74 release alignment
+- app/build.gradle.kts: versionName 6.74 / versionCode 674.
+- CI current gate: 6.74/674; previous-version upgrade gate: 6.73/673.
+- Four string resources changed from %1$d to %1$s (fa + en); no Room schema or migration change.
+
 | **6.73** | **673** | 2026-10-02 | Issue 7 Activity Chart: verified existing fix (chronological data + LTR chart + test), documentation only | CI pending |
 
 ## v6.73 release alignment

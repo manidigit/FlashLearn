@@ -1,3 +1,10 @@
+## v6.74 — Issue 4: Category click crash
+
+- Root cause: `CategorySelectionScreen` (shared by Library and Review) and `LibraryScreenV2` passed Persian-digit text (`toFaDigits(...)`) to string resources declared with `%1$d`. Android formatting then throws `IllegalFormatConversionException` the first time the screen is composed, so the app closed as soon as the category list opened.
+- Fix: `category_words`, `category_selected_count`, `library_selected_categories` and `library_merged_duplicates` now use `%1$s` in both Persian and English catalogs. Displayed digits are unchanged (Persian digits, same as the rest of the Library screen).
+- Test: `StringFormatArgumentContractTest` scans all resources and Kotlin sources and fails if a numeric-format resource receives a text argument.
+- No Room schema or migration change.
+
 ## v6.73 — Issue 7 Activity Chart (verified, documentation)
 
 - The fix was already in the code but undocumented: `buildActivityData` returns days oldest → today, the chart Row/Canvas is wrapped in `LayoutDirection.Ltr` so bars, labels and the value axis share one direction, and `ActivityChartDataTest` asserts the weekday order.
