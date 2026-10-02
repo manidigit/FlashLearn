@@ -10,7 +10,7 @@ class FinalReleaseAuditContractTest {
         val buildFile = sequenceOf(File("build.gradle.kts"), File("app/build.gradle.kts"))
             .first { it.exists() && it.readText().contains("versionCode = 670") }
             .readText()
-        assertTrue(buildFile.contains("versionName = \"6.69\""))
+        assertTrue(buildFile.contains("versionName = \"6.70\""))
     }
 
     @Test
