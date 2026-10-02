@@ -1,3 +1,11 @@
+## v6.78 — Quiz feedback stability / release synchronization
+- Advanced application identity to 6.78 / versionCode 678.
+- Previous-version upgrade gate is 6.77 / 677.
+- Quiz feedback timer is cancellable and guarded by session generation and session identity.
+- Feedback/card replacement is state-safe and visually transitioned with Crossfade.
+- Release documentation and CI gates are synchronized.
+- GitHub Actions remains the authoritative verification gate; this checkpoint is not marked verified until Build + Unit Test and Instrumentation + Upgrade Gate pass.
+
 ## v6.21 — Modern Minimal + CI/instrumentation reconciliation
 - Application identity: 6.21 / 121; previous-version gate: 6.20 / 120.
 - Scope: Modern Minimal runtime presentation, theme-token hardening, and CI/instrumentation reconciliation.
