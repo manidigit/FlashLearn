@@ -17,12 +17,28 @@ class TypedBackupRepository @Inject constructor(
     private val fullBackupRepository: RoomBackupRepository,
     private val vocabularyBackupRepository: VocabularyBackupRepository
 ) {
+    suspend fun exportBundle(types: Set<BackupType>): String {
+        require(types.isNotEmpty()) { "حداقل یک نوع پشتیبان انتخاب شود" }
+        require(BackupType.FULL !in types || types.size == 1) { "پشتیبان کامل به‌تنهایی انتخاب شود" }
+        val root = JSONObject()
+            .put("schemaVersion", 3)
+            .put("exportedAt", Instant.now().toString())
+            .put("backupType", "BUNDLE")
+            .put("backupTypes", JSONArray(types.map { it.name }))
+        val payloads = JSONObject()
+        types.forEach { selectedType ->
+            payloads.put(selectedType.name, JSONObject(export(selectedType)))
+        }
+        root.put("payloads", payloads)
+        return root.toString()
+    }
+
     suspend fun export(type: BackupType): String {
         val root = JSONObject().put("schemaVersion", 2).put("exportedAt", Instant.now().toString()).put("backupType", type.name)
         when (type) {
             BackupType.VOCABULARY -> {
                 root.put("concepts", JSONArray(db.conceptDao().getAll().map { JSONObject().put("id", it.id.toString()).put("entryType", it.entryType).put("categoryId", it.categoryId?.toString()).put("favorite", it.favorite).put("active", it.active).put("createdAt", it.createdAt.toString()).put("updatedAt", it.updatedAt.toString()) }))
-                root.put("contents", JSONArray(db.contentDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection).put("translationIndex", it.translationIndex).put("pronunciation", it.pronunciation).put("example", it.example) }))
+                root.put("contents", JSONArray(db.contentDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("languageCode", it.languageCode).put("text", it.text).put("canonicalKey", it.canonicalKey).put("notes", it.notes).put("grammarNote", it.grammarNote).put("possibleCorrection", it.possibleCorrection).put("translationIndex", it.translationIndex) }))
                 root.put("tags", JSONArray(db.tagDao().getAll().map { JSONObject().put("id", it.id.toString()).put("name", it.name) }))
                 root.put("categories", JSONArray(db.categoryDao().getAll().map { JSONObject().put("id", it.id.toString()).put("name", it.name) }))
                 root.put("relations", JSONArray(db.vocabularyRelationDao().getAll().map { JSONObject().put("id", it.id.toString()).put("sourceConceptId", it.sourceConceptId.toString()).put("targetConceptId", it.targetConceptId?.toString()).put("relationType", it.relationType).put("unresolvedText", it.unresolvedText) }))
@@ -33,6 +49,7 @@ class TypedBackupRepository @Inject constructor(
             BackupType.PROGRESS -> {
                 root.put("learningStates", JSONArray(db.learningStateDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("stage", it.stage).put("nextReviewAt", it.nextReviewAt?.toString()).put("monthlyWrongCount", it.monthlyWrongCount).put("hasPathFailure", it.hasPathFailure).put("totalCorrect", it.totalCorrect).put("totalWrong", it.totalWrong).put("lastReviewedAt", it.lastReviewedAt?.toString()) }))
                 root.put("difficultyStates", JSONArray(db.difficultyStateDao().getAll().map { JSONObject().put("id", it.id.toString()).put("conceptId", it.conceptId.toString()).put("current", it.current).put("consecutiveCorrect", it.consecutiveCorrect).put("consecutiveWrong", it.consecutiveWrong).put("hasReachedVeryHard", it.hasReachedVeryHard) }))
+                root.put("settings", JSONArray(db.settingsDao().getAll().map { JSONObject().put("key", it.key).put("value", it.value).put("updatedAt", it.updatedAt) }))
                 root.put("reviewSessions", JSONArray(db.reviewSessionDao().getAll().map { JSONObject().put("id", it.id.toString()).put("startedAt", it.startedAt.toString()).put("endedAt", it.endedAt?.toString()).put("reviewType", it.reviewType) }))
                 root.put("reviewHistory", JSONArray(db.reviewHistoryDao().getAll().map { JSONObject().put("id", it.id.toString()).put("sessionId", it.sessionId.toString()).put("reviewAttemptId", it.reviewAttemptId.toString()).put("conceptId", it.conceptId.toString()).put("reviewedAt", it.reviewedAt.toString()).put("isCorrect", it.isCorrect).put("reviewType", it.reviewType) }))
             }
@@ -52,6 +69,48 @@ class TypedBackupRepository @Inject constructor(
         }
     } catch (_: Exception) {
         RestoreResult(0, 0, listOf("INVALID_JSON"))
+    }
+
+    suspend fun restoreBundle(json: String): RestoreResult {
+        return try {
+            val root = JSONObject(json)
+            if (root.optInt("schemaVersion", -1) != 3 || root.optString("backupType") != "BUNDLE") {
+                RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP_BUNDLE"))
+            } else {
+                val types = root.optJSONArray("backupTypes")
+                val payloads = root.optJSONObject("payloads")
+                if (types == null) RestoreResult(0, 0, listOf("MISSING_BACKUP_TYPES"))
+                else if (payloads == null) RestoreResult(0, 0, listOf("MISSING_BACKUP_PAYLOADS"))
+                else {
+                    val requested = buildList {
+                        for (i in 0 until types.length()) {
+                            runCatching { BackupType.valueOf(types.getString(i)) }.getOrNull()?.let { add(it) }
+                        }
+                    }.distinct()
+                    if (requested.isEmpty() || (BackupType.FULL in requested && requested.size > 1)) {
+                        RestoreResult(0, 0, listOf("INVALID_BACKUP_TYPES"))
+                    } else {
+                        var newCount = 0
+                        var mergedCount = 0
+                        val issues = mutableListOf<String>()
+                        requested.forEach { selectedType ->
+                            val payload = payloads.optJSONObject(selectedType.name)
+                            if (payload == null) {
+                                issues += "${selectedType.name}:MISSING_BACKUP_PAYLOAD"
+                            } else {
+                                val result = restore(selectedType, payload.toString())
+                                newCount += result.newCount
+                                mergedCount += result.mergedCount
+                                issues += result.issues.map { "${selectedType.name}:$it" }
+                            }
+                        }
+                        RestoreResult(newCount, mergedCount, issues)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            RestoreResult(0, 0, listOf("INVALID_JSON"))
+        }
     }
 
     private suspend fun restoreVocabulary(root: JSONObject): RestoreResult {
@@ -76,7 +135,7 @@ class TypedBackupRepository @Inject constructor(
             val conceptId = o.optString("conceptId")
             if (runCatching { UUID.fromString(conceptId) }.isFailure) return RestoreResult(0, 0, listOf("INVALID_UUID:contents"))
             if (o.optString("languageCode").isBlank() || o.optString("text").isBlank()) return RestoreResult(0, 0, listOf("INVALID_VALUE:contents"))
-            contentByConcept.getOrPut(conceptId) { mutableListOf() }.add(JSONObject().put("languageCode", o.optString("languageCode")).put("text", o.optString("text")))
+            contentByConcept.getOrPut(conceptId) { mutableListOf() }.add(JSONObject().put("languageCode", o.optString("languageCode")).put("text", o.optString("text")).put("notes", o.optString("notes")).put("grammarNote", o.optString("grammarNote")).put("possibleCorrection", o.optString("possibleCorrection")).put("translationIndex", o.optInt("translationIndex",0)))
         }
         val nestedConcepts = JSONArray()
         val seenConceptIds = mutableSetOf<String>()
@@ -87,7 +146,7 @@ class TypedBackupRepository @Inject constructor(
             if (contentByConcept[id].isNullOrEmpty()) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_contents"))
             val categoryId = o.optString("categoryId")
             if (categoryId.isNotBlank() && categoryId !in categoryNames) return RestoreResult(0, 0, listOf("INVALID_REFERENCE:concept_category"))
-            nestedConcepts.put(JSONObject().put("uuid", id).put("contentType", o.optString("entryType", "WORD")).put("favorite", o.optBoolean("favorite", false)).put("active", o.optBoolean("active", true)).put("categoryName", categoryNames[categoryId]).put("contents", JSONArray(contentByConcept[id]!!)))
+            nestedConcepts.put(JSONObject().put("uuid", id).put("contentType", o.optString("entryType", "WORD")).put("favorite", o.optBoolean("favorite", false)).put("active", o.optBoolean("active", true)).put("categoryName", categoryNames[categoryId]).put("createdAt", o.optString("createdAt")).put("updatedAt", o.optString("updatedAt")).put("contents", JSONArray(contentByConcept[id]!!)))
         }
         nested.put("concepts", nestedConcepts)
         return vocabularyBackupRepository.restore(nested.toString())
@@ -98,6 +157,7 @@ class TypedBackupRepository @Inject constructor(
         val difficulty = root.optJSONArray("difficultyStates") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_PROGRESS_SECTION:difficultyStates"))
         val sessions = root.optJSONArray("reviewSessions") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_PROGRESS_SECTION:reviewSessions"))
         val history = root.optJSONArray("reviewHistory") ?: return RestoreResult(0, 0, listOf("MISSING_TYPED_PROGRESS_SECTION:reviewHistory"))
+        val settings = root.optJSONArray("settings") ?: JSONArray()
         val issues = mutableListOf<String>()
         val conceptIds = db.conceptDao().getAll().map { it.id }.toSet()
         val sessionIds = mutableSetOf<UUID>()

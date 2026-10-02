@@ -54,6 +54,7 @@ class ProgressUseCaseTest {
         assertEquals(1, result.weeklyConcepts)
         assertEquals(1, result.monthlyConcepts)
         assertEquals(1, result.learnedConcepts)
+        assertEquals(result.totalConcepts, result.dailyConcepts + result.weeklyConcepts + result.monthlyConcepts + result.learnedConcepts)
         assertEquals(2, result.pathFailureConcepts)
         assertEquals(1, result.easyConcepts)
         assertEquals(1, result.mediumConcepts)

@@ -20,7 +20,7 @@ import org.json.JSONObject
 import java.io.File
 import javax.inject.Inject
 
-data class BackupUiState(val busy: Boolean = false, val message: String? = null, val exportedJson: String? = null, val exportedType: BackupType = BackupType.FULL, val exportedFile: File? = null, val exportedFormat: ExportFormat? = null)
+data class BackupUiState(val busy: Boolean = false, val message: String? = null, val exportedJson: String? = null, val exportedType: BackupType = BackupType.FULL, val exportedLabel: String = "پشتیبان", val selectedTypes: Set<BackupType> = setOf(BackupType.VOCABULARY, BackupType.PROGRESS), val exportedFile: File? = null, val exportedFormat: ExportFormat? = null)
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
@@ -32,6 +32,29 @@ class BackupViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(BackupUiState())
     val state: StateFlow<BackupUiState> = _state
+
+    fun toggleBackupType(type: BackupType) {
+        val current = _state.value.selectedTypes.toMutableSet()
+        if (type == BackupType.FULL) {
+            _state.value = _state.value.copy(selectedTypes = if (BackupType.FULL in current) emptySet() else setOf(BackupType.FULL))
+            return
+        }
+        current.remove(BackupType.FULL)
+        if (!current.add(type)) current.remove(type)
+        _state.value = _state.value.copy(selectedTypes = current)
+    }
+
+    fun exportSelected() = viewModelScope.launch {
+        val types = _state.value.selectedTypes
+        if (types.isEmpty() || _state.value.busy) return@launch
+        _state.value = _state.value.copy(busy = true, message = "در حال ساخت پشتیبان…", exportedJson = null)
+        runCatching { withContext(Dispatchers.IO) { typedRepo.exportBundle(types) } }
+            .onSuccess { json ->
+                val label = if (types.size == 1 && BackupType.FULL in types) "پشتیبان کامل" else "پشتیبان ترکیبی (${types.joinToString("، ") { it.name }})"
+                _state.value = _state.value.copy(busy = false, message = "${label} آماده است.", exportedJson = json, exportedLabel = label)
+            }
+            .onFailure { e -> _state.value = _state.value.copy(busy = false, message = "ساخت پشتیبان ناموفق بود: ${e.message ?: "خطای نامشخص"}") }
+    }
 
     fun export(type: BackupType = BackupType.FULL) = viewModelScope.launch {
         if (_state.value.busy) return@launch
@@ -72,6 +95,7 @@ class BackupViewModel @Inject constructor(
             backupType == "VOCABULARY" && schema == 2 -> typedRepo.restore(BackupType.VOCABULARY, normalized)
             backupType == "PROGRESS" && schema == 2 -> typedRepo.restore(BackupType.PROGRESS, normalized)
             backupType == "FULL" && schema == 2 -> typedRepo.restore(BackupType.FULL, normalized)
+            backupType == "BUNDLE" && schema == 3 -> typedRepo.restoreBundle(normalized)
             else -> RestoreResult(0, 0, listOf("UNSUPPORTED_BACKUP_FORMAT"))
         }
     }

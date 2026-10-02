@@ -3,6 +3,7 @@ package com.flashlearn.domain.usecase
 import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 
@@ -29,6 +30,31 @@ class GetThresholdDifficultyUseCase @Inject constructor(
         )
 }
 
+class EnsureStatesUseCase @Inject constructor(
+    private val conceptRepository: ConceptRepository,
+    private val learningStateRepository: LearningStateRepository,
+    private val difficultyStateRepository: DifficultyStateRepository
+) {
+    suspend operator fun invoke(now: Instant = Instant.now()) {
+        val concepts = conceptRepository.getAllActive()
+        val learningByConcept = learningStateRepository.getAll().associateBy { it.conceptId }
+        val difficultyByConcept = difficultyStateRepository.getAll().associateBy { it.conceptId }
+
+        concepts.forEach { concept ->
+            if (concept.id !in learningByConcept) {
+                learningStateRepository.upsert(
+                    LearningState(UUID.randomUUID(), concept.id, Stage.DAILY, now, 0, false, 0, 0, null)
+                )
+            }
+            if (concept.id !in difficultyByConcept) {
+                difficultyStateRepository.upsert(
+                    DifficultyState(UUID.randomUUID(), concept.id, VocabularyDifficulty.EASY, 0, 0, false)
+                )
+            }
+        }
+    }
+}
+
 class GetProgressSummaryUseCase @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val learningStateRepository: LearningStateRepository
@@ -37,8 +63,6 @@ class GetProgressSummaryUseCase @Inject constructor(
         val concepts = conceptRepository.getAllActive()
         val statesById = learningStateRepository.getAll().associateBy { it.conceptId }
 
-        // Summary screens used to query LearningState once per concept. That is an N+1
-        // pattern and becomes visibly slow after a large backup restore. Join in memory.
         var learned = 0
         var due = 0
         var dailyDue = 0
@@ -48,11 +72,12 @@ class GetProgressSummaryUseCase @Inject constructor(
         var wrong = 0
 
         concepts.forEach { concept ->
-            val state = statesById[concept.id]
-                ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${concept.id}")
+            val state = statesById[concept.id] ?: return@forEach
 
             if (state.stage == Stage.LEARNED) learned++
-            if (state.stage != Stage.LEARNED && (state.nextReviewAt == null || state.nextReviewAt <= now)) {
+
+            val reviewedToday = wasReviewedToday(state.lastReviewedAt, now, ZoneId.systemDefault())
+            if (!reviewedToday && state.stage != Stage.LEARNED && (state.nextReviewAt == null || state.nextReviewAt <= now)) {
                 due++
                 when (state.stage) {
                     Stage.DAILY -> dailyDue++
@@ -81,3 +106,4 @@ class GetProgressSummaryUseCase @Inject constructor(
         )
     }
 }
+

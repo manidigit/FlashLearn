@@ -1,0 +1,66 @@
+package com.flashlearn.app.ui.theme
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class GtpThemeContractTest {
+
+    @Test
+    fun gtpIsTheFourthBuiltInTheme() {
+        assertEquals(4, FlashLearnThemeSpec.BUILT_IN.size)
+        assertEquals("gtp", FlashLearnThemeSpec.BUILT_IN[3].id)
+        assertEquals("GTP", FlashLearnThemeSpec.GTP.name)
+    }
+
+    @Test
+    fun gtpHasDistinctDesignTokens() {
+        val gtp = FlashLearnThemeSpec.GTP
+        assertEquals("filled", gtp.iconStyle)
+        assertEquals(IconStyle.FILLED, gtp.design.iconStyle)
+        assertEquals(IconStyle.FILLED, gtp.design.activeIconStyle)
+        assertEquals(6f, gtp.cornerSmall, 0.001f)
+        assertEquals(12f, gtp.cornerMedium, 0.001f)
+        assertEquals(18f, gtp.cornerLarge, 0.001f)
+        assertTrue(gtp.elevationScale > 1.4f)
+        assertTrue(gtp.typographyScale > 1.05f)
+        assertTrue(gtp.densityScale < 0.98f)
+        assertTrue(gtp.spacingScale < 0.95f)
+        assertTrue(gtp.lightPrimary != FlashLearnThemeSpec.GROK.lightPrimary)
+        assertTrue(gtp.lightSecondary != FlashLearnThemeSpec.GROK.lightSecondary)
+    }
+
+    @Test
+    fun grokOwnsTheReferenceLayoutContract() {
+        val grok = FlashLearnThemeSpec.GROK
+        assertEquals(ButtonStyle.FILLED, grok.design.buttonStyle)
+        assertEquals(NavigationStyle.PILL, grok.design.navStyle)
+        assertEquals(StatsLayoutStrategy.GRID_4_COLUMNS, grok.design.statsLayout)
+        assertEquals(ReviewsLayoutStrategy.HORIZONTAL_CARDS, grok.design.reviewsLayout)
+        assertEquals(LibraryLayoutStrategy.GRID_2_COLUMNS, grok.design.libraryLayout)
+        assertEquals(ReviewPresentation.SWIPE_STACK, grok.design.reviewPresentation)
+        assertEquals(20f, grok.design.metric("screenPadding"), 0.001f)
+        assertEquals(18f, grok.design.metric("sectionGap"), 0.001f)
+        assertTrue(grok.design.metric("cardBorderAlpha") > 0.5f)
+        assertEquals("outlined", grok.iconStyle)
+        assertEquals(IconStyle.OUTLINED, grok.design.iconStyle)
+        assertEquals(IconStyle.FILLED, grok.design.activeIconStyle)
+    }
+
+
+    @Test
+    fun runtimeVisualOwnershipIsSingleSourcedInThemeDesign() {
+        FlashLearnThemeSpec.BUILT_IN.forEach { spec ->
+            assertEquals(spec.elevationScale, spec.design.metric("elevationScale"), 0.001f)
+            assertEquals(spec.typographyScale, spec.design.metric("typographyScale"), 0.001f)
+            assertEquals(spec.densityScale, spec.design.metric("densityScale"), 0.001f)
+            assertEquals(spec.spacingScale, spec.design.metric("spacingScale"), 0.001f)
+            assertEquals(spec.cornerSmall, spec.design.metric("cornerSmall"), 0.001f)
+            assertEquals(spec.cornerMedium, spec.design.metric("cornerMedium"), 0.001f)
+            assertEquals(spec.cornerLarge, spec.design.metric("cornerLarge"), 0.001f)
+            assertTrue(spec.design.metric("adaptiveMediumBreakpoint") > 0f)
+            assertTrue(spec.design.metric("adaptiveExpandedBreakpoint") > spec.design.metric("adaptiveMediumBreakpoint"))
+        }
+    }
+
+}

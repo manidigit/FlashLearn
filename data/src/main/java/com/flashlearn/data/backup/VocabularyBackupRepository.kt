@@ -50,7 +50,8 @@ class VocabularyBackupRepository @Inject constructor(
 
             data class Incoming(
                 val concept: ConceptEntity,
-                val contents: List<ContentEntity>
+                val contents: List<ContentEntity>,
+                val categoryName: String?
             )
 
             val now = Instant.now()
@@ -65,7 +66,7 @@ class VocabularyBackupRepository @Inject constructor(
                 val entryType = item.optString("contentType", "WORD").uppercase()
                 require(entryType in validEntryTypes) { "INVALID_VALUE:contentType" }
 
-                val byLanguage = linkedMapOf<String, MutableList<String>>()
+                val byLanguage = linkedMapOf<String, MutableList<JSONObject>>()
                 val contentsJson = item.getJSONArray("contents")
                 for (j in 0 until contentsJson.length()) {
                     val content = contentsJson.getJSONObject(j)
@@ -74,19 +75,28 @@ class VocabularyBackupRepository @Inject constructor(
                     // Some legacy vocabulary exports contain empty placeholder translations.
                     // They are not real vocabulary values and must not abort the whole 8k+ import.
                     if (language.isEmpty() || text.isEmpty()) continue
-                    byLanguage.getOrPut(language) { mutableListOf() }.let { values ->
-                        if (text !in values) values += text
-                    }
+                    byLanguage.getOrPut(language) { mutableListOf() }.let { values -> if (values.none { it.optString("text") == text }) values += content }
                 }
                 require(byLanguage.isNotEmpty()) { "INVALID_VALUE:contents" }
 
                 val note = item.optString("notes").takeIf { it.isNotBlank() && it != "null" }
-                val concept = ConceptEntity(id, entryType, null, false, true, now, now)
-                val contents = byLanguage.map { (language, values) ->
-                    val mergedText = values.joinToString(" / ")
-                    ContentEntity(UUID.randomUUID(), id, language, mergedText, computeCanonicalKey(mergedText), note, null, null)
+                val categoryName = item.optString("categoryName").trim().takeIf { it.isNotBlank() }
+                val createdAt = item.optString("createdAt").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
+                val updatedAt = item.optString("updatedAt").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
+                val concept = ConceptEntity(id, entryType, null, item.optBoolean("favorite", false), item.optBoolean("active", true), createdAt, updatedAt)
+                val contents = byLanguage.flatMap { (language, values) ->
+                    values.mapIndexed { index, o ->
+                        val value = o.optString("text").trim()
+                        ContentEntity(
+                            UUID.randomUUID(), id, language, value, computeCanonicalKey(value),
+                            o.optString("notes").takeIf { it.isNotBlank() && it != "null" } ?: note,
+                            o.optInt("translationIndex", index),
+                            o.optString("grammarNote").takeIf { it.isNotBlank() && it != "null" },
+                            o.optString("possibleCorrection").takeIf { it.isNotBlank() && it != "null" }
+                        )
+                    }
                 }
-                incoming += Incoming(concept, contents)
+                incoming += Incoming(concept, contents, categoryName)
             }
 
             db.withTransaction {
@@ -99,6 +109,7 @@ class VocabularyBackupRepository @Inject constructor(
                 if (categoryEntities.isNotEmpty()) db.categoryDao().insertAll(categoryEntities)
 
                 val conceptEntities = ArrayList<ConceptEntity>(incoming.size)
+                val categoryIdsByName = categoryNames.associateWith { name -> db.categoryDao().findByName(name)?.id }
                 val contentEntities = ArrayList<ContentEntity>()
                 val learningEntities = ArrayList<LearningStateEntity>()
                 val difficultyEntities = ArrayList<DifficultyStateEntity>()
@@ -108,7 +119,7 @@ class VocabularyBackupRepository @Inject constructor(
                 for (item in incoming) {
                     val existing = existingConcepts[item.concept.id]
                     if (existing == null) {
-                        conceptEntities += item.concept
+                        conceptEntities += item.concept.copy(categoryId = item.categoryName?.let { categoryIdsByName[it] })
                         learningEntities += LearningStateEntity(UUID.randomUUID(), item.concept.id, Stage.DAILY.name, now, 0, false, 0, 0, null)
                         difficultyEntities += DifficultyStateEntity(UUID.randomUUID(), item.concept.id, VocabularyDifficulty.EASY.name, 0, 0, false)
                         newCount++
@@ -118,17 +129,17 @@ class VocabularyBackupRepository @Inject constructor(
                         mergedCount++
                     }
 
-                    val oldByLanguage = existingContents[item.concept.id].orEmpty().associateBy { it.languageCode }
+                    val oldByIdentity = existingContents[item.concept.id].orEmpty().associateBy { it.languageCode + "\u0000" + it.translationIndex }
                     for (content in item.contents) {
-                        val old = oldByLanguage[content.languageCode]
+                        val old = oldByIdentity[content.languageCode + "\u0000" + content.translationIndex]
                         if (old == null) {
                             contentEntities += content
                         } else {
                             contentEntities += content.copy(
                                 id = old.id,
                                 notes = content.notes ?: old.notes,
-                                pronunciation = old.pronunciation,
-                                example = old.example
+                                grammarNote = content.grammarNote ?: old.grammarNote,
+                                possibleCorrection = content.possibleCorrection ?: old.possibleCorrection
                             )
                         }
                     }

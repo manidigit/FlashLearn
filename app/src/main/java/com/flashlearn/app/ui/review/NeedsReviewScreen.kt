@@ -15,16 +15,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.model.ReviewQueueItem
 
 @Composable
-fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
+fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit, onApprove: (ReviewQueueItem) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val items by viewModel.items.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -43,15 +45,15 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("نیازمند بررسی دستی", style = MaterialTheme.typography.headlineSmall)
-                Button(onClick = onBack) { Text("بازگشت") }
+                Text(stringResource(R.string.needs_review_title), style = MaterialTheme.typography.headlineSmall)
+                Button(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             }
             if (items.isEmpty()) {
-                Text("صف بررسی خالی است.")
+                Text(stringResource(R.string.needs_review_empty))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
                     items(items, key = { it.id }) { item ->
-                        ReviewQueueCard(item, viewModel)
+                        ReviewQueueCard(item, onApprove = { onApprove(item) }, onReject = { viewModel.reject(item) })
                     }
                 }
             }
@@ -60,7 +62,7 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewModel) {
+private fun ReviewQueueCard(item: ReviewQueueItem, onApprove: () -> Unit, onReject: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -74,14 +76,14 @@ private fun ReviewQueueCard(item: ReviewQueueItem, viewModel: NeedsReviewViewMod
             verticalArrangement = Arrangement.spacedBy(tokens.contentGap * 0.875f)
         ) {
             Text(item.sourceText, style = MaterialTheme.typography.titleMedium)
-            Text(item.targetText ?: "بدون ترجمه")
-            Text("اعتماد: ${(item.confidence * 100).toInt()}٪")
-            item.possibleCorrection?.let { Text("پیشنهاد اصلاح: $it") }
-            item.lineNumber?.let { Text("خط: $it") }
+            Text(item.targetText ?: stringResource(R.string.needs_review_no_translation))
+            Text(stringResource(R.string.needs_review_confidence, (item.confidence * 100).toInt()))
+            item.possibleCorrection?.let { Text(stringResource(R.string.needs_review_correction, it)) }
+            item.lineNumber?.let { Text(stringResource(R.string.needs_review_line, it)) }
             item.warning?.let { Text(it) }
             Row(horizontalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
-                Button(onClick = { viewModel.approve(item) }) { Text("تأیید") }
-                Button(onClick = { viewModel.reject(item) }) { Text("رد") }
+                Button(onClick = onApprove) { Text(stringResource(R.string.needs_review_approve)) }
+                Button(onClick = onReject) { Text(stringResource(R.string.needs_review_reject)) }
             }
         }
     }

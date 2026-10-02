@@ -11,23 +11,48 @@ android {
 
     defaultConfig {
         applicationId = "com.flashlearn.app"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
-        versionCode = 625
-        versionName = "6.25"
+        versionCode = 669
+        versionName = "6.69"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "VERSION_CODE_NAME", "\"625\"")
+        buildConfigField("String", "VERSION_CODE_NAME", "\"669\"")
         buildConfigField("String", "BUILD_TYPE", "\"${buildTypes.getByName("release").name}\"")
-        buildConfigField("String", "BUILD_DATE", "\"2026-09-25\"")
-        buildConfigField("String", "THEME_VERSION", "\"2.0-Complete\"")
-        buildConfigField("String", "THEME_STATUS", "\"۳ Screens Fixed, 8 Patterns Ready\"")
+        buildConfigField("String", "BUILD_DATE", "\"2026-10-02\"")
+        buildConfigField("String", "THEME_VERSION", "\"3.3-ADAPTIVE\"")
+        buildConfigField("String", "THEME_STATUS", "\"ThemeDesign-owned adaptive layout, localization and visual tokens\"")
+        buildConfigField("String", "APP_GITHUB_URL", "\"https://github.com/manidigit/FlashLearn\"")
+        buildConfigField("String", "APP_AUTHOR", "\"Mani\"")
+        buildConfigField("String", "APP_LANGUAGE", "\"English / Persian\"")
+        buildConfigField("String", "APP_DATABASE", "\"Room\"")
+        buildConfigField("String", "APP_AI_ASSISTANT", "\"ChatGPT\"")
+        buildConfigField("String", "APP_BUILD_DATE", "\"2026-10-02\"")
+    }
+
+    signingConfigs {
+        val ciDebugKeystore = rootProject.file("keystore/debug.keystore")
+        if (ciDebugKeystore.exists()) {
+            create("ciDebug") {
+                storeFile = ciDebugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "androiddebugkey"
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            val ciDebugKeystore = rootProject.file("keystore/debug.keystore")
+            if (ciDebugKeystore.exists()) {
+                signingConfig = signingConfigs.getByName("ciDebug")
+            }
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -43,14 +68,20 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":database"))
+    implementation(project(":core"))
+
     // Androidx
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
@@ -60,20 +91,20 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.5.4")
     implementation("androidx.compose.ui:ui-graphics:1.5.4")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
-    implementation("androidx.compose.material3:material3:1.1.1")
-    
-    // Room
-    implementation("androidx.room:room-runtime:2.6.0")
-    kapt("androidx.room:room-compiler:2.6.0")
-    implementation("androidx.room:room-ktx:2.6.0")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
     
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.4")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
 

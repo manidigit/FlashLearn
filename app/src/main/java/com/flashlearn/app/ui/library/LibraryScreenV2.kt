@@ -9,11 +9,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.LanguagePair
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
@@ -30,25 +33,25 @@ fun LibraryScreenV2(
     onAddWord: () -> Unit
 ) {
     val tokens = LocalFlashLearnThemeTokens.current
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     var duplicateMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(languagePair) { viewModel.setLanguagePair(languagePair) }
-    LaunchedEffect(Unit) { viewModel.refresh() }
-
+    
     Column(
         Modifier.fillMaxSize().padding(horizontal = tokens.screenPadding, vertical = tokens.dp(8f))
     ) {
-        FlashLearnScreenHeader(title = "واژگان", onBack = onBack)
+        FlashLearnScreenHeader(title = stringResource(R.string.library_title), onBack = onBack)
 
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::onQueryChange,
             modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
             placeholder = {
-                Text("جستجو در واژگان...", Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.onSurfaceVariant)
+                Text(stringResource(R.string.library_search), Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = tokens.onSurfaceVariant)
             },
-            trailingIcon = { Icon(Icons.Outlined.Search, "جستجو", tint = tokens.primary) },
+            trailingIcon = { Icon(Icons.Outlined.Search, stringResource(R.string.library_search), tint = tokens.primary) },
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
@@ -61,17 +64,17 @@ fun LibraryScreenV2(
 
         Spacer(Modifier.height(tokens.sectionGap))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.dp(9f))) {
-            StatCard("جدید", state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), Icons.Outlined.Add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
-            StatCard("در حال یادگیری", state.learningCount, tokens.secondary, tokens.secondary.copy(alpha = .10f), Icons.Outlined.History, Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
-            StatCard("یادگرفته", state.learnedCount, tokens.success, tokens.success.copy(alpha = .10f), Icons.Outlined.CheckCircle, Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
-            StatCard("کل واژگان", state.totalCount, tokens.primary, tokens.surfaceVariant, Icons.Outlined.Book, Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
+            StatCard(stringResource(R.string.library_new), state.newCount, tokens.warning, tokens.warning.copy(alpha = .10f), Icons.Outlined.Add, Modifier.weight(1f), state.filter == LibraryFilter.NEW) { viewModel.onFilterChange(LibraryFilter.NEW) }
+            StatCard(stringResource(R.string.library_learning), state.learningCount, tokens.secondary, tokens.secondary.copy(alpha = .10f), Icons.Outlined.History, Modifier.weight(1f), state.filter == LibraryFilter.LEARNING) { viewModel.onFilterChange(LibraryFilter.LEARNING) }
+            StatCard(stringResource(R.string.library_learned), state.learnedCount, tokens.success, tokens.success.copy(alpha = .10f), Icons.Outlined.CheckCircle, Modifier.weight(1f), state.filter == LibraryFilter.LEARNED) { viewModel.onFilterChange(LibraryFilter.LEARNED) }
+            StatCard(stringResource(R.string.library_total), state.totalCount, tokens.primary, tokens.surfaceVariant, Icons.Outlined.Book, Modifier.weight(1f), state.filter == LibraryFilter.ALL) { viewModel.onFilterChange(LibraryFilter.ALL) }
         }
 
         Spacer(Modifier.height(tokens.sectionGap))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-            Text("فیلترها", color = tokens.onSurface, style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.library_filters), color = tokens.onSurface, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.width(tokens.compactGap))
-            Icon(Icons.Outlined.FilterList, "فیلترها", tint = tokens.onSurface)
+            Icon(Icons.Outlined.FilterList, stringResource(R.string.library_filters), tint = tokens.onSurface)
         }
         Spacer(Modifier.height(tokens.compactGap))
 
@@ -82,12 +85,12 @@ fun LibraryScreenV2(
             border = BorderStroke(tokens.dp(1f), tokens.outlineColor)
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(14f), vertical = tokens.dp(12f)), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ChevronLeft, "انتخاب دسته", tint = tokens.onSurface)
+                Icon(Icons.Outlined.ChevronLeft, stringResource(R.string.library_choose_category), tint = tokens.onSurface)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("دسته‌بندی‌ها", color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.library_categories), color = tokens.onSurface, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else "${toFaDigits(state.selectedCategoryIds.size)} دسته انتخاب شده",
+                        if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.library_selected_categories, toFaDigits(state.selectedCategoryIds.size)),
                         color = tokens.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -95,7 +98,7 @@ fun LibraryScreenV2(
                 Spacer(Modifier.width(tokens.compactGap))
                 Surface(Modifier.size(tokens.dp(48f)), MaterialTheme.shapes.small, color = tokens.surfaceVariant) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Folder, "دسته‌بندی‌ها", tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge))
+                        Icon(Icons.Outlined.Folder, stringResource(R.string.library_categories), tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge))
                     }
                 }
             }
@@ -114,15 +117,15 @@ fun LibraryScreenV2(
                 modifier = Modifier.weight(1f).height(tokens.controlHeight),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(Icons.Outlined.Refresh, "رفرش واژگان", modifier = Modifier.size(tokens.iconMedium))
+                Icon(Icons.Outlined.Refresh, stringResource(R.string.library_refresh_words), modifier = Modifier.size(tokens.iconMedium))
                 Spacer(Modifier.width(tokens.compactGap))
-                Text("رفرش")
+                Text(stringResource(R.string.library_refresh))
             }
             FilledTonalButton(
                 onClick = {
                     duplicateMessage = null
                     viewModel.removeExactDuplicates { count ->
-                        duplicateMessage = if (count == 0) "تکراری پیدا نشد." else "${toFaDigits(count)} واژه تکراری Merge شد."
+                        duplicateMessage = if (count == 0) context.getString(R.string.library_find_duplicates) else context.getString(R.string.library_merged_duplicates, toFaDigits(count))
                     }
                 },
                 enabled = !state.isLoading && !state.isDuplicateCleanupBusy,
@@ -131,11 +134,11 @@ fun LibraryScreenV2(
             ) {
                 Icon(
                     if (state.isDuplicateCleanupBusy) Icons.Outlined.Sync else Icons.Outlined.Search,
-                    "تکراری‌ها",
+                    stringResource(R.string.library_duplicates),
                     modifier = Modifier.size(tokens.iconMedium)
                 )
                 Spacer(Modifier.width(tokens.compactGap))
-                Text(if (state.isDuplicateCleanupBusy) "در حال Merge..." else "تکراری‌ها")
+                Text(if (state.isDuplicateCleanupBusy) stringResource(R.string.library_merging) else stringResource(R.string.library_duplicates))
             }
         }
 
@@ -146,21 +149,21 @@ fun LibraryScreenV2(
 
         Spacer(Modifier.height(tokens.compactGap))
         when {
-            state.isLoading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            state.isLoading && state.items.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = tokens.primary)
             }
             state.error != null -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(state.error.orEmpty(), color = tokens.error, textAlign = TextAlign.Center)
             }
             state.items.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("واژه‌ای پیدا نشد.")
+                Text(stringResource(R.string.library_not_found))
             }
             else -> LazyColumn(
                 Modifier.weight(1f).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(tokens.itemGap),
                 contentPadding = PaddingValues(bottom = tokens.compactGap)
             ) {
-                items(state.items, key = { it.concept.id }) { item -> VocabularyCardV2(item, languagePair) { onOpen(item.concept.id) } }
+                items(state.items, key = { it.concept.id }) { item -> VocabularyCardV2(item, languagePair, onFavorite = { viewModel.toggleFavorite(item.concept.id) }) { onOpen(item.concept.id) } }
             }
         }
     }
@@ -186,11 +189,11 @@ private fun StatCard(title: String, value: Int, color: Color, background: Color,
 }
 
 @Composable
-private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onClick: () -> Unit) {
+private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onFavorite: () -> Unit, onClick: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = tokens.surface), border = BorderStroke(tokens.dp(1f), tokens.outlineColor)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = tokens.dp(12f), vertical = tokens.dp(11f)), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.MoreVert, "گزینه‌ها", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconMedium))
+            Icon(Icons.Outlined.MoreVert, stringResource(R.string.library_options), tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconMedium))
             Spacer(Modifier.width(tokens.compactGap))
             DifficultyPillV2(item.difficulty)
             Spacer(Modifier.weight(1f))
@@ -215,7 +218,7 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
                 item.category?.let { Text(it.name, color = tokens.secondary, style = MaterialTheme.typography.labelSmall) }
             }
             Spacer(Modifier.width(tokens.compactGap))
-            Icon(Icons.Outlined.StarBorder, "موردعلاقه", tint = tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge))
+            IconButton(onClick = onFavorite) { Icon(if (item.concept.favorite) Icons.Outlined.Star else Icons.Outlined.StarBorder, stringResource(R.string.library_favorite), tint = if (item.concept.favorite) tokens.primary else tokens.onSurfaceVariant, modifier = Modifier.size(tokens.iconLarge)) }
         }
     }
 }
@@ -224,11 +227,11 @@ private fun VocabularyCardV2(item: LibraryItem, languagePair: LanguagePair, onCl
 private fun DifficultyPillV2(difficulty: VocabularyDifficulty?) {
     val tokens = LocalFlashLearnThemeTokens.current
     val v = when (difficulty) {
-        VocabularyDifficulty.EASY -> Triple("آسان", tokens.success.copy(alpha = .10f), tokens.success)
-        VocabularyDifficulty.MEDIUM -> Triple("متوسط", tokens.warning.copy(alpha = .10f), tokens.warning)
-        VocabularyDifficulty.HARD -> Triple("سخت", tokens.error.copy(alpha = .10f), tokens.error)
-        VocabularyDifficulty.VERY_HARD -> Triple("خیلی سخت", tokens.error.copy(alpha = .10f), tokens.error)
-        null -> Triple("آسان", tokens.success.copy(alpha = .10f), tokens.success)
+        VocabularyDifficulty.EASY -> Triple(stringResource(R.string.difficulty_easy), tokens.success.copy(alpha = .10f), tokens.success)
+        VocabularyDifficulty.MEDIUM -> Triple(stringResource(R.string.difficulty_medium), tokens.warning.copy(alpha = .10f), tokens.warning)
+        VocabularyDifficulty.HARD -> Triple(stringResource(R.string.difficulty_hard), tokens.error.copy(alpha = .10f), tokens.error)
+        VocabularyDifficulty.VERY_HARD -> Triple(stringResource(R.string.difficulty_very_hard), tokens.error.copy(alpha = .10f), tokens.error)
+        null -> Triple(stringResource(R.string.difficulty_unknown), tokens.surfaceVariant, tokens.onSurfaceVariant)
     }
     Surface(shape = MaterialTheme.shapes.medium, color = v.second) {
         Text(v.first, color = v.third, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = tokens.dp(12f), vertical = tokens.dp(7f)))

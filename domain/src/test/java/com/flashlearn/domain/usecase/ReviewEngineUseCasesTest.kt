@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 
 class ReviewEngineUseCasesTest {
@@ -43,6 +44,36 @@ class ReviewEngineUseCasesTest {
     private fun concept(id: UUID, categoryId: UUID? = null, active: Boolean = true) = Concept(id, EntryType.WORD, categoryId, false, active, now, now)
     private fun learning(id: UUID, stage: Stage, due: Instant? = now.minusSeconds(1)) = LearningState(UUID.randomUUID(), id, stage, due, 0, false, 0, 0, null)
     private fun difficulty(id: UUID, level: VocabularyDifficulty) = DifficultyState(UUID.randomUUID(), id, level, 0, 0, false)
+
+    @Test
+    fun everyReviewMode_excludesConceptReviewedEarlierToday() = runBlocking {
+        val id = UUID.randomUUID()
+        val state = learning(id, Stage.DAILY).copy(lastReviewedAt = now.minusSeconds(60))
+        val repo = SelectReviewQueueUseCase(
+            CRepo(listOf(concept(id))),
+            LRepo(listOf(state)),
+            DRepo(listOf(difficulty(id, VocabularyDifficulty.EASY))),
+            TRepo(emptyMap())
+        )
+
+        assertTrue(repo(ReviewSelectionFilters(ReviewType.DAILY, now = now)).isEmpty())
+        assertTrue(repo(ReviewSelectionFilters(ReviewType.RANDOM, now = now)).isEmpty())
+    }
+
+    @Test
+    fun sameDayEligibility_usesLocalCalendarDate_not24HourWindow() = runBlocking {
+        val id = UUID.randomUUID()
+        val reviewTime = Instant.parse("2026-09-11T23:30:00Z")
+        val checkTime = Instant.parse("2026-09-12T00:30:00Z")
+        val repo = SelectReviewQueueUseCase(
+            CRepo(listOf(concept(id))),
+            LRepo(listOf(learning(id, Stage.DAILY, due = checkTime.minusSeconds(1)).copy(lastReviewedAt = reviewTime))),
+            DRepo(listOf(difficulty(id, VocabularyDifficulty.EASY))),
+            TRepo(emptyMap())
+        )
+
+        assertEquals(1, repo(ReviewSelectionFilters(ReviewType.DAILY, now = checkTime, zoneId = ZoneId.of("UTC"))).size)
+    }
 
     @Test fun dailyMode_returnsOnlyDueDailyCandidates() = runBlocking {
         val a = UUID.randomUUID(); val b = UUID.randomUUID()

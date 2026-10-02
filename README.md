@@ -1,269 +1,50 @@
-# 🎓 FlashLearn - Spanish/Persian Vocabulary Learning App
+# FlashLearn
 
-**Version:** 6.25 | **Theme System:** 2.0-Complete | **Date:** 2026-09-25
+Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
----
+**Current version:** 6.63 (versionCode 663)
 
-## 📱 About
+## Core features
 
-FlashLearn is a comprehensive offline language learning app for Spanish-Persian vocabulary using spaced repetition algorithm.
+- Spaced-repetition review: Daily → Weekly → Monthly → Learned
+- Independent vocabulary difficulty: Easy → Medium → Hard → Very Hard
+- Flashcard and 4-choice Quiz review
+- Bulk vocabulary import with parser warnings and review queue
+- Categories, favorites, tags and duplicate cleanup
+- Progress, statistics and achievements\n- Home review-ready counts separated from total words in each Learning stage
+- Review session language-pair routing, explicit flashcard next-card/quiz-skip controls, and same-day eligibility aligned with the active review queue
+- Offline-first Room database
+- Multiple built-in themes with a single ThemeDesign runtime source for layout, navigation, icons, spacing, shapes, typography, density, elevation and adaptive breakpoints; custom theme JSON compatibility is preserved
+- Backup/restore with legacy-format compatibility and combined multi-type backup bundles
 
-### Features
-- ✅ Spaced repetition learning
-- ✅ Quiz mode (4-choice)
-- ✅ Statistics dashboard
-- ✅ Multiple themes (GROK, CLAUD, Modern Minimal, etc)
-- ✅ Offline-first architecture
-- ✅ Room database
-- ✅ Jetpack Compose UI
+## Architecture
 
----
+- `app` — Android UI, Compose screens, ViewModels and navigation
+- `domain` — algorithms, parser, models, repositories and use cases
+- `data` — Room-backed repository implementations and backup/restore
+- `database` — Room entities, DAOs and migrations
+- `core` — Hilt dependency-injection bindings
+- Theme system — FlashLearnThemeSpec → ThemeDesign → FlashLearnThemeTokens is the single runtime visual path; legacy top-level visual fields are compatibility-only
 
-## 📊 Version 6.25 - Theme System Complete
+## Localization and adaptive UI\n\n- User-facing UI text belongs in Android string resources; Room stores user-created vocabulary/content, not static UI copy.\n- The active ThemeDesign owns adaptive breakpoints. Screens reflow from available width rather than targeting a specific phone model.\n- Material dynamic color is intentionally disabled so wallpaper colors cannot silently override a selected FlashLearn theme; every visual decision remains theme-owned.\n\n## Build and test
 
-### 🎨 What's New
-
-**Theme System Overhaul:**
-- ✅ 3 Critical Screens Fixed (100% Theme-Compliant)
-  - NeedsReviewScreen
-  - AboutScreen
-  - LibraryDetailScreen
-  
-- ✅ ColorScheme Integration
-  - Dynamic background colors
-  - Surface colors
-  - Text colors from MaterialTheme
-
-- ✅ Shape System
-  - All Cards: `MaterialTheme.shapes.medium`
-  - All Buttons: Dynamic corners
-  - BorderRadius responsive to theme
-
-- ✅ Spacing Standardization
-  - 47 hardcoded DPs → tokens
-  - Consistent spacing system
-  - 8 reusable patterns
-
-### 📚 Documentation
-- PATTERN_GUIDE_COMPLETE.md - 8 patterns for remaining screens
-- IMPLEMENTATION_GUIDE.md - Step-by-step instructions
-- CHANGELOG.md - Detailed changelog
-
----
-
-## 🛠️ Tech Stack
-
-- **Language:** Kotlin
-- **Framework:** Jetpack Compose
-- **Database:** Room
-- **DI:** Hilt
-- **Architecture:** MVVM + Repository Pattern
-- **Min SDK:** 24
-- **Target SDK:** 34
-- **Compile SDK:** 34
-
----
-
-## 📁 Project Structure
-
-```
-FlashLearn-main/
-├── app/
-│   └── src/
-│       └── main/
-│           └── java/com/flashlearn/app/
-│               ├── ui/
-│               │   ├── theme/
-│               │   │   ├── FlashLearnTheme.kt
-│               │   │   ├── FlashLearnThemeSpec.kt
-│               │   │   └── FlashLearnThemeTokens.kt
-│               │   ├── review/
-│               │   │   └── ReviewScreen.kt
-│               │   ├── library/
-│               │   │   ├── LibraryScreen.kt
-│               │   │   └── LibraryDetailScreen.kt
-│               │   ├── about/
-│               │   │   └── AboutScreen.kt
-│               │   └── [other screens]
-│               └── domain/
-│                   ├── model/
-│                   └── usecase/
-│
-├── CHANGELOG.md
-├── DOCUMENTATION/
-│   ├── PATTERN_GUIDE_COMPLETE.md
-│   ├── IMPLEMENTATION_GUIDE.md
-│   └── [other docs]
-└── README.md
-```
-
----
-
-## 🎯 Theme System
-
-### Available Themes (9 Total)
-1. **GROK** - Luxury Gold Dark (New)
-2. **CLAUD** - Modern Minimalist (New)
-3. MODERN_MINIMAL
-4. MODERN_PURPLE
-5. OCEAN_BLUE
-6. FRESH_GREEN
-7. SUNSET_ORANGE
-8. MIDNIGHT
-9. FOREST
-
-### Switching Themes
-Go to Settings → Appearance → Select Theme
-
-All UI updates automatically.
-
----
-
-## 🚀 Getting Started
-
-### Build
 ```bash
-./gradlew build
-```
-
-### Run
-```bash
-./gradlew installDebug
-```
-
-### Run Tests
-```bash
+./gradlew assembleDebug
 ./gradlew test
+./gradlew connectedDebugAndroidTest
+./gradlew assembleRelease
 ```
 
----
+GitHub Actions is the authoritative CI gate for debug build, unit tests, instrumentation tests and the previous-version upgrade path. Database migration tests cover the legacy v1→v7 path, including the v5→v6 contents-index contract.
 
-## 📖 Theme System Guide
+## Review rules
 
-### For Developers
+Learning and difficulty are independent systems. A concept reviewed once on the current local calendar day is excluded from subsequent review that day. Correct answers advance the learning stage; incorrect answers return non-learned concepts to Daily. Difficulty changes only after the configured consecutive-answer threshold. Home distinguishes between words ready for review now and the total words assigned to each Learning stage; these totals are consistent with Statistics.
 
-**New Screens:**
-1. Read: `DOCUMENTATION/PATTERN_GUIDE_COMPLETE.md`
-2. Reference: `LibraryScreen_REFACTORED.kt`
-3. Apply patterns
-4. Test theme switching
+## Repository hygiene
 
-**Remaining Screens (10):**
-- Can be fixed using provided patterns
-- Expected time: 1-2 hours
-- All documentation included
+Generated reports, audit archives, obsolete design-system documentation and duplicate screen implementations are kept out of the production source tree. Release builds use R8 code shrinking and resource shrinking.
 
-### Key Tokens
-```kotlin
-// Spacing
-tokens.screenPadding        // 20.dp
-tokens.contentGap          // 12.dp
-tokens.compactGap          // 8.dp
-tokens.controlHeight       // 52.dp
+## License
 
-// Shapes
-MaterialTheme.shapes.small      // 12.dp
-MaterialTheme.shapes.medium     // 16.dp
-MaterialTheme.shapes.large      // 24.dp
-
-// Colors
-MaterialTheme.colorScheme.background
-MaterialTheme.colorScheme.surface
-MaterialTheme.colorScheme.primary
-```
-
----
-
-## ✅ Verification
-
-### Theme Switching Test
-1. Open Settings
-2. Change theme to GROK
-3. Navigate all screens
-4. Verify: Colors, Corners, Spacing all changed
-5. Change to CLAUD
-6. Verify again
-
-### Fixed Screens (v6.25)
-- ✅ NeedsReviewScreen
-- ✅ AboutScreen
-- ✅ LibraryDetailScreen
-- ✅ All use MaterialTheme tokens
-- ✅ All respond to theme changes
-
----
-
-## 📋 Architecture
-
-### Models
-- `Concept` - Vocabulary item
-- `ReviewQueueItem` - Item for review
-- `VocabularyDifficulty` - Difficulty levels
-
-### Repositories
-- `ConceptRepository` - Vocabulary data
-- `ContentRepository` - Translations
-- `CategoryRepository` - Categories
-
-### Use Cases
-- Learning algorithm
-- Spaced repetition
-- Difficulty calculation
-
----
-
-## 🐛 Known Issues & TODOs
-
-### Fixed (v6.25)
-- ✅ Theme system ColorScheme not applied (7 screens)
-- ✅ Hardcoded DPs preventing dynamic spacing (47 instances)
-- ✅ Cards without proper shapes (6 screens)
-
-### Remaining
-- 10 screens need pattern application
-- See: IMPLEMENTATION_GUIDE.md
-
----
-
-## 📝 License
-
-FlashLearn © 2026 - All rights reserved
-
----
-
-## 👨‍💻 Contributors
-
-- **AI Assistant:** Theme System Design & Audit
-- **Date:** September 25, 2026
-
----
-
-## 🔄 Recent Changes
-
-### v6.25 (2026-09-25)
-- Theme System Complete Overhaul
-- 3 Critical Screens Fixed
-- 8 Reusable Patterns Added
-- Full Documentation
-- GROK + CLAUD Themes Ready
-
-### v6.24 (2026-09-24)
-- Initial Release
-- Base Theme System
-- 9 Pre-built Themes
-
----
-
-## 📞 Support
-
-**Documentation:**
-- `CHANGELOG.md` - Version history
-- `DOCUMENTATION/PATTERN_GUIDE_COMPLETE.md` - Patterns
-- `DOCUMENTATION/IMPLEMENTATION_GUIDE.md` - How-to guide
-
----
-
-**Build Status:** ✅ Ready for GitHub
-**Last Updated:** 2026-09-25
-**Version:** 6.25
-
+FlashLearn © 2026

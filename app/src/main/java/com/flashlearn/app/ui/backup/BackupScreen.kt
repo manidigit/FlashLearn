@@ -10,10 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.flashlearn.app.R
 import com.flashlearn.app.ui.components.FlashLearnScreenHeader
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
 import com.flashlearn.domain.backup.BackupType
@@ -32,12 +34,17 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     var pendingFile by remember { mutableStateOf<File?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val backupTypeLabels = mapOf(
+        BackupType.VOCABULARY to stringResource(R.string.backup_vocabulary),
+        BackupType.PROGRESS to stringResource(R.string.backup_progress),
+        BackupType.FULL to stringResource(R.string.backup_complete)
+    )
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val json = pendingJson
         if (uri != null && !json.isNullOrBlank()) scope.launch(Dispatchers.IO) {
             runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } }
-                .onFailure { viewModel.showMessage("ذخیره فایل ناموفق بود: ${it.message ?: "خطا"}") }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_save_file_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
         pendingJson = null
     }
@@ -45,16 +52,16 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
         val file = pendingFile
         if (uri != null && file != null) scope.launch(Dispatchers.IO) {
             runCatching { file.inputStream().use { input -> context.contentResolver.openOutputStream(uri)?.use { output -> input.copyTo(output) } } }
-                .onFailure { viewModel.showMessage("ذخیره خروجی ناموفق بود: ${it.message ?: "خطا"}") }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_save_output_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
         pendingFile = null
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch(Dispatchers.IO) {
-            runCatching { context.contentResolver.openInputStream(uri)?.use { BufferedReader(InputStreamReader(it, Charsets.UTF_8)).readText() } ?: error("فایل قابل خواندن نیست") }
+            runCatching { context.contentResolver.openInputStream(uri)?.use { input -> if ((context.contentResolver.openAssetFileDescriptor(uri, "r")?.length ?: 0L) > 20L * 1024L * 1024L) error(context.getString(R.string.backup_too_large)) ; BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText() } ?: error(context.getString(R.string.bulk_file_unreadable)) }
                 .map { it.removePrefix("\uFEFF").trimStart() }
-                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage("این فایل پشتیبان معتبر JSON نیست.") }
-                .onFailure { viewModel.showMessage("خواندن فایل ناموفق بود: ${it.message ?: "خطا"}") }
+                .onSuccess { json -> if (json.startsWith("{")) viewModel.restore(json, onRestored) else viewModel.showMessage(context.getString(R.string.backup_invalid_json)) }
+                .onFailure { viewModel.showMessage(context.getString(R.string.backup_read_failed, it.message ?: context.getString(R.string.ui_error_generic))) }
         }
     }
 
@@ -65,12 +72,12 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
     ) {
         item {
             FlashLearnScreenHeader(
-                title = "پشتیبان‌گیری و بازیابی",
-                subtitle = "حفظ واژه‌ها، پیشرفت و تنظیمات",
+                title = stringResource(R.string.backup_title),
+                subtitle = stringResource(R.string.backup_subtitle),
                 onBack = onBack
             )
         }
-        item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = "بازیابی", subtitle = "اطلاعات قبلی را از یک فایل پشتیبان JSON وارد کن.") }
+        item { SectionHeader(icon = Icons.Outlined.SettingsBackupRestore, title = stringResource(R.string.backup_restore), subtitle = stringResource(R.string.backup_restore_summary)) }
         item {
             Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = tokens.primary.copy(alpha = .08f))) {
                 Column(Modifier.fillMaxWidth().padding(tokens.contentGap), verticalArrangement = Arrangement.spacedBy(tokens.compactGap), horizontalAlignment = Alignment.Start) {
@@ -78,29 +85,48 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                         Surface(Modifier.size(tokens.iconLarge.plus(tokens.compactGap)), shape = MaterialTheme.shapes.medium, color = tokens.primary.copy(alpha = .14f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.FileOpen, null, tint = tokens.primary, modifier = Modifier.size(tokens.iconLarge)) } }
                         Spacer(Modifier.width(tokens.contentGap))
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                            Text("بازیابی از فایل پشتیبان", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
-                            Text("یک فایل JSON قبلی را انتخاب کن. نوع پشتیبان از خود فایل تشخیص داده می‌شود.", style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start)
+                            Text(stringResource(R.string.backup_restore_file), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
+                            Text(stringResource(R.string.backup_restore_file_hint), style = MaterialTheme.typography.bodySmall, color = tokens.onSurfaceVariant, textAlign = TextAlign.Start)
                         }
                     }
                     Button(onClick = { open.launch(arrayOf("application/json", "text/plain", "*/*")) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.large, colors = ButtonDefaults.buttonColors(containerColor = tokens.primary)) {
-                        Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text("انتخاب فایل پشتیبان", fontWeight = FontWeight.Bold)
+                        Icon(Icons.Outlined.FileOpen, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_select_file), fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
         item { HorizontalDivider(modifier = Modifier.padding(vertical = tokens.compactGap)) }
-        item { SectionHeader(icon = Icons.Outlined.Backup, title = "پشتیبان‌گیری", subtitle = "نوع اطلاعاتی را که می‌خواهی ذخیره شود انتخاب کن.") }
+        item { SectionHeader(icon = Icons.Outlined.Backup, title = stringResource(R.string.backup_create), subtitle = stringResource(R.string.backup_create_summary)) }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 BackupType.entries.forEach { type ->
-                    val label = when (type) { BackupType.VOCABULARY -> "واژگان"; BackupType.PROGRESS -> "پیشرفت و تنظیمات"; BackupType.FULL -> "پشتیبان کامل" }
-                    OutlinedButton(onClick = { viewModel.export(type) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight), shape = MaterialTheme.shapes.medium) {
-                        Icon(if (type == BackupType.VOCABULARY) Icons.Outlined.MenuBook else Icons.Outlined.SettingsBackupRestore, null); Spacer(Modifier.width(tokens.compactGap)); Text(label, fontWeight = FontWeight.Bold)
+                    val label = when (type) { BackupType.VOCABULARY -> stringResource(R.string.backup_vocabulary); BackupType.PROGRESS -> stringResource(R.string.backup_progress); BackupType.FULL -> stringResource(R.string.backup_full) }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = type in state.selectedTypes,
+                            onCheckedChange = { viewModel.toggleBackupType(type) },
+                            enabled = !state.busy
+                        )
+                        Text(label, Modifier.weight(1f), fontWeight = FontWeight.Bold, textAlign = TextAlign.Start)
                     }
                 }
+                Button(
+                    onClick = viewModel::exportSelected,
+                    enabled = !state.busy && state.selectedTypes.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().height(tokens.controlHeight),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Outlined.Backup, null)
+                    Spacer(Modifier.width(tokens.compactGap))
+                    Text(stringResource(R.string.backup_create_selected), fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    if (state.selectedTypes.isEmpty()) stringResource(R.string.backup_minimum) else stringResource(R.string.backup_current_selection, state.selectedTypes.joinToString("، ") { backupTypeLabels[it].orEmpty() }),
+                    Modifier.fillMaxWidth(), color = tokens.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Start
+                )
             }
         }
-        item { SectionHeader(icon = Icons.Outlined.FileDownload, title = "خروجی داده", subtitle = "خروجی قابل استفاده در قالب‌های مختلف دریافت کن.") }
+        item { SectionHeader(icon = Icons.Outlined.FileDownload, title = stringResource(R.string.backup_data_export), subtitle = stringResource(R.string.backup_data_export_summary)) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
                 ExportFormat.values().forEach { format ->
@@ -108,10 +134,10 @@ fun BackupScreen(viewModel: BackupViewModel, onBack: () -> Unit, onRestored: () 
                 }
             }
         }
-        state.exportedJson?.let { json -> item { ResultCard(title = "${state.exportedType.name} آماده است", detail = "${json.length} نویسه") { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره JSON") } } } }
-        state.exportedFile?.let { file -> item { ResultCard(title = "خروجی ${state.exportedFormat?.name} آماده است", detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text("ذخیره فایل") } } } }
+        state.exportedJson?.let { json -> item { ResultCard(title = stringResource(R.string.backup_export_ready, state.exportedLabel), detail = stringResource(R.string.backup_char_count, json.length)) { Button(onClick = { pendingJson = json; save.launch("flashlearn-${state.exportedType.name.lowercase()}-backup.json") }, enabled = !state.busy) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_json)) } } } }
+        state.exportedFile?.let { file -> item { ResultCard(title = stringResource(R.string.backup_file_export_ready, state.exportedFormat?.name.orEmpty()), detail = file.name) { Button(onClick = { pendingFile = file; saveData.launch(file.name) }, enabled = !state.busy) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(tokens.compactGap)); Text(stringResource(R.string.backup_save_file)) } } } }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-        state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains("ناموفق") || message.contains("معتبر")) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
+        state.message?.let { message -> item { Text(message, Modifier.fillMaxWidth(), color = if (message.contains(stringResource(R.string.backup_failure_marker)) || message.contains(stringResource(R.string.backup_invalid_marker))) tokens.error else tokens.success, textAlign = TextAlign.Start) } }
     }
 }
 

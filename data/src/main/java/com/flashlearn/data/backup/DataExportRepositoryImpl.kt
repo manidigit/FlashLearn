@@ -6,6 +6,9 @@ import com.flashlearn.domain.repository.DataExportRepository
 import com.flashlearn.domain.repository.ExportFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
@@ -25,7 +28,7 @@ class DataExportRepositoryImpl @Inject constructor(
     }
 
     private suspend fun rows(): List<Array<String?>> {
-        val concepts = db.conceptDao().getAll()
+        val concepts = db.conceptDao().getAllActive()
         val contents = db.contentDao().getAll()
         val byId = concepts.associateBy { it.id }
         return contents.map { content ->
@@ -39,8 +42,6 @@ class DataExportRepositoryImpl @Inject constructor(
                 content.notes,
                 content.grammarNote,
                 content.possibleCorrection,
-                content.pronunciation,
-                content.example,
                 content.translationIndex.toString()
             )
         }
@@ -49,7 +50,7 @@ class DataExportRepositoryImpl @Inject constructor(
     private suspend fun csv(): File {
         val file = File(context.cacheDir, "flashlearn-vocabulary.csv")
         file.bufferedWriter().use { writer ->
-            writer.appendLine("conceptId,entryType,languageCode,text,canonicalKey,notes,grammarNote,possibleCorrection,pronunciation,example,translationIndex")
+            writer.appendLine("conceptId,entryType,languageCode,text,canonicalKey,notes,grammarNote,possibleCorrection,translationIndex")
             rows().forEach { row ->
                 writer.appendLine(row.joinToString(",") { value -> escapeCsv(value) })
             }
@@ -57,33 +58,36 @@ class DataExportRepositoryImpl @Inject constructor(
         return file
     }
 
-    private fun escapeCsv(value: String?): String {
-        return "\"${(value ?: "").replace("\"", "\"\"")}\""
-    }
+    private fun escapeCsv(value: String?): String { val v = value ?: ""; val safe = if (v.firstOrNull()?.let { it in charArrayOf('=','+','-','@') } == true) "'$v" else v; return "\"${safe.replace("\"", "\"\"")}\"" }
 
     private suspend fun json(): File {
-        val file = File(context.cacheDir, "flashlearn-vocabulary.json")
+        val target = File(context.cacheDir, "flashlearn-vocabulary.json.gz")
+        val temp = File(context.cacheDir, "flashlearn-vocabulary.json.gz.tmp")
         val values = rows()
         val names = listOf(
             "conceptId", "entryType", "languageCode", "text", "canonicalKey",
-            "notes", "grammarNote", "possibleCorrection", "pronunciation",
-            "example", "translationIndex"
+            "notes", "grammarNote", "possibleCorrection", "translationIndex"
         )
-        file.writeText(buildString {
-            append("{\"format\":\"FlashLearn JSON\",\"version\":2,\"contents\":[")
+        GZIPOutputStream(temp.outputStream().buffered()).bufferedWriter(Charsets.UTF_8).use { writer ->
+            writer.append("""{"format":"FlashLearn JSON","version":2,"contents":[""")
             values.forEachIndexed { index, row ->
-                if (index > 0) append(',')
-                append('{')
+                if (index > 0) writer.append(',')
+                writer.append('{')
                 names.forEachIndexed { fieldIndex, name ->
-                    if (fieldIndex > 0) append(',')
-                    append('"').append(name).append("\":")
-                    append(jsonString(row[fieldIndex]))
+                    if (fieldIndex > 0) writer.append(',')
+                    writer.append('"').append(name).append("""":""")
+                    writer.append(jsonString(row[fieldIndex]))
                 }
-                append('}')
+                writer.append('}')
             }
-            append("]}")
-        })
-        return file
+            writer.append("]}")
+        }
+        runCatching {
+            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }.getOrElse {
+            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+        return target
     }
 
     private fun jsonString(value: String?): String {
@@ -99,8 +103,7 @@ class DataExportRepositoryImpl @Inject constructor(
         val file = File(context.cacheDir, "flashlearn-vocabulary.xlsx")
         val names = listOf(
             "conceptId", "entryType", "languageCode", "text", "canonicalKey",
-            "notes", "grammarNote", "possibleCorrection", "pronunciation",
-            "example", "translationIndex"
+            "notes", "grammarNote", "possibleCorrection", "translationIndex"
         )
         ZipOutputStream(file.outputStream()).use { zip ->
             putZipEntry(
@@ -148,7 +151,7 @@ class DataExportRepositoryImpl @Inject constructor(
     }
 
     private fun xlsxCell(value: String?): String {
-        return "<c t=\"inlineStr\"><is><t>${xml(value)}</t></is></c>"
+        val v = value ?: ""; val safe = if (v.firstOrNull()?.let { it in charArrayOf('=','+','-','@') } == true) "'$v" else v; return "<c t=\"inlineStr\"><is><t>${xml(safe)}</t></is></c>"
     }
 
     private fun xml(value: String?): String {

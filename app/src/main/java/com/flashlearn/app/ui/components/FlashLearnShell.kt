@@ -1,6 +1,7 @@
 package com.flashlearn.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
@@ -16,6 +17,8 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -24,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.flashlearn.app.navigation.AppRoutes
 import com.flashlearn.app.ui.theme.IconStyle
 import com.flashlearn.app.ui.theme.LocalFlashLearnThemeTokens
+import com.flashlearn.app.ui.theme.NavigationStyle
 
 @Composable
 fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content: @Composable ColumnScope.() -> Unit) {
@@ -33,16 +37,61 @@ fun FlashLearnShell(selectedRoute: String, onNavigate: (String) -> Unit, content
     val navigationBackground = if (reviewRoute) tokens.reviewNav else tokens.cardColor
     Column(Modifier.fillMaxSize().background(shellBackground)) {
         Column(Modifier.weight(1f).fillMaxWidth()) { content() }
-        NavigationBar(
-            modifier = Modifier.fillMaxWidth().height(if (reviewRoute) tokens.reviewNavHeight else tokens.navHeight),
-            containerColor = navigationBackground,
-            tonalElevation = tokens.cardElevation
-        ) {
-            NavItem(AppRoutes.HOME, "خانه", Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
-            NavItem(AppRoutes.REVIEW, "مرور", Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
-            NavItem(AppRoutes.LIBRARY, "واژگان", Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
-            NavItem(AppRoutes.PROGRESS, "آمار", Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
-            NavItem(AppRoutes.SETTINGS, "تنظیمات", Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+        if (tokens.navStyle == NavigationStyle.PILL && !reviewRoute) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(tokens.navHeight)
+                    .background(navigationBackground),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GrokNavItem(AppRoutes.HOME, stringResource(R.string.nav_home), Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.REVIEW, stringResource(R.string.nav_review), Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.LIBRARY, stringResource(R.string.nav_library), Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.PROGRESS, stringResource(R.string.nav_progress), Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                GrokNavItem(AppRoutes.SETTINGS, stringResource(R.string.nav_settings), Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            }
+        } else {
+            NavigationBar(
+                modifier = Modifier.fillMaxWidth().height(if (reviewRoute) tokens.reviewNavHeight else tokens.navHeight),
+                containerColor = navigationBackground,
+                tonalElevation = tokens.cardElevation
+            ) {
+                NavItem(AppRoutes.HOME, stringResource(R.string.nav_home), Icons.Outlined.Home, Icons.Filled.Home, selectedRoute, onNavigate)
+                NavItem(AppRoutes.REVIEW, stringResource(R.string.nav_review), Icons.Outlined.History, Icons.Filled.History, selectedRoute, onNavigate)
+                NavItem(AppRoutes.LIBRARY, stringResource(R.string.nav_library), Icons.Outlined.MenuBook, Icons.Filled.MenuBook, selectedRoute, onNavigate)
+                NavItem(AppRoutes.PROGRESS, stringResource(R.string.nav_progress), Icons.Outlined.BarChart, Icons.Filled.BarChart, selectedRoute, onNavigate)
+                NavItem(AppRoutes.SETTINGS, stringResource(R.string.nav_settings), Icons.Outlined.Settings, Icons.Filled.Settings, selectedRoute, onNavigate)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.GrokNavItem(
+    route: String,
+    label: String,
+    outlinedIcon: ImageVector,
+    filledIcon: ImageVector,
+    selectedRoute: String,
+    onNavigate: (String) -> Unit
+) {
+    val tokens = LocalFlashLearnThemeTokens.current
+    val selected = selectedRoute == route
+    val iconColor = if (selected) tokens.onPrimary else tokens.onSurfaceVariant
+    Box(
+        modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = tokens.dp(4f), vertical = tokens.dp(8f))
+            .background(if (selected) tokens.primary else Color.Transparent, MaterialTheme.shapes.large)
+            .clickable { onNavigate(route) },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(
+                imageVector = if (selected && tokens.activeIconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                contentDescription = label,
+                tint = iconColor,
+                modifier = Modifier.size(tokens.iconMedium * if (selected) tokens.activeIconSizeScale else tokens.iconSizeScale)
+            )
+            Spacer(Modifier.height(tokens.dp(2f)))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = iconColor, maxLines = 1)
         }
     }
 }
@@ -60,21 +109,21 @@ private fun RowScope.NavItem(route: String, label: String, outlinedIcon: ImageVe
         icon = {
             Box(
                 Modifier
-                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = .12f), MaterialTheme.shapes.medium) else Modifier)
-                    .padding(horizontal = tokens.dp(13f), vertical = tokens.dp(6f))
+                    .then(if (selected) Modifier.background(selectedColor.copy(alpha = if (tokens.navStyle == NavigationStyle.PILL) tokens.navIndicatorAlpha else tokens.navIndicatorAlpha * .65f), MaterialTheme.shapes.medium) else Modifier)
+                    .padding(horizontal = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(8f) else tokens.dp(13f), vertical = if (tokens.navStyle == NavigationStyle.COMPACT) tokens.dp(4f) else tokens.dp(6f))
             ) {
                 Icon(
-                    imageVector = if (selected && tokens.iconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
+                    imageVector = if (selected && tokens.activeIconStyle == IconStyle.FILLED) filledIcon else outlinedIcon,
                     contentDescription = label,
-                    modifier = Modifier.size(tokens.iconMedium)
+                    modifier = Modifier.size(tokens.iconMedium * if (selected) tokens.activeIconSizeScale else tokens.iconSizeScale)
                 )
             }
         },
         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = selectedColor,
-            selectedTextColor = selectedColor,
-            indicatorColor = Color.Transparent,
+            selectedIconColor = if (tokens.navStyle == NavigationStyle.PILL) tokens.onPrimary else selectedColor,
+            selectedTextColor = if (tokens.navStyle == NavigationStyle.PILL) tokens.onPrimary else selectedColor,
+            indicatorColor = if (tokens.navStyle == NavigationStyle.PILL) selectedColor else Color.Transparent,
             unselectedIconColor = unselectedColor,
             unselectedTextColor = unselectedColor
         )

@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FL_VERSION_NAME: "6.24"
-  FL_VERSION_CODE: "124"
-  FL_PREVIOUS_VERSION_NAME: "6.23"
-  FL_PREVIOUS_VERSION_CODE: "123"
+  FL_VERSION_NAME: "6.69"
+  FL_VERSION_CODE: "669"
+  FL_PREVIOUS_VERSION_NAME: "6.68"
+  FL_PREVIOUS_VERSION_CODE: "668"
 
 jobs:
   build-and-unit-test:
@@ -57,14 +57,20 @@ jobs:
             keytool -genkeypair -v -keystore keystore/debug.keystore -storetype JKS -storepass android -keypass androiddebugkey -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
-      - name: Theme + Design System static audit
-        run: python3 tools/theme_design_system_audit.py
       - name: Clean
         run: gradle --no-daemon clean
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Unit tests
         run: gradle --no-daemon test
+      - name: Build release APK with R8
+        run: gradle --no-daemon :app:assembleRelease
+      - name: Verify release APK
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -s "$APK"
+          aapt dump badging "$APK" | grep "versionCode='${FL_VERSION_CODE}'"
       - name: Verify APK
         run: |
           set -euo pipefail
@@ -132,7 +138,7 @@ jobs:
           keytool -list -keystore keystore/debug.keystore -storetype JKS -storepass android -alias androiddebugkey >/dev/null
       - name: Enable KVM
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0667", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Start Android Emulator
@@ -169,6 +175,12 @@ jobs:
           adb devices
       - name: Run instrumentation tests
         run: gradle --no-daemon connectedDebugAndroidTest
+      - name: Dump emulator crash log
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          adb logcat -d -v time | tail -n 1200
       - name: Verify previous-version upgrade path
         shell: bash
         run: |

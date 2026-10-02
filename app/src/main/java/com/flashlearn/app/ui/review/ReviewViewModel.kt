@@ -30,18 +30,22 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 
 enum class ReviewMode { FLASHCARD, QUIZ }
 data class QuizCardUiState(val promptText: String, val options: List<String>, val selectedOption: String? = null, val correctAnswerText: String)
-data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val hintText: String? = null, val noteVisible: Boolean = false)
+data class ReviewCardUiState(val sourceText: String, val sourceNotes: String?, val targetText: String, val categoryName: String? = null, val isFlipped: Boolean = false, val hintRevealed: Boolean = false, val hintText: String? = null, val noteVisible: Boolean = false)
 data class ReviewAnswerFeedbackUiState(val isCorrect: Boolean, val stageLabel: String, val difficultyLabel: String, val correctAnswerText: String? = null, val answered: Int, val correct: Int, val wrong: Int)
 
 data class ReviewUiState(
+    val sourceLanguage: String = "es",
     val isLoading: Boolean = false,
     val isSelectingMode: Boolean = true,
     val selectedMode: ReviewMode = ReviewMode.QUIZ,
@@ -91,7 +95,7 @@ class ReviewViewModel @Inject constructor(
     private var queue: List<UUID> = emptyList()
     private var index = 0
     private var sessionGeneration = 0L
-    private var isAdvancing = false
+    private val advanceMutex = Mutex()
     private var activeLanguagePair = LanguagePair()
     private var quizDifficulty = QuizDifficulty.MEDIUM
     private var maximumReviewCards = SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS
@@ -117,6 +121,7 @@ class ReviewViewModel @Inject constructor(
     fun setLanguagePair(pair: LanguagePair) {
         if (pair == activeLanguagePair) return
         activeLanguagePair = pair
+        _state.value = _state.value.copy(sourceLanguage = pair.source.code)
         if (sessionId != null || queue.isNotEmpty()) { sessionGeneration++; sessionId = null; queue = emptyList(); index = 0; sessionContents = emptyMap(); sessionDifficulties = emptyMap() }
     }
 
@@ -172,14 +177,16 @@ class ReviewViewModel @Inject constructor(
         val categories = snapshot.selectedCategoryIds
         viewModelScope.launch {
             val count = runCatching {
-                val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
-                val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
-                var total = 0
-                val now = Instant.now()
-                for (d in difficultyOptions) for (c in categoryOptions) {
-                    total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                withContext(Dispatchers.Default) {
+                    val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
+                    val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
+                    var total = 0
+                    val now = Instant.now()
+                    for (d in difficultyOptions) for (c in categoryOptions) {
+                        total += countReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now))
+                    }
+                    total
                 }
-                total
             }.getOrDefault(0)
             val current = _state.value
             if (current.selectedReviewType == reviewType && current.selectedDifficulties == difficulties && current.selectedCategoryIds == categories) {
@@ -202,7 +209,7 @@ class ReviewViewModel @Inject constructor(
             _state.value = currentState.copy(isLoading = true, isSelectingMode = false, selectedReviewType = normalizedReviewType, selectedDifficulties = difficulties, selectedDifficulty = difficulties.singleOrNull(), selectedCategoryIds = categories, selectedCategoryId = categories.singleOrNull(), maximumReviewCards = maxCards, selectedQuizDifficulty = quizDifficulty, card = null, quizCard = null, answerFeedback = null, error = null, answered = 0, correct = 0, wrong = 0)
             try {
                 sessionId?.let { endReviewSession(it); sessionId = null }
-                val candidates = selectCandidates(normalizedReviewType, difficulties, categories, now, maxCards)
+                val candidates = withContext(Dispatchers.Default) { selectCandidates(normalizedReviewType, difficulties, categories, now, maxCards) }
                 if (generation != sessionGeneration) return@launch
                 val candidateIds = candidates.map { it.concept.id }.distinct()
                 val contents = contentRepository.findForConcepts(candidateIds)
@@ -213,7 +220,7 @@ class ReviewViewModel @Inject constructor(
                 if (_state.value.selectedMode == ReviewMode.QUIZ) {
                     // Refresh once per review session so newly added/edited vocabulary is
                     // available to the distractor generator without refreshing per card.
-                    generateQuizQuestion.refreshBank()
+                    withContext(Dispatchers.IO) { generateQuizQuestion.refreshBank() }
                 }
                 queue = validCandidates.map { it.concept.id }.distinct(); index = 0
                 if (queue.isEmpty()) {
@@ -234,7 +241,7 @@ class ReviewViewModel @Inject constructor(
         val difficultyOptions = if (difficulties.isEmpty()) listOf<VocabularyDifficulty?>(null) else difficulties.map { it }
         val categoryOptions = if (categories.isEmpty()) listOf<UUID?>(null) else categories.map { it }
         val results = mutableListOf<ReviewCandidate>()
-        for (d in difficultyOptions) for (c in categoryOptions) results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulty = d, categoryId = c, now = now, maxCards = maxCards))
+        results += selectReviewQueue(ReviewSelectionFilters(reviewType = reviewType, difficulties = difficultyOptions.filterNotNull().toSet(), categoryIds = categories, sourceLanguage = activeLanguagePair.source.code, targetLanguage = activeLanguagePair.target.code, now = now, maxCards = SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT))
         val unique = results.distinctBy { it.concept.id }
         return if (reviewType == ReviewType.RANDOM || reviewType == ReviewType.LEARNED) unique.shuffled().take(maxCards) else unique.take(maxCards)
     }
@@ -247,16 +254,19 @@ class ReviewViewModel @Inject constructor(
         val target = cc.firstOrNull { it.languageCode == pair.target.code }
         if (source == null || target == null) { if (generation == sessionGeneration) advanceToNext(generation); return }
         if (generation != sessionGeneration || sessionId == null) return
-        val baseCard = ReviewCardUiState(source.text, source.notes, target.text)
+        val categoryName = conceptRepository.get(conceptId)?.categoryId?.let { categoryId -> _state.value.categories.firstOrNull { it.id == categoryId }?.name }
+        val baseCard = ReviewCardUiState(source.text, source.notes, target.text, categoryName = categoryName)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
-            when (val result = generateQuizQuestion(
-                concept,
-                QuizLanguagePair(pair.source.code, pair.target.code),
-                sessionDifficulties[conceptId],
-                quizDifficulty,
-                usedQuizDistractorTexts
-            )) {
+            when (val result = withContext(Dispatchers.Default) {
+                generateQuizQuestion(
+                    concept,
+                    QuizLanguagePair(pair.source.code, pair.target.code),
+                    sessionDifficulties[conceptId],
+                    quizDifficulty,
+                    usedQuizDistractorTexts.toSet()
+                )
+            }) {
                 is QuizQuestionResult.QuizQuestion -> {
                     usedQuizDistractorTexts += result.options
                         .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
@@ -271,7 +281,7 @@ class ReviewViewModel @Inject constructor(
     fun selectQuizOption(option: String) { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return; _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option), error = null) }
     fun submitQuizAnswer() { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null) return; val selected = quiz.selectedOption ?: return; if (selected !in quiz.options) return; submitAnswer(selected == quiz.correctAnswerText) }
     fun flipCard() { _state.value.card?.let { _state.value = _state.value.copy(card = it.copy(isFlipped = true)) } }
-    fun revealHint() { val card = _state.value.card ?: return; _state.value = _state.value.copy(card = card.copy(hintRevealed = true, hintText = reviewHelp.hintFor(card.sourceText))) }
+    fun revealHint() { val card = _state.value.card ?: return; _state.value = _state.value.copy(card = card.copy(hintRevealed = true, hintText = reviewHelp.hintFor(card.sourceText, card.targetText, card.categoryName))) }
     fun toggleNote() { val card = _state.value.card ?: return; if (reviewHelp.noteFor(card.sourceNotes) == null) return; _state.value = _state.value.copy(card = card.copy(noteVisible = !card.noteVisible)) }
 
     fun submitAnswer(isCorrect: Boolean) {
@@ -280,7 +290,7 @@ class ReviewViewModel @Inject constructor(
         viewModelScope.launch {
             if (generation != sessionGeneration || sessionId != session) return@launch
             _state.value = _state.value.copy(isSubmitting = true, error = null)
-            runCatching { submitReviewAnswer(SubmitReviewAnswerRequest(conceptId, session, UUID.randomUUID(), reviewType, isCorrect, Instant.now())) }
+            runCatching { withContext(Dispatchers.IO) { submitReviewAnswer(SubmitReviewAnswerRequest(conceptId, session, UUID.randomUUID(), reviewType, isCorrect, Instant.now())) } }
                 .onSuccess { result ->
                     if (generation != sessionGeneration || sessionId != session) return@onSuccess
                     val answered = _state.value.answered + 1; val correct = _state.value.correct + if (isCorrect) 1 else 0; val wrong = _state.value.wrong + if (isCorrect) 0 else 1
@@ -296,8 +306,25 @@ class ReviewViewModel @Inject constructor(
         }
     }
 
-    fun nextCard() { if (_state.value.isSubmitting || _state.value.answerFeedback == null || isAdvancing) return; val generation = sessionGeneration; isAdvancing = true; viewModelScope.launch { try { if (generation == sessionGeneration) advanceToNext(generation) } finally { isAdvancing = false } } }
+    fun skipCurrentCard() {
+        if (_state.value.isSubmitting || _state.value.isFinished || !advanceMutex.tryLock()) return
+        val generation = sessionGeneration
+        viewModelScope.launch {
+            try { if (generation == sessionGeneration) advanceToNext(generation) }
+            finally { advanceMutex.unlock() }
+        }
+    }
+
+    fun nextCard() {
+        if (_state.value.isSubmitting || _state.value.answerFeedback == null || !advanceMutex.tryLock()) return
+        val generation = sessionGeneration
+        viewModelScope.launch {
+            try { if (generation == sessionGeneration) advanceToNext(generation) }
+            finally { advanceMutex.unlock() }
+        }
+    }
     fun resetAfterFinished() {
+        refreshAvailableReviewCount()
         sessionGeneration++
         sessionId = null
         queue = emptyList()
@@ -305,7 +332,6 @@ class ReviewViewModel @Inject constructor(
         sessionContents = emptyMap()
         sessionDifficulties = emptyMap()
         usedQuizDistractorTexts.clear()
-        isAdvancing = false
         _state.value = _state.value.copy(
             isSelectingMode = true,
             isFinished = false,

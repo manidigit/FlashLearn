@@ -4,12 +4,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.flashlearn.app.ui.AccentColor
 import com.flashlearn.app.ui.AppearanceMode
@@ -36,9 +36,9 @@ fun FlashLearnTheme(
     val context = LocalContext.current
     
     // =========== Theme Loading ===========
-    val spec = FlashLearnThemeSpec.BUILT_IN.firstOrNull { it.id == themeId }
+    val spec = remember(themeId) { FlashLearnThemeSpec.BUILT_IN.firstOrNull { it.id == themeId }
         ?: FlashLearnThemeSpec.loadCustom(context).firstOrNull { it.id == themeId }
-        ?: FlashLearnThemeSpec.GROK
+        ?: FlashLearnThemeSpec.GROK }
     
     // =========== Dark Mode Detection ===========
     val isDark = when (appearance) {
@@ -47,35 +47,16 @@ fun FlashLearnTheme(
         AppearanceMode.DARK -> true
     }
     
-    // =========== Primary Color Selection ===========
-    // GROK theme: always use its gold palette
-    // Others: respect accent override
-    val accentLight = when (accentColor) {
-        AccentColor.PURPLE -> Color(spec.lightPrimary)
-        AccentColor.BLUE -> Color(0xFF2563EB)
-        AccentColor.GREEN -> Color(0xFF16A34A)
-        AccentColor.ORANGE -> Color(0xFFEA580C)
-        AccentColor.PINK -> Color(0xFFDB2777)
-    }
-    val accentDark = when (accentColor) {
-        AccentColor.PURPLE -> Color(spec.darkPrimary)
-        AccentColor.BLUE -> Color(0xFF60A5FA)
-        AccentColor.GREEN -> Color(0xFF4ADE80)
-        AccentColor.ORANGE -> Color(0xFFFB923C)
-        AccentColor.PINK -> Color(0xFFF472B6)
-    }
-    
-    val primary = when {
-        spec.id == "grok" && isDark -> Color(spec.darkPrimary)
-        spec.id == "grok" -> Color(spec.lightPrimary)
-        isDark -> accentDark
-        else -> accentLight
-    }
-    
-    val onPrimaryColor = when (spec.id) {
-        "grok" -> Color(0xFF0F1419)  // dark on gold
-        "claud" -> Color.White
-        else -> Color.White
+    // ThemeDesign/ThemeSpec owns the visual identity. The legacy accent preference
+    // is retained for settings/JSON compatibility but cannot override a selected theme.
+    val primary = if (isDark) Color(spec.darkPrimary) else Color(spec.lightPrimary)
+    val onPrimaryColor = Color(if (isDark) spec.design.darkOnPrimary else spec.design.lightOnPrimary)
+    val accent = when (accentColor) {
+        AccentColor.PURPLE -> if (isDark) Color(0xFFB794F6) else Color(0xFF6D28D9)
+        AccentColor.BLUE -> if (isDark) Color(0xFF93C5FD) else Color(0xFF2563EB)
+        AccentColor.GREEN -> if (isDark) Color(0xFF86EFAC) else Color(0xFF16A34A)
+        AccentColor.ORANGE -> if (isDark) Color(0xFFFDBA74) else Color(0xFFEA580C)
+        AccentColor.PINK -> if (isDark) Color(0xFFF9A8D4) else Color(0xFFDB2777)
     }
     
     // =========== Material Color Scheme ===========
@@ -85,7 +66,7 @@ fun FlashLearnTheme(
             primary = primary,
             onPrimary = onPrimaryColor,
             secondary = Color(spec.darkSecondary),
-            tertiary = Color(spec.darkSecondary),
+            tertiary = accent,
             background = Color(spec.darkBackground),
             surface = Color(spec.darkSurface),
             surfaceVariant = Color(spec.darkSurfaceVariant),
@@ -93,14 +74,14 @@ fun FlashLearnTheme(
             onSurface = Color(spec.darkOnSurface),
             onSurfaceVariant = Color(spec.darkOnSurfaceVariant),
             outline = Color(spec.darkOutline),
-            error = Color(0xFFFF8A9A)
+            error = Color(spec.design.darkError)
         )
     } else {
         lightColorScheme(
             primary = primary,
             onPrimary = onPrimaryColor,
             secondary = Color(spec.lightSecondary),
-            tertiary = Color(spec.lightSecondary),
+            tertiary = accent,
             background = Color(spec.lightBackground),
             surface = Color(spec.lightSurface),
             surfaceVariant = Color(spec.lightSurfaceVariant),
@@ -108,14 +89,14 @@ fun FlashLearnTheme(
             onSurface = Color(spec.lightOnSurface),
             onSurfaceVariant = Color(spec.lightOnSurfaceVariant),
             outline = Color(spec.lightOutline),
-            error = Color(0xFFD92D48)
+            error = Color(spec.design.lightError)
         )
     }
     
     // =========== Material Typography ===========
     // This is what screens use for all text styles
     val baseTypography = Typography()
-    val scale = spec.typographyScale
+    val scale = spec.design.metric("typographyScale")
     fun androidx.compose.ui.text.TextStyle.scaled(weight: FontWeight? = null) =
         copy(fontSize = fontSize * scale, fontWeight = weight ?: fontWeight)
     
@@ -155,9 +136,9 @@ fun FlashLearnTheme(
         onSurface = colorScheme.onSurface,
         onSurfaceVariant = colorScheme.onSurfaceVariant,
         outlineColor = colorScheme.outline,
-        dividerColor = colorScheme.outline.copy(alpha = 0.65f),
-        success = if (isDark) Color(0xFF52D49A) else Color(0xFF138A5B),
-        warning = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+        dividerColor = colorScheme.outline.copy(alpha = spec.design.metric("dividerAlpha")),
+        success = if (isDark) Color(spec.design.darkSuccess) else Color(spec.design.lightSuccess),
+        warning = if (isDark) Color(spec.design.darkWarning) else Color(spec.design.lightWarning),
         error = colorScheme.error,
         
         // --- Gradients ---
@@ -165,20 +146,25 @@ fun FlashLearnTheme(
         gradientEnd = if (isDark) Color(spec.darkSecondary) else Color(spec.gradientEnd),
         
         // --- Layout & Appearance ---
-        iconStyle = if (spec.iconStyle.equals("filled", true)) IconStyle.FILLED else IconStyle.OUTLINED,
-        elevationScale = spec.elevationScale,
-        densityScale = spec.densityScale,
-        typographyScale = spec.typographyScale,
+        iconStyle = spec.design.iconStyle,
+        activeIconStyle = spec.design.activeIconStyle,
+        iconSizeScale = spec.design.iconSizeScale,
+        activeIconSizeScale = spec.design.activeIconSizeScale,
+        navIndicatorAlpha = spec.design.navIndicatorAlpha,
+        elevationScale = spec.design.metric("elevationScale"),
+        densityScale = spec.design.metric("densityScale"),
+        typographyScale = spec.design.metric("typographyScale"),
+        spacingScale = spec.design.metric("spacingScale"),
         
         // --- Shapes (Corners) ---
-        cornerSmall = spec.cornerSmall.dp,
-        cornerMedium = spec.cornerMedium.dp,
-        cornerLarge = spec.cornerLarge.dp,
+        cornerSmall = spec.design.metric("cornerSmall").dp,
+        cornerMedium = spec.design.metric("cornerMedium").dp,
+        cornerLarge = spec.design.metric("cornerLarge").dp,
         
         // --- Review Screen Colors ---
         reviewBackground = colorScheme.background,
         reviewSurface = colorScheme.surface,
-        reviewSurfaceSelected = colorScheme.primary.copy(alpha = 0.10f).compositeOver(colorScheme.surface),
+        reviewSurfaceSelected = colorScheme.primary.copy(alpha = spec.design.metric("reviewSelectedAlpha")).compositeOver(colorScheme.surface),
         reviewAccent = colorScheme.primary,
         reviewText = colorScheme.onSurface,
         reviewMutedText = colorScheme.onSurfaceVariant,
@@ -192,24 +178,13 @@ fun FlashLearnTheme(
         critical = colorScheme.error,
         
         // --- Visual Personality ---
-        cardBorderAlpha = if (spec.id == "grok") 0.55f else 0.40f,
-        cardBorderStrongAlpha = if (spec.id == "grok") 0.85f else 0.65f,
-        accentSurfaceAlpha = if (spec.id == "grok") 0.16f else 0.10f,
-        hierarchyBoost = if (spec.id == "grok") 1.08f else 1f,
-        preferFilledButtons = spec.id == "grok" || spec.iconStyle.equals("filled", true)
-    )
-    
-    // =========== Density Adjustment ===========
-    val baseDensity = LocalDensity.current
-    val themedDensity = Density(
-        density = baseDensity.density * spec.densityScale,
-        fontScale = baseDensity.fontScale
+        design = spec.design
     )
     
     // =========== Provide All Theme Data ===========
+    // Density must remain system-owned; theme scaling is handled by spacing/typography tokens.
     CompositionLocalProvider(
-        LocalFlashLearnThemeTokens provides tokens,
-        LocalDensity provides themedDensity
+        LocalFlashLearnThemeTokens provides tokens
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -225,9 +200,4 @@ fun FlashLearnTheme(
     }
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-private fun Color.compositeOver(background: Color): Color = this.copy(alpha = 1f)
 

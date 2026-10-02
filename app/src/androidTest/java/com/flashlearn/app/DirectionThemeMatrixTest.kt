@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.LayoutDirection
 import com.flashlearn.app.ui.AppLayoutDirection
 import com.flashlearn.app.ui.AppearanceMode
@@ -21,7 +21,7 @@ import org.junit.Test
 
 class DirectionThemeMatrixTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComposeTestActivity>()
 
     @Test
     fun rtlLtrAndLightDarkMatrixPreservesRootDirectionAndTheme() {
@@ -36,7 +36,7 @@ class DirectionThemeMatrixTest {
         var observedBackground: Color? = null
 
         composeRule.setContent {
-            FlashLearnTheme(appearance = currentCase.second) {
+            FlashLearnTheme(appearance = currentCase.second, themeId = FlashLearnThemeSpec.MODERN_MINIMAL.id) {
                 CompositionLocalProvider(
                     LocalLayoutDirection provides currentCase.first.toComposeLayoutDirection()
                 ) {

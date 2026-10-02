@@ -26,22 +26,23 @@ class CalculateProgressUseCase @Inject constructor(
     private val learningRepository: LearningStateRepository,
     private val difficultyRepository: DifficultyStateRepository
 ) {
-    @Suppress("UNUSED_PARAMETER")
     suspend operator fun invoke(now: Instant): ProgressSnapshot {
         val concepts = conceptRepository.getAllActive()
-        val learningById = learningRepository.getAll().associateBy { it.conceptId }
-        val difficultyById = difficultyRepository.getAll().associateBy { it.conceptId }
+        val activeIds = concepts.asSequence().map { it.id }.toSet()
+        val stageCounts = learningRepository.countByStage(activeIds)
+        val difficultyCounts = difficultyRepository.countByDifficulty(activeIds)
+        val learningStates = learningRepository.getAll()
         return ProgressSnapshot(
             totalConcepts = concepts.size,
-            dailyConcepts = concepts.count { learningById[it.id]?.stage == Stage.DAILY },
-            weeklyConcepts = concepts.count { learningById[it.id]?.stage == Stage.WEEKLY },
-            monthlyConcepts = concepts.count { learningById[it.id]?.stage == Stage.MONTHLY },
-            learnedConcepts = concepts.count { learningById[it.id]?.stage == Stage.LEARNED },
-            pathFailureConcepts = concepts.count { learningById[it.id]?.hasPathFailure == true },
-            easyConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.EASY },
-            mediumConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.MEDIUM },
-            hardConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.HARD },
-            veryHardConcepts = concepts.count { difficultyById[it.id]?.current == VocabularyDifficulty.VERY_HARD }
+            dailyConcepts = stageCounts[Stage.DAILY] ?: 0,
+            weeklyConcepts = stageCounts[Stage.WEEKLY] ?: 0,
+            monthlyConcepts = stageCounts[Stage.MONTHLY] ?: 0,
+            learnedConcepts = stageCounts[Stage.LEARNED] ?: 0,
+            pathFailureConcepts = learningStates.count { it.hasPathFailure && it.conceptId in concepts.map { concept -> concept.id }.toSet() },
+            easyConcepts = difficultyCounts[VocabularyDifficulty.EASY] ?: 0,
+            mediumConcepts = difficultyCounts[VocabularyDifficulty.MEDIUM] ?: 0,
+            hardConcepts = difficultyCounts[VocabularyDifficulty.HARD] ?: 0,
+            veryHardConcepts = difficultyCounts[VocabularyDifficulty.VERY_HARD] ?: 0
         )
     }
 }
@@ -68,13 +69,15 @@ class CalculateProgressPercentage @Inject constructor(
     private val learningRepository: LearningStateRepository,
     private val reviewHistoryRepository: ReviewHistoryRepository
 ) {
-    suspend operator fun invoke(): Double {
+    suspend operator fun invoke(): Double = invoke(reviewHistoryRepository.getAll())
+
+    suspend operator fun invoke(history: List<ReviewHistory>): Double {
         val concepts = conceptRepository.getAllActive()
         if (concepts.isEmpty()) return 0.0
         val states = learningRepository.getAll().associateBy { it.conceptId }
-        val reviewed = reviewHistoryRepository.getAll().groupBy { it.conceptId }
+        val reviewedIds = history.asSequence().map { it.conceptId }.toSet()
         val totalScore: Int = concepts.sumOf { concept ->
-            ProgressScoring.score(states[concept.id]?.stage, !reviewed[concept.id].isNullOrEmpty())
+            ProgressScoring.score(states[concept.id]?.stage, concept.id in reviewedIds)
         }
         return totalScore.toDouble() / concepts.size.toDouble()
     }

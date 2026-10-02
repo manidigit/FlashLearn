@@ -6,7 +6,6 @@ import com.flashlearn.domain.model.*
 import com.flashlearn.domain.repository.*
 import com.flashlearn.domain.settings.SettingsKeys
 import java.time.Instant
-import java.time.ZoneId
 import java.text.Normalizer
 import java.util.Locale
 import java.util.UUID
@@ -16,7 +15,6 @@ data class CreateConceptCommand(
     val sourceText: String, val targetText: String,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa",
     val categoryId: UUID? = null, val notes: String? = null,
-    val pronunciation: String? = null, val example: String? = null,
     val entryType: EntryType = EntryType.WORD, val tags: List<UUID> = emptyList(),
     val mergeExistingSource: Boolean = true
 )
@@ -53,9 +51,9 @@ class CreateConceptUseCase @Inject constructor(
         require(sourceKey.isNotBlank() && targetKey.isNotBlank()) { "متن واژه نمی‌تواند خالی باشد" }
         val activeConcepts = conceptRepository.getAllActive()
         if (command.mergeExistingSource) {
-            val existing = activeConcepts.firstOrNull { concept ->
-                contentRepository.find(concept.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey
-            }
+            val indexedIds = contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).map { it.conceptId }.toSet()
+            val existing = activeConcepts.firstOrNull { it.id in indexedIds }
+                ?: if (indexedIds.isEmpty()) contentRepository.getAll().firstOrNull { it.conceptId in activeConcepts.map(Concept::id) && it.languageCode == command.sourceLanguage && computeCanonicalKey(it.text) == sourceKey }?.let { activeConcepts.first { c -> c.id == it.conceptId } } else null
             if (existing != null) {
                 val translations = contentRepository.findAll(existing.id, command.targetLanguage)
                 if (translations.any { computeCanonicalKey(it.text) == targetKey }) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
@@ -66,7 +64,7 @@ class CreateConceptUseCase @Inject constructor(
         }
         val id = UUID.randomUUID(); val now = Instant.now()
         conceptRepository.insert(Concept(id, command.entryType, command.categoryId, false, true, now, now))
-        contentRepository.upsert(Content(UUID.randomUUID(), id, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example))
+        contentRepository.upsert(Content(UUID.randomUUID(), id, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes))
         contentRepository.upsert(Content(UUID.randomUUID(), id, command.targetLanguage, command.targetText.trim(), targetKey, translationIndex = 0))
         learningStateRepository.upsert(LearningState(UUID.randomUUID(), id, Stage.DAILY, now, 0, false, 0, 0, null))
         difficultyStateRepository.upsert(DifficultyState(UUID.randomUUID(), id, VocabularyDifficulty.EASY, 0, 0, false))
@@ -74,9 +72,24 @@ class CreateConceptUseCase @Inject constructor(
     }
 }
 
+/** Finalizes manual review approval after the edited Add Word form is saved. */
+class ApproveReviewQueueItemUseCase @Inject constructor(
+    private val createConcept: CreateConceptUseCase,
+    private val reviewQueueRepository: ReviewQueueRepository,
+    private val database: FlashLearnDatabase
+) {
+    suspend operator fun invoke(item: ReviewQueueItem, sourceText: String, targetText: String, sourceLanguage: String, targetLanguage: String, categoryId: UUID? = null, notes: String? = null, entryType: EntryType = EntryType.WORD): UUID = database.withTransaction {
+        require(item.status == ReviewQueueStatus.PENDING) { "این مورد دیگر در صف انتظار نیست" }
+        require(sourceText.isNotBlank() && targetText.isNotBlank()) { "متن واژه و ترجمه نمی‌توانند خالی باشند" }
+        val conceptId = createConcept.createInTransaction(CreateConceptCommand(sourceText.trim(), targetText.trim(), sourceLanguage, targetLanguage, categoryId, notes, entryType = entryType, mergeExistingSource = true))
+        reviewQueueRepository.update(item.copy(status = ReviewQueueStatus.APPROVED))
+        conceptId
+    }
+}
+
 data class UpdateConceptCommand(
     val conceptId: UUID, val sourceText: String, val targetText: String,
-    val notes: String? = null, val pronunciation: String? = null, val example: String? = null,
+    val notes: String? = null,
     val entryType: EntryType? = null, val categoryId: UUID? = null, val preserveCategory: Boolean = true,
     val sourceLanguage: String = "es", val targetLanguage: String = "fa"
 )
@@ -96,20 +109,22 @@ class UpdateConceptUseCase @Inject constructor(private val conceptRepository: Co
         val activeConcepts = conceptRepository.getAllActive().filter { it.id != command.conceptId }
         val requestedKeys = requestedTranslations.map(::computeCanonicalKey).toSet()
         val duplicate = activeConcepts.any { other ->
-            contentRepository.find(other.id, command.sourceLanguage)?.let { computeCanonicalKey(it.text) } == sourceKey &&
+            contentRepository.findByCanonicalKey(command.sourceLanguage, sourceKey).any { it.conceptId == other.id } &&
                 contentRepository.findAll(other.id, command.targetLanguage).any { computeCanonicalKey(it.text) in requestedKeys }
         }
         if (duplicate) throw DuplicateConceptException("این واژه با همین ترجمه قبلاً در کتابخانه وجود دارد")
         val now = Instant.now()
         conceptRepository.update(concept.copy(entryType = command.entryType ?: concept.entryType, categoryId = if (command.preserveCategory) concept.categoryId else command.categoryId, updatedAt = now))
         val source = contentRepository.find(command.conceptId, command.sourceLanguage)
-        contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, command.pronunciation, command.example, translationIndex = source?.translationIndex ?: 0, grammarNote = source?.grammarNote, possibleCorrection = source?.possibleCorrection))
-        val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage)
-        val firstRequested = requestedTranslations.first(); val firstKey = computeCanonicalKey(firstRequested); val firstExisting = existingTranslations.firstOrNull()
-        contentRepository.upsert(Content(firstExisting?.id ?: UUID.randomUUID(), command.conceptId, command.targetLanguage, firstRequested, firstKey, translationIndex = firstExisting?.translationIndex ?: 0, grammarNote = firstExisting?.grammarNote, possibleCorrection = firstExisting?.possibleCorrection))
-        val existingKeysAfterFirst = existingTranslations.drop(1).map { computeCanonicalKey(it.text) }.toMutableSet()
-        var nextIndex = maxOf(existingTranslations.maxOfOrNull { it.translationIndex } ?: 0, firstExisting?.translationIndex ?: 0) + 1
-        requestedTranslations.drop(1).forEach { text -> val key = computeCanonicalKey(text); if (existingKeysAfterFirst.add(key) && key != firstKey) contentRepository.insertTranslation(Content(UUID.randomUUID(), command.conceptId, command.targetLanguage, text, key, translationIndex = nextIndex++)) }
+        contentRepository.upsert(Content(source?.id ?: UUID.randomUUID(), command.conceptId, command.sourceLanguage, command.sourceText.trim(), sourceKey, command.notes, translationIndex = source?.translationIndex ?: 0, grammarNote = source?.grammarNote, possibleCorrection = source?.possibleCorrection))
+        val existingTranslations = contentRepository.findAll(command.conceptId, command.targetLanguage).sortedBy { it.translationIndex }
+        requestedTranslations.forEachIndexed { index, text ->
+            val key = computeCanonicalKey(text)
+            val existing = existingTranslations.getOrNull(index)
+            if (existing == null) contentRepository.insertTranslation(Content(UUID.randomUUID(), command.conceptId, command.targetLanguage, text, key, translationIndex = index))
+            else contentRepository.upsert(existing.copy(text = text, canonicalKey = key, translationIndex = index))
+        }
+        existingTranslations.drop(requestedTranslations.size).forEach { contentRepository.deleteById(it.id) }
         command.conceptId
     }
 }
@@ -118,13 +133,15 @@ class DeleteConceptUseCase @Inject constructor(private val conceptRepository: Co
     suspend operator fun invoke(conceptId: UUID) = database.withTransaction { if (conceptRepository.get(conceptId) == null) error("Concept not found: $conceptId"); conceptRepository.softDelete(conceptId, Instant.now()) }
 }
 
-class EnsureStarterDataUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val categoryRepository: CategoryRepository, private val createConcept: CreateConceptUseCase, private val database: FlashLearnDatabase) {
+class EnsureStarterDataUseCase @Inject constructor(private val conceptRepository: ConceptRepository, private val categoryRepository: CategoryRepository, private val createConcept: CreateConceptUseCase, private val database: FlashLearnDatabase, private val settingsRepository: SettingsRepository) {
+    companion object { const val STARTER_DATA_CREATED = "starter_data_created" }
     suspend operator fun invoke(): Int = database.withTransaction {
-        if (conceptRepository.getAllActive().isNotEmpty()) return@withTransaction 0
+        if (settingsRepository.getString(STARTER_DATA_CREATED, "false") == "true") return@withTransaction 0
+        if (conceptRepository.getAllActive().isNotEmpty()) { settingsRepository.setString(STARTER_DATA_CREATED, "true"); return@withTransaction 0 }
         val categoryNames = listOf("مکالمه روزمره", "سفر", "غذا", "افعال پایه")
         val categories = categoryNames.associateWith { name -> categoryRepository.findByName(name) ?: run { val category = Category(UUID.randomUUID(), name); categoryRepository.insert(category); category } }
         val starter = listOf(Triple("hola", "سلام", "مکالمه روزمره"), Triple("gracias", "ممنون / متشکرم", "مکالمه روزمره"), Triple("por favor", "لطفاً", "مکالمه روزمره"), Triple("adiós", "خداحافظ", "مکالمه روزمره"), Triple("buenos días", "صبح بخیر", "مکالمه روزمره"), Triple("¿cómo estás?", "حالت چطور است؟", "مکالمه روزمره"), Triple("agua", "آب", "غذا"), Triple("comida", "غذا", "غذا"), Triple("café", "قهوه", "غذا"), Triple("casa", "خانه", "مکالمه روزمره"), Triple("viaje", "سفر", "سفر"), Triple("hotel", "هتل", "سفر"), Triple("ir", "رفتن", "افعال پایه"), Triple("venir", "آمدن", "افعال پایه"), Triple("comer", "خوردن", "افعال پایه"), Triple("beber", "نوشیدن", "افعال پایه"), Triple("hablar", "صحبت کردن", "افعال پایه"), Triple("aprender", "یاد گرفتن", "افعال پایه"), Triple("entender", "فهمیدن", "افعال پایه"), Triple("ayuda", "کمک", "سفر"))
-        starter.forEach { (source, target, categoryName) -> createConcept(CreateConceptCommand(sourceText = source, targetText = target, categoryId = categories.getValue(categoryName).id, notes = "واژهٔ نمونهٔ اولیه FlashLearn")) }; starter.size
+        starter.forEach { (source, target, categoryName) -> createConcept.createInTransaction(CreateConceptCommand(sourceText = source, targetText = target, categoryId = categories.getValue(categoryName).id, notes = "واژهٔ نمونهٔ اولیه FlashLearn")) }; settingsRepository.setString(STARTER_DATA_CREATED, "true"); starter.size
     }
 }
 
@@ -139,19 +156,34 @@ class SubmitReviewAnswerUseCase @Inject constructor(
         val learning = learningStateRepository.get(request.conceptId) ?: error("DATA_INTEGRITY_ERROR: LearningState not found for concept ${request.conceptId}")
         val difficulty = difficultyStateRepository.get(request.conceptId) ?: error("DATA_INTEGRITY_ERROR: DifficultyState not found for concept ${request.conceptId}")
         if (reviewHistoryRepository.existsByAttemptId(request.sessionId, request.reviewAttemptId)) error("Duplicate review attempt: ${request.reviewAttemptId}")
-        val reviewedLocalDate = request.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate()
-        val alreadyPracticedToday = reviewHistoryRepository.getAll().any { it.conceptId == request.conceptId && it.reviewedAt.atZone(ZoneId.systemDefault()).toLocalDate() == reviewedLocalDate }
-        if (alreadyPracticedToday) error("Concept has already been practiced today: ${request.conceptId}")
+        if (wasReviewedToday(learning.lastReviewedAt, request.reviewedAt)) {
+            error("Concept has already been practiced today: ${request.conceptId}")
+        }
         if (request.reviewType != ReviewType.LEARNED) {
             val dueAt = learning.nextReviewAt
             if (dueAt != null && dueAt > request.reviewedAt) error("Concept is not due yet (nextReviewAt = $dueAt")
         }
         val transition = calculateLearningTransition(learning, request.isCorrect, request.reviewedAt)
         val threshold = settingsRepository.getInt("threshold_difficulty", default = 3)
-        val newDifficulty = calculateDifficulty(state = difficulty, isCorrect = request.isCorrect, reviewType = request.reviewType, monthlyWrongCountBefore = learning.monthlyWrongCount, threshold = threshold)
+        val newDifficulty = calculateDifficulty(state = difficulty, isCorrect = request.isCorrect, threshold = threshold)
         val updatedLearning = learning.copy(stage = transition.newStage, nextReviewAt = transition.nextReviewAt, hasPathFailure = transition.hasPathFailure, monthlyWrongCount = transition.monthlyWrongCount, totalCorrect = if (request.isCorrect) learning.totalCorrect + 1 else learning.totalCorrect, totalWrong = if (!request.isCorrect) learning.totalWrong + 1 else learning.totalWrong, lastReviewedAt = request.reviewedAt)
         learningStateRepository.upsert(updatedLearning); difficultyStateRepository.upsert(newDifficulty)
         reviewHistoryRepository.insert(ReviewHistory(UUID.randomUUID(), request.sessionId, request.reviewAttemptId, request.conceptId, request.reviewedAt, request.isCorrect, request.reviewType))
         SubmitReviewAnswerResult(updatedLearning, newDifficulty, transition)
+    }
+}
+
+
+class CleanupDeletedConceptsUseCase @Inject constructor(
+    private val repository: com.flashlearn.domain.repository.DeletedConceptCleanupRepository,
+    private val settingsRepository: SettingsRepository
+) {
+    companion object { const val LAST_RUN = "deleted_cleanup.last_run"; const val PERIOD_DAYS = 30L; const val RETENTION_DAYS = 90L }
+    suspend operator fun invoke(now: Instant = Instant.now()): Int {
+        val last = settingsRepository.getString(LAST_RUN, "").takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() }
+        if (last != null && last.plusSeconds(PERIOD_DAYS * 86400L).isAfter(now)) return 0
+        val removed = repository.purgeInactiveBefore(now.minusSeconds(RETENTION_DAYS * 86400L))
+        settingsRepository.setString(LAST_RUN, now.toString())
+        return removed
     }
 }

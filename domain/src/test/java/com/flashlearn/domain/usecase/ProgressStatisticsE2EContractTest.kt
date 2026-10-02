@@ -108,7 +108,7 @@ class ProgressStatisticsE2EContractTest {
         assertEquals(1, progress.dailyConcepts)
         assertEquals(0, progress.learnedConcepts)
 
-        val stats = CalculateStatisticsUseCase(history)()
+        val stats = CalculateStatisticsUseCase(history, concepts)()
         assertEquals(2, stats.totalReviews)
         assertEquals(1, stats.totalCorrect)
         assertEquals(1, stats.totalWrong)
@@ -125,8 +125,12 @@ class ProgressStatisticsE2EContractTest {
         assertEquals(1, afterDelete.totalConcepts)
         assertEquals(1, afterDelete.dailyConcepts)
         assertEquals(0, afterDelete.weeklyConcepts)
-        // Historical review statistics remain immutable after soft deletion.
-        val statsAfterDelete = CalculateStatisticsUseCase(history)()
-        assertEquals(stats, statsAfterDelete)
+        // Review-event totals remain historical, while reviewed-word projection follows active vocabulary.
+        val statsAfterDelete = CalculateStatisticsUseCase(history, concepts)()
+        assertEquals(stats.totalReviews, statsAfterDelete.totalReviews)
+        assertEquals(stats.totalCorrect, statsAfterDelete.totalCorrect)
+        assertEquals(stats.totalWrong, statsAfterDelete.totalWrong)
+        assertEquals(stats.accuracyPercent, statsAfterDelete.accuracyPercent)
+        assertEquals(1, statsAfterDelete.reviewedConceptCount)
     }
 }

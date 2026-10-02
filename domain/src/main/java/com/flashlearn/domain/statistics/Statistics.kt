@@ -37,34 +37,58 @@ class GetBasicStatistics @Inject constructor(
     suspend operator fun invoke(): BasicStatistics {
         val active = conceptRepository.getAllActive()
         val activeIds = active.map { it.id }.toSet()
-        val history = reviewHistoryRepository.getAll().filter { it.conceptId in activeIds }
-        val learnedIds = learningStateRepository.getAll()
-            .filter { it.conceptId in activeIds && it.stage == com.flashlearn.domain.model.Stage.LEARNED }
+        val learningStates = learningStateRepository.getAll()
+            .filter { it.conceptId in activeIds }
+
+        val learnedIds = learningStates
+            .filter { it.stage == com.flashlearn.domain.model.Stage.LEARNED }
             .map { it.conceptId }
             .toSet()
-        val practiced = history.map { it.conceptId }.toSet().size
+
+        val practicedIds = learningStates
+            .filter {
+                it.stage != com.flashlearn.domain.model.Stage.LEARNED &&
+                    it.lastReviewedAt != null
+            }
+            .map { it.conceptId }
+            .toSet()
+
+        val practiced = practicedIds.size
+        val unpracticed = maxOf(0, active.size - practiced - learnedIds.size)
+
         return BasicStatistics(
             totalActiveWords = active.size,
             practicedWords = practiced,
-            unpracticedWords = maxOf(0, active.size - practiced),
+            unpracticedWords = unpracticed,
             learnedWords = learnedIds.size
         )
     }
 }
 
 class CalculateStatisticsUseCase @Inject constructor(
-    private val repository: ReviewHistoryRepository
+    private val repository: ReviewHistoryRepository,
+    private val conceptRepository: ConceptRepository
 ) {
     suspend operator fun invoke(): StatisticsSnapshot {
         val records = repository.getAll()
         val total = records.size
         val correct = records.count { it.isCorrect }
+        val activeConceptIds = conceptRepository.getAllActive()
+            .asSequence()
+            .map { it.id }
+            .toSet()
+        val reviewedConceptCount = records.asSequence()
+            .map { it.conceptId }
+            .filter { it in activeConceptIds }
+            .toSet()
+            .size
+
         return StatisticsSnapshot(
             totalReviews = total,
             totalCorrect = correct,
             totalWrong = total - correct,
             accuracyPercent = if (total == 0) 0 else correct * 100 / total,
-            reviewedConceptCount = records.map { it.conceptId }.distinct().size
+            reviewedConceptCount = reviewedConceptCount
         )
     }
 }

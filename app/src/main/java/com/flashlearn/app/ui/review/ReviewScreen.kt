@@ -36,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.flashlearn.app.R
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -84,14 +86,14 @@ fun ReviewScreen(viewModel: ReviewViewModel, personalDifficulty: VocabularyDiffi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(tokens.reviewSectionGap)
     ) {
-            state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text("خطا: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = leadingTextAlign) }
+            state.error?.takeIf { state.selectedMode != ReviewMode.QUIZ || state.quizCard == null }?.let { Text(stringResource(R.string.review_error, it), color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = leadingTextAlign) }
             when {
                 state.isSelectingMode -> ReviewSetup(state, viewModel, personalDifficulty, onFinished, onOpenCategories = { showCategoryPicker = true })
                 state.isLoading -> CircularProgressIndicator()
                 state.isFinished -> FinishCard(state, onFinished)
                 state.selectedMode == ReviewMode.QUIZ && state.quizCard != null -> QuizCard(state, viewModel)
-                state.answerFeedback != null -> FeedbackCard(state)
-                state.selectedMode == ReviewMode.QUIZ -> QuizUnavailableCard()
+                state.answerFeedback != null -> FeedbackCard(state, viewModel)
+                state.selectedMode == ReviewMode.QUIZ -> QuizUnavailableCard(viewModel)
                 state.card != null -> FlashCard(state, viewModel)
             }
     }
@@ -109,63 +111,70 @@ private fun ReviewSetup(
     val tokens = LocalFlashLearnThemeTokens.current
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.reviewSectionGap)) {
         ReviewHeader(onBack)
-        ReviewSectionTitle(1, "حالت پاسخ اجرا")
+        ReviewSectionTitle(1, stringResource(R.string.review_answer_mode))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-            ReviewChoiceCard("تستی", state.selectedMode == ReviewMode.QUIZ, Icons.Outlined.Quiz, { vm.chooseMode(ReviewMode.QUIZ) }, Modifier.weight(1f))
-            ReviewChoiceCard("فلش کارت", state.selectedMode == ReviewMode.FLASHCARD, Icons.Outlined.Style, { vm.chooseMode(ReviewMode.FLASHCARD) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_quiz), state.selectedMode == ReviewMode.QUIZ, Icons.Outlined.Quiz, { vm.chooseMode(ReviewMode.QUIZ) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_flashcard), state.selectedMode == ReviewMode.FLASHCARD, Icons.Outlined.Style, { vm.chooseMode(ReviewMode.FLASHCARD) }, Modifier.weight(1f))
         }
-        ReviewSectionTitle(2, "دسته بندی لغات")
+        ReviewSectionTitle(2, stringResource(R.string.review_word_categories))
         CategoryFilterCard(state, onOpenCategories)
-        ReviewSectionTitle(3, "مرور ویژه")
+        ReviewSectionTitle(3, stringResource(R.string.review_special))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-            ReviewChoiceCard("تصادفی", state.selectedReviewType == ReviewType.RANDOM, Icons.Outlined.Style, { vm.chooseReviewType(ReviewType.RANDOM) }, Modifier.weight(1f))
-            ReviewChoiceCard("یادگرفته", state.selectedReviewType == ReviewType.LEARNED, Icons.Outlined.DoneAll, { vm.chooseReviewType(ReviewType.LEARNED) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_random), state.selectedReviewType == ReviewType.RANDOM, Icons.Outlined.Style, { vm.chooseReviewType(ReviewType.RANDOM) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_learned), state.selectedReviewType == ReviewType.LEARNED, Icons.Outlined.DoneAll, { vm.chooseReviewType(ReviewType.LEARNED) }, Modifier.weight(1f))
         }
-        ReviewSectionTitle(4, "زمانبندی مرور")
+        ReviewSectionTitle(4, stringResource(R.string.review_schedule))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-            ReviewChoiceCard("روزانه", state.selectedReviewType == ReviewType.DAILY, Icons.Outlined.FormatListNumbered, { vm.chooseReviewType(ReviewType.DAILY) }, Modifier.weight(1f))
-            ReviewChoiceCard("هفتگی", state.selectedReviewType == ReviewType.WEEKLY, Icons.Outlined.Category, { vm.chooseReviewType(ReviewType.WEEKLY) }, Modifier.weight(1f))
-            ReviewChoiceCard("ماهانه", state.selectedReviewType == ReviewType.MONTHLY, Icons.Outlined.AutoAwesome, { vm.chooseReviewType(ReviewType.MONTHLY) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_daily), state.selectedReviewType == ReviewType.DAILY, Icons.Outlined.FormatListNumbered, { vm.chooseReviewType(ReviewType.DAILY) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_weekly), state.selectedReviewType == ReviewType.WEEKLY, Icons.Outlined.Category, { vm.chooseReviewType(ReviewType.WEEKLY) }, Modifier.weight(1f))
+            ReviewChoiceCard(stringResource(R.string.review_monthly), state.selectedReviewType == ReviewType.MONTHLY, Icons.Outlined.AutoAwesome, { vm.chooseReviewType(ReviewType.MONTHLY) }, Modifier.weight(1f))
         }
-        ReviewSectionTitle(5, "سطح دشواری کلمات")
+        ReviewSectionTitle(5, stringResource(R.string.review_difficulty_words))
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-                DifficultyTile("آسان", VocabularyDifficulty.EASY in state.selectedDifficulties, VocabularyDifficulty.EASY, difficultyIcon(VocabularyDifficulty.EASY), Modifier.weight(1f), vm)
-                DifficultyTile("متوسط", VocabularyDifficulty.MEDIUM in state.selectedDifficulties, VocabularyDifficulty.MEDIUM, difficultyIcon(VocabularyDifficulty.MEDIUM), Modifier.weight(1f), vm)
+                DifficultyTile(stringResource(R.string.review_easy), VocabularyDifficulty.EASY in state.selectedDifficulties, VocabularyDifficulty.EASY, difficultyIcon(VocabularyDifficulty.EASY), Modifier.weight(1f), vm)
+                DifficultyTile(stringResource(R.string.review_medium), VocabularyDifficulty.MEDIUM in state.selectedDifficulties, VocabularyDifficulty.MEDIUM, difficultyIcon(VocabularyDifficulty.MEDIUM), Modifier.weight(1f), vm)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-                DifficultyTile("سخت", VocabularyDifficulty.HARD in state.selectedDifficulties, VocabularyDifficulty.HARD, difficultyIcon(VocabularyDifficulty.HARD), Modifier.weight(1f), vm)
-                DifficultyTile("خیلی سخت", VocabularyDifficulty.VERY_HARD in state.selectedDifficulties, VocabularyDifficulty.VERY_HARD, difficultyIcon(VocabularyDifficulty.VERY_HARD), Modifier.weight(1f), vm)
+                DifficultyTile(stringResource(R.string.review_hard), VocabularyDifficulty.HARD in state.selectedDifficulties, VocabularyDifficulty.HARD, difficultyIcon(VocabularyDifficulty.HARD), Modifier.weight(1f), vm)
+                DifficultyTile(stringResource(R.string.review_very_hard), VocabularyDifficulty.VERY_HARD in state.selectedDifficulties, VocabularyDifficulty.VERY_HARD, difficultyIcon(VocabularyDifficulty.VERY_HARD), Modifier.weight(1f), vm)
             }
         }
         if (state.selectedMode == ReviewMode.QUIZ) {
-            ReviewSectionTitle(6, "سطح دشواری آزمون تستی")
+            ReviewSectionTitle(6, stringResource(R.string.review_quiz_difficulty))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
-                QuizLevelTile("ابتدایی", state.selectedQuizDifficulty == QuizDifficulty.EASY, Icons.Outlined.School, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.EASY) }
-                QuizLevelTile("متوسط", state.selectedQuizDifficulty == QuizDifficulty.MEDIUM, Icons.Outlined.Tune, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.MEDIUM) }
-                QuizLevelTile("حرفه‌ای", state.selectedQuizDifficulty == QuizDifficulty.HARD, Icons.Outlined.EmojiEvents, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.HARD) }
+                QuizLevelTile(stringResource(R.string.review_beginner), state.selectedQuizDifficulty == QuizDifficulty.EASY, Icons.Outlined.School, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.EASY) }
+                QuizLevelTile(stringResource(R.string.review_medium), state.selectedQuizDifficulty == QuizDifficulty.MEDIUM, Icons.Outlined.Tune, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.MEDIUM) }
+                QuizLevelTile(stringResource(R.string.review_professional), state.selectedQuizDifficulty == QuizDifficulty.HARD, Icons.Outlined.EmojiEvents, Modifier.weight(1f)) { vm.chooseQuizDifficulty(QuizDifficulty.HARD) }
             }
         }
-        ReviewSectionTitle(if (state.selectedMode == ReviewMode.QUIZ) 7 else 6, "تعداد کلمات")
+        ReviewSectionTitle(if (state.selectedMode == ReviewMode.QUIZ) 7 else 6, stringResource(R.string.review_word_count))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
             listOf(10, 20, 30, 50, 100).forEach { count ->
                 CompactChoice(count.toString(), state.maximumReviewCards == count, Modifier.weight(1f)) { vm.setMaximumReviewCards(count) }
             }
         }
         personalDifficulty?.let {
-            Text("سطح شخصی فعلی: " + difficultyLabel(it), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
+            Text(stringResource(R.string.review_personal_level, difficultyLabel(it)), Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Start)
         }
-        val filterSummary = buildList {
-            add(if (state.selectedDifficulties.isEmpty()) "همه سطوح" else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabel(it) })
-            add(if (state.selectedCategoryIds.isEmpty()) "همه دسته‌ها" else state.selectedCategoryIds.size.toString() + " دسته")
-            add(reviewTypeLabel(state.selectedReviewType))
-            add(if (state.selectedMode == ReviewMode.QUIZ) "تست" else "فلش‌کارت")
-        }.joinToString("  •  ")
+        val difficultyLabels = mapOf(
+            VocabularyDifficulty.EASY to stringResource(R.string.review_easy),
+            VocabularyDifficulty.MEDIUM to stringResource(R.string.review_medium),
+            VocabularyDifficulty.HARD to stringResource(R.string.review_hard),
+            VocabularyDifficulty.VERY_HARD to stringResource(R.string.review_very_hard)
+        )
+        val reviewTypeText = reviewTypeLabel(state.selectedReviewType)
+        val filterSummary = listOf(
+            if (state.selectedDifficulties.isEmpty()) stringResource(R.string.review_all_levels) else state.selectedDifficulties.sortedBy { it.ordinal }.joinToString("، ") { difficultyLabels[it].orEmpty() },
+            if (state.selectedCategoryIds.isEmpty()) stringResource(R.string.category_all) else stringResource(R.string.review_categories_count, state.selectedCategoryIds.size),
+            reviewTypeText,
+            if (state.selectedMode == ReviewMode.QUIZ) stringResource(R.string.review_test) else stringResource(R.string.review_flashcard_mode)
+        ).joinToString("  •  ")
         Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = tokens.reviewSurface, border = BorderStroke(tokens.borderThin, tokens.reviewBorder)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = tokens.reviewCardPadding, vertical = tokens.reviewCompactPadding), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Tune, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconMedium))
                 Column(Modifier.weight(1f).padding(horizontal = tokens.reviewItemGap), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(minOf(state.maximumReviewCards, state.availableReviewCount).toString() + " کلمه مرور از " + state.availableReviewCount + " کلمه آماده فیلتر شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.review_available, minOf(state.maximumReviewCards, state.availableReviewCount), state.availableReviewCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Center)
                     Text(filterSummary, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, textAlign = TextAlign.Center)
                 }
             }
@@ -184,7 +193,7 @@ private fun ReviewSetup(
                 }
             }
             Spacer(Modifier.width(tokens.reviewItemGap))
-            Text("شروع مرور", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.review_start), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -192,7 +201,7 @@ private fun ReviewSetup(
 @Composable
 private fun ReviewHeader(onBack: () -> Unit) {
     FlashLearnScreenHeader(
-        title = "مرور کلمات",
+        title = stringResource(R.string.review_title_full),
         onBack = onBack,
         variant = FlashLearnScreenHeaderVariant.REVIEW
     )
@@ -227,8 +236,8 @@ private fun CategoryFilterCard(state: ReviewUiState, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth().height(tokens.reviewCategoryHeight), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = if (selectedCount > 0) tokens.reviewSurfaceSelected else tokens.reviewSurface), border = BorderStroke(if (selectedCount > 0) tokens.borderStrong else tokens.borderThin, if (selectedCount > 0) tokens.reviewAccent else tokens.reviewBorder), elevation = CardDefaults.cardElevation(defaultElevation = tokens.reviewCardElevation)) {
         Row(Modifier.fillMaxSize().padding(horizontal = tokens.reviewCardPadding), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(tokens.reviewItemGap)) {
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                Text(if (selectedCount == 0) "همه دسته‌ها" else "$selectedCount دسته انتخاب شده", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Start)
-                Text(if (selectedCount == 0) "انتخاب چند دسته برای مرور" else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, maxLines = 2, textAlign = TextAlign.Start)
+                Text(if (selectedCount == 0) stringResource(R.string.category_all) else stringResource(R.string.review_categories_selected, selectedCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tokens.reviewText, textAlign = TextAlign.Start)
+                Text(if (selectedCount == 0) stringResource(R.string.review_choose_categories) else state.selectedCategoryIds.joinToString("، ") { id -> state.categories.firstOrNull { it.id == id }?.name ?: "" }, style = MaterialTheme.typography.bodySmall, color = tokens.reviewMutedText, maxLines = 2, textAlign = TextAlign.Start)
             }
             Surface(Modifier.size(tokens.reviewCategoryIconTile), shape = MaterialTheme.shapes.medium, color = tokens.reviewSurfaceSelected) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Category, null, tint = tokens.reviewAccent, modifier = Modifier.size(tokens.reviewIconLarge)) }
@@ -297,7 +306,7 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     val tokens = LocalFlashLearnThemeTokens.current
     val card = state.card ?: return
     val leadingTextAlign = TextAlign.Start
-    val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat(); Text("${state.remaining} کارت باقی‌مانده از ${state.total}", style = MaterialTheme.typography.labelMedium, textAlign = leadingTextAlign, modifier = Modifier.fillMaxWidth()); LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth()); Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text(card.sourceText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center); if (card.isFlipped) { Spacer(Modifier.height(tokens.sectionGap)); Text(card.targetText, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center) }; if (card.hintRevealed && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }; if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } } }; if (!card.isFlipped) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) "مخفی کردن یادداشت" else "نمایش یادداشت") }; OutlinedButton(onClick = vm::revealHint, enabled = !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("راهنما") } }; Button(onClick = vm::flipCard, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight)) { Text("نمایش پاسخ") } } else { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { OutlinedButton(onClick = { vm.submitAnswer(false) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("غلط") }; Button(onClick = { vm.submitAnswer(true) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text("صحیح") } } } }
+    val progress = if (state.total <= 0) 0f else state.answered.toFloat() / state.total.toFloat(); Text(stringResource(R.string.review_remaining_cards, state.remaining, state.total), style = MaterialTheme.typography.labelMedium, textAlign = leadingTextAlign, modifier = Modifier.fillMaxWidth()); LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth()); Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text(card.sourceText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center); if (card.isFlipped) { Spacer(Modifier.height(tokens.sectionGap)); Text(card.targetText, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center) }; if (card.hintRevealed && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }; if (card.noteVisible && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } } }; if (!card.isFlipped) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { if (!card.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, modifier = Modifier.weight(1f)) { Text(if (card.noteVisible) stringResource(R.string.review_hide_note) else stringResource(R.string.review_show_note)) }; OutlinedButton(onClick = vm::revealHint, enabled = !card.hintRevealed, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_hint)) } }; Button(onClick = vm::flipCard, modifier = Modifier.fillMaxWidth().height(tokens.controlHeight)) { Text(stringResource(R.string.review_show_answer)) } } else { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) { OutlinedButton(onClick = { vm.submitAnswer(false) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_wrong)) }; Button(onClick = { vm.submitAnswer(true) }, enabled = state.canSubmitAnswer, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_correct)) } } } }
 
 @Composable private fun QuizCard(state: ReviewUiState, vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
@@ -310,14 +319,14 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
     val card = state.card
     val context = androidx.compose.ui.platform.LocalContext.current
     var ttsReady by remember { mutableStateOf(false) }
-    val tts = remember(context) {
+    val tts = remember(context, state.sourceLanguage) {
         lateinit var engine: TextToSpeech
         engine = TextToSpeech(context) { status ->
-            val spanish = Locale("es", "ES")
+            val sourceLocale = Locale.forLanguageTag(state.sourceLanguage)
             ttsReady = status == TextToSpeech.SUCCESS &&
-                engine.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE
+                engine.isLanguageAvailable(sourceLocale) >= TextToSpeech.LANG_AVAILABLE
             if (ttsReady) {
-                engine.language = spanish
+                engine.language = sourceLocale
                 engine.setSpeechRate(0.92f)
             }
         }
@@ -342,21 +351,21 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
             Text(quiz.promptText, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             OutlinedButton(
                 onClick = {
-                    val spanish = Locale("es", "ES")
-                    if (tts.isLanguageAvailable(spanish) >= TextToSpeech.LANG_AVAILABLE) {
-                        tts.language = spanish
+                    val sourceLocale = Locale.forLanguageTag(state.sourceLanguage)
+                    if (tts.isLanguageAvailable(sourceLocale) >= TextToSpeech.LANG_AVAILABLE) {
+                        tts.language = sourceLocale
                         tts.speak(quiz.promptText, TextToSpeech.QUEUE_FLUSH, null, "flashlearn_quiz_prompt")
                     }
                 },
                 enabled = !answered && ttsReady
-            ) { Text("🔊 پخش سؤال به اسپانیایی") }
+            ) { Text(stringResource(R.string.review_play_question)) }
             if (card?.hintRevealed == true && !card.hintText.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.hintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
             if (card?.noteVisible == true && !card.sourceNotes.isNullOrBlank()) { Spacer(Modifier.height(tokens.compactGap)); Text(card.sourceNotes, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) }
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokens.compactGap)) {
-        if (!card?.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, enabled = !answered, modifier = Modifier.weight(1f)) { Text(if (card?.noteVisible == true) "مخفی کردن یادداشت" else "نمایش یادداشت") }
-        OutlinedButton(onClick = vm::revealHint, enabled = !answered && card != null && !card.hintRevealed, modifier = Modifier.weight(1f)) { Text("💡 راهنما") }
+        if (!card?.sourceNotes.isNullOrBlank()) OutlinedButton(onClick = vm::toggleNote, enabled = !answered, modifier = Modifier.weight(1f)) { Text(if (card?.noteVisible == true) stringResource(R.string.review_hide_note) else stringResource(R.string.review_show_note)) }
+        OutlinedButton(onClick = vm::revealHint, enabled = !answered && card != null && !card.hintRevealed, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.review_hint)) }
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokens.contentGap)) {
         quiz.options.forEach { option ->
@@ -377,23 +386,25 @@ private fun CompactChoice(label: String, selected: Boolean, modifier: Modifier, 
         }
     }
     if (!answered) {
-        Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(tokens.buttonHeight), shape = MaterialTheme.shapes.large) { Text("ثبت پاسخ", style = MaterialTheme.typography.titleMedium) }
+        Button(onClick = vm::submitQuizAnswer, enabled = selected != null && !state.isSubmitting, modifier = Modifier.fillMaxWidth().height(tokens.buttonHeight), shape = MaterialTheme.shapes.large) { Text(stringResource(R.string.review_register_answer), style = MaterialTheme.typography.titleMedium) }
     } else {
         Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = if (feedback?.isCorrect == true) QuizCorrectContainer else QuizWrongContainer) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(if (feedback?.isCorrect == true) "✓ پاسخ صحیح" else "✕ پاسخ غلط — پاسخ صحیح سبز شده است", color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center);  }
+            Column(Modifier.fillMaxWidth().padding(horizontal = tokens.contentGap, vertical = tokens.compactGap), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(if (feedback?.isCorrect == true) stringResource(R.string.review_feedback_correct) else stringResource(R.string.review_feedback_wrong), color = if (feedback?.isCorrect == true) QuizCorrect else QuizWrong, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center);  }
         }
     }
 }
 
-@Composable private fun QuizUnavailableCard() {
+@Composable private fun QuizUnavailableCard(vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text("آزمون چهارگزینه‌ای آماده نشد", style = MaterialTheme.typography.titleLarge); Text("حالت آزمون حفظ شده و به فلش‌کارت تبدیل نمی‌شود.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
-@Composable private fun FeedbackCard(state: ReviewUiState) {
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally) { Text(stringResource(R.string.review_quiz_not_ready), style = MaterialTheme.typography.titleLarge); Text(stringResource(R.string.review_quiz_preserved), color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(tokens.compactGap)); Button(onClick = vm::skipCurrentCard) { Text(stringResource(R.string.review_skip_card)) } } } }
+@Composable private fun FeedbackCard(state: ReviewUiState, vm: ReviewViewModel) {
     val tokens = LocalFlashLearnThemeTokens.current
     val f = state.answerFeedback ?: return
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) "✓ پاسخ صحیح" else "✕ پاسخ نادرست", style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text("مرحله: ${f.stageLabel}"); Text("سختی: ${f.difficultyLabel}"); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text("پاسخ صحیح: ${f.correctAnswerText}"); Text("نتیجه: ${state.correct} صحیح، ${state.wrong} غلط") } } }
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.tinyGap)) { Text(if (f.isCorrect) stringResource(R.string.review_feedback_correct) else stringResource(R.string.review_feedback_incorrect), style = MaterialTheme.typography.headlineSmall, color = if (f.isCorrect) QuizCorrect else QuizWrong); Text(stringResource(R.string.review_stage, f.stageLabel)); Text(stringResource(R.string.review_difficulty, f.difficultyLabel)); if (!f.isCorrect && !f.correctAnswerText.isNullOrBlank()) Text(stringResource(R.string.review_correct_answer, f.correctAnswerText)); Text(stringResource(R.string.review_result, state.correct, state.wrong)); Button(onClick = vm::nextCard, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_next_card)) } } } }
 @Composable private fun FinishCard(state: ReviewUiState, onFinished: () -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text("مرور تمام شد!", style = MaterialTheme.typography.headlineSmall); Text("${state.answered} کارت پاسخ داده شد"); Text("صحیح: ${state.correct} • غلط: ${state.wrong}"); Text("دقت این جلسه: ${if (state.answered == 0) 0 else state.correct * 100 / state.answered}٪"); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("بازگشت به خانه") } } } }
-private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
-private fun reviewTypeLabel(type: ReviewType) = when (type) { ReviewType.DAILY -> "روزانه"; ReviewType.WEEKLY -> "هفتگی"; ReviewType.MONTHLY -> "ماهانه"; ReviewType.LEARNED -> "یادگرفته"; ReviewType.RANDOM -> "تصادفی" }
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(tokens.cardPadding), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(tokens.compactGap)) { Text(stringResource(R.string.review_finished), style = MaterialTheme.typography.headlineSmall); Text(stringResource(R.string.review_answered, state.answered)); Text(stringResource(R.string.review_result, state.correct, state.wrong)); Text(stringResource(R.string.review_accuracy_session, if (state.answered == 0) 0 else state.correct * 100 / state.answered)); Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_back_home)) } } } }
+@Composable
+private fun difficultyLabel(difficulty: VocabularyDifficulty) = when (difficulty) { VocabularyDifficulty.EASY -> stringResource(R.string.review_easy); VocabularyDifficulty.MEDIUM -> stringResource(R.string.review_medium); VocabularyDifficulty.HARD -> stringResource(R.string.review_hard); VocabularyDifficulty.VERY_HARD -> stringResource(R.string.review_very_hard) }
+@Composable
+private fun reviewTypeLabel(type: ReviewType) = when (type) { ReviewType.DAILY -> stringResource(R.string.review_daily); ReviewType.WEEKLY -> stringResource(R.string.review_weekly); ReviewType.MONTHLY -> stringResource(R.string.review_monthly); ReviewType.LEARNED -> stringResource(R.string.review_learned); ReviewType.RANDOM -> stringResource(R.string.review_random) }

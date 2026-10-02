@@ -13,17 +13,17 @@ class RefreshDataUseCaseTest {
     @Test
     fun contentVersionMigrationRepairsCanonicalKeysAndReachesCurrentVersion() = runBlocking {
         val id = UUID.randomUUID(); val conceptId = UUID.randomUUID()
-        val content = Content(id, conceptId, "es", "  Hola   Mundo ", "stale", null, null, null)
+        val content = Content(id, conceptId, "es", "  Hola   Mundo ", "stale", null, 0, null, null)
         val versions = FakeVersions(concept = 0, content = 0)
         val concepts = emptyConceptRepository()
         val repo = fakeContentRepository(content)
         val useCase = useCase(versions, concepts, repo)
         val result = useCase()
         assertEquals(2, result.conceptTo)
-        assertEquals(3, result.contentTo)
+        assertEquals(4, result.contentTo)
         assertEquals("hola mundo", repo.value.single().canonicalKey)
         assertEquals(2, versions.concept)
-        assertEquals(3, versions.content)
+        assertEquals(4, versions.content)
     }
 
     @Test
@@ -34,11 +34,11 @@ class RefreshDataUseCaseTest {
         val first = useCase()
         val second = useCase()
         assertEquals(2, first.conceptTo)
-        assertEquals(3, first.contentTo)
+        assertEquals(4, first.contentTo)
         assertEquals(0, second.changedContentRows)
         assertEquals(0, second.changedConceptRows)
         assertEquals(2, second.conceptFrom)
-        assertEquals(3, second.contentFrom)
+        assertEquals(4, second.contentFrom)
     }
 
     @Test
@@ -64,6 +64,36 @@ class RefreshDataUseCaseTest {
         val repo = fakeContentRepository(first, mutable = true)
         useCase(versions, emptyConceptRepository(), repo)()
         assertEquals(listOf("کشیش", "درمان"), repo.value.sortedBy { it.translationIndex }.map { it.text })
+    }
+
+    @Test
+    fun spanishEdgeNoiseIsRemovedAndCanonicalKeyRebuilt() = runBlocking {
+        val conceptId = UUID.randomUUID()
+        val dirty = Content(UUID.randomUUID(), conceptId, "es", "*casa*", "*casa*")
+        val dirtyBoth = Content(UUID.randomUUID(), UUID.randomUUID(), "es", " ** el perro _ ", "** el perro _")
+        val spanishPunctuation = Content(UUID.randomUUID(), UUID.randomUUID(), "es", "¿Cómo estás?", "¿cómo estás?")
+        val persian = Content(UUID.randomUUID(), conceptId, "fa", "*خانه*", "*خانه*")
+        val versions = FakeVersions(concept = 2, content = 3)
+        val repo = FakeContentRepository(mutableListOf(dirty, dirtyBoth, spanishPunctuation, persian))
+        val result = useCase(versions, emptyConceptRepository(), repo)()
+        val byId = repo.value.associateBy { it.id }
+        assertEquals("casa", byId.getValue(dirty.id).text)
+        assertEquals("casa", byId.getValue(dirty.id).canonicalKey)
+        assertEquals("el perro", byId.getValue(dirtyBoth.id).text)
+        assertEquals("el perro", byId.getValue(dirtyBoth.id).canonicalKey)
+        assertEquals("¿Cómo estás?", byId.getValue(spanishPunctuation.id).text)
+        assertEquals("*خانه*", byId.getValue(persian.id).text)
+        assertEquals(2, result.changedContentRows)
+        assertEquals(4, versions.content)
+    }
+
+    @Test
+    fun spanishRowMadeOnlyOfNoiseIsLeftUntouched() = runBlocking {
+        val noise = Content(UUID.randomUUID(), UUID.randomUUID(), "es", "***", "***")
+        val versions = FakeVersions(concept = 2, content = 3)
+        val repo = FakeContentRepository(mutableListOf(noise))
+        useCase(versions, emptyConceptRepository(), repo)()
+        assertEquals("***", repo.value.single().text)
     }
 
     private fun useCase(v: FakeVersions, c: ConceptRepository, r: ContentRepository) =

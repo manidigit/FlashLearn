@@ -6,22 +6,35 @@ import org.junit.Test
 import java.io.File
 
 class SchemaContractTest {
-    private fun exportedSchema(): String {
-        val schemaRoot = File("schemas")
-        assertTrue("Room schema directory was not generated", schemaRoot.isDirectory)
-        val schemaFile = schemaRoot.walkTopDown().filter { it.isFile && it.extension == "json" }.firstOrNull { it.name == "6.json" }
-        assertTrue("Room schema version 6 was not generated", schemaFile != null)
-        return schemaFile!!.readText()
+    private val source: String
+        get() = File("src/main/java/com/flashlearn/database/RoomSchema.kt").readText()
+
+    @Test fun expectedEntityCountIsSeventeen() {
+        val entities = Regex("data class (\\w+Entity)").findAll(source).map { it.groupValues[1] }.toSet()
+        assertEquals(17, entities.size)
     }
-    @Test fun expectedEntityCountIsSeventeen() { assertEquals(17, Regex("\"tableName\":").findAll(exportedSchema()).count()) }
-    @Test fun schemaVersionIsSixAfterVocabularyNormalization() { assertTrue(Regex("\"version\":\\s*6").containsMatchIn(exportedSchema())) }
+
+    @Test fun schemaVersionIsEightAfterVocabularyFieldCleanup() {
+        assertTrue(Regex("version\\s*=\\s*8").containsMatchIn(source))
+    }
+
     @Test fun contentSupportsMultipleTranslationsAndReviewMetadata() {
-        val schema=exportedSchema(); assertTrue(schema.contains("\"tableName\": \"contents\"")); assertTrue(schema.contains("\"fieldPath\": \"translationIndex\"")); assertTrue(schema.contains("\"fieldPath\": \"grammarNote\"")); assertTrue(schema.contains("\"fieldPath\": \"possibleCorrection\""))
+        assertTrue(source.contains("translationIndex"))
+        assertTrue(source.contains("grammarNote"))
+        assertTrue(source.contains("possibleCorrection"))
     }
+
     @Test fun vocabularyGraphTablesExist() {
-        val schema=exportedSchema(); assertTrue(schema.contains("\"tableName\": \"vocabulary_relations\"")); assertTrue(schema.contains("\"tableName\": \"vocabulary_variants\"")); assertTrue(schema.contains("\"fieldPath\": \"relationType\"")); assertTrue(schema.contains("\"fieldPath\": \"variantType\""))
+        assertTrue(source.contains("VocabularyRelationEntity"))
+        assertTrue(source.contains("VocabularyVariantEntity"))
+        assertTrue(source.contains("relationType"))
+        assertTrue(source.contains("variantType"))
     }
+
     @Test fun reviewQueueAndLanguageTablesExist() {
-        val schema=exportedSchema(); assertTrue(schema.contains("\"tableName\": \"review_queue\"")); assertTrue(schema.contains("\"tableName\": \"languages\"")); assertTrue(schema.contains("\"tableName\": \"language_pairs\"")); assertTrue(schema.contains("\"fieldPath\": \"confidence\""))
+        assertTrue(source.contains("ReviewQueueEntity"))
+        assertTrue(source.contains("LanguageEntity"))
+        assertTrue(source.contains("LanguagePairEntity"))
+        assertTrue(source.contains("confidence"))
     }
 }

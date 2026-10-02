@@ -31,6 +31,9 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("INSERT INTO `contents_new` (`id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`pronunciation`,`example`,`translationIndex`,`grammarNote`,`possibleCorrection`) SELECT `id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`pronunciation`,`example`,0,NULL,NULL FROM `contents`")
         db.execSQL("DROP TABLE `contents`")
         db.execSQL("ALTER TABLE `contents_new` RENAME TO `contents`")
+        // Room keeps SQLite index names across table renames; recreate the canonical Room name after rename.
+        db.execSQL("DROP INDEX IF EXISTS `index_contents_new_languageCode_canonicalKey`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode_canonicalKey` ON `contents` (`languageCode`, `canonicalKey`)")
         db.execSQL("CREATE UNIQUE INDEX `index_contents_conceptId_languageCode_translationIndex` ON `contents` (`conceptId`, `languageCode`, `translationIndex`)")
         db.execSQL("CREATE TABLE IF NOT EXISTS `vocabulary_relations` (`id` TEXT NOT NULL, `sourceConceptId` TEXT NOT NULL, `targetConceptId` TEXT, `relationType` TEXT NOT NULL, `unresolvedText` TEXT, PRIMARY KEY(`id`))")
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_vocabulary_relations_sourceConceptId_targetConceptId_relationType` ON `vocabulary_relations` (`sourceConceptId`, `targetConceptId`, `relationType`)")
@@ -41,5 +44,27 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_review_queue_status_confidence` ON `review_queue` (`status`, `confidence`)")
         db.execSQL("CREATE TABLE IF NOT EXISTS `languages` (`code` TEXT NOT NULL, `name` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`code`))")
         db.execSQL("CREATE TABLE IF NOT EXISTS `language_pairs` (`sourceLanguageCode` TEXT NOT NULL, `targetLanguageCode` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`sourceLanguageCode`, `targetLanguageCode`))")
+    }
+}
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_concepts_active_categoryId` ON `concepts` (`active`, `categoryId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_concepts_active_favorite` ON `concepts` (`active`, `favorite`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_review_history_conceptId_reviewedAt` ON `review_history` (`conceptId`, `reviewedAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_review_sessions_startedAt` ON `review_sessions` (`startedAt`)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_name` ON `tags` (`name`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_languages_active_code` ON `languages` (`active`, `code`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_language_pairs_active_source_target` ON `language_pairs` (`active`, `sourceLanguageCode`, `targetLanguageCode`)")
+    }
+}
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""CREATE TABLE `contents_new` (`id` TEXT NOT NULL, `conceptId` TEXT NOT NULL, `languageCode` TEXT NOT NULL, `text` TEXT NOT NULL, `canonicalKey` TEXT NOT NULL, `notes` TEXT, `translationIndex` INTEGER NOT NULL, `grammarNote` TEXT, `possibleCorrection` TEXT, PRIMARY KEY(`id`))""")
+        db.execSQL("""INSERT INTO `contents_new` (`id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`translationIndex`,`grammarNote`,`possibleCorrection`) SELECT `id`,`conceptId`,`languageCode`,`text`,`canonicalKey`,`notes`,`translationIndex`,`grammarNote`,`possibleCorrection` FROM `contents`""")
+        db.execSQL("DROP TABLE `contents`")
+        db.execSQL("ALTER TABLE `contents_new` RENAME TO `contents`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode_canonicalKey` ON `contents` (`languageCode`, `canonicalKey`)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_contents_conceptId_languageCode_translationIndex` ON `contents` (`conceptId`, `languageCode`, `translationIndex`)")
     }
 }

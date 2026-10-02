@@ -37,10 +37,16 @@ class UpdateTagUseCase @Inject constructor(
 
 class DeleteTagUseCase @Inject constructor(
     private val repository: TagRepository,
-    private val database: FlashLearnDatabase
+    private val database: FlashLearnDatabase,
+    private val conceptTagRepository: com.flashlearn.domain.repository.ConceptTagRepository = EmptyDeleteTagRepository
 ) {
+    constructor(repository: TagRepository, database: FlashLearnDatabase) : this(repository, database, EmptyDeleteTagRepository) {
+    }
     suspend operator fun invoke(id: UUID) = database.withTransaction {
         require(repository.getAll().any { it.id == id }) { "Tag not found: $id" }
+        conceptTagRepository.deleteByTagId(id)
         repository.delete(id)
     }
 }
+
+private object EmptyDeleteTagRepository : com.flashlearn.domain.repository.ConceptTagRepository { override suspend fun insert(conceptTag:com.flashlearn.domain.model.ConceptTag)=Unit; override suspend fun getTagsForConcept(conceptId:UUID)=emptyList<UUID>(); override suspend fun getConceptsForTag(tagId:UUID)=emptyList<UUID>(); override suspend fun getAll()=emptyList<com.flashlearn.domain.model.ConceptTag>() }

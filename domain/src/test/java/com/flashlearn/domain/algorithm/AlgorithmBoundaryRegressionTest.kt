@@ -25,7 +25,7 @@ class AlgorithmBoundaryRegressionTest {
     @Test fun weeklyCorrectMovesToMonthly() {
         val r = calculateLearningTransition(state(Stage.WEEKLY), true, now, ZoneOffset.UTC)
         assertEquals(Stage.MONTHLY, r.newStage)
-        assertEquals(now.plusSeconds(2_592_000), r.nextReviewAt)
+        assertEquals(Instant.parse("2026-10-10T00:00:00Z"), r.nextReviewAt)
     }
 
     @Test fun learnedStateIsStableOnBothAnswerOutcomes() {
@@ -39,16 +39,31 @@ class AlgorithmBoundaryRegressionTest {
 
     @Test fun veryHardRemainsCappedAfterFurtherWrongAnswers() {
         val s = difficulty(VocabularyDifficulty.VERY_HARD)
-        val r = calculateDifficulty(s, false, ReviewType.DAILY, 0)
+        val r = calculateDifficulty(s, false)
         assertEquals(VocabularyDifficulty.VERY_HARD, r.current)
         assertTrue(r.hasReachedVeryHard)
     }
 
-    @Test fun monthlyFailureEscalationDependsOnPreIncrementCount() {
-        val first = calculateDifficulty(difficulty(), false, ReviewType.MONTHLY, 0)
-        val repeated = calculateDifficulty(difficulty(), false, ReviewType.MONTHLY, 2)
-        assertEquals(VocabularyDifficulty.HARD, first.current)
-        assertEquals(VocabularyDifficulty.VERY_HARD, repeated.current)
-        assertTrue(repeated.hasReachedVeryHard)
+    @Test fun difficultyUsesOnlyConsecutiveAnswersAcrossAllReviewStages() {
+        var state = difficulty(VocabularyDifficulty.EASY)
+        repeat(2) { state = calculateDifficulty(state, false) }
+        assertEquals(VocabularyDifficulty.EASY, state.current)
+
+        state = calculateDifficulty(state, false)
+        assertEquals(VocabularyDifficulty.MEDIUM, state.current)
+
+        state = calculateDifficulty(state, true)
+        assertEquals(VocabularyDifficulty.MEDIUM, state.current)
+
+        state = calculateDifficulty(state, true)
+        state = calculateDifficulty(state, true)
+        assertEquals(VocabularyDifficulty.EASY, state.current)
+    }
+
+    @Test fun weeklyAndMonthlyWrongDoNotForceDifficultyChanges() {
+        val weekly = calculateDifficulty(difficulty(VocabularyDifficulty.EASY), false)
+        val monthly = calculateDifficulty(difficulty(VocabularyDifficulty.EASY), false)
+        assertEquals(VocabularyDifficulty.EASY, weekly.current)
+        assertEquals(VocabularyDifficulty.EASY, monthly.current)
     }
 }

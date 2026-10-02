@@ -101,7 +101,7 @@ class FullBackupRestoreTest {
         db.tagDao().insert(com.flashlearn.database.TagEntity(tagId, "important"))
         val conceptId = createConcept(CreateConceptCommand(
             sourceText = "buenos días", targetText = "صبح بخیر", categoryId = categoryId,
-            notes = "greeting note", pronunciation = "bwenos", example = "Buenos días, Ana.",
+            notes = "greeting note",
             entryType = com.flashlearn.domain.model.EntryType.PHRASE, tags = listOf(tagId)
         ))
         val learning = db.learningStateDao().getByConceptId(conceptId)!!.copy(

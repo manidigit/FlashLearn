@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flashlearn.app.navigation.AppRoutes
@@ -19,7 +20,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class AppViewModel @Inject constructor(@ApplicationContext context: Context, private val settingsRepository: RoomSettingsRepository) : ViewModel() {
+class AppViewModel @Inject constructor(@ApplicationContext context: Context, private val settingsRepository: RoomSettingsRepository, private val savedStateHandle: SavedStateHandle) : ViewModel() {
     companion object {
         private const val PREFS = "flashlearn_ui_settings"
         private const val KEY_APPEARANCE = "appearance"
@@ -35,7 +36,10 @@ class AppViewModel @Inject constructor(@ApplicationContext context: Context, pri
     }
     private val appContext = context.applicationContext
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    private val _state = mutableStateOf(loadPersistedState())
+    private val _state = mutableStateOf(loadPersistedState().copy(
+        selectedRoute = savedStateHandle.get<String>("route")?.takeIf { it in AppRoutes.all() } ?: AppRoutes.HOME,
+        selectedConceptId = savedStateHandle.get<String>("conceptId")?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    ))
     val state: State<AppUiState> get() = _state
     init { viewModelScope.launch { val threshold = settingsRepository.getInt(SettingsKeys.THRESHOLD_DIFFICULTY, SettingsKeys.DEFAULT_THRESHOLD_DIFFICULTY).coerceIn(1,20); val maxCards = settingsRepository.getInt(SettingsKeys.MAXIMUM_REVIEW_CARDS, SettingsKeys.DEFAULT_MAXIMUM_REVIEW_CARDS).coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS, SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT); val q = runCatching { QuizDifficulty.valueOf(settingsRepository.getString(KEY_QUIZ_DIFFICULTY, QuizDifficulty.MEDIUM.name)) }.getOrDefault(QuizDifficulty.MEDIUM); _state.value = _state.value.copy(difficultyThreshold=threshold, maximumReviewCards=maxCards, quizDifficulty=q) } }
     private fun loadPersistedState(): AppUiState { val languages=LearningLanguage.entries; val d=AppUiState(); val s=prefs.getInt(KEY_SOURCE,d.languagePair.source.ordinal).coerceIn(languages.indices); var t=prefs.getInt(KEY_TARGET,d.languagePair.target.ordinal).coerceIn(languages.indices); if(s==t)t=(t+1)%languages.size; val storedTheme = prefs.getString(KEY_THEME, null)
@@ -56,10 +60,16 @@ class AppViewModel @Inject constructor(@ApplicationContext context: Context, pri
     fun setLanguagePair(v:LanguagePair){if(v.source==v.target)return;_state.value=_state.value.copy(languagePair=v);prefs.edit().putInt(KEY_SOURCE,v.source.ordinal).putInt(KEY_TARGET,v.target.ordinal).apply()}
     fun reverseLanguagePair()=setLanguagePair(_state.value.languagePair.reversed())
     fun setPersonalWordDifficulty(v:VocabularyDifficulty?){_state.value=_state.value.copy(personalWordDifficulty=v);prefs.edit().putInt(KEY_PERSONAL_DIFFICULTY,v?.ordinal?:-1).apply()}
-    fun setQuizDifficulty(v:QuizDifficulty){_state.value=_state.value.copy(quizDifficulty=v);viewModelScope.launch{settingsRepository.setString(KEY_QUIZ_DIFFICULTY,v.name)}}
-    fun setDifficultyThreshold(v:Int){val x=v.coerceIn(1,20);_state.value=_state.value.copy(difficultyThreshold=x);viewModelScope.launch{settingsRepository.setInt(SettingsKeys.THRESHOLD_DIFFICULTY,x)}}
-    fun setMaximumReviewCards(v:Int){val x=v.coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS,SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT);_state.value=_state.value.copy(maximumReviewCards=x);viewModelScope.launch{settingsRepository.setInt(SettingsKeys.MAXIMUM_REVIEW_CARDS,x)}}
-    fun openLibraryDetail(id:UUID){_state.value=_state.value.copy(selectedRoute=AppRoutes.LIBRARY_DETAIL,selectedConceptId=id)}
-    fun goBack(){when(_state.value.selectedRoute){AppRoutes.LIBRARY_DETAIL->_state.value=_state.value.copy(selectedRoute=AppRoutes.LIBRARY,selectedConceptId=null);AppRoutes.BACKUP->_state.value=_state.value.copy(selectedRoute=AppRoutes.SETTINGS,selectedConceptId=null);AppRoutes.HOME->Unit;else->_state.value=_state.value.copy(selectedRoute=AppRoutes.HOME,selectedConceptId=null)}}
-    fun navigate(route:String){require(route in AppRoutes.all());_state.value=_state.value.copy(selectedRoute=route,selectedConceptId=null)}
+    fun setQuizDifficulty(v:QuizDifficulty){_state.value=_state.value.copy(quizDifficulty=v);viewModelScope.launch{runCatching { settingsRepository.setString(KEY_QUIZ_DIFFICULTY,v.name) }.onFailure { _state.value=_state.value.copy(operationError=it.message) }}}
+    fun setDifficultyThreshold(v:Int){val x=v.coerceIn(1,20);_state.value=_state.value.copy(difficultyThreshold=x);viewModelScope.launch{runCatching { settingsRepository.setInt(SettingsKeys.THRESHOLD_DIFFICULTY,x) }.onFailure { _state.value=_state.value.copy(operationError=it.message) }}}
+    fun setMaximumReviewCards(v:Int){val x=v.coerceIn(SettingsKeys.MINIMUM_REVIEW_CARDS,SettingsKeys.MAXIMUM_REVIEW_CARDS_LIMIT);_state.value=_state.value.copy(maximumReviewCards=x);viewModelScope.launch{runCatching { settingsRepository.setInt(SettingsKeys.MAXIMUM_REVIEW_CARDS,x) }.onFailure { _state.value=_state.value.copy(operationError=it.message) }}}
+    private fun saveNavigationState(state: AppUiState) {
+        savedStateHandle["route"] = state.selectedRoute
+        savedStateHandle["conceptId"] = state.selectedConceptId?.toString()
+        _state.value = state
+    }
+    fun openLibraryDetail(id:UUID){saveNavigationState(_state.value.copy(selectedRoute=AppRoutes.LIBRARY_DETAIL,selectedConceptId=id))}
+    fun goBack(){when(_state.value.selectedRoute){AppRoutes.LIBRARY_DETAIL->saveNavigationState(_state.value.copy(selectedRoute=AppRoutes.LIBRARY,selectedConceptId=null));AppRoutes.BACKUP->saveNavigationState(_state.value.copy(selectedRoute=_state.value.backupReturnRoute,selectedConceptId=null));AppRoutes.HOME->Unit;else->saveNavigationState(_state.value.copy(selectedRoute=AppRoutes.HOME,selectedConceptId=null))}}
+    fun openBackup(returnRoute:String){require(returnRoute in AppRoutes.all());saveNavigationState(_state.value.copy(selectedRoute=AppRoutes.BACKUP,selectedConceptId=null,backupReturnRoute=returnRoute))}
+    fun navigate(route:String){require(route in AppRoutes.all());saveNavigationState(_state.value.copy(selectedRoute=route,selectedConceptId=null))}
 }

@@ -10,9 +10,23 @@ package com.flashlearn.domain.usecase
  * presentation-only content; they do not mutate the review domain state.
  */
 class ReviewHelpUseCase {
-    fun hintFor(sourceText: String): String {
+    fun hintFor(sourceText: String): String =
+        hintFor(sourceText = sourceText, targetText = null, categoryName = null)
+
+    fun hintFor(sourceText: String, targetText: String?, categoryName: String?): String {
         require(sourceText.isNotBlank()) { "sourceText must not be blank" }
-        return "راهنما: به معنای واژه، نقش آن در جمله و بافتی که در آن دیده‌اید فکر کنید."
+        val category = categoryName?.trim()?.takeIf { it.isNotEmpty() }
+        if (category != null) return "دسته‌بندی: $category"
+        val firstMeaningChar = targetText
+            ?.trim()
+            ?.firstOrNull { !it.isWhitespace() }
+            ?.toString()
+            ?.takeIf { it.isNotBlank() }
+        return if (firstMeaningChar != null) {
+            "حرف اول معنی: $firstMeaningChar"
+        } else {
+            "راهنما: حرف اول معنی را به یاد بیاور."
+        }
     }
 
     fun noteFor(sourceNotes: String?): String? = sourceNotes
