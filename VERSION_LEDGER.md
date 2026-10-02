@@ -1,3 +1,13 @@
+| **6.71** | **671** | 2026-10-02 | Statistics DB aggregation, bounded activity window, persistent activity snapshot, timestamp-only streak input | CI pending |
+
+## v6.71 release alignment
+- app/build.gradle.kts: versionName 6.71 / versionCode 671.
+- CI current gate: 6.71/671; previous-version upgrade gate: 6.70/670.
+- No Room schema or migration change.
+- Statistics no longer loads the full ReviewHistory dataset for aggregation.
+- Activity range changes reuse the stored 90-day activity snapshot.
+- CI was not awaited by task instruction.
+
 | **6.70** | **670** | 2026-10-02 | Fix Achievement evaluation path; use real persisted context; add integration regression test | GREEN — GitHub Actions run 36988213115 |
 
 ## v6.70 release alignment
