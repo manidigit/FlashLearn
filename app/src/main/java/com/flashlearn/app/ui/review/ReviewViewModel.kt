@@ -264,6 +264,7 @@ class ReviewViewModel @Inject constructor(
         val baseCard = ReviewCardUiState(source.text, source.notes, target.text, categoryName = categoryName)
         if (_state.value.selectedMode == ReviewMode.QUIZ) {
             prefetchedQuizCards.remove(conceptId)?.let { prefetched ->
+                usedQuizDistractorTexts += prefetched.options.filterNot { it.equals(prefetched.correctAnswerText, ignoreCase = false) }.map { it.trim() }
                 _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = prefetched, remaining = queue.size - index, total = queue.size)
                 prefetchNextQuizCard(generation, pair)
                 return
