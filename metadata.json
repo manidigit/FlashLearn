@@ -1,0 +1,8 @@
+{
+  "name": "FlashLearn",
+  "description": "Offline Spanish/Persian vocabulary learning app with spaced repetition, multi-choice quiz & flashcards, bulk import, multi-theme system, and progress analytics.",
+  "requestFrame": false,
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
