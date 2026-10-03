@@ -163,7 +163,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                     .filter { it.id != target.id }
                     .mapNotNull { other ->
                         val values = contentsByConcept[other.id].orEmpty()
-                            .filter { it.languageCode.equals(targetLanguage, true) && it.text.isNotBlank() }
+                            .filter { normalizeQuizLanguage(it.languageCode) == targetLanguage && it.text.isNotBlank() }
                             .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
                             .distinctBy { normalizeQuizText(it.text) }
                         if (values.isEmpty()) null else {
