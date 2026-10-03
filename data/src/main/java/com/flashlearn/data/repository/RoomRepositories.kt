@@ -9,11 +9,8 @@ import java.util.UUID
 import org.json.JSONArray
 import javax.inject.Inject
 
-private const val TAG = "Mappers"
-
 private inline fun <reified T : Enum<T>> safeEnum(value: String, fallback: T): T =
-    enumValues<T>().firstOrNull { it.name == value }
-        ?: fallback.also { android.util.Log.w(TAG, "unknown " + T::class.simpleName + "=" + value) }
+    enumValues<T>().firstOrNull { it.name == value } ?: fallback
 
 object Mappers {
     fun concept(e: ConceptEntity)=Concept(e.id,safeEnum(e.entryType, EntryType.WORD),e.categoryId,e.favorite,e.active,e.createdAt,e.updatedAt)
