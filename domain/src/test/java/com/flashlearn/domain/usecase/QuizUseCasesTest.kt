@@ -27,6 +27,30 @@ class QuizUseCasesTest {
         assertTrue(r is QuizQuestionResult.QuizQuestion); r as QuizQuestionResult.QuizQuestion
         assertEquals(4, r.options.size); assertEquals(4, r.options.distinct().size); assertTrue(r.correctAnswerText in r.options); assertEquals("s0", r.promptText)
     }
+    @Test fun normalizesLanguageCodesWhenBuildingIndexedDistractors() = runBlocking {
+        val target = concept()
+        val distractors = (1..3).map { concept() }
+        val concepts = listOf(target) + distractors
+        val all = concepts.flatMapIndexed { i, c ->
+            listOf(content(c.id, if (i == 0) "ES" else "es", "source-$i"), content(c.id, "FA", "answer-$i"))
+        }
+        val states = concepts.associate {
+            it.id to DifficultyState(UUID.randomUUID(), it.id, VocabularyDifficulty.MEDIUM, 0, 0, false)
+        }
+
+        val result = GenerateQuizQuestionUseCase(CoR(all), CR(concepts), DR(states))(
+            target,
+            QuizLanguagePair("es", "fa"),
+            states.getValue(target.id)
+        )
+
+        assertTrue(result is QuizQuestionResult.QuizQuestion)
+        assertEquals(4, (result as QuizQuestionResult.QuizQuestion).options.size)
+        assertTrue(result.options.any { it == "answer-1" })
+        assertTrue(result.options.any { it == "answer-2" })
+        assertTrue(result.options.any { it == "answer-3" })
+    }
+
     @Test fun quizPromptFollowsSourceLanguageWhenLanguagePairIsReversed() = runBlocking {
         val target = concept()
         val d1 = concept()
