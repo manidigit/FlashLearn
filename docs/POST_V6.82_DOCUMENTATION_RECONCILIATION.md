@@ -1,3 +1,15 @@
+## v6.83 follow-up
+The Android release identity advanced to **6.83 / 683** after the Quiz performance audit. The Web scaffold remains a prototype/branch artifact and is not part of this Android release.
+
+### Quiz change
+- Filtered review candidates are selected first, respecting the existing review type, difficulty, category, language, and maximum-card rules.
+- For Quiz mode, the review bank is refreshed once and language-aware distractor candidate pools are indexed once.
+- The selected Quiz questions are prepared before the first card is shown.
+- Questions that cannot produce four valid options are excluded during preparation.
+- No out-of-filter vocabulary is introduced merely to reach the requested count.
+
+CI status is pending until the authoritative 6.83 workflow gates complete.
+
 # FlashLearn — Post-v6.82 Documentation Reconciliation
 
 **Date:** 2026-10-03  
