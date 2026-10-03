@@ -128,23 +128,32 @@ data class FlashLearnThemeSpec(
         const val FORMAT_VERSION = 3
 
         val MODERN_MINIMAL = FlashLearnThemeSpec(
-            id="modern_minimal", name="مدرن مینیمال",
-            lightPrimary=0xFFC79B32, darkPrimary=0xFFE0B44C,
-            lightSecondary=0xFF9F7925, darkSecondary=0xFFF0C65A,
-            lightBackground=0xFFF7F2E8, darkBackground=0xFF080D13,
-            lightSurface=0xFFFFFCF5, darkSurface=0xFF111820,
-            lightSurfaceVariant=0xFFF0E8D8, darkSurfaceVariant=0xFF18222D,
-            lightOnSurface=0xFF17130C, darkOnSurface=0xFFF7F0E3,
-            lightOnSurfaceVariant=0xFF756A59, darkOnSurfaceVariant=0xFFB9B2A6,
-            lightCard=0xFFFFFBF2, darkCard=0xFF121B24,
-            lightOutline=0xFFE8D8B6, darkOutline=0xFF2C3744,
-            gradientStart=0xFFC79B32, gradientEnd=0xFFE0B44C,
-            iconStyle="outlined", elevationScale=1.1f,
-            cornerSmall=14f, cornerMedium=20f, cornerLarge=28f,
-            typographyScale=1.02f, densityScale=0.98f, spacingScale=1f,
-            design=ThemeDesign.grok().copy(
-                statsLayout=StatsLayoutStrategy.GRID_2X2,
-                navStyle=NavigationStyle.STANDARD
+            id = "modern_minimal", name = "مدرن مینیمال",
+            lightPrimary = 0xFFC79B32, darkPrimary = 0xFFE0B44C,
+            lightSecondary = 0xFF9F7925, darkSecondary = 0xFFF0C65A,
+            lightBackground = 0xFFF7F2E8, darkBackground = 0xFF080D13,
+            lightSurface = 0xFFFFFCF5, darkSurface = 0xFF111820,
+            lightSurfaceVariant = 0xFFF0E8D8, darkSurfaceVariant = 0xFF18222D,
+            lightOnSurface = 0xFF17130C, darkOnSurface = 0xFFF7F0E3,
+            lightOnSurfaceVariant = 0xFF756A59, darkOnSurfaceVariant = 0xFFB9B2A6,
+            lightCard = 0xFFFFFBF2, darkCard = 0xFF121B24,
+            lightOutline = 0xFFE8D8B6, darkOutline = 0xFF2C3744,
+            gradientStart = 0xFFC79B32, gradientEnd = 0xFFE0B44C,
+            iconStyle = "outlined", elevationScale = 1.0f,
+            cornerSmall = 12f, cornerMedium = 16f, cornerLarge = 24f,
+            typographyScale = 1.0f, densityScale = 1.0f, spacingScale = 1.0f,
+            design = ThemeDesign.default().copy(
+                statsLayout = StatsLayoutStrategy.GRID_2X2,
+                navStyle = NavigationStyle.STANDARD,
+                metrics = ThemeDesign.default().metrics + mapOf(
+                    "elevationScale" to 1.0f,
+                    "typographyScale" to 1.0f,
+                    "densityScale" to 1.0f,
+                    "spacingScale" to 1.0f,
+                    "cornerSmall" to 12f,
+                    "cornerMedium" to 16f,
+                    "cornerLarge" to 24f
+                )
             )
         )
 
