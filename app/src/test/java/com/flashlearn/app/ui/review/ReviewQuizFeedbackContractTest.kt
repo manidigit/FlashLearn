@@ -26,6 +26,7 @@ class ReviewQuizFeedbackContractTest {
         assertTrue(content.contains("quizCard = null"))
         assertTrue(content.contains("isLoading = false"))
         assertTrue(content.contains("prefetchedQuizCards"))
-        assertTrue(content.contains("prefetchNextQuizCard"))
+        assertTrue(content.contains("generateQuizQuestion.refreshBank()"))
+        assertTrue(content.contains("val prepared = mutableMapOf<UUID, QuizCardUiState>()"))
     }
 }
