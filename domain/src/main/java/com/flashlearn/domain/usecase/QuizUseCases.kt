@@ -117,7 +117,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         // Pre-index distractor candidates once per review-bank refresh. This avoids
         // rescanning every active concept for every question in a large quiz.
         val activeConcepts = concepts.filter { it.active }
-        val distractorCandidatesByConcept = activeConcepts.associate { target ->
+        val distractorCandidatesByConcept = activeConcepts.associateWith { target ->
             val targetContents = contentsByConcept[target.id].orEmpty()
             val languages = targetContents.map { it.languageCode }.filter { it.isNotBlank() }.distinct()
             val byLanguage = languages.associateWith { targetLanguage ->
@@ -253,6 +253,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         // Prefer distractors that have not already appeared earlier in the same
         // review session. If fewer than three fresh distractors exist, fall back
         // to the complete valid pool so small vocabulary banks still produce quizzes.
+        val normalizedExcludedDistractors = excludedDistractorTexts.map(::normalizeQuizText).filter { it.isNotBlank() }.toSet()
         val freshCandidates = candidates.filter {
             normalizeQuizText(it.displayText) !in normalizedExcludedDistractors
         }
