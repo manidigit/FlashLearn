@@ -1,3 +1,12 @@
+## v6.83 — Batched Quiz preparation and indexed distractor pools
+- Review Quiz now prepares the selected session as a batch instead of discovering each question independently during card display.
+- Quiz-bank refresh builds language-aware distractor candidate indexes once per review session; individual questions reuse the prepared pools.
+- The requested review size still comes from the existing filtered review queue. If fewer eligible words exist, the session contains only the available eligible words; no unfiltered words are added.
+- Questions that cannot produce four valid options are excluded during preparation rather than failing after the session has started.
+- Existing Quiz Difficulty and Vocabulary Difficulty rules, duplicate/canonical guards, and distractor freshness behavior are preserved.
+- Android release identity: 6.83 / 683; previous-version gate: 6.82 / 682.
+- No Room schema or migration change.
+
 # Unreleased — post-v6.82 documentation reconciliation
 
 This section records changes present on `main` after the v6.82 Android release checkpoint. **No Android versionCode/versionName was changed by this documentation pass.** These entries are documentation of the current branch state, not a new release.
