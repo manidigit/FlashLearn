@@ -1,3 +1,13 @@
+# v6.83 — Quiz batch preparation
+- **Android release identity:** 6.83 / 683
+- **Previous-version gate:** 6.82 / 682
+- Quiz review now prepares the selected question set once at session start.
+- Quiz distractor candidates are indexed by concept and target language when the review bank is refreshed, avoiding a full active-concept scan for every question.
+- The selected question count remains bounded by the existing review filters and available eligible vocabulary.
+- Invalid quiz questions are filtered during preparation; no out-of-filter fallback vocabulary is introduced.
+- No Room schema/migration, backup format, or learning-stage rule change.
+- CI verification: pending.
+
 # Post-v6.82 branch reconciliation — 2026-10-03
 
 **Important:** This is a documentation reconciliation record, **not a new Android release**. The executable Android identity remains **6.82 / 682**.
