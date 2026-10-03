@@ -1,3 +1,12 @@
+## v6.83 — Quiz generation performance
+- Status: **implemented; CI pending**
+- Review session question preparation is now batch-oriented: the filtered candidate set is selected first, then valid Quiz questions are prepared before the first card.
+- Quiz-bank refresh builds language-aware distractor candidate pools once per session; question generation reuses those pools instead of rescanning every active concept for every question.
+- Requested question count remains bounded by the filtered eligible vocabulary. No fallback to words outside the selected filters is introduced.
+- Questions without four valid options are removed before the session starts.
+- Existing Quiz Difficulty/Vocabulary Difficulty selection, canonical duplicate guards, and distractor freshness rules are preserved.
+- No Room schema/migration change.
+
 ## v6.82 — Audit Phase 1 (v6.65 findings)
 
 - Status: **implemented; CI pending**
