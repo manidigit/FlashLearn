@@ -1,3 +1,16 @@
+# Unreleased — post-v6.82 documentation reconciliation
+
+This section records changes present on `main` after the v6.82 Android release checkpoint. **No Android versionCode/versionName was changed by this documentation pass.** These entries are documentation of the current branch state, not a new release.
+
+- **About / Settings:** expanded localized About resources and implemented the personal difficulty-threshold settings state; the related test suite was aligned with Android Compose test rules.
+- **Home:** added navigation from Home to Statistics/Progress and updated Home presentation/localized labels.
+- **Modern Minimal theme:** the current `main` state contains updated Modern Minimal theme values and ThemeDesign metrics. The later formatting commit also reflects those current values; it should not be treated as documentation-only merely because its commit message says “format”.
+- **Web scaffold:** `main` contains a Vite/React/TypeScript/Tailwind scaffold with its own `package.json` version `6.82.0`. It is not represented as a separate Android release and is therefore tracked as a branch-level artifact until its product/release status is explicitly decided.
+- **Release identity:** Android remains 6.82 / 682 in `app/build.gradle.kts`. No code-version bump was made in this documentation-only synchronization.
+- **Verification:** the post-v6.82 commits are documented here, but this pass does not claim a new CI-green release.
+
+See `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md` for the commit-level reconciliation and documentation gaps.
+
 ## v6.82 — Audit Phase 1 hardening
 
 - Hardened achievement evaluation, parser marker classification, persisted enum mapping, and Needs Review error handling.
