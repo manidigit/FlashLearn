@@ -16,6 +16,8 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 
+private fun normalizeQuizLanguage(language: String): String = language.trim().lowercase(Locale.ROOT)
+
 private fun normalizeQuizText(text: String): String =
     Normalizer.normalize(text.trim().replace(Regex("\\s+"), " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)
 
@@ -120,10 +122,10 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         val distractorCandidatesByConcept = activeConcepts.associate { target ->
             target.id to run {
             val targetContents = contentsByConcept[target.id].orEmpty()
-            val languages = targetContents.map { it.languageCode }.filter { it.isNotBlank() }.distinct()
+            val languages = targetContents.map { normalizeQuizLanguage(it.languageCode) }.filter { it.isNotBlank() }.distinct()
             val byLanguage = languages.associateWith { targetLanguage ->
                 val targetTranslations = targetContents
-                    .filter { it.languageCode.equals(targetLanguage, true) && it.text.isNotBlank() }
+                    .filter { normalizeQuizLanguage(it.languageCode) == targetLanguage && it.text.isNotBlank() }
                     .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
                     .distinctBy { normalizeQuizText(it.text) }
                 val correctDisplayText = targetTranslations.joinToString(" / ") { it.text.trim() }
@@ -246,7 +248,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             .filter { it.id in targetLanguageConceptIds && it.id in sourceLanguageConceptIds }
             .toList()
 
-        val candidates = snapshot.distractorCandidatesByConcept[concept.id]?.get(activeLanguagePair.targetLanguage).orEmpty()
+        val candidates = snapshot.distractorCandidatesByConcept[concept.id]?.get(normalizeQuizLanguage(activeLanguagePair.targetLanguage)).orEmpty()
             .filter {
                 normalizedCorrectCanonicalKeys.isEmpty() ||
                     it.canonicalKeys.none { key -> key in normalizedCorrectCanonicalKeys }
