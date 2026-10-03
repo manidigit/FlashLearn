@@ -6142,31 +6142,33 @@ Concept ناقص نباید به‌عنوان Concept معتبر باقی بما
 
 ### اصل
 
-Algorithm فقط سؤال را تولید می‌کند.
+Quiz review is prepared in two stages:
 
-### مراحل
+1. Select the requested review concepts using the existing review filters.
+2. Prepare the selected Quiz questions as a batch before the first card is shown.
 
-1.  Concept/Content هدف را مشخص کن.
-2.  تمام Translationهای غیرخالی هدف را در یک Target Group جمع کن.
-3.  Candidateهای Distractor را پیدا کن.
-4.  Concept فعلی را حذف کن.
-5.  CanonicalKeyهای تکراری را حذف کن.
-6.  Candidateهای همان Session را در صورت قرارداد حذف کن.
-7.  Category را در صورت فعال بودن Filter ترجیح بده.
-8.  همان Difficulty را ترجیح بده.
-9.  Difficultyهای مجاور را در مرحلهٔ بعد بررسی کن.
-10. در صورت نیاز کل بانک را بررسی کن.
-11. سه Distractor معتبر لازم است.
-12. پاسخ صحیح + سه Distractor = چهار گزینه.
-13. گزینه‌ها قبل از خروجی Shuffle شوند.
+This keeps the requested count bounded by the actual filtered vocabulary. The generator must never pull an out-of-filter concept merely to reach the requested count.
 
-اگر سه Distractor معتبر وجود ندارد:
+### Batch preparation
 
-``` text
-Fallback → Flashcard
-```
+1. Select the eligible Concept/Content targets using review type, difficulty, category, language and maximum-card rules.
+2. Refresh the Quiz bank once for the review session.
+3. Reuse language-aware distractor candidate pools for the selected Quiz questions.
+4. For each selected target, collect all non-empty translations in the target language.
+5. Exclude the target Concept itself.
+6. Remove canonical/normalized duplicates.
+7. Exclude distractors already used earlier in the same prepared session when at least three fresh candidates remain.
+8. Apply Vocabulary Difficulty pool rules.
+9. Apply Quiz Difficulty preference to category, entry type and confusability.
+10. Select exactly three valid Distractors.
+11. Correct answer + three Distractors = exactly four options.
+12. Shuffle the four options before presentation.
+
+If three valid Distractors cannot be produced for a selected target, that target is removed from the prepared Quiz session rather than causing a mid-session fallback or importing an out-of-filter word.
 
 ### Non-mutation
+
+
 
 این Algorithm نباید هیچ Persistence انجام دهد.
 
