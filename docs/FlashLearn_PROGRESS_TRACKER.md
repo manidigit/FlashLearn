@@ -1,3 +1,12 @@
+# FlashLearn — PROGRESS TRACKER
+## Current checkpoint: v6.83
+- Application identity: 6.83 / 683; previous-version gate: 6.82 / 682.
+- Scope: Quiz batch preparation and indexed distractor candidate pools.
+- Review filters still determine the available question set; requested count is capped by actual eligible vocabulary.
+- Quiz questions are prepared before the first card, while preserving Quiz Difficulty, Vocabulary Difficulty, and distractor freshness rules.
+- No Room schema/migration or backup format change.
+- Verification remains pending until the authoritative GitHub Actions gates are green.
+
 # Post-v6.82 documentation reconciliation — 2026-10-03
 
 ## Current documented runtime checkpoint
