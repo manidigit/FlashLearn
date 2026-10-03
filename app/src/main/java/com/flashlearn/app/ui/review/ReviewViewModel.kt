@@ -223,12 +223,42 @@ class ReviewViewModel @Inject constructor(
                 val validCandidates = candidates.asSequence().filter { candidate -> val cc = byConcept[candidate.concept.id].orEmpty(); cc.any { it.languageCode == pair.source.code } && cc.any { it.languageCode == pair.target.code } }.distinctBy { it.concept.id }.take(maxCards).toList()
                 sessionContents = byConcept
                 sessionDifficulties = validCandidates.associate { it.concept.id to it.difficulty }
-                if (_state.value.selectedMode == ReviewMode.QUIZ) {
-                    // Refresh once per review session so newly added/edited vocabulary is
-                    // available to the distractor generator without refreshing per card.
+                val preparedQueue = if (_state.value.selectedMode == ReviewMode.QUIZ) {
+                    // Prepare the complete quiz list once: refresh the bank, then generate
+                    // each selected question against the already indexed distractor pools.
+                    // This keeps the review flow from doing question discovery card-by-card.
                     withContext(Dispatchers.IO) { generateQuizQuestion.refreshBank() }
+                    val excluded = mutableSetOf<String>()
+                    val prepared = mutableMapOf<UUID, QuizCardUiState>()
+                    for (candidate in validCandidates) {
+                        val result = withContext(Dispatchers.Default) {
+                            generateQuizQuestion(
+                                candidate.concept,
+                                QuizLanguagePair(pair.source.code, pair.target.code),
+                                candidate.difficulty,
+                                quizDifficulty,
+                                excluded.toSet()
+                            )
+                        }
+                        if (result is QuizQuestionResult.QuizQuestion) {
+                            prepared[candidate.concept.id] = QuizCardUiState(
+                                result.promptText,
+                                result.options,
+                                correctAnswerText = result.correctAnswerText
+                            )
+                            excluded += result.options
+                                .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
+                                .map { it.trim() }
+                        }
+                    }
+                    prefetchedQuizCards = prepared
+                    validCandidates.filter { it.concept.id in prepared.keys }.map { it.concept.id }.distinct()
+                } else {
+                    prefetchedQuizCards.clear()
+                    validCandidates.map { it.concept.id }.distinct()
                 }
-                queue = validCandidates.map { it.concept.id }.distinct(); index = 0
+                queue = preparedQueue
+                index = 0
                 if (queue.isEmpty()) {
                     sessionId = null; sessionContents = emptyMap(); sessionDifficulties = emptyMap(); _state.value = _state.value.copy(isLoading = false, isFinished = true, total = 0, remaining = 0)
                 } else {
@@ -266,8 +296,7 @@ class ReviewViewModel @Inject constructor(
             prefetchedQuizCards.remove(conceptId)?.let { prefetched ->
                 usedQuizDistractorTexts += prefetched.options.filterNot { it.equals(prefetched.correctAnswerText, ignoreCase = false) }.map { it.trim() }
                 _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = prefetched, remaining = queue.size - index, total = queue.size)
-                prefetchNextQuizCard(generation, pair)
-                return
+                                return
             }
             val concept = conceptRepository.get(conceptId) ?: run { _state.value = _state.value.copy(isLoading = false, error = "واژه برای آزمون پیدا نشد"); return }
             when (val result = withContext(Dispatchers.Default) {
@@ -284,32 +313,10 @@ class ReviewViewModel @Inject constructor(
                         .filterNot { it.equals(result.correctAnswerText, ignoreCase = false) }
                         .map { it.trim() }
                     _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText), remaining = queue.size - index, total = queue.size)
-                    prefetchNextQuizCard(generation, pair)
-                }
+                                    }
                 QuizQuestionResult.FlashcardFallback -> _state.value = _state.value.copy(isLoading = false, isFinished = false, card = null, quizCard = null, error = "برای این سؤال چهار گزینهٔ معتبر پیدا نشد؛ حالت آزمون حفظ شد.", remaining = queue.size - index, total = queue.size)
             }
         } else _state.value = _state.value.copy(isLoading = false, isFinished = false, card = baseCard, quizCard = null, remaining = queue.size - index, total = queue.size)
-    }
-
-    private fun prefetchNextQuizCard(generation: Long, pair: LanguagePair) {
-        val nextConceptId = queue.getOrNull(index + 1) ?: return
-        if (generation != sessionGeneration || sessionId == null || prefetchedQuizCards.containsKey(nextConceptId)) return
-        if (sessionContents[nextConceptId].isNullOrEmpty()) return
-        viewModelScope.launch(Dispatchers.Default) {
-            if (generation != sessionGeneration || sessionId == null) return@launch
-            val nextConcept = conceptRepository.get(nextConceptId) ?: return@launch
-            val result = generateQuizQuestion(
-                nextConcept,
-                QuizLanguagePair(pair.source.code, pair.target.code),
-                sessionDifficulties[nextConceptId],
-                quizDifficulty,
-                usedQuizDistractorTexts.toSet()
-            )
-            if (generation != sessionGeneration || sessionId == null) return@launch
-            if (result is QuizQuestionResult.QuizQuestion) {
-                prefetchedQuizCards[nextConceptId] = QuizCardUiState(result.promptText, result.options, correctAnswerText = result.correctAnswerText)
-            }
-        }
     }
 
     fun selectQuizOption(option: String) { val quiz = _state.value.quizCard ?: return; if (_state.value.isSubmitting || _state.value.answerFeedback != null || option !in quiz.options) return; _state.value = _state.value.copy(quizCard = quiz.copy(selectedOption = option), error = null) }
