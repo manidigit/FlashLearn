@@ -34,6 +34,8 @@ interface AppContextType {
   setIsDark: (dark: boolean) => void;
   setLanguage: (lang: LanguageCode) => void;
   toggleDarkMode: () => void;
+  difficultyThreshold: number;
+  setDifficultyThreshold: (val: number) => void;
 
   // Database
   db: DatabaseState;
@@ -79,8 +81,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('flashlearn_lang') as LanguageCode) || 'en';
+    return (localStorage.getItem('flashlearn_lang') as LanguageCode) || 'fa';
   });
+
+  const [difficultyThreshold, setDifficultyThresholdState] = useState<number>(() => {
+    const saved = localStorage.getItem('flashlearn_difficulty_threshold');
+    const parsed = saved ? parseInt(saved, 10) : 3;
+    return isNaN(parsed) || parsed < 1 || parsed > 20 ? 3 : parsed;
+  });
+
+  const setDifficultyThreshold = (val: number) => {
+    const clamped = Math.max(1, Math.min(20, val));
+    setDifficultyThresholdState(clamped);
+    localStorage.setItem('flashlearn_difficulty_threshold', String(clamped));
+  };
 
   const [db, setDb] = useState<DatabaseState>(() => loadDatabase());
   const [streak, setStreak] = useState<StreakInfo>(() => loadStreak());
@@ -145,7 +159,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const updatedDiffs = db.difficultyStates.map((d) => {
       if (d.conceptId !== conceptId) return d;
-      return calculateDifficulty(d, isCorrect, 3);
+      return calculateDifficulty(d, isCorrect, difficultyThreshold);
     });
 
     const newHistory = {
@@ -452,6 +466,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsDark,
         setLanguage,
         toggleDarkMode,
+        difficultyThreshold,
+        setDifficultyThreshold,
         db,
         vocabulary,
         progressSummary,

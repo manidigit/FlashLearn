@@ -12,6 +12,9 @@ import {
   Info,
   HelpCircle,
   Check,
+  Sliders,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { THEMES, ThemeId } from '../theme/themeConfig';
@@ -29,6 +32,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
     toggleDarkMode,
     language,
     setLanguage,
+    difficultyThreshold,
+    setDifficultyThreshold,
     t,
     theme,
     db,
@@ -50,7 +55,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
     a.download = `flashlearn-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMsg('Backup downloaded successfully.');
+    setStatusMsg(language === 'fa' ? 'پشتیبان با موفقیت دانلود و ذخیره شد.' : 'Backup downloaded successfully.');
     setTimeout(() => setStatusMsg(null), 3000);
   };
 
@@ -75,7 +80,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   const handleResetSample = () => {
     if (window.confirm(t.resetConfirm)) {
       resetToSampleData();
-      setStatusMsg('Reset to default Spanish-Persian vocabulary successfully.');
+      setStatusMsg(language === 'fa' ? 'واژگان با موفقیت به نمونه پیش‌فرض اسپانیایی - فارسی بازگردانی شد.' : 'Reset to default Spanish-Persian vocabulary successfully.');
       setTimeout(() => setStatusMsg(null), 3000);
     }
   };
@@ -83,7 +88,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   const handleClear = () => {
     if (window.confirm(t.clearDbConfirm)) {
       clearDatabase();
-      setStatusMsg('Database cleared.');
+      setStatusMsg(language === 'fa' ? 'پایگاه داده واژگان پاکسازی شد.' : 'Database cleared.');
       setTimeout(() => setStatusMsg(null), 3000);
     }
   };
@@ -92,7 +97,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
     <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-6">
       <div>
         <h2 className="text-2xl font-black">{t.navSettings}</h2>
-        <p className="text-xs opacity-65">Customize appearance, learning rules, and data</p>
+        <p className="text-xs opacity-65">
+          {language === 'fa'
+            ? 'تنظیمات پوسته ظاهری، قوانین یادگیری و مدیریت پشتیبان'
+            : 'Customize appearance, learning rules, and data'}
+        </p>
       </div>
 
       {statusMsg && (
@@ -202,6 +211,56 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
               فارسی (RTL)
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* ── Difficulty Threshold (تعداد پاسخ برای تغییر سطح) ── */}
+      <div
+        className="p-5 rounded-3xl border shadow-xs space-y-3"
+        style={{
+          backgroundColor: isDark ? theme.cardDark : theme.cardLight,
+          borderColor: isDark ? theme.borderDark : theme.borderLight,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <Sliders size={18} style={{ color: primaryColor }} />
+          <h3 className="font-bold text-sm">{t.settingsDifficultyThreshold}</h3>
+        </div>
+        <p className="text-xs opacity-65 leading-relaxed">
+          {t.settingsDifficultySummary}
+        </p>
+
+        <div
+          className="p-4 rounded-2xl border flex items-center justify-between"
+          style={{
+            backgroundColor: isDark ? theme.surfaceDark : theme.surfaceLight,
+            borderColor: isDark ? theme.borderDark : theme.borderLight,
+          }}
+        >
+          <button
+            onClick={() => setDifficultyThreshold(difficultyThreshold - 1)}
+            disabled={difficultyThreshold <= 1}
+            className="w-11 h-11 rounded-2xl border flex items-center justify-center font-black text-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95 shadow-xs"
+            style={{ borderColor: isDark ? theme.borderDark : theme.borderLight }}
+            aria-label={t.decrease}
+          >
+            <Minus size={18} />
+          </button>
+
+          <div className="text-center px-4">
+            <span className="text-3xl font-black">{difficultyThreshold}</span>
+            <p className="text-[11px] opacity-65 font-bold mt-0.5">{t.consecutiveAnswers}</p>
+          </div>
+
+          <button
+            onClick={() => setDifficultyThreshold(difficultyThreshold + 1)}
+            disabled={difficultyThreshold >= 20}
+            className="w-11 h-11 rounded-2xl border flex items-center justify-center font-black text-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95 shadow-xs"
+            style={{ borderColor: isDark ? theme.borderDark : theme.borderLight }}
+            aria-label={t.increase}
+          >
+            <Plus size={18} />
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><resources><string name="bulk_file_unreadable">فایل قابل خواندن نیست</string><string name="bulk_file_read_error">خطا در خواندن فایل</string><string name="bulk_placeholder">la piedra
-سنگ
-
-el nivel
-سطح، درجه</string><string name="backup_save_file_failed">ذخیره فایل ناموفق بود: %1$s</string><string name="backup_save_output_failed">ذخیره خروجی ناموفق بود: %1$s</string><string name="backup_too_large">فایل پشتیبان بیش از ۲۰ مگابایت است</string><string name="backup_invalid_json">این فایل پشتیبان معتبر JSON نیست.</string><string name="backup_read_failed">خواندن فایل ناموفق بود: %1$s</string><string name="backup_complete">کامل</string><string name="backup_data_export">خروجی داده</string><string name="backup_data_export_summary">خروجی قابل استفاده در قالب‌های مختلف دریافت کن.</string><string name="backup_export_ready">%1$s آماده است</string><string name="backup_char_count">%1$d نویسه</string><string name="backup_file_export_ready">خروجی %1$s آماده است</string></resources>

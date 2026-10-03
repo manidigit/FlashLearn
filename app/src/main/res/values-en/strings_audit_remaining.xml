@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><resources><string name="bulk_file_unreadable">File cannot be read</string><string name="bulk_file_read_error">Error reading file</string><string name="bulk_placeholder">la piedra
-stone
-
-el nivel
-level, degree</string><string name="backup_save_file_failed">Failed to save file: %1$s</string><string name="backup_save_output_failed">Failed to save output: %1$s</string><string name="backup_too_large">The backup file is larger than 20 MB</string><string name="backup_invalid_json">This backup file is not valid JSON.</string><string name="backup_read_failed">Failed to read file: %1$s</string><string name="backup_complete">Complete</string><string name="backup_data_export">Data export</string><string name="backup_data_export_summary">Get usable exports in different formats.</string><string name="backup_export_ready">%1$s is ready</string><string name="backup_char_count">%1$d characters</string><string name="backup_file_export_ready">%1$s export is ready</string></resources>

@@ -23,7 +23,7 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartReview, onNavigate }) => {
-  const { theme, isDark, t, progressSummary, streak, db, vocabulary } = useApp();
+  const { theme, isDark, language, t, progressSummary, streak, db, vocabulary } = useApp();
   const primaryColor = isDark ? theme.primaryDark : theme.primaryLight;
 
   const totalWords = vocabulary.length;
@@ -87,7 +87,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartReview, onNavigat
             </span>
             <span className="text-sm font-bold opacity-80">{t.streakHeroLabel}</span>
           </div>
-          <p className="text-xs opacity-70 mt-0.5">{t.learningStreak} • Keep up your daily habit</p>
+          <p className="text-xs opacity-70 mt-0.5">
+            {t.learningStreak} • {language === 'fa' ? 'عادت روزانه مطالعه را حفظ کنید' : 'Keep up your daily habit'}
+          </p>
         </div>
         <button
           onClick={() => onStartReview('DAILY')}
@@ -144,7 +146,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartReview, onNavigat
             className="text-xs font-semibold hover:underline"
             style={{ color: primaryColor }}
           >
-            View all stats →
+            {language === 'fa' ? 'مشاهده همه آمار ←' : 'View all stats →'}
           </button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -313,7 +315,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartReview, onNavigat
           style={{ backgroundColor: primaryColor }}
         >
           <BookOpen size={18} />
-          <span>{totalReady > 0 ? `Start Review (${totalReady} due)` : 'Start Practice Review'}</span>
+          <span>
+            {language === 'fa'
+              ? totalReady > 0
+                ? `شروع مرور (${totalReady} واژه آماده)`
+                : 'شروع مرور تمرینی'
+              : totalReady > 0
+              ? `Start Review (${totalReady} due)`
+              : 'Start Practice Review'}
+          </span>
         </button>
 
         <button

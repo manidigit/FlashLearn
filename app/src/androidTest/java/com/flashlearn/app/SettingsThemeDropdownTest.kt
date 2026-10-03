@@ -2,7 +2,8 @@ package com.flashlearn.app
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,7 +18,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SettingsThemeDropdownTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComposeTestActivity>()
 
     @Test
     fun themeSelectorUsesDropdownAndChangesSelection() {
@@ -34,8 +35,8 @@ class SettingsThemeDropdownTest {
             }
         }
 
-        composeRule.onNodeWithText(FlashLearnThemeSpec.GROK.name).assertIsDisplayed().performClick()
+        composeRule.onAllNodesWithText(FlashLearnThemeSpec.GROK.name)[0].assertIsDisplayed().performClick()
         composeRule.onNodeWithText(FlashLearnThemeSpec.CLAUD.name).assertIsDisplayed().performClick()
-        composeRule.onNodeWithText(FlashLearnThemeSpec.CLAUD.name).assertIsDisplayed()
+        composeRule.onAllNodesWithText(FlashLearnThemeSpec.CLAUD.name)[0].assertIsDisplayed()
     }
 }

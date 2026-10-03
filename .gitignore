@@ -2,3 +2,12 @@
 keystore/
 *.jks
 *.keystore
+
+# Dependencies & Build artifacts
+node_modules/
+dist/
+.gradle/
+build/
+app/build/
+.dev.env.json
+.dev.pid
