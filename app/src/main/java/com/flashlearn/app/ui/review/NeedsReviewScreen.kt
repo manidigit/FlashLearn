@@ -29,6 +29,7 @@ import com.flashlearn.domain.model.ReviewQueueItem
 fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit, onApprove: (ReviewQueueItem) -> Unit) {
     val tokens = LocalFlashLearnThemeTokens.current
     val items by viewModel.items.collectAsState()
+    val error by viewModel.error.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
     
     Surface(
@@ -48,6 +49,7 @@ fun NeedsReviewScreen(viewModel: NeedsReviewViewModel, onBack: () -> Unit, onApp
                 Text(stringResource(R.string.needs_review_title), style = MaterialTheme.typography.headlineSmall)
                 Button(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             }
+            error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
             if (items.isEmpty()) {
                 Text(stringResource(R.string.needs_review_empty))
             } else {

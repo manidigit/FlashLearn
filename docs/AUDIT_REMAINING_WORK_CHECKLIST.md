@@ -1,3 +1,15 @@
+## v6.82 — Audit Phase 1 (v6.65 findings)
+
+- Status: **implemented; CI pending**
+- B-10: HARD_MODE_MASTER achievement evaluation changed from repeated per-concept scans to concept-ID set intersection.
+- A-3: bare Persian marker words no longer collide with ordinary vocabulary lines; explicit colon markers remain supported.
+- C-1: persisted enum mapping uses safe fallbacks and malformed parser metadata arrays are isolated.
+- C-2: Needs Review repository failures are surfaced through an explicit ViewModel error state while coroutine cancellation is preserved.
+- Regression coverage added for all four Phase 1 boundaries.
+- No Room schema/migration change.
+- Release/process records synchronized at v6.82 / 682 with 6.81 / 681 as the previous-version gate.
+- Final status remains pending until authoritative GitHub Actions Build + Unit Test and Instrumentation + Upgrade Gate are green.
+
 ## Issue 10 — Theme Selection
 
 - Status: **implemented; CI pending**

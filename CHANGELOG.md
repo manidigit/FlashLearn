@@ -1,3 +1,11 @@
+## v6.82 — Audit Phase 1 hardening
+
+- Hardened achievement evaluation, parser marker classification, persisted enum mapping, and Needs Review error handling.
+- Added focused regression coverage for the Phase 1 audit findings.
+- No Room schema or migration change.
+- Release identity: 6.82 / 682; previous gate: 6.81 / 681.
+- CI verification pending.
+
 ## v6.81 — Quiz prefetch build fix
 
 - Fixed the v6.80 Quiz prefetch compilation error caused by calling the suspend `ConceptRepository.get()` outside a coroutine.

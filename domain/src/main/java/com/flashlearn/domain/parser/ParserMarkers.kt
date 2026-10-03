@@ -12,8 +12,8 @@ data class ParserMarkers(
     companion object {
         val DEFAULT = ParserMarkers(
             notes = setOf(
-                "نکته:", "نکته", "توضیحات:", "توضیحات", "احتمال اشتباه:", "احتمال اشتباه",
-                "توجه:", "توجه", "مثال:", "مثال", "Examples:", "Example:", "Note:", "Notes:", "Usage:",
+                "نکته:", "توضیحات:", "احتمال اشتباه:",
+                "توجه:", "مثال:", "Examples:", "Example:", "Note:", "Notes:", "Usage:",
                 "Ejemplo:", "Ejemplos:", "Nota:", "Uso:"
             ),
             grammar = setOf(

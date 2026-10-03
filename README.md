@@ -2,7 +2,7 @@
 
 Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
-**Current version:** 6.63 (versionCode 663)
+**Current version:** 6.82 (versionCode 682)
 
 ## Core features
 

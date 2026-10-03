@@ -1,3 +1,14 @@
+## v6.82 — Audit Phase 1 hardening
+
+- B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
+- A-3: removed bare Persian marker words from marker-prefix classification and made marker matching exact unless the marker explicitly ends with a colon.
+- C-1: persisted enum decoding now falls back safely instead of using valueOf; malformed parser-metadata JSON arrays degrade to empty lists.
+- C-2: Needs Review queue repository operations are cancellation-safe and expose a user-facing error state.
+- Added focused regression tests for parser marker collisions, malformed persisted enums, and cancellable coroutine handling.
+- No Room schema or migration change.
+- Release identity: 6.82 / 682; previous-version gate: 6.81 / 681.
+- GitHub Actions verification pending.
+
 ## v6.78 release alignment
 - app/build.gradle.kts: versionName 6.78 / versionCode 678.
 - CI current gate: 6.78/678; previous-version upgrade gate: 6.77/677.

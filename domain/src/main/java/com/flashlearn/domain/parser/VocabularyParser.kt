@@ -194,8 +194,8 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
 
     private fun explicitMarkerType(s: String): ParsedLineType? {
         val lower = s.trim().lowercase(Locale.ROOT)
-        if (markers.grammar.any { lower.startsWith(it.lowercase(Locale.ROOT)) }) return ParsedLineType.GRAMMAR_NOTE
-        if (markers.notes.any { lower.startsWith(it.lowercase(Locale.ROOT)) }) return ParsedLineType.NOTE
+        if (markers.grammar.any { matchesMarker(lower, it) }) return ParsedLineType.GRAMMAR_NOTE
+        if (markers.notes.any { matchesMarker(lower, it) }) return ParsedLineType.NOTE
         if (Regex("^(example|examples|note|notes|usage|ejemplo|ejemplos|nota|uso)\\s+[^:]{1,60}:").containsMatchIn(lower)) return ParsedLineType.NOTE
         return null
     }
@@ -277,10 +277,19 @@ class VocabularyParser(private val markers: ParserMarkers = ParserMarkers.DEFAUL
         }
     }
 
-    private fun isBreakdownLine(s: String): Boolean = markers.breakdown.any { s.lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
-    private fun isDerivativeLine(s: String): Boolean = markers.derivative.any { s.lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
-    private fun isVariantLine(s: String): Boolean = markers.variant.any { s.lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
-    private fun isRelationLine(s: String): Boolean = markers.relation.any { s.lowercase(Locale.ROOT).startsWith(it.lowercase(Locale.ROOT)) }
+    private fun matchesMarker(value: String, marker: String): Boolean {
+        val normalizedMarker = marker.trim().lowercase(Locale.ROOT)
+        return if (normalizedMarker.endsWith(":")) {
+            value.startsWith(normalizedMarker)
+        } else {
+            value == normalizedMarker
+        }
+    }
+
+    private fun isBreakdownLine(s: String): Boolean = markers.breakdown.any { matchesMarker(s.trim().lowercase(Locale.ROOT), it) }
+    private fun isDerivativeLine(s: String): Boolean = markers.derivative.any { matchesMarker(s.trim().lowercase(Locale.ROOT), it) }
+    private fun isVariantLine(s: String): Boolean = markers.variant.any { matchesMarker(s.trim().lowercase(Locale.ROOT), it) }
+    private fun isRelationLine(s: String): Boolean = markers.relation.any { matchesMarker(s.trim().lowercase(Locale.ROOT), it) }
     private fun isCommentLine(s: String): Boolean = s.startsWith("#") || s.startsWith("//")
     private fun isSeparator(s: String): Boolean = s.matches(Regex("[-—_=*•]{3,}"))
 

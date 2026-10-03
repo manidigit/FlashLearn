@@ -99,9 +99,16 @@ class CheckAndUnlockAchievements @Inject constructor(
             practicedWords = history.map { it.conceptId }.distinct().size,
             learnedConcepts = learning.count { it.stage == Stage.LEARNED },
             totalActiveWords = activeConcepts.size,
-            veryHardLearnedConcepts = activeConcepts.count { concept ->
-                learning.any { it.conceptId == concept.id && it.stage == Stage.LEARNED } &&
-                    difficulty.any { it.conceptId == concept.id && it.hasReachedVeryHard }
+            veryHardLearnedConcepts = run {
+                val learnedIds = learning.asSequence()
+                    .filter { it.stage == Stage.LEARNED }
+                    .map { it.conceptId }
+                    .toSet()
+                val veryHardIds = difficulty.asSequence()
+                    .filter { it.hasReachedVeryHard }
+                    .map { it.conceptId }
+                    .toSet()
+                activeIds.count { it in learnedIds && it in veryHardIds }
             },
             monthlyCorrectConcepts = history.asSequence()
                 .filter { it.reviewType == ReviewType.MONTHLY && it.isCorrect }
