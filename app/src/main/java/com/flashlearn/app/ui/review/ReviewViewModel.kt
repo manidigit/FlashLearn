@@ -28,6 +28,7 @@ import com.flashlearn.domain.usecase.SubmitReviewAnswerRequest
 import com.flashlearn.domain.usecase.SubmitReviewAnswerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -220,7 +221,7 @@ class ReviewViewModel @Inject constructor(
                 val candidateIds = candidates.map { it.concept.id }.distinct()
                 val contents = contentRepository.findForConcepts(candidateIds)
                 val byConcept = contents.groupBy { it.conceptId }
-                val validCandidates = candidates.asSequence().filter { candidate -> val cc = byConcept[candidate.concept.id].orEmpty(); cc.any { it.languageCode == pair.source.code } && cc.any { it.languageCode == pair.target.code } }.distinctBy { it.concept.id }.take(maxCards).toList()
+                val validCandidates = candidates.asSequence().filter { candidate -> val cc = byConcept[candidate.concept.id].orEmpty(); cc.any { normalizeReviewLanguage(it.languageCode) == normalizeReviewLanguage(pair.source.code) } && cc.any { normalizeReviewLanguage(it.languageCode) == normalizeReviewLanguage(pair.target.code) } }.distinctBy { it.concept.id }.take(maxCards).toList()
                 sessionContents = byConcept
                 sessionDifficulties = validCandidates.associate { it.concept.id to it.difficulty }
                 val preparedQueue = if (_state.value.selectedMode == ReviewMode.QUIZ) {
@@ -426,6 +427,8 @@ class ReviewViewModel @Inject constructor(
         }
     }
 }
+
+private fun normalizeReviewLanguage(language: String): String = language.trim().lowercase(Locale.ROOT)
 
 private fun difficultyLabel(value: VocabularyDifficulty) = when (value) { VocabularyDifficulty.EASY -> "آسان"; VocabularyDifficulty.MEDIUM -> "متوسط"; VocabularyDifficulty.HARD -> "سخت"; VocabularyDifficulty.VERY_HARD -> "خیلی سخت" }
 private fun stageLabel(stage: com.flashlearn.domain.model.Stage) = when (stage) { com.flashlearn.domain.model.Stage.DAILY -> "روزانه"; com.flashlearn.domain.model.Stage.WEEKLY -> "هفتگی"; com.flashlearn.domain.model.Stage.MONTHLY -> "ماهانه"; com.flashlearn.domain.model.Stage.LEARNED -> "یادگرفته‌شده" }
