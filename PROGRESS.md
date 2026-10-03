@@ -1,3 +1,12 @@
+## v6.83 — Quiz batch preparation
+- Reworked Quiz review preparation so the selected session is built once before the first card.
+- Added a language-aware distractor candidate index to the Quiz bank; questions reuse prepared candidate pools instead of rescanning the active vocabulary bank.
+- Existing review filters determine the candidate question set. If fewer eligible words exist than requested, only those eligible words are used.
+- Quiz questions that cannot produce four valid options are removed during preparation.
+- Preserved Quiz Difficulty/Vocabulary Difficulty semantics, canonical duplicate protection, and distractor freshness.
+- Android identity: 6.83 / 683; previous gate: 6.82 / 682.
+- CI verification pending.
+
 ## v6.82 — Audit Phase 1 hardening
 
 - B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
