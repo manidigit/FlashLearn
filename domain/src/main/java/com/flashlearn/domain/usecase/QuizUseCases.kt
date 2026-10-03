@@ -83,7 +83,13 @@ data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: Stri
     }
 }
 
-private data class QuizBank(val contents: List<Content>, val contentsByConcept: Map<UUID, List<Content>>, val concepts: List<Concept>, val difficultiesById: Map<UUID, DifficultyState>)
+private data class QuizBank(
+    val contents: List<Content>,
+    val contentsByConcept: Map<UUID, List<Content>>,
+    val concepts: List<Concept>,
+    val difficultiesById: Map<UUID, DifficultyState>,
+    val distractorCandidatesByConcept: Map<UUID, List<DistractorCandidate>>
+)
 
 private data class DistractorCandidate(
     val displayText: String,
@@ -104,11 +110,80 @@ class GenerateQuizQuestionUseCase @Inject constructor(
 
     suspend fun refreshBank() = bankMutex.withLock {
         val contents = contentRepository.getAll()
+        val contentsByConcept = contents.groupBy { it.conceptId }
+        val concepts = conceptRepository.getAllActive()
+        val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+
+        // Pre-index distractor candidates once per review-bank refresh. This avoids
+        // rescanning every active concept for every question in a large quiz.
+        val activeConcepts = concepts.filter { it.active }
+        val distractorCandidatesByConcept = activeConcepts.associate { target ->
+            val targetContents = contentsByConcept[target.id].orEmpty()
+            val targetTranslations = targetContents
+                .filter { it.text.isNotBlank() }
+                .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
+                .distinctBy { normalizeQuizText(it.text) }
+            val correctDisplayText = targetTranslations.joinToString(" / ") { it.text.trim() }
+
+            fun difficultyDistance(other: Concept): Int {
+                val effective = difficultiesById[target.id]?.current ?: VocabularyDifficulty.MEDIUM
+                val otherDifficulty = difficultiesById[other.id]?.current ?: return 3
+                return when (effective) {
+                    VocabularyDifficulty.EASY -> when (otherDifficulty) {
+                        VocabularyDifficulty.EASY -> 0
+                        VocabularyDifficulty.MEDIUM -> 1
+                        VocabularyDifficulty.HARD -> 2
+                        VocabularyDifficulty.VERY_HARD -> 3
+                    }
+                    VocabularyDifficulty.MEDIUM -> when (otherDifficulty) {
+                        VocabularyDifficulty.MEDIUM -> 0
+                        VocabularyDifficulty.EASY, VocabularyDifficulty.HARD -> 1
+                        VocabularyDifficulty.VERY_HARD -> 2
+                    }
+                    VocabularyDifficulty.HARD -> when (otherDifficulty) {
+                        VocabularyDifficulty.HARD -> 0
+                        VocabularyDifficulty.MEDIUM, VocabularyDifficulty.VERY_HARD -> 1
+                        VocabularyDifficulty.EASY -> 2
+                    }
+                    VocabularyDifficulty.VERY_HARD -> when (otherDifficulty) {
+                        VocabularyDifficulty.VERY_HARD -> 0
+                        VocabularyDifficulty.HARD -> 1
+                        VocabularyDifficulty.MEDIUM -> 2
+                        VocabularyDifficulty.EASY -> 3
+                    }
+                }
+            }
+
+            activeConcepts.asSequence()
+                .filter { it.id != target.id }
+                .mapNotNull { other ->
+                    val values = contentsByConcept[other.id].orEmpty()
+                        .filter { it.text.isNotBlank() }
+                        .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
+                        .distinctBy { normalizeQuizText(it.text) }
+                    if (values.isEmpty()) null else {
+                        val displayText = values.joinToString(" / ") { it.text.trim() }
+                        DistractorCandidate(
+                            displayText = displayText,
+                            canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
+                            vocabularyDifficultyDistance = difficultyDistance(other),
+                            categoryMatch = target.categoryId != null && target.categoryId == other.categoryId,
+                            entryTypeMatch = target.entryType == other.entryType,
+                            lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayText)
+                        )
+                    }
+                }
+                .filter { normalizeQuizText(it.displayText) != normalizeQuizText(correctDisplayText) }
+                .distinctBy { normalizeQuizText(it.displayText) }
+                .toList()
+        }
+
         bank = QuizBank(
             contents = contents,
-            contentsByConcept = contents.groupBy { it.conceptId },
-            concepts = conceptRepository.getAllActive(),
-            difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
+            contentsByConcept = contentsByConcept,
+            concepts = concepts,
+            difficultiesById = difficultiesById,
+            distractorCandidatesByConcept = distractorCandidatesByConcept
         )
     }
 
@@ -165,64 +240,11 @@ class GenerateQuizQuestionUseCase @Inject constructor(
             .filter { it.id in targetLanguageConceptIds && it.id in sourceLanguageConceptIds }
             .toList()
 
-        fun difficultyDistance(other: Concept): Int {
-            val otherDifficulty = snapshot.difficultiesById[other.id]?.current ?: return 3
-            return when (effectiveVocabularyDifficulty) {
-                VocabularyDifficulty.EASY -> when (otherDifficulty) {
-                    VocabularyDifficulty.EASY -> 0
-                    VocabularyDifficulty.MEDIUM -> 1
-                    VocabularyDifficulty.HARD -> 2
-                    VocabularyDifficulty.VERY_HARD -> 3
-                }
-                VocabularyDifficulty.MEDIUM -> when (otherDifficulty) {
-                    VocabularyDifficulty.MEDIUM -> 0
-                    VocabularyDifficulty.EASY, VocabularyDifficulty.HARD -> 1
-                    VocabularyDifficulty.VERY_HARD -> 2
-                }
-                VocabularyDifficulty.HARD -> when (otherDifficulty) {
-                    VocabularyDifficulty.HARD -> 0
-                    VocabularyDifficulty.MEDIUM, VocabularyDifficulty.VERY_HARD -> 1
-                    VocabularyDifficulty.EASY -> 2
-                }
-                VocabularyDifficulty.VERY_HARD -> when (otherDifficulty) {
-                    VocabularyDifficulty.VERY_HARD -> 0
-                    VocabularyDifficulty.HARD -> 1
-                    VocabularyDifficulty.MEDIUM -> 2
-                    VocabularyDifficulty.EASY -> 3
-                }
-            }
-        }
-
-        val normalizedExcludedDistractors = excludedDistractorTexts
-            .map(::normalizeQuizText)
-            .filter { it.isNotBlank() }
-            .toSet()
-
-        val candidates = eligibleConcepts.mapNotNull { other ->
-            val values = contentsByConcept[other.id].orEmpty()
-                .filter { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
-                .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
-                .distinctBy { normalizeQuizText(it.text) }
-            if (values.isEmpty()) {
-                null
-            } else {
-                val displayText = displayTranslations(values)
-                DistractorCandidate(
-                    displayText = displayText,
-                    canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
-                    vocabularyDifficultyDistance = difficultyDistance(other),
-                    categoryMatch = concept.categoryId != null && concept.categoryId == other.categoryId,
-                    entryTypeMatch = concept.entryType == other.entryType,
-                    lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayText)
-                )
-            }
-        }
-            .filter { normalizeQuizText(it.displayText) != normalizedCorrect }
+        val candidates = snapshot.distractorCandidatesByConcept[concept.id].orEmpty()
             .filter {
                 normalizedCorrectCanonicalKeys.isEmpty() ||
                     it.canonicalKeys.none { key -> key in normalizedCorrectCanonicalKeys }
             }
-            .distinctBy { normalizeQuizText(it.displayText) }
 
         // Prefer distractors that have not already appeared earlier in the same
         // review session. If fewer than three fresh distractors exist, fall back
