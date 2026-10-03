@@ -1,3 +1,18 @@
+# Post-v6.82 documentation reconciliation — 2026-10-03
+
+**Android runtime checkpoint: v6.82 / 682.**
+
+Post-v6.82 work exists on `main` and is now documented without changing executable code or version identity:
+
+- Web scaffold added.
+- About/localization and difficulty-threshold Settings work added.
+- Home now exposes Statistics/Progress navigation.
+- Modern Minimal theme source was updated/normalized.
+
+This record does **not** claim a new release or CI-green status. Detailed reconciliation: `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`.
+
+---
+
 ## v6.82 — Audit Phase 1 hardening
 
 - B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
