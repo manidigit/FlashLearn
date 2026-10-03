@@ -162,7 +162,13 @@ class MainActivity : ComponentActivity() {
     private fun TopLevelContent(route: String) {
         val uiState by appViewModel.state
         when (route) {
-            AppRoutes.HOME -> HomeScreen(homeViewModel, uiState.languagePair, onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
+            AppRoutes.HOME -> HomeScreen(
+                homeViewModel,
+                uiState.languagePair,
+                onStartReview = { type -> reviewViewModel.prepareReviewType(type); appViewModel.navigate(AppRoutes.REVIEW) },
+                onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) },
+                onViewStats = { appViewModel.navigate(AppRoutes.PROGRESS) }
+            )
             AppRoutes.REVIEW -> ReviewSessionContent(viewModel = reviewViewModel, personalDifficulty = uiState.personalWordDifficulty, quizDifficulty = uiState.quizDifficulty, maximumReviewCards = uiState.maximumReviewCards, languagePair = uiState.languagePair, onFinished = { homeViewModel.refresh(); progressViewModel.refresh(); appViewModel.navigate(AppRoutes.HOME) })
             AppRoutes.LIBRARY -> LibraryScreenV2(libraryViewModel, uiState.languagePair, onBack = { appViewModel.navigate(AppRoutes.HOME) }, onOpen = appViewModel::openLibraryDetail, onCategories = { appViewModel.navigate(AppRoutes.CATEGORY_SELECTION) }, onAddWord = { appViewModel.navigate(AppRoutes.ADD_WORD) })
             AppRoutes.PROGRESS -> ProgressScreen(progressViewModel) { appViewModel.navigate(AppRoutes.HOME) }
