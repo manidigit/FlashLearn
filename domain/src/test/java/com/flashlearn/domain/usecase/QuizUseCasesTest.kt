@@ -162,4 +162,23 @@ class QuizUseCasesTest {
         assertTrue("Missing difficulty state must not force flashcard fallback", result is QuizQuestionResult.QuizQuestion)
         assertEquals(4,(result as QuizQuestionResult.QuizQuestion).options.size)
     }
+
+    @Test fun refreshBankStaysFastOnLargeVocabularyAndStillBuildsQuestions() = runBlocking {
+        val concepts = (1..3000).map { concept() }
+        val all = concepts.flatMapIndexed { i, c -> listOf(content(c.id, "es", "palabra$i"), content(c.id, "fa", "کلمه$i")) }
+        val ds = concepts.associate { it.id to DifficultyState(UUID.randomUUID(), it.id, VocabularyDifficulty.MEDIUM, 0, 0, false) }
+        val useCase = GenerateQuizQuestionUseCase(CoR(all), CR(concepts), DR(ds))
+        val started = System.nanoTime()
+        useCase.refreshBank()
+        val refreshMillis = (System.nanoTime() - started) / 1_000_000
+        assertTrue("refreshBank took ${refreshMillis}ms", refreshMillis < 5_000)
+        val questionsStarted = System.nanoTime()
+        concepts.take(20).forEach { c ->
+            val r = useCase(c, QuizLanguagePair("es", "fa"), ds.getValue(c.id))
+            assertTrue(r is QuizQuestionResult.QuizQuestion)
+            assertEquals(4, (r as QuizQuestionResult.QuizQuestion).options.size)
+        }
+        val questionsMillis = (System.nanoTime() - questionsStarted) / 1_000_000
+        assertTrue("20 questions took ${questionsMillis}ms", questionsMillis < 15_000)
+    }
 }

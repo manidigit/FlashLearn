@@ -11,18 +11,26 @@ import com.flashlearn.domain.repository.DifficultyStateRepository
 import java.text.Normalizer
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 
+private val QUIZ_WHITESPACE_REGEX = Regex("\\s+")
+private val QUIZ_TOKEN_SPLIT_REGEX = Regex("[^\\p{L}\\p{N}]+")
+
 private fun normalizeQuizLanguage(language: String): String = language.trim().lowercase(Locale.ROOT)
 
 private fun normalizeQuizText(text: String): String =
-    Normalizer.normalize(text.trim().replace(Regex("\\s+"), " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)
+    Normalizer.normalize(text.trim().replace(QUIZ_WHITESPACE_REGEX, " "), Normalizer.Form.NFC).lowercase(Locale.ROOT)
 
-private fun quizTokens(text: String): Set<String> =
-    normalizeQuizText(text).split(Regex("[^\\p{L}\\p{N}]+" )).filter { it.isNotBlank() }.toSet()
+/** Normalized text, tokens and bigrams computed once per entry instead of once per comparison. */
+private class QuizTextProfile(text: String) {
+    val normalized: String = normalizeQuizText(text)
+    val tokens: Set<String> = normalized.split(QUIZ_TOKEN_SPLIT_REGEX).filter { it.isNotBlank() }.toSet()
+    val bigrams: Set<String> = if (normalized.length <= 2) setOf(normalized) else normalized.windowed(2).toSet()
+}
 
 private fun levenshteinSimilarity(a: String, b: String): Double {
     if (a == b) return 1.0
@@ -43,24 +51,42 @@ private fun levenshteinSimilarity(a: String, b: String): Double {
     return 1.0 - distance.toDouble() / max(a.length, b.length).toDouble()
 }
 
-private fun ngramSimilarity(a: String, b: String, n: Int = 2): Double {
-    fun grams(value: String): Set<String> = if (value.length <= n) setOf(value) else value.windowed(n).toSet()
-    val left = grams(a)
-    val right = grams(b)
-    if (left.isEmpty() && right.isEmpty()) return 1.0
-    if (left.isEmpty() || right.isEmpty()) return 0.0
-    return left.intersect(right).size.toDouble() / left.union(right).size
+private fun quizLexicalSimilarity(left: QuizTextProfile, right: QuizTextProfile): Double {
+    val tokenSimilarity = if (left.tokens.isEmpty() && right.tokens.isEmpty()) 1.0
+    else if (left.tokens.isEmpty() || right.tokens.isEmpty()) 0.0
+    else left.tokens.intersect(right.tokens).size.toDouble() / left.tokens.union(right.tokens).size
+    val ngramSimilarity = if (left.bigrams.isEmpty() && right.bigrams.isEmpty()) 1.0
+    else if (left.bigrams.isEmpty() || right.bigrams.isEmpty()) 0.0
+    else left.bigrams.intersect(right.bigrams).size.toDouble() / left.bigrams.union(right.bigrams).size
+    return (tokenSimilarity * 0.45 + levenshteinSimilarity(left.normalized, right.normalized) * 0.35 + ngramSimilarity * 0.20).coerceIn(0.0, 1.0)
 }
 
-private fun lexicalSimilarity(a: String, b: String): Double {
-    val left = normalizeQuizText(a)
-    val right = normalizeQuizText(b)
-    val leftTokens = quizTokens(left)
-    val rightTokens = quizTokens(right)
-    val tokenSimilarity = if (leftTokens.isEmpty() && rightTokens.isEmpty()) 1.0
-    else if (leftTokens.isEmpty() || rightTokens.isEmpty()) 0.0
-    else leftTokens.intersect(rightTokens).size.toDouble() / leftTokens.union(rightTokens).size
-    return (tokenSimilarity * 0.45 + levenshteinSimilarity(left, right) * 0.35 + ngramSimilarity(left, right) * 0.20).coerceIn(0.0, 1.0)
+private fun vocabularyDifficultyDistance(effective: VocabularyDifficulty, other: VocabularyDifficulty?): Int {
+    if (other == null) return 3
+    return when (effective) {
+        VocabularyDifficulty.EASY -> when (other) {
+            VocabularyDifficulty.EASY -> 0
+            VocabularyDifficulty.MEDIUM -> 1
+            VocabularyDifficulty.HARD -> 2
+            VocabularyDifficulty.VERY_HARD -> 3
+        }
+        VocabularyDifficulty.MEDIUM -> when (other) {
+            VocabularyDifficulty.MEDIUM -> 0
+            VocabularyDifficulty.EASY, VocabularyDifficulty.HARD -> 1
+            VocabularyDifficulty.VERY_HARD -> 2
+        }
+        VocabularyDifficulty.HARD -> when (other) {
+            VocabularyDifficulty.HARD -> 0
+            VocabularyDifficulty.MEDIUM, VocabularyDifficulty.VERY_HARD -> 1
+            VocabularyDifficulty.EASY -> 2
+        }
+        VocabularyDifficulty.VERY_HARD -> when (other) {
+            VocabularyDifficulty.VERY_HARD -> 0
+            VocabularyDifficulty.HARD -> 1
+            VocabularyDifficulty.MEDIUM -> 2
+            VocabularyDifficulty.EASY -> 3
+        }
+    }
 }
 
 sealed interface QuizQuestionResult {
@@ -85,22 +111,64 @@ data class QuizLanguagePair(val sourceLanguage: String, val targetLanguage: Stri
     }
 }
 
-private data class QuizBank(
-    val contents: List<Content>,
-    val contentsByConcept: Map<UUID, List<Content>>,
-    val concepts: List<Concept>,
-    val difficultiesById: Map<UUID, DifficultyState>,
-    val distractorCandidatesByConcept: Map<UUID, Map<String, List<DistractorCandidate>>>
+private class QuizLanguageEntry(
+    val concept: Concept,
+    val displayText: String,
+    val profile: QuizTextProfile,
+    val canonicalKeys: Set<String>
 )
 
-private data class DistractorCandidate(
+/**
+ * Refreshing the bank is O(N): it only stores raw data. The per-language entry list
+ * is built lazily once per language, and similarity is computed per question only for
+ * candidates that actually reach ranking. (v6.83 precomputed all N x N similarities
+ * at refresh time, which froze the screen on large vocabularies.)
+ */
+private class QuizBank(
+    val contentsByConcept: Map<UUID, List<Content>>,
+    val concepts: List<Concept>,
+    val difficultiesById: Map<UUID, DifficultyState>
+) {
+    private val languageIndexes = ConcurrentHashMap<String, List<QuizLanguageEntry>>()
+
+    fun entriesFor(language: String): List<QuizLanguageEntry> {
+        val key = normalizeQuizLanguage(language)
+        return languageIndexes[key] ?: buildEntries(key).also { languageIndexes[key] = it }
+    }
+
+    private fun buildEntries(language: String): List<QuizLanguageEntry> =
+        concepts.asSequence()
+            .filter { it.active }
+            .mapNotNull { concept ->
+                val values = contentsByConcept[concept.id].orEmpty()
+                    .filter { normalizeQuizLanguage(it.languageCode) == language && it.text.isNotBlank() }
+                    .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
+                    .distinctBy { normalizeQuizText(it.text) }
+                if (values.isEmpty()) null else {
+                    val displayText = values.joinToString(" / ") { it.text.trim() }
+                    QuizLanguageEntry(
+                        concept = concept,
+                        displayText = displayText,
+                        profile = QuizTextProfile(displayText),
+                        canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet()
+                    )
+                }
+            }
+            .toList()
+}
+
+private class DistractorCandidate(
     val displayText: String,
-    val canonicalKeys: Set<String>,
     val vocabularyDifficultyDistance: Int,
     val categoryMatch: Boolean,
     val entryTypeMatch: Boolean,
-    val lexicalSimilarity: Double
-)
+    private val entryProfile: QuizTextProfile,
+    private val correctProfile: QuizTextProfile
+) {
+    val lexicalSimilarity: Double by lazy(LazyThreadSafetyMode.NONE) {
+        quizLexicalSimilarity(correctProfile, entryProfile)
+    }
+}
 
 class GenerateQuizQuestionUseCase @Inject constructor(
     private val contentRepository: ContentRepository,
@@ -112,86 +180,12 @@ class GenerateQuizQuestionUseCase @Inject constructor(
 
     suspend fun refreshBank() = bankMutex.withLock {
         val contents = contentRepository.getAll()
-        val contentsByConcept = contents.groupBy { it.conceptId }
         val concepts = conceptRepository.getAllActive()
         val difficultiesById = difficultyStateRepository.getAll().associateBy { it.conceptId }
-
-        // Pre-index distractor candidates once per review-bank refresh. This avoids
-        // rescanning every active concept for every question in a large quiz.
-        val activeConcepts = concepts.filter { it.active }
-        val distractorCandidatesByConcept = activeConcepts.associate { target ->
-            target.id to run {
-            val targetContents = contentsByConcept[target.id].orEmpty()
-            val languages = targetContents.map { normalizeQuizLanguage(it.languageCode) }.filter { it.isNotBlank() }.distinct()
-            val byLanguage = languages.associateWith { targetLanguage ->
-                val targetTranslations = targetContents
-                    .filter { normalizeQuizLanguage(it.languageCode) == targetLanguage && it.text.isNotBlank() }
-                    .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
-                    .distinctBy { normalizeQuizText(it.text) }
-                val correctDisplayText = targetTranslations.joinToString(" / ") { it.text.trim() }
-
-                fun difficultyDistance(other: Concept): Int {
-                    val effective = difficultiesById[target.id]?.current ?: VocabularyDifficulty.MEDIUM
-                    val otherDifficulty = difficultiesById[other.id]?.current ?: return 3
-                    return when (effective) {
-                        VocabularyDifficulty.EASY -> when (otherDifficulty) {
-                            VocabularyDifficulty.EASY -> 0
-                            VocabularyDifficulty.MEDIUM -> 1
-                            VocabularyDifficulty.HARD -> 2
-                            VocabularyDifficulty.VERY_HARD -> 3
-                        }
-                        VocabularyDifficulty.MEDIUM -> when (otherDifficulty) {
-                            VocabularyDifficulty.MEDIUM -> 0
-                            VocabularyDifficulty.EASY, VocabularyDifficulty.HARD -> 1
-                            VocabularyDifficulty.VERY_HARD -> 2
-                        }
-                        VocabularyDifficulty.HARD -> when (otherDifficulty) {
-                            VocabularyDifficulty.HARD -> 0
-                            VocabularyDifficulty.MEDIUM, VocabularyDifficulty.VERY_HARD -> 1
-                            VocabularyDifficulty.EASY -> 2
-                        }
-                        VocabularyDifficulty.VERY_HARD -> when (otherDifficulty) {
-                            VocabularyDifficulty.VERY_HARD -> 0
-                            VocabularyDifficulty.HARD -> 1
-                            VocabularyDifficulty.MEDIUM -> 2
-                            VocabularyDifficulty.EASY -> 3
-                        }
-                    }
-                }
-
-                activeConcepts.asSequence()
-                    .filter { it.id != target.id }
-                    .mapNotNull { other ->
-                        val values = contentsByConcept[other.id].orEmpty()
-                            .filter { normalizeQuizLanguage(it.languageCode) == targetLanguage && it.text.isNotBlank() }
-                            .sortedWith(compareBy<Content> { it.translationIndex }.thenBy { it.id.toString() })
-                            .distinctBy { normalizeQuizText(it.text) }
-                        if (values.isEmpty()) null else {
-                            val displayText = values.joinToString(" / ") { it.text.trim() }
-                            DistractorCandidate(
-                                displayText = displayText,
-                                canonicalKeys = values.map { normalizeQuizText(it.canonicalKey) }.filter { it.isNotBlank() }.toSet(),
-                                vocabularyDifficultyDistance = difficultyDistance(other),
-                                categoryMatch = target.categoryId != null && target.categoryId == other.categoryId,
-                                entryTypeMatch = target.entryType == other.entryType,
-                                lexicalSimilarity = lexicalSimilarity(correctDisplayText, displayText)
-                            )
-                        }
-                    }
-                    .filter { normalizeQuizText(it.displayText) != normalizeQuizText(correctDisplayText) }
-                    .distinctBy { normalizeQuizText(it.displayText) }
-                    .toList()
-            }
-            byLanguage
-            }
-        }
-
         bank = QuizBank(
-            contents = contents,
-            contentsByConcept = contentsByConcept,
+            contentsByConcept = contents.groupBy { it.conceptId },
             concepts = concepts,
-            difficultiesById = difficultiesById,
-            distractorCandidatesByConcept = distractorCandidatesByConcept
+            difficultiesById = difficultiesById
         )
     }
 
@@ -236,23 +230,33 @@ class GenerateQuizQuestionUseCase @Inject constructor(
 
         // Vocabulary Difficulty controls the documented candidate pool. Quiz Difficulty
         // is independent and controls how close/plausible the wrong answers are.
-        val effectiveVocabularyDifficulty = difficultyState?.current ?: VocabularyDifficulty.MEDIUM
-        val targetLanguageConceptIds = contentsByConcept.filterValues { values ->
-            values.any { it.languageCode.equals(activeLanguagePair.targetLanguage, true) && it.text.isNotBlank() }
-        }.keys
-        val sourceLanguageConceptIds = contentsByConcept.filterValues { values ->
-            values.any { it.languageCode.equals(activeLanguagePair.sourceLanguage, true) && it.text.isNotBlank() }
-        }.keys
-        val eligibleConcepts = snapshot.concepts.asSequence()
-            .filter { it.active && it.id != concept.id }
-            .filter { it.id in targetLanguageConceptIds && it.id in sourceLanguageConceptIds }
-            .toList()
+        val effectiveVocabularyDifficulty = difficultyState?.current
+            ?: snapshot.difficultiesById[concept.id]?.current
+            ?: VocabularyDifficulty.MEDIUM
+        val correctProfile = QuizTextProfile(correctDisplayText)
 
-        val candidates = snapshot.distractorCandidatesByConcept[concept.id]?.get(normalizeQuizLanguage(activeLanguagePair.targetLanguage)).orEmpty()
-            .filter {
+        val candidates = snapshot.entriesFor(activeLanguagePair.targetLanguage).asSequence()
+            .filter { it.concept.id != concept.id }
+            .filter { it.profile.normalized != normalizedCorrect }
+            .distinctBy { it.profile.normalized }
+            .filter { entry ->
                 normalizedCorrectCanonicalKeys.isEmpty() ||
-                    it.canonicalKeys.none { key -> key in normalizedCorrectCanonicalKeys }
+                    entry.canonicalKeys.none { key -> key in normalizedCorrectCanonicalKeys }
             }
+            .map { entry ->
+                DistractorCandidate(
+                    displayText = entry.displayText,
+                    vocabularyDifficultyDistance = vocabularyDifficultyDistance(
+                        effectiveVocabularyDifficulty,
+                        snapshot.difficultiesById[entry.concept.id]?.current
+                    ),
+                    categoryMatch = concept.categoryId != null && concept.categoryId == entry.concept.categoryId,
+                    entryTypeMatch = concept.entryType == entry.concept.entryType,
+                    entryProfile = entry.profile,
+                    correctProfile = correctProfile
+                )
+            }
+            .toList()
 
         // Prefer distractors that have not already appeared earlier in the same
         // review session. If fewer than three fresh distractors exist, fall back

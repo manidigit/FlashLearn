@@ -1,3 +1,11 @@
+## v6.84 — Quiz preparation freeze fix
+- Fixed the Review Quiz loading screen hanging after choosing the number of questions (introduced by the v6.83 N x N distractor precomputation).
+- Quiz bank refresh is now linear; distractor candidates are indexed lazily per language and similarity is computed only when needed.
+- Added a large-vocabulary regression test (3000 words).
+- Android release identity: 6.84 / 684; previous gate: 6.83 / 683.
+- No Room schema or migration change.
+- CI verification pending.
+
 ## v6.83 — Batched Quiz preparation and indexed distractor pools
 - Review Quiz now prepares the selected session as a batch instead of discovering each question independently during card display.
 - Quiz-bank refresh builds language-aware distractor candidate indexes once per review session; individual questions reuse the prepared pools.

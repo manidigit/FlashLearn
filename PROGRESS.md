@@ -1,3 +1,10 @@
+## v6.84 — Quiz preparation freeze fix
+- Cause: v6.83 built an N x N distractor/similarity table inside refreshBank(), freezing Quiz start on large vocabularies.
+- refreshBank() is now O(N); per-language entry index is built lazily; similarity is lazy and uses precomputed text profiles and precompiled regexes.
+- Added a 3000-word regression test. Quiz selection rules unchanged.
+- Android identity: 6.84 / 684; previous gate: 6.83 / 683.
+- CI verification pending.
+
 ## v6.83 — Quiz batch preparation
 - Reworked Quiz review preparation so the selected session is built once before the first card.
 - Added a language-aware distractor candidate index to the Quiz bank; questions reuse prepared candidate pools instead of rescanning the active vocabulary bank.

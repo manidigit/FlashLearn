@@ -2,9 +2,9 @@
 
 Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compose, Room, Hilt and a multi-module Clean Architecture.
 
-**Current version:** 6.83 (versionCode 683)
+**Current version:** 6.84 (versionCode 684)
 
-> **Documentation reconciliation — 2026-10-03:** The Android release identity is now **6.83 / 683**. v6.83 adds batched Quiz preparation and indexed distractor candidate pools; the Web scaffold remains a prototype artifact and does not define the Android release. These changes are tracked in `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`. A parallel Vite/React web scaffold is also present in `main`; its presence is documented separately and does not change the Android release identity.
+> **Documentation reconciliation — 2026-10-03:** The Android release identity is now **6.84 / 684**. v6.83 adds batched Quiz preparation and indexed distractor candidate pools; the Web scaffold remains a prototype artifact and does not define the Android release. These changes are tracked in `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`. A parallel Vite/React web scaffold is also present in `main`; its presence is documented separately and does not change the Android release identity.
 
 
 

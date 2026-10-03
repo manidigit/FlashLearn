@@ -1,3 +1,15 @@
+# v6.84 — Quiz preparation freeze fix
+- **Android release identity:** 6.84 / 684
+- **Previous-version gate:** 6.83 / 683
+- Root cause: v6.83 `refreshBank()` precomputed distractor candidates and lexical similarity for every active concept against every other concept (N x N, with regex compilation per comparison). On large vocabularies this froze the Quiz loading screen after choosing the question count.
+- `refreshBank()` is now O(N): it only stores raw contents, concepts and difficulty states.
+- Distractor entries are indexed lazily once per language; normalized text, tokens and bigrams are computed once per entry; regexes are precompiled.
+- Lexical similarity is computed lazily, only for candidates that reach ranking.
+- Removed unused per-question full scans of all contents.
+- Quiz Difficulty, Vocabulary Difficulty, canonical-key duplicate guard, freshness and filter behavior unchanged.
+- No Room schema/migration, backup format, or learning-stage rule change.
+- CI verification: pending.
+
 # v6.83 — Quiz batch preparation
 - **Android release identity:** 6.83 / 683
 - **Previous-version gate:** 6.82 / 682
