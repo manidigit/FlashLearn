@@ -1,3 +1,11 @@
+# v6.83 — Quiz batch preparation
+- Selected Quiz sessions are prepared before the first card.
+- Distractor candidates are indexed once per refreshed review bank and keyed by target language.
+- Existing review filters remain authoritative for question count; unavailable vocabulary is never replaced with out-of-filter words.
+- Invalid questions are filtered during preparation.
+- Android identity: 6.83 / 683; previous gate: 6.82 / 682.
+- CI verification pending.
+
 # Post-v6.82 documentation reconciliation — 2026-10-03
 
 **Android runtime checkpoint: v6.82 / 682.**
