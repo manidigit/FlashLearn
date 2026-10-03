@@ -4,6 +4,10 @@ Offline Spanish/Persian vocabulary learning app built with Kotlin, Jetpack Compo
 
 **Current version:** 6.82 (versionCode 682)
 
+> **Documentation reconciliation — 2026-10-03:** The Android release identity remains **6.82 / 682**. The `main` branch contains additional post-6.82 commits that have not been promoted to a new Android release identity yet. These changes are tracked in `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`. A parallel Vite/React web scaffold is also present in `main`; its presence is documented separately and does not change the Android release identity.
+
+
+
 ## Core features
 
 - Spaced-repetition review: Daily → Weekly → Monthly → Learned
