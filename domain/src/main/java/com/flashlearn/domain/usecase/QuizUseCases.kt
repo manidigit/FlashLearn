@@ -117,7 +117,8 @@ class GenerateQuizQuestionUseCase @Inject constructor(
         // Pre-index distractor candidates once per review-bank refresh. This avoids
         // rescanning every active concept for every question in a large quiz.
         val activeConcepts = concepts.filter { it.active }
-        val distractorCandidatesByConcept = activeConcepts.associateWith { target ->
+        val distractorCandidatesByConcept = activeConcepts.associate { target ->
+            target.id to run {
             val targetContents = contentsByConcept[target.id].orEmpty()
             val languages = targetContents.map { it.languageCode }.filter { it.isNotBlank() }.distinct()
             val byLanguage = languages.associateWith { targetLanguage ->
@@ -180,6 +181,7 @@ class GenerateQuizQuestionUseCase @Inject constructor(
                     .toList()
             }
             byLanguage
+            }
         }
 
         bank = QuizBank(
