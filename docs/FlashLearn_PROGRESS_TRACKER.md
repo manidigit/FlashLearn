@@ -1,3 +1,29 @@
+# Post-v6.82 documentation reconciliation — 2026-10-03
+
+## Current documented runtime checkpoint
+
+**Android:** v6.82 / versionCode 682.
+
+The repository `main` contains additional commits after the v6.82 checkpoint. They are documented here without changing the Android release identity.
+
+### Post-v6.82 implementation state
+
+- **Web scaffold:** Vite + React + TypeScript + Tailwind project files were added to the repository. Release/product status is not yet defined.
+- **About / Settings:** localized About resources and difficulty-threshold Settings state were expanded; Compose test setup was adjusted.
+- **Home:** Home now exposes navigation to Statistics/Progress and has updated localized presentation.
+- **Modern Minimal:** current source contains updated theme values and ThemeDesign metrics.
+- **Repository hygiene:** web/build artifacts are explicitly ignored.
+
+### Status
+
+- Documentation drift from v6.82 is now recorded.
+- Android release identity remains 6.82 / 682.
+- No new release version is declared by this documentation pass.
+- CI status for a hypothetical post-v6.82 release is **not claimed**.
+- Detailed commit-level evidence is in `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`.
+
+---
+
 ## v6.82 — Audit Phase 1 hardening
 
 - B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
