@@ -1,3 +1,18 @@
+# Post-v6.82 branch reconciliation — 2026-10-03
+
+**Documentation-only record. Android remains v6.82 / versionCode 682.**
+
+The `main` branch contains implementation commits after the v6.82 checkpoint. They are recorded here without promoting them to a new Android release.
+
+- `67ccf452`: Vite/React/TypeScript/Tailwind web scaffold introduced; web package version is 6.82.0.
+- `4458485e`: About localization, difficulty-threshold Settings state, Compose test adjustments, and repository ignore rules.
+- `0506812e`: Home → Statistics/Progress navigation and localized Home/theme updates.
+- `53dd9899`: current Modern Minimal ThemeDesign/property representation normalized in source.
+
+**Governance:** do not change Android version identity until the post-v6.82 implementation is audited, scoped, and CI-verified. See `docs/POST_V6.82_DOCUMENTATION_RECONCILIATION.md`.
+
+---
+
 ## v6.82 — Audit Phase 1 hardening
 
 - B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
