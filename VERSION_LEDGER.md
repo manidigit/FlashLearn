@@ -1,3 +1,26 @@
+# Post-v6.82 branch reconciliation — 2026-10-03
+
+**Important:** This is a documentation reconciliation record, **not a new Android release**. The executable Android identity remains **6.82 / 682**.
+
+| Branch state | Android release identity | Documentation status |
+|---|---:|---|
+| v6.82 checkpoint | 6.82 / 682 | Release record exists |
+| Post-v6.82 commits on `main` | 6.82 / 682 | Documented below; not promoted to a new Android version |
+| Web scaffold | package version 6.82.0 | Branch artifact; release status not yet defined |
+
+### Changes after the v6.82 checkpoint
+
+- **67ccf452** — introduced a Vite/React/TypeScript/Tailwind web scaffold and core web/domain files.
+- **4458485e** — expanded About localization, added/updated difficulty-threshold Settings state, adjusted Compose tests, and ignored web/build artifacts.
+- **0506812e** — changed Home navigation to expose Statistics/Progress and updated Home localized presentation; updated Modern Minimal theme values.
+- **53dd9899** — current Modern Minimal ThemeDesign/property representation was reformatted/normalized. The resulting source must be treated as the current theme state, not assumed to be formatting-only.
+
+### Version-governance decision for this reconciliation
+
+No `versionName`, `versionCode`, Android CI gate, or release artifact identity is changed here. A future release number should be assigned only after the post-v6.82 implementation state is audited and the Android/Web scope is explicitly decided.
+
+---
+
 ## v6.82 — Audit Phase 1 hardening
 
 - B-10: replaced the HARD_MODE_MASTER quadratic cross-scan with learned/VERY_HARD concept-ID sets.
